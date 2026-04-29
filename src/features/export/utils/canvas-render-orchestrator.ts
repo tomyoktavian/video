@@ -193,7 +193,7 @@ async function tryPacketRemuxComposition(
   let conversion: {
     cancel: () => Promise<void>
     isValid: boolean
-    onProgress?: (progress: number) => unknown
+    onProgress?: (progress: number, processedTime: number) => unknown
     execute: () => Promise<void>
   } | null = null
   const cancelConversion = () => {
@@ -260,6 +260,9 @@ async function tryPacketRemuxComposition(
         audio: plan.includeAudio ? { forceTranscode: false } : { discard: true },
         showWarnings: false,
       })
+      if (!conversion) {
+        return null
+      }
 
       if (!conversion.isValid) {
         return null
