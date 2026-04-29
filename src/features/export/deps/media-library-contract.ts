@@ -3,26 +3,54 @@
  * Export modules should import media resolution helpers from here.
  */
 
-import { useMediaLibraryStore } from '@/features/media-library/stores/media-library-store'
+import { useMediaLibraryStore } from "@/features/media-library/stores/media-library-store";
 
 export {
   resolveMediaUrl,
   resolveMediaUrls,
   resolveProxyUrl,
   cleanupBlobUrls,
-} from '@/features/media-library/utils/media-resolver'
+} from "@/features/media-library/utils/media-resolver";
 
-export function getMediaAudioCodecById(mediaId: string | undefined): string | undefined {
-  if (!mediaId) return undefined
+export function getMaxSourceVideoBitrate(
+  items: Array<{ type: string; mediaId?: string }>,
+): number {
+  const mediaById = useMediaLibraryStore.getState().mediaById;
+  let maxBitrate = 0;
 
-  const media = useMediaLibraryStore.getState().mediaById[mediaId]
-  if (!media) return undefined
+  for (const item of items) {
+    if (item.type !== "video" || !item.mediaId) continue;
+    const media = mediaById[item.mediaId];
+    if (!media) continue;
 
-  if (media.mimeType.startsWith('video/')) {
-    return media.audioCodec
+    const bitrate =
+      media.bitrate > 0
+        ? media.bitrate
+        : media.duration > 0
+          ? (media.fileSize * 8) / media.duration
+          : 0;
+
+    if (bitrate > maxBitrate) {
+      maxBitrate = bitrate;
+    }
   }
-  if (media.mimeType.startsWith('audio/')) {
-    return media.codec
+
+  return maxBitrate;
+}
+
+export function getMediaAudioCodecById(
+  mediaId: string | undefined,
+): string | undefined {
+  if (!mediaId) return undefined;
+
+  const media = useMediaLibraryStore.getState().mediaById[mediaId];
+  if (!media) return undefined;
+
+  if (media.mimeType.startsWith("video/")) {
+    return media.audioCodec;
   }
-  return undefined
+  if (media.mimeType.startsWith("audio/")) {
+    return media.codec;
+  }
+  return undefined;
 }

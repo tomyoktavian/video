@@ -1,12 +1,12 @@
-import { useRef, useEffect, useCallback, memo } from 'react'
-import { Button } from '@/components/ui/button'
+import { useRef, useEffect, useCallback, memo, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Slider } from '@/components/ui/slider'
+} from '@/components/ui/dropdown-menu';
+import { Slider } from '@/components/ui/slider';
 import {
   Film,
   ZoomIn,
@@ -26,44 +26,110 @@ import {
   FlagOff,
   Activity,
   Link2,
-} from 'lucide-react'
-import { Separator } from '@/components/ui/separator'
-import { formatHotkeyBinding } from '@/config/hotkeys'
-import { useTimelineZoom } from '../hooks/use-timeline-zoom'
-import { useTimelineStore } from '../stores/timeline-store'
-import { useTimelineCommandStore } from '../stores/timeline-command-store'
-import { usePlaybackStore } from '@/shared/state/playback'
-import { useEditorStore } from '@/app/state/editor'
-import { useSelectionStore } from '@/shared/state/selection'
+  Trash2,
+} from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
+import { formatHotkeyBinding } from '@/config/hotkeys';
+import { useTimelineZoom } from '../hooks/use-timeline-zoom';
+import { useTimelineStore } from '../stores/timeline-store';
+import { useTimelineCommandStore } from '../stores/timeline-command-store';
+import { usePlaybackStore } from '@/shared/state/playback';
+import { useEditorStore } from '@/app/state/editor';
+import { useSelectionStore } from '@/shared/state/selection';
 import {
   ZOOM_FRICTION,
   ZOOM_MIN_VELOCITY,
   ZOOM_MIN,
   ZOOM_MAX,
   SLIP_SLIDE_TOOLS_ENABLED,
-} from '../constants'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
-import { useResolvedHotkeys } from '@/features/timeline/deps/settings'
+} from '../constants';
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout';
+import { useResolvedHotkeys } from '@/features/timeline/deps/settings';
+import { createDefaultClassicTracks } from '../utils/classic-tracks';
+import { DEFAULT_TRACK_HEIGHT } from '../constants';
 
 interface TimelineHeaderProps {
-  onZoomChange?: (newZoom: number) => void
-  onZoomIn?: () => void
-  onZoomOut?: () => void
-  onZoomToFit?: () => void
+  onZoomChange?: (newZoom: number) => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onZoomToFit?: () => void;
   /** Whether the color scopes tab is active in the bottom editor panel */
-  isScopesPanelOpen?: boolean
+  isScopesPanelOpen?: boolean;
   /** Callback to toggle/open the color scopes tab */
-  onToggleScopesPanel?: () => void
+  onToggleScopesPanel?: () => void;
 }
 
 function TrimEditIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="10.6" y="4" width="2.8" height="16" rx="0.75" fill="currentColor" opacity="0.72" />
       <path d="m9 7-6 5 6 5z" fill="currentColor" stroke="none" />
       <path d="m15 7 6 5-6 5z" fill="currentColor" stroke="none" />
     </svg>
-  )
+  );
+}
+
+function ClearTimelineButton({ btnSize, disabled }: { btnSize: { width: string; height: string }; disabled: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  const handleClear = useCallback(() => {
+    const store = useTimelineStore.getState();
+    const allItemIds = store.items.map((item) => item.id);
+    if (allItemIds.length > 0) {
+      store.removeItems(allItemIds);
+    }
+    store.clearAllMarkers();
+    store.clearInOutPoints();
+    // Reset tracks to default: 1 video (V1) + 1 audio (A1)
+    store.setTracks(createDefaultClassicTracks(DEFAULT_TRACK_HEIGHT));
+    setOpen(false);
+  }, []);
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <Button
+        variant="ghost"
+        size="icon"
+        style={btnSize}
+        onClick={() => setOpen(true)}
+        disabled={disabled}
+        aria-label="Clear timeline"
+        data-tooltip="Clear Timeline"
+        className="text-muted-foreground hover:text-destructive"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </Button>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Clear Timeline</AlertDialogTitle>
+          <AlertDialogDescription>
+            Clear All items and reset tracks to default (V1 + A1). This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleClear} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Clear All
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
 
 /**
@@ -83,178 +149,170 @@ export const TimelineHeader = memo(function TimelineHeader({
   isScopesPanelOpen,
   onToggleScopesPanel,
 }: TimelineHeaderProps) {
-  const hotkeys = useResolvedHotkeys()
-  const { zoomLevel, zoomIn, zoomOut, setZoom } = useTimelineZoom()
-  const snapEnabled = useTimelineStore((s) => s.snapEnabled)
-  const toggleSnap = useTimelineStore((s) => s.toggleSnap)
-  const inPoint = useTimelineStore((s) => s.inPoint)
-  const outPoint = useTimelineStore((s) => s.outPoint)
-  const setInPoint = useTimelineStore((s) => s.setInPoint)
-  const setOutPoint = useTimelineStore((s) => s.setOutPoint)
-  const clearInOutPoints = useTimelineStore((s) => s.clearInOutPoints)
-  const addMarker = useTimelineStore((s) => s.addMarker)
+  const hotkeys = useResolvedHotkeys();
+  const { zoomLevel, zoomIn, zoomOut, setZoom } = useTimelineZoom();
+  const snapEnabled = useTimelineStore((s) => s.snapEnabled);
+  const toggleSnap = useTimelineStore((s) => s.toggleSnap);
+  const inPoint = useTimelineStore((s) => s.inPoint);
+  const outPoint = useTimelineStore((s) => s.outPoint);
+  const setInPoint = useTimelineStore((s) => s.setInPoint);
+  const setOutPoint = useTimelineStore((s) => s.setOutPoint);
+  const clearInOutPoints = useTimelineStore((s) => s.clearInOutPoints);
+  const addMarker = useTimelineStore((s) => s.addMarker);
   // Only subscribe to marker count for disabled state - avoids re-render on marker changes
-  const hasMarkers = useTimelineStore((s) => s.markers.length > 0)
-  const removeMarker = useTimelineStore((s) => s.removeMarker)
-  const clearAllMarkers = useTimelineStore((s) => s.clearAllMarkers)
+  const hasMarkers = useTimelineStore((s) => s.markers.length > 0);
+  const removeMarker = useTimelineStore((s) => s.removeMarker);
+  const clearAllMarkers = useTimelineStore((s) => s.clearAllMarkers);
+  const hasTimelineItems = useTimelineStore((s) => s.items.length > 0);
   // NOTE: Don't subscribe to currentFrame - only needed in click handlers
   // Read from store directly when needed to avoid re-renders every frame
-  const activeTool = useSelectionStore((s) => s.activeTool)
-  const setActiveTool = useSelectionStore((s) => s.setActiveTool)
-  const selectedMarkerId = useSelectionStore((s) => s.selectedMarkerId)
-  const clearSelection = useSelectionStore((s) => s.clearSelection)
-  const linkedSelectionEnabled = useEditorStore((s) => s.linkedSelectionEnabled)
-  const setLinkedSelectionEnabled = useEditorStore((s) => s.setLinkedSelectionEnabled)
-  const canUndo = useTimelineCommandStore((s) => s.canUndo)
-  const canRedo = useTimelineCommandStore((s) => s.canRedo)
-  const undoLabel = useTimelineCommandStore((s) => s.getUndoLabel())
-  const redoLabel = useTimelineCommandStore((s) => s.getRedoLabel())
+  const activeTool = useSelectionStore((s) => s.activeTool);
+  const setActiveTool = useSelectionStore((s) => s.setActiveTool);
+  const selectedMarkerId = useSelectionStore((s) => s.selectedMarkerId);
+  const clearSelection = useSelectionStore((s) => s.clearSelection);
+  const linkedSelectionEnabled = useEditorStore((s) => s.linkedSelectionEnabled);
+  const setLinkedSelectionEnabled = useEditorStore((s) => s.setLinkedSelectionEnabled);
+  const canUndo = useTimelineCommandStore((s) => s.canUndo);
+  const canRedo = useTimelineCommandStore((s) => s.canRedo);
+  const undoLabel = useTimelineCommandStore((s) => s.getUndoLabel());
+  const redoLabel = useTimelineCommandStore((s) => s.getRedoLabel());
 
-  const SlipSlideFlyoutIcon = activeTool === 'slide' ? BetweenHorizontalEnd : ArrowRightLeft
+  const SlipSlideFlyoutIcon = activeTool === 'slide' ? BetweenHorizontalEnd : ArrowRightLeft;
 
-  const btnSize = {
-    width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-    height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-  } as const
+  const btnSize = { width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize } as const;
 
   // Momentum state for zoom slider
-  const zoomVelocityRef = useRef(0)
-  const lastZoomValueRef = useRef(zoomLevel)
-  const lastZoomTimeRef = useRef(0)
-  const momentumIdRef = useRef<number | null>(null)
-  const sliderRafIdRef = useRef<number | null>(null)
-  const queuedSliderZoomRef = useRef<number | null>(null)
-  const isDraggingRef = useRef(false)
-  const zoomLevelRef = useRef(zoomLevel)
-  zoomLevelRef.current = zoomLevel
+  const zoomVelocityRef = useRef(0);
+  const lastZoomValueRef = useRef(zoomLevel);
+  const lastZoomTimeRef = useRef(0);
+  const momentumIdRef = useRef<number | null>(null);
+  const sliderRafIdRef = useRef<number | null>(null);
+  const queuedSliderZoomRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const zoomLevelRef = useRef(zoomLevel);
+  zoomLevelRef.current = zoomLevel;
 
   // Apply zoom with bounds checking
-  const applyZoom = useCallback(
-    (newZoom: number) => {
-      const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
-      if (onZoomChange) {
-        onZoomChange(clampedZoom)
-      } else {
-        setZoom(clampedZoom)
-      }
-      return clampedZoom
-    },
-    [onZoomChange, setZoom],
-  )
+  const applyZoom = useCallback((newZoom: number) => {
+    const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+    if (onZoomChange) {
+      onZoomChange(clampedZoom);
+    } else {
+      setZoom(clampedZoom);
+    }
+    return clampedZoom;
+  }, [onZoomChange, setZoom]);
 
   // Momentum loop for zoom slider
   const startZoomMomentum = useCallback(() => {
     if (momentumIdRef.current !== null) {
-      cancelAnimationFrame(momentumIdRef.current)
+      cancelAnimationFrame(momentumIdRef.current);
     }
 
     const momentumLoop = () => {
       if (Math.abs(zoomVelocityRef.current) > ZOOM_MIN_VELOCITY) {
-        const newZoom = zoomLevelRef.current + zoomVelocityRef.current
-        const clampedZoom = applyZoom(newZoom)
+        const newZoom = zoomLevelRef.current + zoomVelocityRef.current;
+        const clampedZoom = applyZoom(newZoom);
 
         // Stop momentum if we hit bounds
         if (clampedZoom <= ZOOM_MIN || clampedZoom >= ZOOM_MAX) {
-          zoomVelocityRef.current = 0
-          momentumIdRef.current = null
-          return
+          zoomVelocityRef.current = 0;
+          momentumIdRef.current = null;
+          return;
         }
 
-        zoomVelocityRef.current *= ZOOM_FRICTION
-        momentumIdRef.current = requestAnimationFrame(momentumLoop)
+        zoomVelocityRef.current *= ZOOM_FRICTION;
+        momentumIdRef.current = requestAnimationFrame(momentumLoop);
       } else {
-        zoomVelocityRef.current = 0
-        momentumIdRef.current = null
+        zoomVelocityRef.current = 0;
+        momentumIdRef.current = null;
       }
-    }
+    };
 
-    momentumIdRef.current = requestAnimationFrame(momentumLoop)
-  }, [applyZoom])
+    momentumIdRef.current = requestAnimationFrame(momentumLoop);
+  }, [applyZoom]);
 
   // Convert between linear slider position (0-1) and logarithmic zoom level
   // This gives finer control at low zoom levels
   const sliderToZoom = useCallback((sliderValue: number) => {
     // Map 0-1 to log scale: ZOOM_MIN to ZOOM_MAX
     // Using exponential: zoom = min * (max/min)^slider
-    return ZOOM_MIN * Math.pow(ZOOM_MAX / ZOOM_MIN, sliderValue)
-  }, [])
+    return ZOOM_MIN * Math.pow(ZOOM_MAX / ZOOM_MIN, sliderValue);
+  }, []);
 
   const zoomToSlider = useCallback((zoom: number) => {
     // Inverse of sliderToZoom: slider = log(zoom/min) / log(max/min)
-    return Math.log(zoom / ZOOM_MIN) / Math.log(ZOOM_MAX / ZOOM_MIN)
-  }, [])
+    return Math.log(zoom / ZOOM_MIN) / Math.log(ZOOM_MAX / ZOOM_MIN);
+  }, []);
 
   // Handle slider value change (while dragging)
-  const handleSliderChange = useCallback(
-    (values: number[]) => {
-      const sliderValue = values[0] ?? 0.5
-      const newZoom = sliderToZoom(sliderValue)
-      const now = performance.now()
-      const timeDelta = now - lastZoomTimeRef.current
+  const handleSliderChange = useCallback((values: number[]) => {
+    const sliderValue = values[0] ?? 0.5;
+    const newZoom = sliderToZoom(sliderValue);
+    const now = performance.now();
+    const timeDelta = now - lastZoomTimeRef.current;
 
-      // Calculate velocity based on change over time (in zoom space, not slider space)
-      if (timeDelta > 0 && timeDelta < 100) {
-        const valueDelta = newZoom - lastZoomValueRef.current
-        zoomVelocityRef.current = (valueDelta / timeDelta) * 16 // Normalize to ~60fps
-      }
+    // Calculate velocity based on change over time (in zoom space, not slider space)
+    if (timeDelta > 0 && timeDelta < 100) {
+      const valueDelta = newZoom - lastZoomValueRef.current;
+      zoomVelocityRef.current = valueDelta / timeDelta * 16; // Normalize to ~60fps
+    }
 
-      lastZoomValueRef.current = newZoom
-      lastZoomTimeRef.current = now
-      isDraggingRef.current = true
-      queuedSliderZoomRef.current = newZoom
-      if (sliderRafIdRef.current === null) {
-        sliderRafIdRef.current = requestAnimationFrame(() => {
-          sliderRafIdRef.current = null
-          const queuedZoom = queuedSliderZoomRef.current
-          if (queuedZoom !== null) {
-            applyZoom(queuedZoom)
-          }
-        })
-      }
-    },
-    [applyZoom, sliderToZoom],
-  )
+    lastZoomValueRef.current = newZoom;
+    lastZoomTimeRef.current = now;
+    isDraggingRef.current = true;
+    queuedSliderZoomRef.current = newZoom;
+    if (sliderRafIdRef.current === null) {
+      sliderRafIdRef.current = requestAnimationFrame(() => {
+        sliderRafIdRef.current = null;
+        const queuedZoom = queuedSliderZoomRef.current;
+        if (queuedZoom !== null) {
+          applyZoom(queuedZoom);
+        }
+      });
+    }
+  }, [applyZoom, sliderToZoom]);
 
   // Handle slider release - start momentum
   const handleSliderCommit = useCallback(() => {
-    isDraggingRef.current = false
+    isDraggingRef.current = false;
     if (sliderRafIdRef.current !== null) {
-      cancelAnimationFrame(sliderRafIdRef.current)
-      sliderRafIdRef.current = null
+      cancelAnimationFrame(sliderRafIdRef.current);
+      sliderRafIdRef.current = null;
     }
     if (queuedSliderZoomRef.current !== null) {
-      applyZoom(queuedSliderZoomRef.current)
-      queuedSliderZoomRef.current = null
+      applyZoom(queuedSliderZoomRef.current);
+      queuedSliderZoomRef.current = null;
     }
     // Only start momentum if there's meaningful velocity
     if (Math.abs(zoomVelocityRef.current) > ZOOM_MIN_VELOCITY) {
-      startZoomMomentum()
+      startZoomMomentum();
     }
     // Blur slider to release focus for keyboard shortcuts (play/pause)
     if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur()
+      document.activeElement.blur();
     }
-  }, [applyZoom, startZoomMomentum])
+  }, [applyZoom, startZoomMomentum]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (momentumIdRef.current !== null) {
-        cancelAnimationFrame(momentumIdRef.current)
+        cancelAnimationFrame(momentumIdRef.current);
       }
       if (sliderRafIdRef.current !== null) {
-        cancelAnimationFrame(sliderRafIdRef.current)
+        cancelAnimationFrame(sliderRafIdRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const handleUndo = () => {
-    useTimelineStore.temporal.getState().undo()
-  }
+    useTimelineStore.temporal.getState().undo();
+  };
 
   const handleRedo = () => {
-    useTimelineStore.temporal.getState().redo()
-  }
+    useTimelineStore.temporal.getState().redo();
+  };
 
   return (
     <div
@@ -274,285 +332,255 @@ export const TimelineHeader = memo(function TimelineHeader({
       {/* Middle: Timeline Controls */}
       <div className="min-w-0 overflow-x-auto overflow-y-hidden">
         <div className="flex w-max min-w-full items-center justify-center gap-2.5">
-          {/* Timeline Tools */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              className={
-                activeTool === 'select'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }
-              onClick={() => setActiveTool('select')}
-              aria-label="Select tool"
-              data-tooltip="Select Tool (V)"
-            >
-              <MousePointer2 className="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              className={
-                activeTool === 'trim-edit'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }
-              onClick={() => setActiveTool(activeTool === 'trim-edit' ? 'select' : 'trim-edit')}
-              aria-label="Trim edit tool"
-              data-tooltip="Trim Edit Tool (T)"
-            >
-              <TrimEditIcon className="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              className={
-                activeTool === 'razor'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }
-              onClick={() => setActiveTool(activeTool === 'razor' ? 'select' : 'razor')}
-              aria-label="Razor tool"
-              data-tooltip="Razor Tool (C)"
-            >
-              <Scissors className="w-3.5 h-3.5 -rotate-90" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              className={
-                activeTool === 'rate-stretch'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTool(activeTool === 'rate-stretch' ? 'select' : 'rate-stretch')
-              }
-              aria-label="Rate stretch tool"
-              data-tooltip="Rate Stretch Tool (R)"
-            >
-              <Gauge className="w-3.5 h-3.5" />
-            </Button>
-
-            {SLIP_SLIDE_TOOLS_ENABLED ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    style={{ height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
-                    className={`gap-1 px-2 ${
-                      activeTool === 'slip' || activeTool === 'slide'
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : ''
-                    }`}
-                    aria-label="Slip and slide tools"
-                    data-tooltip="Slip / Slide Tools"
-                  >
-                    <span className="flex items-center gap-1">
-                      <span className="inline-flex items-center justify-center">
-                        <SlipSlideFlyoutIcon className="w-3.5 h-3.5" />
-                      </span>
-                      <ChevronDown className="w-3 h-3 opacity-70" />
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={() => setActiveTool(activeTool === 'slip' ? 'select' : 'slip')}
-                  >
-                    <ArrowRightLeft className="w-3.5 h-3.5" />
-                    <span className="flex-1">Slip tool</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatHotkeyBinding(hotkeys.SLIP_TOOL)}
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setActiveTool(activeTool === 'slide' ? 'select' : 'slide')}
-                  >
-                    <BetweenHorizontalEnd className="w-3.5 h-3.5" />
-                    <span className="flex-1">Slide tool</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatHotkeyBinding(hotkeys.SLIDE_TOOL)}
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-          </div>
-
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-
-          {/* Undo/Redo */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={handleUndo}
-              disabled={!canUndo}
-              aria-label={undoLabel ? `Undo ${undoLabel}` : 'Undo'}
-              data-tooltip={undoLabel ? `Undo ${undoLabel} (Ctrl+Z)` : 'Undo (Ctrl+Z)'}
-            >
-              <Undo2 className="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={handleRedo}
-              disabled={!canRedo}
-              aria-label={redoLabel ? `Redo ${redoLabel}` : 'Redo'}
-              data-tooltip={redoLabel ? `Redo ${redoLabel} (Ctrl+Shift+Z)` : 'Redo (Ctrl+Shift+Z)'}
-            >
-              <Redo2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-
-          {/* In/Out Points */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={() => setInPoint(usePlaybackStore.getState().currentFrame)}
-              aria-label="Set in point"
-              data-tooltip="Set In Point (I)"
-            >
-              <span className="text-sm font-bold" style={{ color: 'var(--color-timeline-in)' }}>
-                [
-              </span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={() => setOutPoint(usePlaybackStore.getState().currentFrame)}
-              aria-label="Set out point"
-              data-tooltip="Set Out Point (O)"
-            >
-              <span className="text-sm font-bold" style={{ color: 'var(--color-timeline-out)' }}>
-                ]
-              </span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={clearInOutPoints}
-              disabled={inPoint === null && outPoint === null}
-              aria-label="Clear in and out points"
-              data-tooltip="Clear In/Out Points"
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-
-          {/* Markers */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={() => addMarker(usePlaybackStore.getState().currentFrame)}
-              aria-label="Add marker"
-              data-tooltip="Add Marker (M)"
-            >
-              <Flag className="w-3.5 h-3.5" style={{ color: 'var(--color-timeline-marker)' }} />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={() => {
-                if (selectedMarkerId) {
-                  removeMarker(selectedMarkerId)
-                  clearSelection()
-                }
-              }}
-              disabled={!selectedMarkerId}
-              aria-label="Remove selected marker"
-              data-tooltip="Remove Selected Marker"
-            >
-              <FlagOff className="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              style={btnSize}
-              onClick={clearAllMarkers}
-              disabled={!hasMarkers}
-              aria-label="Clear all markers"
-              data-tooltip="Clear All Markers"
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-
-          {/* Snap Toggle */}
+        {/* Timeline Tools */}
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
             style={btnSize}
-            className={snapEnabled ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
-            onClick={toggleSnap}
-            aria-label={snapEnabled ? 'Disable snapping' : 'Enable snapping'}
-            data-tooltip={snapEnabled ? 'Snap Enabled' : 'Snap Disabled'}
+            className={activeTool === 'select' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+            onClick={() => setActiveTool('select')}
+            aria-label="Select tool"
+            data-tooltip="Select Tool (V)"
           >
-            <Magnet className="w-3.5 h-3.5" />
-          </Button>
-
-          <Separator orientation="vertical" className="h-5 mx-1.5" />
-
-          {/* Editor Panel Toggles */}
-          <Button
-            variant="ghost"
-            size="icon"
-            style={btnSize}
-            className={
-              isScopesPanelOpen ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
-            }
-            onClick={onToggleScopesPanel}
-            aria-label={isScopesPanelOpen ? 'Hide color scopes' : 'Show color scopes'}
-            data-tooltip={isScopesPanelOpen ? 'Hide Color Scopes' : 'Show Color Scopes'}
-          >
-            <Activity className="w-3.5 h-3.5" />
+            <MousePointer2 className="w-3.5 h-3.5" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             style={btnSize}
-            className={
-              linkedSelectionEnabled ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
-            }
-            onClick={() => setLinkedSelectionEnabled(!linkedSelectionEnabled)}
-            aria-label={
-              linkedSelectionEnabled ? 'Disable linked selection' : 'Enable linked selection'
-            }
-            aria-pressed={linkedSelectionEnabled}
-            data-tooltip={`${linkedSelectionEnabled ? 'Linked Selection On' : 'Linked Selection Off'} (${formatHotkeyBinding(hotkeys.TOGGLE_LINKED_SELECTION)})`}
+            className={activeTool === 'trim-edit' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+            onClick={() => setActiveTool(activeTool === 'trim-edit' ? 'select' : 'trim-edit')}
+            aria-label="Trim edit tool"
+            data-tooltip="Trim Edit Tool (T)"
           >
-            <Link2 className="w-3.5 h-3.5" />
+            <TrimEditIcon className="w-3.5 h-3.5" />
           </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            className={activeTool === 'razor' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+            onClick={() => setActiveTool(activeTool === 'razor' ? 'select' : 'razor')}
+            aria-label="Razor tool"
+            data-tooltip="Razor Tool (C)"
+          >
+            <Scissors className="w-3.5 h-3.5 -rotate-90" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            className={activeTool === 'rate-stretch' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+            onClick={() => setActiveTool(activeTool === 'rate-stretch' ? 'select' : 'rate-stretch')}
+            aria-label="Rate stretch tool"
+            data-tooltip="Rate Stretch Tool (R)"
+          >
+            <Gauge className="w-3.5 h-3.5" />
+          </Button>
+
+          {SLIP_SLIDE_TOOLS_ENABLED ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  style={{ height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
+                  className={`gap-1 px-2 ${
+                    activeTool === 'slip' || activeTool === 'slide'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      : ''
+                  }`}
+                  aria-label="Slip and slide tools"
+                  data-tooltip="Slip / Slide Tools"
+                >
+                  <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center">
+                      <SlipSlideFlyoutIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <ChevronDown className="w-3 h-3 opacity-70" />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setActiveTool(activeTool === 'slip' ? 'select' : 'slip')}>
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span className="flex-1">Slip tool</span>
+                  <span className="text-xs text-muted-foreground">{formatHotkeyBinding(hotkeys.SLIP_TOOL)}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTool(activeTool === 'slide' ? 'select' : 'slide')}>
+                  <BetweenHorizontalEnd className="w-3.5 h-3.5" />
+                  <span className="flex-1">Slide tool</span>
+                  <span className="text-xs text-muted-foreground">{formatHotkeyBinding(hotkeys.SLIDE_TOOL)}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* Undo/Redo */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={handleUndo}
+            disabled={!canUndo}
+            aria-label={undoLabel ? `Undo ${undoLabel}` : 'Undo'}
+            data-tooltip={undoLabel ? `Undo ${undoLabel} (Ctrl+Z)` : 'Undo (Ctrl+Z)'}
+          >
+            <Undo2 className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={handleRedo}
+            disabled={!canRedo}
+            aria-label={redoLabel ? `Redo ${redoLabel}` : 'Redo'}
+            data-tooltip={redoLabel ? `Redo ${redoLabel} (Ctrl+Shift+Z)` : 'Redo (Ctrl+Shift+Z)'}
+          >
+            <Redo2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* In/Out Points */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={() => setInPoint(usePlaybackStore.getState().currentFrame)}
+            aria-label="Set in point"
+            data-tooltip="Set In Point (I)"
+          >
+            <span className="text-sm font-bold" style={{ color: 'var(--color-timeline-in)' }}>[</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={() => setOutPoint(usePlaybackStore.getState().currentFrame)}
+            aria-label="Set out point"
+            data-tooltip="Set Out Point (O)"
+          >
+            <span className="text-sm font-bold" style={{ color: 'var(--color-timeline-out)' }}>]</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={clearInOutPoints}
+            disabled={inPoint === null && outPoint === null}
+            aria-label="Clear in and out points"
+            data-tooltip="Clear In/Out Points"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* Markers */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={() => addMarker(usePlaybackStore.getState().currentFrame)}
+            aria-label="Add marker"
+            data-tooltip="Add Marker (M)"
+          >
+            <Flag className="w-3.5 h-3.5" style={{ color: 'var(--color-timeline-marker)' }} />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={() => {
+              if (selectedMarkerId) {
+                removeMarker(selectedMarkerId);
+                clearSelection();
+              }
+            }}
+            disabled={!selectedMarkerId}
+            aria-label="Remove selected marker"
+            data-tooltip="Remove Selected Marker"
+          >
+            <FlagOff className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            style={btnSize}
+            onClick={clearAllMarkers}
+            disabled={!hasMarkers}
+            aria-label="Clear all markers"
+            data-tooltip="Clear All Markers"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* Snap Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          style={btnSize}
+          className={snapEnabled ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+          onClick={toggleSnap}
+          aria-label={snapEnabled ? 'Disable snapping' : 'Enable snapping'}
+          data-tooltip={snapEnabled ? 'Snap Enabled' : 'Snap Disabled'}
+        >
+          <Magnet className="w-3.5 h-3.5" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* Editor Panel Toggles */}
+        <Button
+          variant="ghost"
+          size="icon"
+          style={btnSize}
+          className={isScopesPanelOpen ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+          onClick={onToggleScopesPanel}
+          aria-label={isScopesPanelOpen ? 'Hide color scopes' : 'Show color scopes'}
+          data-tooltip={isScopesPanelOpen ? 'Hide Color Scopes' : 'Show Color Scopes'}
+        >
+          <Activity className="w-3.5 h-3.5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          style={btnSize}
+          className={linkedSelectionEnabled ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+          onClick={() => setLinkedSelectionEnabled(!linkedSelectionEnabled)}
+          aria-label={linkedSelectionEnabled ? 'Disable linked selection' : 'Enable linked selection'}
+          aria-pressed={linkedSelectionEnabled}
+          data-tooltip={`${linkedSelectionEnabled ? 'Linked Selection On' : 'Linked Selection Off'} (${formatHotkeyBinding(hotkeys.TOGGLE_LINKED_SELECTION)})`}
+        >
+          <Link2 className="w-3.5 h-3.5" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-5 mx-1.5" />
+
+        {/* Clear Timeline */}
+        <ClearTimelineButton btnSize={btnSize} disabled={!hasTimelineItems} />
+
         </div>
       </div>
 
@@ -564,9 +592,9 @@ export const TimelineHeader = memo(function TimelineHeader({
           style={btnSize}
           onClick={() => {
             if (onZoomOut) {
-              onZoomOut()
+              onZoomOut();
             } else {
-              zoomOut()
+              zoomOut();
             }
           }}
           aria-label="Zoom out"
@@ -592,9 +620,9 @@ export const TimelineHeader = memo(function TimelineHeader({
           style={btnSize}
           onClick={() => {
             if (onZoomIn) {
-              onZoomIn()
+              onZoomIn();
             } else {
-              zoomIn()
+              zoomIn();
             }
           }}
           aria-label="Zoom in"
@@ -613,7 +641,8 @@ export const TimelineHeader = memo(function TimelineHeader({
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </Button>
+
       </div>
     </div>
-  )
-})
+  );
+});

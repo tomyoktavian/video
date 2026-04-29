@@ -342,3 +342,18 @@
 .animate-shimmer {
   animation: shimmer 2s ease-in-out infinite;
 }
+
+@keyframes download-progress {
+  0% {
+    width: 5%;
+    opacity: 0.6;
+  }
+  50% {
+    width: 85%;
+    opacity: 1;
+  }
+  100% {
+    width: 5%;
+    opacity: 0.6;
+  }
+}

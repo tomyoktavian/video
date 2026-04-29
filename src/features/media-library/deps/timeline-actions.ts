@@ -5,4 +5,6 @@ export {
   updateProjectItem,
   updateItem,
   removeItemsFromItemsActions,
-} from './timeline-contract'
+  addItem,
+  addItems,
+} from './timeline-contract';

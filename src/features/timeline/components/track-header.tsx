@@ -1,37 +1,40 @@
-import { memo } from 'react'
-import { Button } from '@/components/ui/button'
+import { memo, useState, useCallback, useRef } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu'
-import { Power, PowerOff, Lock, GripVertical, Radio, FoldHorizontal, Link2 } from 'lucide-react'
-import type { TimelineTrack } from '@/types/timeline'
-import { useTrackDrag } from '../hooks/use-track-drag'
-import { TIMELINE_SIDEBAR_WIDTH } from '../constants'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
-import { useItemsStore } from '../stores/items-store'
-import { isTrackDisabled } from '@/features/timeline/utils/classic-tracks'
-import { isTrackSyncLockActive } from '../utils/track-sync-lock'
+} from '@/components/ui/context-menu';
+import { Power, PowerOff, Lock, GripVertical, Radio, FoldHorizontal, Link2, Volume2, VolumeX } from 'lucide-react';
+import type { TimelineTrack } from '@/types/timeline';
+import { useTrackDrag } from '../hooks/use-track-drag';
+import { TIMELINE_SIDEBAR_WIDTH } from '../constants';
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout';
+import { useItemsStore } from '../stores/items-store';
+import { isTrackDisabled } from '@/features/timeline/utils/classic-tracks';
+import { isTrackSyncLockActive } from '../utils/track-sync-lock';
+import { Slider } from '@/components/ui/slider';
 
 interface TrackHeaderProps {
-  track: TimelineTrack
-  isActive: boolean
-  isSelected: boolean
-  canDeleteTrack: boolean
-  canDeleteEmptyTracks: boolean
-  onToggleLock: () => void
-  onToggleSyncLock: () => void
-  onToggleDisabled: () => void
-  onToggleSolo: () => void
-  onSelect: (e: React.MouseEvent) => void
-  onCloseGaps?: () => void
-  onAddVideoTrack: () => void
-  onAddAudioTrack: () => void
-  onDeleteTrack: () => void
-  onDeleteEmptyTracks: () => void
+  track: TimelineTrack;
+  isActive: boolean;
+  isSelected: boolean;
+  canDeleteTrack: boolean;
+  canDeleteEmptyTracks: boolean;
+  onToggleLock: () => void;
+  onToggleSyncLock: () => void;
+  onToggleDisabled: () => void;
+  onToggleSolo: () => void;
+  onSelect: (e: React.MouseEvent) => void;
+  onCloseGaps?: () => void;
+  onAddVideoTrack: () => void;
+  onAddAudioTrack: () => void;
+  onDeleteTrack: () => void;
+  onDeleteEmptyTracks: () => void;
+  onMoveTrackUp: () => void;
+  onMoveTrackDown: () => void;
 }
 
 /**
@@ -44,7 +47,7 @@ function areTrackHeaderPropsEqual(prev: TrackHeaderProps, next: TrackHeaderProps
     prev.isSelected === next.isSelected &&
     prev.canDeleteTrack === next.canDeleteTrack &&
     prev.canDeleteEmptyTracks === next.canDeleteEmptyTracks
-  )
+  );
   // Callbacks (onToggleLock, etc.) are ignored - they're recreated each render but functionality is same
 }
 
@@ -73,14 +76,49 @@ export const TrackHeader = memo(function TrackHeader({
   onAddAudioTrack,
   onDeleteTrack,
   onDeleteEmptyTracks,
+  onMoveTrackUp,
+  onMoveTrackDown,
 }: TrackHeaderProps) {
-  const itemCount = useItemsStore((s) => s.itemsByTrackId[track.id]?.length ?? 0)
-  const syncLockEnabled = isTrackSyncLockActive(track)
-  const trackDisabled = isTrackDisabled(track)
+  const itemCount = useItemsStore((s) => s.itemsByTrackId[track.id]?.length ?? 0);
+  const syncLockEnabled = isTrackSyncLockActive(track);
+  const trackDisabled = isTrackDisabled(track);
 
   // Use track drag hook (visuals handled centrally by timeline.tsx via DOM)
-  const { handleDragStart } = useTrackDrag(track)
-  const itemCountLabel = `${itemCount} ${itemCount === 1 ? 'Clip' : 'Clips'}`
+  const { handleDragStart } = useTrackDrag(track);
+  const itemCountLabel = `${itemCount} ${itemCount === 1 ? 'Clip' : 'Clips'}`;
+  const isAudioTrack = track.kind === 'audio';
+
+  // Volume control — purely local state, pushes to store on change (no store subscription)
+  const [localVolume, setLocalVolume] = useState(0);
+  const prevVolumeRef = useRef(0);
+  const isMuted = localVolume <= -60;
+
+  const applyVolumeToTrack = useCallback((vol: number) => {
+    const items = useItemsStore.getState().itemsByTrackId[track.id];
+    if (!items) return;
+    for (const item of items) {
+      useItemsStore.getState()._updateItem(item.id, { volume: vol });
+    }
+  }, [track.id]);
+
+  const handleVolumeChange = useCallback((values: number[]) => {
+    const v = values[0] ?? 0;
+    setLocalVolume(v);
+    applyVolumeToTrack(v);
+  }, [applyVolumeToTrack]);
+
+  const handleToggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isMuted) {
+      const restore = prevVolumeRef.current > -60 ? prevVolumeRef.current : 0;
+      setLocalVolume(restore);
+      applyVolumeToTrack(restore);
+    } else {
+      prevVolumeRef.current = localVolume;
+      setLocalVolume(-60);
+      applyVolumeToTrack(-60);
+    }
+  }, [isMuted, localVolume, applyVolumeToTrack]);
 
   return (
     <ContextMenu>
@@ -114,13 +152,10 @@ export const TrackHeader = memo(function TrackHeader({
               variant="ghost"
               size="icon"
               className="rounded hover:bg-secondary"
-              style={{
-                width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-                height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-              }}
+              style={{ width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
               onClick={(e) => {
-                e.stopPropagation()
-                onToggleDisabled()
+                e.stopPropagation();
+                onToggleDisabled();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               aria-label={trackDisabled ? 'Enable track' : 'Disable track'}
@@ -138,19 +173,18 @@ export const TrackHeader = memo(function TrackHeader({
               variant="ghost"
               size="icon"
               className="rounded hover:bg-secondary"
-              style={{
-                width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-                height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-              }}
+              style={{ width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
               onClick={(e) => {
-                e.stopPropagation()
-                onToggleSolo()
+                e.stopPropagation();
+                onToggleSolo();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               aria-label={track.solo ? 'Unsolo track' : 'Solo track'}
               data-tooltip={track.solo ? 'Unsolo track' : 'Solo track'}
             >
-              <Radio className={`w-3 h-3 ${track.solo ? 'text-primary' : ''}`} />
+              <Radio
+                className={`w-3 h-3 ${track.solo ? 'text-primary' : ''}`}
+              />
             </Button>
 
             {/* Lock Button */}
@@ -158,51 +192,46 @@ export const TrackHeader = memo(function TrackHeader({
               variant="ghost"
               size="icon"
               className="rounded hover:bg-secondary"
-              style={{
-                width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-                height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-              }}
+              style={{ width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
               onClick={(e) => {
-                e.stopPropagation()
-                onToggleLock()
+                e.stopPropagation();
+                onToggleLock();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               aria-label={track.locked ? 'Unlock track' : 'Lock track'}
               data-tooltip={track.locked ? 'Unlock track' : 'Lock track'}
             >
-              <Lock className={`w-3 h-3 ${track.locked ? 'text-primary' : 'opacity-70'}`} />
+              <Lock
+                className={`w-3 h-3 ${track.locked ? 'text-primary' : 'opacity-70'}`}
+              />
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
               className="rounded hover:bg-secondary"
-              style={{
-                width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-                height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-              }}
+              style={{ width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
               onClick={(e) => {
-                e.stopPropagation()
-                onToggleSyncLock()
+                e.stopPropagation();
+                onToggleSyncLock();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               aria-label={syncLockEnabled ? 'Disable sync lock' : 'Enable sync lock'}
               data-tooltip={syncLockEnabled ? 'Disable sync lock' : 'Enable sync lock'}
             >
-              <Link2 className={`w-3 h-3 ${syncLockEnabled ? 'text-primary' : 'opacity-70'}`} />
+              <Link2
+                className={`w-3 h-3 ${syncLockEnabled ? 'text-primary' : 'opacity-70'}`}
+              />
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
               className="rounded hover:bg-secondary"
-              style={{
-                width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-                height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize,
-              }}
+              style={{ width: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize, height: EDITOR_LAYOUT_CSS_VALUES.toolbarButtonSize }}
               onClick={(e) => {
-                e.stopPropagation()
-                onCloseGaps?.()
+                e.stopPropagation();
+                onCloseGaps?.();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               aria-label="Close all gaps"
@@ -219,16 +248,58 @@ export const TrackHeader = memo(function TrackHeader({
             <span className="shrink-0 text-[10px] leading-none text-muted-foreground">
               {itemCountLabel}
             </span>
+            {isAudioTrack && (
+              <div
+                className="ml-auto flex items-center gap-1 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={handleToggleMute}
+                  aria-label={isMuted ? 'Unmute track' : 'Mute track'}
+                  data-tooltip={isMuted ? 'Unmute track' : 'Mute track'}
+                >
+                  {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                </button>
+                <Slider
+                  min={-60}
+                  max={12}
+                  step={1}
+                  value={[localVolume]}
+                  onValueChange={handleVolumeChange}
+                  className="w-14"
+                  aria-label="Track volume"
+                />
+                <span className="text-[9px] w-7 text-right text-muted-foreground tabular-nums">
+                  {localVolume > -60 ? `${localVolume > 0 ? '+' : ''}${localVolume}` : '-∞'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </ContextMenuTrigger>
 
       <ContextMenuContent className="w-52">
-        <ContextMenuItem onClick={onCloseGaps}>Close All Gaps</ContextMenuItem>
+        <ContextMenuItem onClick={onCloseGaps}>
+          Close All Gaps
+        </ContextMenuItem>
 
         <ContextMenuSeparator />
-        <ContextMenuItem onClick={onAddVideoTrack}>Add Video Track</ContextMenuItem>
-        <ContextMenuItem onClick={onAddAudioTrack}>Add Audio Track</ContextMenuItem>
+        <ContextMenuItem onClick={onAddVideoTrack}>
+          Add Video Track
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onAddAudioTrack}>
+          Add Audio Track
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={onMoveTrackUp}>
+          Bring Up
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onMoveTrackDown}>
+          Bring Down
+        </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem disabled={!canDeleteTrack} onClick={onDeleteTrack}>
           Delete Track
@@ -238,5 +309,5 @@ export const TrackHeader = memo(function TrackHeader({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
-  )
-}, areTrackHeaderPropsEqual)
+  );
+}, areTrackHeaderPropsEqual);

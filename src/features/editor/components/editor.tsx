@@ -1,95 +1,102 @@
-import { useEffect, useState, useRef, useCallback, memo, lazy, Suspense } from 'react'
-import { useNavigate, useRouter } from '@tanstack/react-router'
-import { createLogger } from '@/shared/logging/logger'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { Toolbar } from './toolbar'
-import { MediaSidebar } from './media-sidebar'
-import { PropertiesSidebar } from './properties-sidebar'
-import { PreviewArea } from './preview-area'
-import { InteractionLockRegion } from './interaction-lock-region'
-import { AudioMeterPanel } from './audio-meter-panel'
-import { Timeline, BentoLayoutDialog } from '@/features/editor/deps/timeline-ui'
-import { toast } from 'sonner'
-import { useEditorHotkeys } from '@/features/editor/hooks/use-editor-hotkeys'
-import { useAutoSave } from '../hooks/use-auto-save'
+import { useEffect, useState, useRef, useCallback, memo, lazy, Suspense } from 'react';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { createLogger } from '@/shared/logging/logger';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { Toolbar } from './toolbar';
+import { MediaSidebar } from './media-sidebar';
+import { PropertiesSidebar } from './properties-sidebar';
+import { PreviewArea } from './preview-area';
+import { InteractionLockRegion } from './interaction-lock-region';
+import { AudioMeterPanel } from './audio-meter-panel';
+import { Timeline, BentoLayoutDialog } from '@/features/editor/deps/timeline-ui';
+import { toast } from 'sonner';
+import { useEditorHotkeys } from '@/features/editor/hooks/use-editor-hotkeys';
+import { useAutoSave } from '../hooks/use-auto-save';
 import {
   useTimelineShortcuts,
   useTransitionBreakageNotifications,
-} from '@/features/editor/deps/timeline-hooks'
-import { initTransitionChainSubscription } from '@/features/editor/deps/timeline-subscriptions'
-import { useTimelineStore } from '@/features/editor/deps/timeline-store'
-import { importBundleExportDialog } from '@/features/editor/deps/project-bundle'
-import { useMediaLibraryStore } from '@/features/editor/deps/media-library'
-import { useSettingsStore } from '@/features/editor/deps/settings'
-import { useMaskEditorStore } from '@/features/editor/deps/preview'
-import { usePlaybackStore } from '@/shared/state/playback'
-import { useEditorStore } from '@/app/state/editor'
-import { clearPreviewAudioCache } from '@/features/editor/deps/composition-runtime'
-import { useProjectStore } from '@/features/editor/deps/projects'
-import { importExportDialog } from '@/features/editor/deps/export-contract'
-import { prewarmEffectPreviews } from '@/features/editor/deps/effects-contract'
-import { getEditorLayout, getEditorLayoutCssVars } from '@/app/editor-layout'
-import {
-  createProjectUpgradeBackup,
-  formatProjectUpgradeBackupName,
-} from '@/features/editor/deps/projects'
-import { ProjectUpgradeDialog } from './project-upgrade-dialog'
-import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
-import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
-import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
-const logger = createLogger('Editor')
-const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId'
+} from '@/features/editor/deps/timeline-hooks';
+import { initTransitionChainSubscription } from '@/features/editor/deps/timeline-subscriptions';
+import { useTimelineStore } from '@/features/editor/deps/timeline-store';
+import { importBundleExportDialog } from '@/features/editor/deps/project-bundle';
+import { useMediaLibraryStore } from '@/features/editor/deps/media-library';
+import { useSettingsStore } from '@/features/editor/deps/settings';
+import { useMaskEditorStore } from '@/features/editor/deps/preview';
+import { usePlaybackStore } from '@/shared/state/playback';
+import { useEditorStore } from '@/app/state/editor';
+import { clearPreviewAudioCache } from '@/features/editor/deps/composition-runtime';
+import { useProjectStore } from '@/features/editor/deps/projects';
+import { importExportDialog } from '@/features/editor/deps/export-contract';
+import { prewarmEffectPreviews } from '@/features/editor/deps/effects-contract';
+import { getEditorLayout, getEditorLayoutCssVars } from '@/app/editor-layout';
+import { createProjectUpgradeBackup, formatProjectUpgradeBackupName } from '@/features/editor/deps/projects';
+import { ProjectUpgradeDialog } from './project-upgrade-dialog';
+import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog';
+import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog';
+import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog';
+import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog';
+const logger = createLogger('Editor');
+const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId';
 const LazyExportDialog = lazy(() =>
   importExportDialog().then((module) => ({
     default: module.ExportDialog,
-  })),
-)
+  }))
+);
 const LazyBundleExportDialog = lazy(() =>
   importBundleExportDialog().then((module) => ({
     default: module.BundleExportDialog,
-  })),
-)
+  }))
+);
 const LazyClearKeyframesDialog = lazy(() =>
   import('@/features/editor/components/clear-keyframes-dialog').then((module) => ({
     default: module.ClearKeyframesDialog,
-  })),
-)
+  }))
+);
 const LazyTtsGenerateDialog = lazy(() =>
   import('@/features/editor/components/tts-generate-dialog').then((module) => ({
     default: module.TtsGenerateDialog,
-  })),
-)
+  }))
+);
 const LazyProjectMediaMatchDialog = lazy(() =>
   import('@/features/editor/components/project-media-match-dialog').then((module) => ({
     default: module.ProjectMediaMatchDialog,
-  })),
-)
+  }))
+);
+const LazyTranscriptViewerDialog = lazy(() =>
+  import('@/features/editor/components/transcript-viewer-dialog').then((module) => ({
+    default: module.TranscriptViewerDialog,
+  }))
+);
 
 function preloadExportDialog() {
-  return importExportDialog()
+  return importExportDialog();
 }
 
 function preloadBundleExportDialog() {
-  return importBundleExportDialog()
+  return importBundleExportDialog();
 }
 
 /** Project metadata passed from route loader (timeline loaded separately via loadTimeline) */
 interface EditorProps {
-  projectId: string
+  projectId: string;
   project: {
-    id: string
-    name: string
-    width: number
-    height: number
-    fps: number
-    backgroundColor?: string
-  }
+    id: string;
+    name: string;
+    width: number;
+    height: number;
+    fps: number;
+    backgroundColor?: string;
+  };
   migration: {
-    storedSchemaVersion: number
-    currentSchemaVersion: number
-    requiresUpgrade: boolean
-  }
+    storedSchemaVersion: number;
+    currentSchemaVersion: number;
+    requiresUpgrade: boolean;
+  };
 }
 
 /**
@@ -97,46 +104,51 @@ interface EditorProps {
  * Shows an explicit backup-and-upgrade prompt for legacy projects before loading editor state.
  */
 export const Editor = memo(function Editor({ projectId, project, migration }: EditorProps) {
-  const navigate = useNavigate()
-  const [upgradeApproved, setUpgradeApproved] = useState(!migration.requiresUpgrade)
-  const [isPreparingUpgrade, setIsPreparingUpgrade] = useState(false)
+  const navigate = useNavigate();
+  const [upgradeApproved, setUpgradeApproved] = useState(!migration.requiresUpgrade);
+  const [isPreparingUpgrade, setIsPreparingUpgrade] = useState(false);
   const backupName = formatProjectUpgradeBackupName(
     project.name,
     migration.storedSchemaVersion,
-    migration.currentSchemaVersion,
-  )
+    migration.currentSchemaVersion
+  );
 
   useEffect(() => {
-    setUpgradeApproved(!migration.requiresUpgrade)
-    setIsPreparingUpgrade(false)
-  }, [migration.requiresUpgrade, projectId])
+    setUpgradeApproved(!migration.requiresUpgrade);
+    setIsPreparingUpgrade(false);
+  }, [migration.requiresUpgrade, projectId]);
 
   const handleCancelUpgrade = useCallback(() => {
-    navigate({ to: '/projects' })
-  }, [navigate])
+    navigate({ to: '/projects' });
+  }, [navigate]);
 
   const handleConfirmUpgrade = useCallback(async () => {
-    setIsPreparingUpgrade(true)
+    setIsPreparingUpgrade(true);
 
     try {
       const backup = await createProjectUpgradeBackup(projectId, {
         fromVersion: migration.storedSchemaVersion,
         toVersion: migration.currentSchemaVersion,
         backupName,
-      })
+      });
       toast.success('Backup created before upgrade', {
         description: backup.name,
-      })
-      setUpgradeApproved(true)
+      });
+      setUpgradeApproved(true);
     } catch (error) {
-      logger.error('Failed to create upgrade backup:', error)
+      logger.error('Failed to create upgrade backup:', error);
       toast.error('Failed to create backup before upgrade', {
         description: error instanceof Error ? error.message : 'Please try again.',
-      })
+      });
     } finally {
-      setIsPreparingUpgrade(false)
+      setIsPreparingUpgrade(false);
     }
-  }, [backupName, migration.currentSchemaVersion, migration.storedSchemaVersion, projectId])
+  }, [
+    backupName,
+    migration.currentSchemaVersion,
+    migration.storedSchemaVersion,
+    projectId,
+  ]);
 
   if (!upgradeApproved) {
     return (
@@ -152,18 +164,19 @@ export const Editor = memo(function Editor({ projectId, project, migration }: Ed
           onConfirm={handleConfirmUpgrade}
         />
       </div>
-    )
+    );
   }
 
-  return <LoadedEditor projectId={projectId} project={project} migration={migration} />
-})
+  return <LoadedEditor projectId={projectId} project={project} migration={migration} />;
+});
 
 const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { projectId: string }) {
-  const clearKeyframesDialogOpen = useClearKeyframesDialogStore((s) => s.isOpen)
-  const ttsGenerateDialogOpen = useTtsGenerateDialogStore((s) => s.isOpen)
+  const clearKeyframesDialogOpen = useClearKeyframesDialogStore((s) => s.isOpen);
+  const ttsGenerateDialogOpen = useTtsGenerateDialogStore((s) => s.isOpen);
+  const transcriptViewerDialogOpen = useTranscriptViewerDialogStore((s) => s.isOpen);
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
-    (s) => s.isOpen && s.projectId === projectId,
-  )
+    (s) => s.isOpen && s.projectId === projectId
+  );
 
   return (
     <>
@@ -182,82 +195,90 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
           <LazyTtsGenerateDialog />
         </Suspense>
       )}
+      {transcriptViewerDialogOpen && (
+        <Suspense fallback={null}>
+          <LazyTranscriptViewerDialog />
+        </Suspense>
+      )}
     </>
-  )
-})
+  );
+});
 
 export const LoadedEditor = memo(function LoadedEditor({
   projectId,
   project,
   migration,
 }: EditorProps) {
-  const router = useRouter()
-  const [exportDialogOpen, setExportDialogOpen] = useState(false)
-  const [bundleExportDialogOpen, setBundleExportDialogOpen] = useState(false)
-  const [bundleFileHandle, setBundleFileHandle] = useState<FileSystemFileHandle | undefined>()
-  const editorDensity = useSettingsStore((s) => s.editorDensity)
-  const snapEnabledPreference = useSettingsStore((s) => s.snapEnabled)
-  const editorLayout = getEditorLayout(editorDensity)
-  const editorLayoutCssVars = getEditorLayoutCssVars(editorLayout)
-  const syncSidebarLayout = useEditorStore((s) => s.syncSidebarLayout)
-  const propertiesFullColumn = useEditorStore((s) => s.propertiesFullColumn)
-  const mediaFullColumn = useEditorStore((s) => s.mediaFullColumn)
-  const isMaskEditingActive = useMaskEditorStore((s) => s.isEditing)
-  const hasRefreshedMigrationStateRef = useRef(false)
+  const router = useRouter();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [bundleExportDialogOpen, setBundleExportDialogOpen] = useState(false);
+  const [bundleFileHandle, setBundleFileHandle] = useState<FileSystemFileHandle | undefined>();
+  const editorDensity = useSettingsStore((s) => s.editorDensity);
+  const snapEnabledPreference = useSettingsStore((s) => s.snapEnabled);
+  const editorLayout = getEditorLayout(editorDensity);
+  const editorLayoutCssVars = getEditorLayoutCssVars(editorLayout);
+  const syncSidebarLayout = useEditorStore((s) => s.syncSidebarLayout);
+  const propertiesFullColumn = useEditorStore((s) => s.propertiesFullColumn);
+  const mediaFullColumn = useEditorStore((s) => s.mediaFullColumn);
+  const isMaskEditingActive = useMaskEditorStore((s) => s.isEditing);
+  const hasRefreshedMigrationStateRef = useRef(false);
 
   // Guard against concurrent saves (e.g., spamming Ctrl+S)
-  const isSavingRef = useRef(false)
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
-    hasRefreshedMigrationStateRef.current = false
-  }, [projectId])
+    hasRefreshedMigrationStateRef.current = false;
+  }, [projectId]);
 
   // Initialize transition chain subscription (pre-computes chains from timeline data)
   // This subscription recomputes chains when items/transitions change - deferred to idle
   // time so it doesn't compete with the initial editor render.
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined
+    let unsubscribe: (() => void) | undefined;
     const id = requestIdleCallback(() => {
-      unsubscribe = initTransitionChainSubscription()
-    })
+      unsubscribe = initTransitionChainSubscription();
+    });
     return () => {
-      cancelIdleCallback(id)
-      unsubscribe?.()
-    }
-  }, [])
+      cancelIdleCallback(id);
+      unsubscribe?.();
+    };
+  }, []);
 
   // Preload export dialogs during idle time so they open instantly.
   useEffect(() => {
     const id = requestIdleCallback(() => {
-      preloadExportDialog()
-      preloadBundleExportDialog()
-    })
-    return () => cancelIdleCallback(id)
-  }, [])
+      preloadExportDialog();
+      preloadBundleExportDialog();
+    });
+    return () => cancelIdleCallback(id);
+  }, []);
 
   // Prewarm effect preview thumbnails so the Add Effect picker has no
   // placeholder → image flash on first open.
   useEffect(() => {
-    const id = requestIdleCallback(() => prewarmEffectPreviews())
-    return () => cancelIdleCallback(id)
-  }, [])
+    const id = requestIdleCallback(() => prewarmEffectPreviews());
+    return () => cancelIdleCallback(id);
+  }, []);
 
   // Initialize timeline from project data (or create default tracks for new projects).
   useEffect(() => {
-    const { setCurrentProject: setMediaProject, loadMediaItems } = useMediaLibraryStore.getState()
-    const { setCurrentProject } = useProjectStore.getState()
-    const playbackStore = usePlaybackStore.getState()
+    const {
+      setCurrentProject: setMediaProject,
+      loadMediaItems,
+    } = useMediaLibraryStore.getState();
+    const { setCurrentProject } = useProjectStore.getState();
+    const playbackStore = usePlaybackStore.getState();
 
     // Clear stale scrub preview from previous editor sessions.
     // A non-null previewFrame puts preview into "scrubbing" mode, which can
     // defer media URL resolution during project open.
-    playbackStore.setPreviewFrame(null)
+    playbackStore.setPreviewFrame(null);
 
     // Set current project context for media library (v3: project-scoped media)
-    setMediaProject(projectId)
+    setMediaProject(projectId);
     void loadMediaItems().catch((error) => {
-      logger.error('Failed to load media library:', error)
-    })
+      logger.error('Failed to load media library:', error);
+    });
 
     // Set current project in project store for properties panel
     setCurrentProject({
@@ -274,43 +295,44 @@ export const LoadedEditor = memo(function LoadedEditor({
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    })
+    });
 
     // Load timeline from IndexedDB - single source of truth for all timeline state
-    const { loadTimeline } = useTimelineStore.getState()
-    let cancelled = false
+    const { loadTimeline } = useTimelineStore.getState();
+    let cancelled = false;
 
     void (async () => {
       try {
-        await loadTimeline(projectId, { allowProjectUpgrade: migration.requiresUpgrade })
+        await loadTimeline(projectId, { allowProjectUpgrade: migration.requiresUpgrade });
 
         if (cancelled || !migration.requiresUpgrade || hasRefreshedMigrationStateRef.current) {
-          return
+          return;
         }
 
-        hasRefreshedMigrationStateRef.current = true
+        hasRefreshedMigrationStateRef.current = true;
 
         // Refresh the editor route metadata once the approved legacy project has
         // opened successfully so future reopens do not briefly show the upgrade prompt.
         await router.invalidate({
           filter: (match) =>
-            match.routeId === EDITOR_PROJECT_ROUTE_ID && match.params.projectId === projectId,
-        })
+            match.routeId === EDITOR_PROJECT_ROUTE_ID &&
+            match.params.projectId === projectId,
+        });
       } catch (error) {
-        logger.error('Failed to load timeline:', error)
+        logger.error('Failed to load timeline:', error);
       }
-    })()
+    })();
 
     // Cleanup: clear project context, stop playback, and release blob URLs when leaving editor
     return () => {
-      cancelled = true
-      const cleanupPlaybackStore = usePlaybackStore.getState()
-      cleanupPlaybackStore.setPreviewFrame(null)
-      useMediaLibraryStore.getState().setCurrentProject(null)
-      useProjectStore.getState().setCurrentProject(null)
-      cleanupPlaybackStore.pause()
-      clearPreviewAudioCache()
-    }
+      cancelled = true;
+      const cleanupPlaybackStore = usePlaybackStore.getState();
+      cleanupPlaybackStore.setPreviewFrame(null);
+      useMediaLibraryStore.getState().setCurrentProject(null);
+      useProjectStore.getState().setCurrentProject(null);
+      cleanupPlaybackStore.pause();
+      clearPreviewAudioCache();
+    };
   }, [
     migration.currentSchemaVersion,
     migration.requiresUpgrade,
@@ -322,62 +344,62 @@ export const LoadedEditor = memo(function LoadedEditor({
     project.width,
     projectId,
     router,
-  ])
+  ]);
 
   // Track unsaved changes
-  const isDirty = useTimelineStore((s: { isDirty: boolean }) => s.isDirty)
+  const isDirty = useTimelineStore((s: { isDirty: boolean }) => s.isDirty);
 
   useEffect(() => {
-    syncSidebarLayout(editorLayout)
-  }, [editorLayout, syncSidebarLayout])
+    syncSidebarLayout(editorLayout);
+  }, [editorLayout, syncSidebarLayout]);
 
   useEffect(() => {
-    const timelineState = useTimelineStore.getState()
+    const timelineState = useTimelineStore.getState();
     if (timelineState.snapEnabled !== snapEnabledPreference) {
-      timelineState.toggleSnap()
+      timelineState.toggleSnap();
     }
-  }, [snapEnabledPreference])
+  }, [snapEnabledPreference]);
 
   useEffect(() => {
-    if (!isMaskEditingActive) return
-    const activeElement = document.activeElement
+    if (!isMaskEditingActive) return;
+    const activeElement = document.activeElement;
     if (activeElement instanceof HTMLElement) {
-      activeElement.blur()
+      activeElement.blur();
     }
-  }, [isMaskEditingActive])
+  }, [isMaskEditingActive]);
 
   // Save timeline to project (with guard against concurrent saves)
   const handleSave = useCallback(async () => {
     // Prevent concurrent saves (e.g., spamming Ctrl+S)
     if (isSavingRef.current) {
-      return
+      return;
     }
 
-    isSavingRef.current = true
-    const { saveTimeline } = useTimelineStore.getState()
+    isSavingRef.current = true;
+    const { saveTimeline } = useTimelineStore.getState();
 
     try {
-      await saveTimeline(projectId)
-      logger.debug('Project saved successfully')
-      toast.success('Project saved')
+      await saveTimeline(projectId);
+      logger.debug('Project saved successfully');
+      toast.success('Project saved');
     } catch (error) {
-      logger.error('Failed to save project:', error)
-      toast.error('Failed to save project')
-      throw error // Re-throw so callers know save failed
+      logger.error('Failed to save project:', error);
+      toast.error('Failed to save project');
+      throw error; // Re-throw so callers know save failed
     } finally {
-      isSavingRef.current = false
+      isSavingRef.current = false;
     }
-  }, [projectId])
+  }, [projectId]);
 
   const handleExport = useCallback(() => {
     // Pause playback when opening export dialog
-    usePlaybackStore.getState().pause()
-    void preloadExportDialog()
-    setExportDialogOpen(true)
-  }, [])
+    usePlaybackStore.getState().pause();
+    void preloadExportDialog();
+    setExportDialogOpen(true);
+  }, []);
 
   const handleExportBundle = useCallback(async () => {
-    void preloadBundleExportDialog()
+    void preloadBundleExportDialog();
 
     // Show native save picker BEFORE opening the modal dialog to avoid
     // focus-loss conflicts between the native picker and Radix Dialog.
@@ -385,7 +407,7 @@ export const LoadedEditor = memo(function LoadedEditor({
       const safeName = project.name
         .replace(/[<>:"/\\|?*]/g, '_')
         .replace(/\s+/g, '_')
-        .substring(0, 100)
+        .substring(0, 100);
       try {
         const handle = await window.showSaveFilePicker({
           suggestedName: `${safeName}.freecut.zip`,
@@ -395,38 +417,38 @@ export const LoadedEditor = memo(function LoadedEditor({
               accept: { 'application/zip': ['.freecut.zip'] },
             },
           ],
-        })
-        setBundleFileHandle(handle)
+        });
+        setBundleFileHandle(handle);
       } catch {
         // User cancelled the picker - don't open the dialog
-        return
+        return;
       }
     } else {
-      setBundleFileHandle(undefined)
+      setBundleFileHandle(undefined);
     }
 
-    setBundleExportDialogOpen(true)
-  }, [project.name])
+    setBundleExportDialogOpen(true);
+  }, [project.name]);
 
   // Enable keyboard shortcuts
   useEditorHotkeys({
     onSave: handleSave,
     onExport: handleExport,
-  })
+  });
 
   // Enable auto-save based on settings interval
   useAutoSave({
     isDirty,
     onSave: handleSave,
-  })
+  });
 
   // Enable timeline shortcuts (space, cut tool, rate tool, etc.)
-  useTimelineShortcuts()
+  useTimelineShortcuts();
 
   // Enable transition breakage notifications
-  useTransitionBreakageNotifications()
+  useTransitionBreakageNotifications();
 
-  const timelineDuration = 30
+  const timelineDuration = 30;
 
   return (
     <div
@@ -541,8 +563,8 @@ export const LoadedEditor = memo(function LoadedEditor({
           <LazyBundleExportDialog
             open={bundleExportDialogOpen}
             onClose={() => {
-              setBundleExportDialogOpen(false)
-              setBundleFileHandle(undefined)
+              setBundleExportDialogOpen(false);
+              setBundleFileHandle(undefined);
             }}
             projectId={projectId}
             onBeforeExport={handleSave}
@@ -555,6 +577,7 @@ export const LoadedEditor = memo(function LoadedEditor({
 
       {/* Bento Layout Preset Dialog */}
       <BentoLayoutDialog />
+
     </div>
-  )
-})
+  );
+});

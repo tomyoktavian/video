@@ -1,46 +1,19 @@
-import { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react'
-import {
-  Search,
-  Filter,
-  SortAsc,
-  Video,
-  FileAudio,
-  Image as ImageIcon,
-  Trash2,
-  Grid3x3,
-  List,
-  AlertTriangle,
-  Info,
-  X,
-  FolderOpen,
-  Link,
-  Link2Off,
-  ChevronRight,
-  Film,
-  ArrowLeft,
-  Zap,
-  Loader2,
-  Copy,
-  Check,
-  Upload,
-  Sparkles,
-  FileText,
-  ScanSearch,
-} from 'lucide-react'
-import { SceneBrowserPanel, useSceneBrowserStore } from '../deps/scene-browser'
-import { createLogger } from '@/shared/logging/logger'
+import { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react';
+import { Search, Filter, SortAsc, Video, FileAudio, Image as ImageIcon, Trash2, Grid3x3, List, AlertTriangle, Info, X, FolderOpen, Link, Link2Off, ChevronRight, Film, ArrowLeft, Zap, Loader2, Copy, Check, Upload, Sparkles, FileText, ScanSearch, CloudDownload, ListPlus, MoreHorizontal, Merge } from 'lucide-react';
+import { SceneBrowserPanel, useSceneBrowserStore } from '../deps/scene-browser';
+import { createLogger } from '@/shared/logging/logger';
 
-const logger = createLogger('MediaLibrary')
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Slider } from '@/components/ui/slider'
+const logger = createLogger('MediaLibrary');
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from '@/components/ui/alert-dialog';
 import {
   Dialog,
   DialogContent,
@@ -58,18 +31,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { MarqueeOverlay } from '@/components/marquee-overlay'
-import { cn } from '@/shared/ui/cn'
-import { MediaGrid } from './media-grid'
-import { CompositionsSection } from './compositions-section'
-import { BackgroundTaskProgress } from './background-task-progress'
-import { MissingMediaDialog } from './missing-media-dialog'
-import { OrphanedClipsDialog } from './orphaned-clips-dialog'
-import { UnsupportedAudioCodecDialog } from './unsupported-audio-codec-dialog'
-import { useFilteredMediaItems, useMediaLibraryStore } from '../stores/media-library-store'
+} from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { MarqueeOverlay } from '@/components/marquee-overlay';
+import { cn } from '@/shared/ui/cn';
+import { MediaGrid } from './media-grid';
+import { CompositionsSection } from './compositions-section';
+import { BackgroundTaskProgress } from './background-task-progress';
+import { MissingMediaDialog } from './missing-media-dialog';
+import { OrphanedClipsDialog } from './orphaned-clips-dialog';
+import { UnsupportedAudioCodecDialog } from './unsupported-audio-codec-dialog';
+import { OnlineMediaTab } from './online-media-tab';
+import { useFilteredMediaItems, useMediaLibraryStore } from '../stores/media-library-store';
 import {
   deleteCompoundClips,
   getCompoundClipDeletionImpact,
@@ -77,56 +60,65 @@ import {
   removeProjectItems,
   useCompositionsStore,
   useCompositionNavigationStore,
-} from '@/features/media-library/deps/timeline-stores'
-import { useProjectStore } from '@/features/media-library/deps/projects'
-import { proxyService } from '../services/proxy-service'
-import { mediaLibraryService } from '../services/media-library-service'
-import { mediaTranscriptionService } from '../services/media-transcription-service'
-import { mediaAnalysisService } from '../services/media-analysis-service'
-import { extractValidMediaFileEntriesFromDataTransfer } from '../utils/file-drop'
-import { getSharedProxyKey } from '../utils/proxy-key'
-import { getMediaType } from '../utils/validation'
-import { getProjectBrokenMediaIds } from '@/features/media-library/utils/broken-media'
+} from '@/features/media-library/deps/timeline-stores';
+import { useProjectStore } from '@/features/media-library/deps/projects';
+import { proxyService } from '../services/proxy-service';
+import { ffmpegMergeService, type MergeProgressEvent } from '../services/ffmpeg-merge-service';
+import { mediaLibraryService } from '../services/media-library-service';
+import { mediaTranscriptionService } from '../services/media-transcription-service';
+import { mediaAnalysisService } from '../services/media-analysis-service';
+import { extractValidMediaFileEntriesFromDataTransfer } from '../utils/file-drop';
+import { getSharedProxyKey } from '../utils/proxy-key';
+import { getMediaType } from '../utils/validation';
+import { getProjectBrokenMediaIds } from '@/features/media-library/utils/broken-media';
 import {
   getTranscriptionOverallProgress,
   getTranscriptionStageLabel,
-} from '@/shared/utils/transcription-progress'
-import type { MediaMetadata } from '@/types/storage'
+} from '@/shared/utils/transcription-progress';
+import type { MediaMetadata } from '@/types/storage';
+import { isMarqueeJustFinished, useMarqueeSelection, type MarqueeItem } from '@/hooks/use-marquee-selection';
 import {
-  isMarqueeJustFinished,
-  useMarqueeSelection,
-  type MarqueeItem,
-} from '@/hooks/use-marquee-selection'
+  useItemsStore,
+  useTimelineStore,
+  resolveMediaUrl,
+} from '@/features/media-library/deps/timeline-stores';
+import { addItems as timelineAddItems } from '@/features/media-library/deps/timeline-actions';
+import {
+  buildDroppedMediaTimelineItem,
+  getDroppedMediaDurationInFrames,
+} from '@/features/media-library/deps/timeline-utils';
 
 function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [text])
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [text]);
   return (
     <button
       onClick={handleCopy}
       className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-muted transition-colors"
       title="Copy to clipboard"
     >
-      {copied ? (
-        <Check className="h-3 w-3 text-green-500" />
-      ) : (
-        <Copy className="h-3 w-3 text-muted-foreground" />
-      )}
+      {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
     </button>
-  )
+  );
 }
 
-function HeaderActionTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+function HeaderActionTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent side="bottom">{label}</TooltipContent>
     </Tooltip>
-  )
+  );
 }
 
 const GROUP_ICONS = {
@@ -134,46 +126,40 @@ const GROUP_ICONS = {
   audio: FileAudio,
   image: ImageIcon,
   gif: Film,
-} as const
+} as const;
 
 interface MediaTypeGroupProps {
-  groupKey: string
-  label: string
-  icon: keyof typeof GROUP_ICONS
-  items: MediaMetadata[]
-  isOpen: boolean
-  onToggle: (key: string, open: boolean) => void
-  onMediaSelect?: (mediaId: string) => void
-  viewMode: 'grid' | 'list'
-  itemSize: number
+  groupKey: string;
+  label: string;
+  icon: keyof typeof GROUP_ICONS;
+  items: MediaMetadata[];
+  isOpen: boolean;
+  onToggle: (key: string, open: boolean) => void;
+  onMediaSelect?: (mediaId: string) => void;
+  viewMode: 'grid' | 'list';
+  itemSize: number;
 }
 
 const MediaTypeGroup = memo(function MediaTypeGroup({
-  groupKey,
-  label,
-  icon,
-  items,
-  isOpen,
-  onToggle,
-  onMediaSelect,
-  viewMode,
-  itemSize,
+  groupKey, label, icon, items, isOpen, onToggle, onMediaSelect, viewMode, itemSize,
 }: MediaTypeGroupProps) {
-  const Icon = GROUP_ICONS[icon]
+  const Icon = GROUP_ICONS[icon];
   return (
     <Collapsible open={isOpen} onOpenChange={(open) => onToggle(groupKey, open)}>
       <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-secondary/50 rounded-md px-2 -mx-2 transition-colors">
         <ChevronRight
           className={cn(
             'w-3 h-3 text-muted-foreground transition-transform',
-            isOpen && 'rotate-90',
+            isOpen && 'rotate-90'
           )}
         />
         <Icon className="w-3 h-3 text-muted-foreground" />
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
           {label}
         </span>
-        <span className="text-[10px] tabular-nums text-muted-foreground/60">{items.length}</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground/60">
+          {items.length}
+        </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-1 pb-2">
         <MediaGrid
@@ -184,191 +170,180 @@ const MediaTypeGroup = memo(function MediaTypeGroup({
         />
       </CollapsibleContent>
     </Collapsible>
-  )
-})
+  );
+});
 
 interface MediaLibraryProps {
-  onMediaSelect?: (mediaId: string) => void
+  onMediaSelect?: (mediaId: string) => void;
 }
 
 interface PendingLibraryDeletion {
-  mediaIds: string[]
-  compositionIds: string[]
+  mediaIds: string[];
+  compositionIds: string[];
 }
 
 export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaLibraryProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const isFocusedRef = useRef(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [pendingDeletion, setPendingDeletion] = useState<PendingLibraryDeletion>({
-    mediaIds: [],
-    compositionIds: [],
-  })
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    () => new Set(['video', 'audio', 'image', 'gif']),
-  )
-  const [isDragging, setIsDragging] = useState(false)
-  const [showImportUrlDialog, setShowImportUrlDialog] = useState(false)
-  const [importUrlValue, setImportUrlValue] = useState('')
-  const [isImportUrlSubmitting, setIsImportUrlSubmitting] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isFocusedRef = useRef(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pendingDeletion, setPendingDeletion] = useState<PendingLibraryDeletion>({ mediaIds: [], compositionIds: [] });
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(['video', 'audio', 'image', 'gif']));
+  const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState<'local' | 'online'>('local');
+  const [mergeProgress, setMergeProgress] = useState<MergeProgressEvent | null>(null);
+  const isMergingRef = useRef(false);
+  const [showImportUrlDialog, setShowImportUrlDialog] = useState(false);
+  const [importUrlValue, setImportUrlValue] = useState('');
+  const [isImportUrlSubmitting, setIsImportUrlSubmitting] = useState(false);
 
   // Store selectors
-  const currentProjectId = useMediaLibraryStore((s) => s.currentProjectId)
-  const setCurrentProject = useMediaLibraryStore((s) => s.setCurrentProject)
-  const loadMediaItems = useMediaLibraryStore((s) => s.loadMediaItems)
-  const importMedia = useMediaLibraryStore((s) => s.importMedia)
-  const importMediaFromUrl = useMediaLibraryStore((s) => s.importMediaFromUrl)
-  const importHandles = useMediaLibraryStore((s) => s.importHandles)
-  const deleteMediaBatch = useMediaLibraryStore((s) => s.deleteMediaBatch)
-  const showNotification = useMediaLibraryStore((s) => s.showNotification)
-  const searchQuery = useMediaLibraryStore((s) => s.searchQuery)
-  const setSearchQuery = useMediaLibraryStore((s) => s.setSearchQuery)
-  const filterByType = useMediaLibraryStore((s) => s.filterByType)
-  const setFilterByType = useMediaLibraryStore((s) => s.setFilterByType)
-  const sortBy = useMediaLibraryStore((s) => s.sortBy)
-  const setSortBy = useMediaLibraryStore((s) => s.setSortBy)
-  const viewMode = useMediaLibraryStore((s) => s.viewMode)
-  const setViewMode = useMediaLibraryStore((s) => s.setViewMode)
-  const sceneBrowserOpen = useSceneBrowserStore((s) => s.open)
-  const openSceneBrowser = useSceneBrowserStore((s) => s.openBrowser)
-  const closeSceneBrowser = useSceneBrowserStore((s) => s.closeBrowser)
-  const mediaItemSize = useMediaLibraryStore((s) => s.mediaItemSize)
-  const setMediaItemSize = useMediaLibraryStore((s) => s.setMediaItemSize)
-  const selectedMediaIds = useMediaLibraryStore((s) => s.selectedMediaIds)
-  const selectedCompositionIds = useMediaLibraryStore((s) => s.selectedCompositionIds)
-  const setSelection = useMediaLibraryStore((s) => s.setSelection)
-  const mediaById = useMediaLibraryStore((s) => s.mediaById)
-  const clearSelection = useMediaLibraryStore((s) => s.clearSelection)
-  const error = useMediaLibraryStore((s) => s.error)
-  const errorLink = useMediaLibraryStore((s) => s.errorLink)
-  const clearError = useMediaLibraryStore((s) => s.clearError)
-  const notification = useMediaLibraryStore((s) => s.notification)
-  const clearNotification = useMediaLibraryStore((s) => s.clearNotification)
-  const brokenMediaIds = useMediaLibraryStore((s) => s.brokenMediaIds)
-  const openMissingMediaDialog = useMediaLibraryStore((s) => s.openMissingMediaDialog)
-  const projectStoreProjectId = useProjectStore((s) => s.currentProject?.id ?? null)
-  const proxyStatus = useMediaLibraryStore((s) => s.proxyStatus)
-  const proxyProgress = useMediaLibraryStore((s) => s.proxyProgress)
-  const transcriptStatus = useMediaLibraryStore((s) => s.transcriptStatus)
-  const transcriptProgress = useMediaLibraryStore((s) => s.transcriptProgress)
-  const filteredMediaItems = useFilteredMediaItems()
+  const currentProjectId = useMediaLibraryStore((s) => s.currentProjectId);
+  const setCurrentProject = useMediaLibraryStore((s) => s.setCurrentProject);
+  const loadMediaItems = useMediaLibraryStore((s) => s.loadMediaItems);
+  const importMedia = useMediaLibraryStore((s) => s.importMedia);
+  const importMediaFromUrl = useMediaLibraryStore((s) => s.importMediaFromUrl);
+  const importHandles = useMediaLibraryStore((s) => s.importHandles);
+  const deleteMediaBatch = useMediaLibraryStore((s) => s.deleteMediaBatch);
+  const showNotification = useMediaLibraryStore((s) => s.showNotification);
+  const searchQuery = useMediaLibraryStore((s) => s.searchQuery);
+  const setSearchQuery = useMediaLibraryStore((s) => s.setSearchQuery);
+  const filterByType = useMediaLibraryStore((s) => s.filterByType);
+  const setFilterByType = useMediaLibraryStore((s) => s.setFilterByType);
+  const sortBy = useMediaLibraryStore((s) => s.sortBy);
+  const setSortBy = useMediaLibraryStore((s) => s.setSortBy);
+  const viewMode = useMediaLibraryStore((s) => s.viewMode);
+  const setViewMode = useMediaLibraryStore((s) => s.setViewMode);
+  const sceneBrowserOpen = useSceneBrowserStore((s) => s.open);
+  const openSceneBrowser = useSceneBrowserStore((s) => s.openBrowser);
+  const closeSceneBrowser = useSceneBrowserStore((s) => s.closeBrowser);
+  const mediaItemSize = useMediaLibraryStore((s) => s.mediaItemSize);
+  const setMediaItemSize = useMediaLibraryStore((s) => s.setMediaItemSize);
+  const selectedMediaIds = useMediaLibraryStore((s) => s.selectedMediaIds);
+  const selectedCompositionIds = useMediaLibraryStore((s) => s.selectedCompositionIds);
+  const setSelection = useMediaLibraryStore((s) => s.setSelection);
+  const mediaById = useMediaLibraryStore((s) => s.mediaById);
+  const clearSelection = useMediaLibraryStore((s) => s.clearSelection);
+  const error = useMediaLibraryStore((s) => s.error);
+  const errorLink = useMediaLibraryStore((s) => s.errorLink);
+  const clearError = useMediaLibraryStore((s) => s.clearError);
+  const notification = useMediaLibraryStore((s) => s.notification);
+  const clearNotification = useMediaLibraryStore((s) => s.clearNotification);
+  const brokenMediaIds = useMediaLibraryStore((s) => s.brokenMediaIds);
+  const openMissingMediaDialog = useMediaLibraryStore((s) => s.openMissingMediaDialog);
+  const projectStoreProjectId = useProjectStore((s) => s.currentProject?.id ?? null);
+  const proxyStatus = useMediaLibraryStore((s) => s.proxyStatus);
+  const proxyProgress = useMediaLibraryStore((s) => s.proxyProgress);
+  const transcriptStatus = useMediaLibraryStore((s) => s.transcriptStatus);
+  const transcriptProgress = useMediaLibraryStore((s) => s.transcriptProgress);
+  const filteredMediaItems = useFilteredMediaItems();
   const mediaGroups = useMemo(() => {
-    const groups: {
-      key: string
-      label: string
-      icon: 'video' | 'audio' | 'image' | 'gif'
-      items: MediaMetadata[]
-    }[] = []
-    const videos: MediaMetadata[] = []
-    const audio: MediaMetadata[] = []
-    const gifs: MediaMetadata[] = []
-    const images: MediaMetadata[] = []
+    const groups: { key: string; label: string; icon: 'video' | 'audio' | 'image' | 'gif'; items: MediaMetadata[] }[] = [];
+    const videos: MediaMetadata[] = [];
+    const audio: MediaMetadata[] = [];
+    const gifs: MediaMetadata[] = [];
+    const images: MediaMetadata[] = [];
     for (const item of filteredMediaItems) {
       if (item.mimeType === 'image/gif') {
-        gifs.push(item)
+        gifs.push(item);
       } else {
-        const t = getMediaType(item.mimeType)
-        if (t === 'video') videos.push(item)
-        else if (t === 'audio') audio.push(item)
-        else images.push(item)
+        const t = getMediaType(item.mimeType);
+        if (t === 'video') videos.push(item);
+        else if (t === 'audio') audio.push(item);
+        else images.push(item);
       }
     }
-    if (videos.length > 0)
-      groups.push({ key: 'video', label: 'Videos', icon: 'video', items: videos })
-    if (audio.length > 0) groups.push({ key: 'audio', label: 'Audio', icon: 'audio', items: audio })
-    if (images.length > 0)
-      groups.push({ key: 'image', label: 'Images', icon: 'image', items: images })
-    if (gifs.length > 0) groups.push({ key: 'gif', label: 'GIFs', icon: 'gif', items: gifs })
-    return groups
-  }, [filteredMediaItems])
-  const compositions = useCompositionsStore((s) => s.compositions)
+    if (videos.length > 0) groups.push({ key: 'video', label: 'Videos', icon: 'video', items: videos });
+    if (audio.length > 0) groups.push({ key: 'audio', label: 'Audio', icon: 'audio', items: audio });
+    if (images.length > 0) groups.push({ key: 'image', label: 'Images', icon: 'image', items: images });
+    if (gifs.length > 0) groups.push({ key: 'gif', label: 'GIFs', icon: 'gif', items: gifs });
+    return groups;
+  }, [filteredMediaItems]);
+  const compositions = useCompositionsStore((s) => s.compositions);
 
   // Composition navigation — show banner when inside a sub-comp
-  const activeCompositionId = useCompositionNavigationStore((s) => s.activeCompositionId)
-  const breadcrumbs = useCompositionNavigationStore((s) => s.breadcrumbs)
-  const exitComposition = useCompositionNavigationStore((s) => s.exitComposition)
-  const activeCompLabel = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 1]?.label : null
+  const activeCompositionId = useCompositionNavigationStore((s) => s.activeCompositionId);
+  const breadcrumbs = useCompositionNavigationStore((s) => s.breadcrumbs);
+  const exitComposition = useCompositionNavigationStore((s) => s.exitComposition);
+  const activeCompLabel = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 1]?.label : null;
 
   // Unsupported codec dialog state
-  const unsupportedCodecFiles = useMediaLibraryStore((s) => s.unsupportedCodecFiles)
-  const showUnsupportedCodecDialog = useMediaLibraryStore((s) => s.showUnsupportedCodecDialog)
-  const resolveUnsupportedCodecDialog = useMediaLibraryStore((s) => s.resolveUnsupportedCodecDialog)
+  const unsupportedCodecFiles = useMediaLibraryStore((s) => s.unsupportedCodecFiles);
+  const showUnsupportedCodecDialog = useMediaLibraryStore((s) => s.showUnsupportedCodecDialog);
+  const resolveUnsupportedCodecDialog = useMediaLibraryStore((s) => s.resolveUnsupportedCodecDialog);
 
   // HMR recovery: if media store lost project context, rehydrate it from project store.
   useEffect(() => {
     if (!currentProjectId && projectStoreProjectId) {
-      setCurrentProject(projectStoreProjectId)
+      setCurrentProject(projectStoreProjectId);
       void loadMediaItems().catch((error) => {
-        logger.error('Failed to load media library during store recovery:', error)
-      })
+        logger.error('Failed to load media library during store recovery:', error);
+      });
     }
-  }, [currentProjectId, loadMediaItems, projectStoreProjectId, setCurrentProject])
+  }, [currentProjectId, loadMediaItems, projectStoreProjectId, setCurrentProject]);
 
-  const selectedAssetCount = selectedMediaIds.length + selectedCompositionIds.length
-  const deleteAssetCount = pendingDeletion.mediaIds.length + pendingDeletion.compositionIds.length
-  const previewAssetIdsRef = useRef<string[]>([])
+  const selectedAssetCount = selectedMediaIds.length + selectedCompositionIds.length;
+  const deleteAssetCount = pendingDeletion.mediaIds.length + pendingDeletion.compositionIds.length;
+  const previewAssetIdsRef = useRef<string[]>([]);
 
   const setPreviewAssetIds = useCallback((ids: string[]) => {
-    const container = scrollContainerRef.current
+    const container = scrollContainerRef.current;
     if (!container) {
-      previewAssetIdsRef.current = ids
-      return
+      previewAssetIdsRef.current = ids;
+      return;
     }
 
-    const nextIds = new Set(ids)
+    const nextIds = new Set(ids);
     for (const previousId of previewAssetIdsRef.current) {
       if (nextIds.has(previousId)) {
-        continue
+        continue;
       }
 
       if (previousId.startsWith('media:')) {
         container
           .querySelector(`[data-media-id="${previousId.slice('media:'.length)}"]`)
-          ?.classList.remove('media-marquee-preview')
+          ?.classList.remove('media-marquee-preview');
       } else if (previousId.startsWith('composition:')) {
         container
           .querySelector(`[data-composition-id="${previousId.slice('composition:'.length)}"]`)
-          ?.classList.remove('composition-marquee-preview')
+          ?.classList.remove('composition-marquee-preview');
       }
     }
 
-    const previousIds = new Set(previewAssetIdsRef.current)
+    const previousIds = new Set(previewAssetIdsRef.current);
     for (const id of ids) {
       if (previousIds.has(id)) {
-        continue
+        continue;
       }
 
       if (id.startsWith('media:')) {
         container
           .querySelector(`[data-media-id="${id.slice('media:'.length)}"]`)
-          ?.classList.add('media-marquee-preview')
+          ?.classList.add('media-marquee-preview');
       } else if (id.startsWith('composition:')) {
         container
           .querySelector(`[data-composition-id="${id.slice('composition:'.length)}"]`)
-          ?.classList.add('composition-marquee-preview')
+          ?.classList.add('composition-marquee-preview');
       }
     }
 
-    previewAssetIdsRef.current = ids
-  }, [])
+    previewAssetIdsRef.current = ids;
+  }, []);
 
   useEffect(() => {
     return () => {
-      setPreviewAssetIds([])
-    }
-  }, [setPreviewAssetIds])
+      setPreviewAssetIds([]);
+    };
+  }, [setPreviewAssetIds]);
 
   const marqueeItems: MarqueeItem[] = useMemo(
     () => [
       ...compositions.map((composition) => ({
         id: `composition:${composition.id}`,
         getBoundingRect: () => {
-          const element = scrollContainerRef.current?.querySelector(
-            `[data-composition-id="${composition.id}"]`,
-          )
-          if (!element) return null
-          const rect = element.getBoundingClientRect()
+          const element = scrollContainerRef.current?.querySelector(`[data-composition-id="${composition.id}"]`);
+          if (!element) return null;
+          const rect = element.getBoundingClientRect();
           return {
             left: rect.left,
             top: rect.top,
@@ -376,15 +351,15 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
             bottom: rect.bottom,
             width: rect.width,
             height: rect.height,
-          }
+          };
         },
       })),
       ...filteredMediaItems.map((media) => ({
         id: `media:${media.id}`,
         getBoundingRect: () => {
-          const element = scrollContainerRef.current?.querySelector(`[data-media-id="${media.id}"]`)
-          if (!element) return null
-          const rect = element.getBoundingClientRect()
+          const element = scrollContainerRef.current?.querySelector(`[data-media-id="${media.id}"]`);
+          if (!element) return null;
+          const rect = element.getBoundingClientRect();
           return {
             left: rect.left,
             top: rect.top,
@@ -392,12 +367,12 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
             bottom: rect.bottom,
             width: rect.width,
             height: rect.height,
-          }
+          };
         },
       })),
     ],
-    [compositions, filteredMediaItems],
-  )
+    [compositions, filteredMediaItems]
+  );
 
   const { marquee } = useMarqueeSelection({
     containerRef: scrollContainerRef as React.RefObject<HTMLElement>,
@@ -407,20 +382,20 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
     commitSelectionOnMouseUp: true,
     liveCommitThrottleMs: 66,
     onSelectionChange: (ids) => {
-      const nextMediaIds: string[] = []
-      const nextCompositionIds: string[] = []
+      const nextMediaIds: string[] = [];
+      const nextCompositionIds: string[] = [];
 
       for (const id of ids) {
         if (id.startsWith('media:')) {
-          nextMediaIds.push(id.slice('media:'.length))
+          nextMediaIds.push(id.slice('media:'.length));
         } else if (id.startsWith('composition:')) {
-          nextCompositionIds.push(id.slice('composition:'.length))
+          nextCompositionIds.push(id.slice('composition:'.length));
         }
       }
 
-      setSelection({ mediaIds: nextMediaIds, compositionIds: nextCompositionIds })
+      setSelection({ mediaIds: nextMediaIds, compositionIds: nextCompositionIds });
     },
-  })
+  });
 
   // Track focus scope for the Delete hotkey. Selection itself is only cleared
   // by explicit user action (empty-area click or marquee), never by focus
@@ -428,254 +403,231 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
   // or another panel.
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
-      isFocusedRef.current = !!containerRef.current?.contains(event.target as Node)
-    }
+      isFocusedRef.current = !!containerRef.current?.contains(event.target as Node);
+    };
 
-    document.addEventListener('mousedown', handleMouseDown, true)
+    document.addEventListener('mousedown', handleMouseDown, true);
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown, true)
-    }
-  }, [])
+      document.removeEventListener('mousedown', handleMouseDown, true);
+    };
+  }, []);
 
   // Handle Delete key to delete selected items
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only handle Delete key
-      if (event.key !== 'Delete') return
+      if (event.key !== 'Delete') return;
 
       // Don't trigger if media library is not focused
-      if (!isFocusedRef.current) return
+      if (!isFocusedRef.current) return;
 
       // Don't trigger if no items selected
-      if (selectedAssetCount === 0) return
+      if (selectedAssetCount === 0) return;
 
       // Don't trigger if dialog is already open
-      if (showDeleteDialog) return
+      if (showDeleteDialog) return;
 
       // Don't trigger if user is typing in an input or textarea
-      const target = event.target as HTMLElement
+      const target = event.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return
+        return;
       }
 
       // Prevent default behavior and trigger delete
-      event.preventDefault()
+      event.preventDefault();
       setPendingDeletion({
         mediaIds: [...selectedMediaIds],
         compositionIds: [...selectedCompositionIds],
-      })
-      setShowDeleteDialog(true)
-    }
+      });
+      setShowDeleteDialog(true);
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [selectedAssetCount, selectedCompositionIds, selectedMediaIds, showDeleteDialog])
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedAssetCount, selectedCompositionIds, selectedMediaIds, showDeleteDialog]);
 
   // Import files using file picker (instant, no copy)
   const handleImport = async () => {
     try {
-      await importMedia()
+      await importMedia();
     } catch (error) {
-      logger.error('Import failed:', error)
+      logger.error('Import failed:', error);
     }
-  }
+  };
 
-  const handleImportUrl = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-      if (isImportUrlSubmitting) {
-        return
-      }
+  const handleImportUrl = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isImportUrlSubmitting) {
+      return;
+    }
 
-      setIsImportUrlSubmitting(true)
-      try {
-        await importMediaFromUrl(importUrlValue)
-        if (!useMediaLibraryStore.getState().error) {
-          setShowImportUrlDialog(false)
-          setImportUrlValue('')
-        }
-      } catch (error) {
-        logger.error('Import from URL failed:', error)
-      } finally {
-        setIsImportUrlSubmitting(false)
+    setIsImportUrlSubmitting(true);
+    try {
+      await importMediaFromUrl(importUrlValue);
+      if (!useMediaLibraryStore.getState().error) {
+        setShowImportUrlDialog(false);
+        setImportUrlValue('');
       }
-    },
-    [importMediaFromUrl, importUrlValue, isImportUrlSubmitting],
-  )
+    } catch (error) {
+      logger.error('Import from URL failed:', error);
+    } finally {
+      setIsImportUrlSubmitting(false);
+    }
+  }, [importMediaFromUrl, importUrlValue, isImportUrlSubmitting]);
 
   // Import files from drag-drop handles - memoized to prevent MediaGrid re-renders
-  const handleImportHandles = useCallback(
-    async (handles: FileSystemFileHandle[]) => {
-      try {
-        await importHandles(handles)
-      } catch (error) {
-        logger.error('Import failed:', error)
-      }
-    },
-    [importHandles],
-  )
+  const handleImportHandles = useCallback(async (handles: FileSystemFileHandle[]) => {
+    try {
+      await importHandles(handles);
+    } catch (error) {
+      logger.error('Import failed:', error);
+    }
+  }, [importHandles]);
 
   // Panel-level drag/drop handlers so the drop zone covers the full panel height.
   // Uses an enter/leave counter to avoid flicker when dragging over child elements.
-  const dragCounterRef = useRef(0)
+  const dragCounterRef = useRef(0);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    dragCounterRef.current++
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
     if (dragCounterRef.current === 1 && !e.dataTransfer.types.includes('application/json')) {
-      setIsDragging(true)
+      setIsDragging(true);
     }
-  }, [])
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    e.dataTransfer.dropEffect = 'copy'
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    dragCounterRef.current--
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
     if (dragCounterRef.current <= 0) {
-      dragCounterRef.current = 0
-      setIsDragging(false)
+      dragCounterRef.current = 0;
+      setIsDragging(false);
     }
-  }, [])
+  }, []);
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      dragCounterRef.current = 0
-      setIsDragging(false)
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
 
-      // Ignore media items being dragged from the grid itself
-      try {
-        const jsonData = e.dataTransfer.getData('application/json')
-        if (jsonData) {
-          const data = JSON.parse(jsonData)
-          if (
-            data.type === 'media-item' ||
-            data.type === 'media-items' ||
-            data.type === 'composition'
-          ) {
-            return
-          }
+    // Ignore media items being dragged from the grid itself
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      if (jsonData) {
+        const data = JSON.parse(jsonData);
+        if (data.type === 'media-item' || data.type === 'media-items' || data.type === 'composition') {
+          return;
         }
-      } catch {
-        // Not JSON data, continue with file handling
       }
+    } catch {
+      // Not JSON data, continue with file handling
+    }
 
-      const { supported, entries, errors } = await extractValidMediaFileEntriesFromDataTransfer(
-        e.dataTransfer,
-      )
-      if (!supported) {
-        showNotification({
-          type: 'warning',
-          message: 'Drag-drop not supported in this browser. Use Chrome or Edge.',
-        })
-        return
-      }
+    const { supported, entries, errors } = await extractValidMediaFileEntriesFromDataTransfer(e.dataTransfer);
+    if (!supported) {
+      showNotification({ type: 'warning', message: 'Drag-drop not supported in this browser. Use Chrome or Edge.' });
+      return;
+    }
 
-      if (errors.length > 0) {
-        showNotification({
-          type: 'error',
-          message: `Some files were rejected: ${errors.join(', ')}`,
-        })
-      }
-      if (entries.length > 0) {
-        await handleImportHandles(entries.map((entry) => entry.handle))
-      }
-    },
-    [showNotification, handleImportHandles],
-  )
+    if (errors.length > 0) {
+      showNotification({ type: 'error', message: `Some files were rejected: ${errors.join(', ')}` });
+    }
+    if (entries.length > 0) {
+      await handleImportHandles(entries.map((entry) => entry.handle));
+    }
+  }, [showNotification, handleImportHandles]);
 
   // Count of items currently generating proxies
   const generatingCount = useMemo(() => {
-    let count = 0
+    let count = 0;
     for (const status of proxyStatus.values()) {
-      if (status === 'generating') count++
+      if (status === 'generating') count++;
     }
-    return count
-  }, [proxyStatus])
+    return count;
+  }, [proxyStatus]);
 
-  const analysisProgress = useMediaLibraryStore((s) => s.analysisProgress)
-  const analysisPercent =
-    analysisProgress && analysisProgress.total > 0
-      ? (analysisProgress.completed / analysisProgress.total) * 100
-      : 0
+  const analysisProgress = useMediaLibraryStore((s) => s.analysisProgress);
+  const analysisPercent = analysisProgress && analysisProgress.total > 0
+    ? (analysisProgress.completed / analysisProgress.total) * 100
+    : 0;
 
   const transcribingCount = useMemo(() => {
-    let count = 0
+    let count = 0;
     for (const status of transcriptStatus.values()) {
-      if (status === 'queued' || status === 'transcribing') count++
+      if (status === 'queued' || status === 'transcribing') count++;
     }
-    return count
-  }, [transcriptStatus])
+    return count;
+  }, [transcriptStatus]);
 
   const currentProjectBrokenMediaIds = useMemo(
     () => getProjectBrokenMediaIds(brokenMediaIds, mediaById),
-    [brokenMediaIds, mediaById],
-  )
+    [brokenMediaIds, mediaById]
+  );
 
   // Average progress of all generating proxies
   const generatingAvgProgress = useMemo(() => {
-    if (generatingCount === 0) return 0
-    let total = 0
-    let count = 0
+    if (generatingCount === 0) return 0;
+    let total = 0;
+    let count = 0;
     for (const [id, status] of proxyStatus.entries()) {
       if (status === 'generating') {
-        total += proxyProgress.get(id) ?? 0
-        count++
+        total += proxyProgress.get(id) ?? 0;
+        count++;
       }
     }
-    return count > 0 ? total / count : 0
-  }, [proxyStatus, proxyProgress, generatingCount])
+    return count > 0 ? total / count : 0;
+  }, [proxyStatus, proxyProgress, generatingCount]);
 
   const transcribingAvgProgress = useMemo(() => {
-    if (transcribingCount === 0) return 0
-    let total = 0
-    let count = 0
+    if (transcribingCount === 0) return 0;
+    let total = 0;
+    let count = 0;
     for (const [id, status] of transcriptStatus.entries()) {
       if (status === 'queued' || status === 'transcribing') {
-        const progress = transcriptProgress.get(id)
-        total += progress ? getTranscriptionOverallProgress(progress) : 0
-        count++
+        const progress = transcriptProgress.get(id);
+        total += progress ? getTranscriptionOverallProgress(progress) : 0;
+        count++;
       }
     }
-    return count > 0 ? total / count : 0
-  }, [transcriptStatus, transcriptProgress, transcribingCount])
+    return count > 0 ? total / count : 0;
+  }, [transcriptStatus, transcriptProgress, transcribingCount]);
 
   const singleTranscriptionStageLabel = useMemo(() => {
-    if (transcribingCount !== 1) return null
+    if (transcribingCount !== 1) return null;
     for (const [id, status] of transcriptStatus.entries()) {
       if (status === 'queued' || status === 'transcribing') {
-        const progress = transcriptProgress.get(id)
-        return progress ? getTranscriptionStageLabel(progress.stage) : null
+        const progress = transcriptProgress.get(id);
+        return progress ? getTranscriptionStageLabel(progress.stage) : null;
       }
     }
-    return null
-  }, [transcriptStatus, transcriptProgress, transcribingCount])
+    return null;
+  }, [transcriptStatus, transcriptProgress, transcribingCount]);
 
   const handleGenerateSelectedProxies = async () => {
     const selectedItems = selectedMediaIds
       .map((id) => mediaById[id])
-      .filter(
-        (m): m is MediaMetadata =>
-          m !== undefined &&
-          proxyService.canGenerateProxy(m.mimeType) &&
-          proxyStatus.get(m.id) !== 'ready' &&
-          proxyStatus.get(m.id) !== 'generating',
-      )
+      .filter((m): m is MediaMetadata =>
+        m !== undefined
+        && proxyService.canGenerateProxy(m.mimeType)
+        && proxyStatus.get(m.id) !== 'ready'
+        && proxyStatus.get(m.id) !== 'generating'
+      );
 
     selectedItems.forEach((item) => {
-      const proxyKey = getSharedProxyKey(item)
-      proxyService.setProxyKey(item.id, proxyKey)
+      const proxyKey = getSharedProxyKey(item);
+      proxyService.setProxyKey(item.id, proxyKey);
       proxyService.generateProxy(
         item.id,
         item.storageType === 'opfs' && item.opfsPath
@@ -683,244 +635,504 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           : () => mediaLibraryService.getMediaFile(item.id),
         item.width,
         item.height,
-        proxyKey,
-      )
-    })
-  }
+        proxyKey
+      );
+    });
+  };
 
   const handleCancelAllProxies = () => {
     for (const [mediaId, status] of proxyStatus.entries()) {
       if (status !== 'generating') {
-        continue
+        continue;
       }
 
-      const media = mediaById[mediaId]
-      proxyService.cancelProxy(mediaId, media ? getSharedProxyKey(media) : undefined)
+      const media = mediaById[mediaId];
+      proxyService.cancelProxy(mediaId, media ? getSharedProxyKey(media) : undefined);
     }
-  }
+  };
 
   const handleCancelAllTranscriptions = () => {
     for (const [mediaId, status] of transcriptStatus.entries()) {
       if (status !== 'queued' && status !== 'transcribing') {
-        continue
+        continue;
       }
 
-      mediaTranscriptionService.cancelTranscription(mediaId)
+      mediaTranscriptionService.cancelTranscription(mediaId);
     }
-  }
+  };
 
   // Count selected items that are eligible for proxy generation
   const selectedProxyEligibleCount = useMemo(() => {
     return selectedMediaIds.filter((id) => {
-      const m = mediaById[id]
-      return (
-        m &&
-        proxyService.canGenerateProxy(m.mimeType) &&
-        proxyStatus.get(id) !== 'ready' &&
-        proxyStatus.get(id) !== 'generating'
-      )
-    }).length
-  }, [selectedMediaIds, mediaById, proxyStatus])
+      const m = mediaById[id];
+      return m
+        && proxyService.canGenerateProxy(m.mimeType)
+        && proxyStatus.get(id) !== 'ready'
+        && proxyStatus.get(id) !== 'generating';
+    }).length;
+  }, [selectedMediaIds, mediaById, proxyStatus]);
 
   const deleteSummary = useMemo(() => {
-    const parts: string[] = []
+    const parts: string[] = [];
     if (pendingDeletion.mediaIds.length > 0) {
-      parts.push(
-        `${pendingDeletion.mediaIds.length} media item${pendingDeletion.mediaIds.length === 1 ? '' : 's'}`,
-      )
+      parts.push(`${pendingDeletion.mediaIds.length} media item${pendingDeletion.mediaIds.length === 1 ? '' : 's'}`);
     }
     if (pendingDeletion.compositionIds.length > 0) {
-      parts.push(
-        `${pendingDeletion.compositionIds.length} compound clip${pendingDeletion.compositionIds.length === 1 ? '' : 's'}`,
-      )
+      parts.push(`${pendingDeletion.compositionIds.length} compound clip${pendingDeletion.compositionIds.length === 1 ? '' : 's'}`);
     }
-    return parts.join(' and ')
-  }, [pendingDeletion.compositionIds.length, pendingDeletion.mediaIds.length])
+    return parts.join(' and ');
+  }, [pendingDeletion.compositionIds.length, pendingDeletion.mediaIds.length]);
 
-  const affectedMediaImpact = useMemo(
-    () =>
-      pendingDeletion.mediaIds.length > 0
-        ? getMediaDeletionImpact(pendingDeletion.mediaIds)
-        : { itemIds: [], rootReferenceCount: 0, nestedReferenceCount: 0, totalReferenceCount: 0 },
-    [pendingDeletion.mediaIds],
-  )
-  const compoundClipDeleteImpact = useMemo(
-    () =>
-      pendingDeletion.compositionIds.length > 0
-        ? getCompoundClipDeletionImpact(pendingDeletion.compositionIds)
-        : { rootReferenceCount: 0, nestedReferenceCount: 0, totalReferenceCount: 0 },
-    [pendingDeletion.compositionIds],
-  )
-  const affectedAssetInstanceCount =
-    affectedMediaImpact.totalReferenceCount + compoundClipDeleteImpact.totalReferenceCount
+  const affectedMediaImpact = useMemo(() => (
+    pendingDeletion.mediaIds.length > 0
+      ? getMediaDeletionImpact(pendingDeletion.mediaIds)
+      : { itemIds: [], rootReferenceCount: 0, nestedReferenceCount: 0, totalReferenceCount: 0 }
+  ), [pendingDeletion.mediaIds]);
+  const compoundClipDeleteImpact = useMemo(() => (
+    pendingDeletion.compositionIds.length > 0
+      ? getCompoundClipDeletionImpact(pendingDeletion.compositionIds)
+      : { rootReferenceCount: 0, nestedReferenceCount: 0, totalReferenceCount: 0 }
+  ), [pendingDeletion.compositionIds]);
+  const affectedAssetInstanceCount = affectedMediaImpact.totalReferenceCount + compoundClipDeleteImpact.totalReferenceCount;
 
   const handleDeleteSelected = () => {
-    if (selectedAssetCount === 0) return
+    if (selectedAssetCount === 0) return;
     // Capture the IDs BEFORE opening dialog (selection may be cleared by click outside)
     setPendingDeletion({
       mediaIds: [...selectedMediaIds],
       compositionIds: [...selectedCompositionIds],
-    })
-    setShowDeleteDialog(true)
-  }
+    });
+    setShowDeleteDialog(true);
+  };
 
   const handleConfirmDelete = async () => {
-    setShowDeleteDialog(false)
+    setShowDeleteDialog(false);
     try {
       // First remove timeline items that reference selected library assets
       if (affectedMediaImpact.itemIds.length > 0) {
-        removeProjectItems(affectedMediaImpact.itemIds)
+        removeProjectItems(affectedMediaImpact.itemIds);
       }
 
       if (pendingDeletion.mediaIds.length > 0) {
-        await deleteMediaBatch(pendingDeletion.mediaIds)
+        await deleteMediaBatch(pendingDeletion.mediaIds);
       }
 
       if (pendingDeletion.compositionIds.length > 0) {
-        deleteCompoundClips(pendingDeletion.compositionIds)
+        deleteCompoundClips(pendingDeletion.compositionIds);
       }
 
-      clearSelection()
-      setPendingDeletion({ mediaIds: [], compositionIds: [] })
+      clearSelection();
+      setPendingDeletion({ mediaIds: [], compositionIds: [] });
     } catch (error) {
-      logger.error('Delete failed:', error)
-      setPendingDeletion({ mediaIds: [], compositionIds: [] })
+      logger.error('Delete failed:', error);
+      setPendingDeletion({ mediaIds: [], compositionIds: [] });
     }
-  }
+  };
 
-  const handleScrollContentClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (isMarqueeJustFinished()) return
+  const handleScrollContentClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (isMarqueeJustFinished()) return;
 
-      const target = event.target as HTMLElement
-      if (!target.closest('[data-media-id], [data-composition-id]')) {
-        clearSelection()
+    const target = event.target as HTMLElement;
+    if (!target.closest('[data-media-id], [data-composition-id]')) {
+      clearSelection();
+    }
+  }, [clearSelection]);
+
+  // Count selected video items eligible for merge
+  const selectedVideoCount = useMemo(() => {
+    return selectedMediaIds.filter((id) => {
+      const m = mediaById[id];
+      return m && m.mimeType.startsWith('video/');
+    }).length;
+  }, [selectedMediaIds, mediaById]);
+
+  // Preload FFmpeg engine when 2+ videos are selected (likely to merge)
+  useEffect(() => {
+    if (selectedVideoCount >= 2) {
+      ffmpegMergeService.preload().catch(() => {
+        // Best effort — merge will load on demand if preload fails
+      });
+    }
+  }, [selectedVideoCount]);
+
+  const handleMergeSelected = useCallback(async () => {
+    if (selectedVideoCount < 2 || isMergingRef.current) return;
+    isMergingRef.current = true;
+
+    const store = useMediaLibraryStore.getState();
+    const projectId = store.currentProjectId;
+    if (!projectId) {
+      store.showNotification({ type: 'error', message: 'No project selected' });
+      isMergingRef.current = false;
+      return;
+    }
+
+    const videoItems = selectedMediaIds
+      .map((id) => mediaById[id])
+      .filter((m): m is MediaMetadata =>
+        m !== undefined && m.mimeType.startsWith('video/')
+      );
+
+    if (videoItems.length < 2) {
+      isMergingRef.current = false;
+      return;
+    }
+
+    try {
+      setMergeProgress({ status: 'loading', text: 'Menyiapkan video files…', progress: 0 });
+
+      const files: Array<{ blob: Blob; name: string; videoCodec?: string; audioCodec?: string; mimeType?: string }> = [];
+      for (let i = 0; i < videoItems.length; i++) {
+        const item = videoItems[i]!;
+        setMergeProgress({
+          status: 'loading',
+          text: `Membaca ${i + 1}/${videoItems.length}: ${item.fileName}`,
+          progress: Math.round((i / videoItems.length) * 30),
+        });
+        const blob = await mediaLibraryService.getMediaFile(item.id);
+        if (!blob) throw new Error(`Gagal membaca file: ${item.fileName}`);
+        files.push({
+          blob,
+          name: item.fileName,
+          videoCodec: item.codec,
+          audioCodec: item.audioCodec,
+          mimeType: item.mimeType,
+        });
       }
-    },
-    [clearSelection],
-  )
+
+      let lastProgressUpdate = 0;
+      const mergedBlob = await ffmpegMergeService.mergeVideos(files, (evt) => {
+        const now = Date.now();
+        if (evt.status === 'done' || evt.status === 'error' || now - lastProgressUpdate >= 250) {
+          lastProgressUpdate = now;
+          setMergeProgress(evt);
+        }
+      });
+
+      const firstName = videoItems[0]!.fileName.replace(/\.[^.]+$/, '');
+      const lastName = videoItems[videoItems.length - 1]!.fileName.replace(/\.[^.]+$/, '');
+      const mergedFileName = `${firstName}_to_${lastName}_merged.mp4`;
+
+      setMergeProgress({ status: 'merging', text: 'Mengimpor hasil merge ke library…', progress: 98 });
+
+      // Import merged result as a new media item via OPFS
+      // Use importOnlineMedia directly (not importMediaFromUrl) because
+      // blob: URLs are rejected by the URL validator in importMediaFromUrl.
+      const mergedUrl = URL.createObjectURL(mergedBlob);
+      try {
+        await mediaLibraryService.importOnlineMedia(
+          mergedUrl,
+          mergedFileName,
+          projectId,
+        );
+      } finally {
+        URL.revokeObjectURL(mergedUrl);
+      }
+
+      await store.loadMediaItems();
+      setMergeProgress({ status: 'done', text: 'Merge selesai!', progress: 100 });
+      store.showNotification({
+        type: 'success',
+        message: `Berhasil merge ${videoItems.length} video → ${mergedFileName}`,
+      });
+      setTimeout(() => setMergeProgress(null), 3000);
+    } catch (error) {
+      logger.error('Merge selected videos failed:', error);
+      setMergeProgress({
+        status: 'error',
+        text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        progress: 0,
+      });
+      store.showNotification({
+        type: 'error',
+        message: `Merge gagal: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    } finally {
+      isMergingRef.current = false;
+    }
+  }, [selectedMediaIds, mediaById, selectedVideoCount]);
+
+  const totalMediaCount = filteredMediaItems.length;
+  const allLocalSelected = totalMediaCount > 0 && selectedMediaIds.length === totalMediaCount;
+  const someLocalSelected = selectedMediaIds.length > 0 && selectedMediaIds.length < totalMediaCount;
+
+  const handleSelectAll = useCallback(() => {
+    if (allLocalSelected) {
+      clearSelection();
+    } else {
+      const allIds = filteredMediaItems.map((m) => m.id);
+      setSelection({ mediaIds: allIds, compositionIds: [] });
+    }
+  }, [allLocalSelected, clearSelection, filteredMediaItems, setSelection]);
+
+  const handleAddSelectedToTimeline = useCallback(async () => {
+    if (selectedMediaIds.length === 0) return;
+
+    const store = useMediaLibraryStore.getState();
+    const allMedia = store.mediaItems;
+    const selectedMedia = selectedMediaIds
+      .map((id) => allMedia.find((m) => m.id === id))
+      .filter((m): m is MediaMetadata => m !== undefined);
+
+    if (selectedMedia.length === 0) return;
+
+    try {
+      const fps = useTimelineStore.getState().fps;
+      const currentProject = useProjectStore.getState().currentProject;
+      const canvasWidth = currentProject?.metadata.width ?? 1920;
+      const canvasHeight = currentProject?.metadata.height ?? 1080;
+      const tracks = useItemsStore.getState().tracks;
+
+      const items = useItemsStore.getState().items;
+      let endFrame = 0;
+      for (const item of items) {
+        const itemEnd = item.from + item.durationInFrames;
+        if (itemEnd > endFrame) endFrame = itemEnd;
+      }
+
+      const avTrack =
+        tracks.find((t: import('@/types/timeline').TimelineTrack) => t.kind === 'video') ?? tracks[0];
+      const audioTrack = tracks.find(
+        (t: import('@/types/timeline').TimelineTrack) => t.kind === 'audio',
+      );
+
+      if (!avTrack) {
+        store.showNotification({ type: 'warning', message: 'No tracks available in the timeline' });
+        return;
+      }
+
+      const allTimelineItems: import('@/types/timeline').TimelineItem[] = [];
+      let currentFrame = endFrame;
+
+      for (const media of selectedMedia) {
+        const mType = getMediaType(media.mimeType) as 'video' | 'audio' | 'image';
+        const blobUrl = await resolveMediaUrl(media.id);
+        if (!blobUrl) continue;
+
+        const needsThumbnail = mType === 'video' || mType === 'image';
+        const thumbUrl = needsThumbnail
+          ? await mediaLibraryService.getThumbnailBlobUrl(media.id)
+          : null;
+
+        const durationInFrames = getDroppedMediaDurationInFrames(media, mType, fps);
+        const targetTrack = mType === 'audio' ? (audioTrack ?? avTrack) : avTrack;
+        const hasAudio = mType === 'video' && !!media.audioCodec;
+        const originId = crypto.randomUUID();
+        const linkedGroupId = hasAudio ? crypto.randomUUID() : undefined;
+
+        const primaryItem = buildDroppedMediaTimelineItem({
+          media,
+          mediaId: media.id,
+          mediaType: mType,
+          label: media.fileName,
+          timelineFps: fps,
+          blobUrl,
+          thumbnailUrl: thumbUrl,
+          canvasWidth,
+          canvasHeight,
+          placement: { trackId: targetTrack.id, from: currentFrame, durationInFrames },
+          originId,
+          linkedGroupId,
+        });
+        allTimelineItems.push(primaryItem);
+
+        if (hasAudio && audioTrack) {
+          const audioItem = buildDroppedMediaTimelineItem({
+            media,
+            mediaId: media.id,
+            mediaType: 'audio',
+            label: media.fileName,
+            timelineFps: fps,
+            blobUrl,
+            thumbnailUrl: null,
+            canvasWidth,
+            canvasHeight,
+            placement: { trackId: audioTrack.id, from: currentFrame, durationInFrames },
+            originId,
+            linkedGroupId,
+          });
+          allTimelineItems.push(audioItem);
+        }
+
+        currentFrame += durationInFrames;
+      }
+
+      if (allTimelineItems.length > 0) {
+        timelineAddItems(allTimelineItems);
+        store.showNotification({
+          type: 'success',
+          message: `Added ${selectedMedia.length} media to timeline`,
+        });
+      }
+    } catch {
+      useMediaLibraryStore.getState().showNotification({
+        type: 'error',
+        message: 'Failed to add selected media to timeline',
+      });
+    }
+  }, [selectedMediaIds]);
 
   return (
     <div ref={containerRef} className="h-full flex flex-col">
+      {/* Tab bar: Local / Online */}
+      <div className="px-3 py-2 border-b border-border flex-shrink-0">
+        <div className="flex bg-secondary p-0.5 rounded-md border border-border">
+          <button
+            onClick={() => setActiveTab('local')}
+            className={cn(
+              'flex items-center gap-1.5 h-6 px-2.5 rounded text-[11px] font-medium transition-colors',
+              activeTab === 'local'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <FolderOpen className="w-3 h-3" />
+            <span>Local</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('online')}
+            className={cn(
+              'flex items-center gap-1.5 h-6 px-2.5 rounded text-[11px] font-medium transition-colors',
+              activeTab === 'online'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <CloudDownload className="w-3 h-3" />
+            <span>Online</span>
+          </button>
+        </div>
+      </div>
+
       {/* Header toolbar */}
-      <div className="@container px-3 py-2 border-b border-border flex-shrink-0">
-        <TooltipProvider>
-          <div className="flex flex-nowrap items-center gap-2 text-xs min-w-0 overflow-hidden">
-            {/* Import action */}
-            <HeaderActionTooltip label="Import media files">
-              <button
-                onClick={handleImport}
-                disabled={!currentProjectId}
-                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0
-                  bg-primary text-primary-foreground
-                  hover:bg-primary/90
-                  disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors duration-150"
-              >
-                <FolderOpen className="w-3.5 h-3.5" />
-                <span className="hidden @[260px]:inline">Import</span>
-              </button>
-            </HeaderActionTooltip>
-
-            <HeaderActionTooltip label="Import media from URL">
-              <button
-                onClick={() => setShowImportUrlDialog(true)}
-                disabled={!currentProjectId}
-                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0 border
-                  bg-secondary border-border text-muted-foreground
-                  hover:text-primary hover:bg-primary/10 hover:border-primary/40
-                  disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-colors duration-150"
-              >
-                <Link className="w-3.5 h-3.5" />
-                <span className="hidden @[360px]:inline">URL</span>
-              </button>
-            </HeaderActionTooltip>
-
-            {/* Missing media indicator */}
-            {currentProjectBrokenMediaIds.length > 0 && (
-              <HeaderActionTooltip
-                label={`View ${currentProjectBrokenMediaIds.length} missing media file${currentProjectBrokenMediaIds.length === 1 ? '' : 's'}`}
-              >
+      {activeTab === 'local' && (
+        <div className="@container px-3 py-2 border-b border-border flex-shrink-0">
+          <TooltipProvider>
+            <div className="flex flex-nowrap items-center gap-2 text-xs min-w-0 overflow-hidden">
+              {/* Import action */}
+              <HeaderActionTooltip label="Import media files">
                 <button
-                  onClick={openMissingMediaDialog}
+                  onClick={handleImport}
+                  disabled={!currentProjectId}
                   className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0
-                    bg-destructive/10 border border-destructive/25 text-destructive
-                    hover:bg-destructive/20 hover:border-destructive/40
+                    bg-primary text-primary-foreground
+                    hover:bg-primary/90
+                    disabled:opacity-40 disabled:cursor-not-allowed
                     transition-colors duration-150"
                 >
-                  <Link2Off className="w-3.5 h-3.5" />
-                  <span className="hidden @[340px]:inline">
-                    {currentProjectBrokenMediaIds.length} Missing
-                  </span>
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span className="hidden @[260px]:inline">Import</span>
                 </button>
               </HeaderActionTooltip>
-            )}
 
-            {/* Selection indicator & actions */}
-            {selectedAssetCount > 0 && (
-              <>
-                <div className="h-4 w-px bg-border hidden @[300px]:block" />
+              <HeaderActionTooltip label="Import media from URL">
+                <button
+                  onClick={() => setShowImportUrlDialog(true)}
+                  disabled={!currentProjectId}
+                  className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0 border
+                    bg-secondary border-border text-muted-foreground
+                    hover:text-primary hover:bg-primary/10 hover:border-primary/40
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                    transition-colors duration-150"
+                >
+                  <Link className="w-3.5 h-3.5" />
+                  <span className="hidden @[360px]:inline">URL</span>
+                </button>
+              </HeaderActionTooltip>
 
-                {/* Selection badge */}
-                <div className="flex items-center gap-1 h-7 pl-2 pr-1 rounded-md bg-accent/50 border border-border min-w-0 max-w-full">
-                  <span className="tabular-nums shrink-0">{selectedAssetCount}</span>
-                  <span className="text-muted-foreground hidden @[360px]:inline">selected</span>
-                  <HeaderActionTooltip label="Clear selection">
-                    <button
-                      onClick={clearSelection}
-                      className="ml-0.5 p-1 rounded hover:bg-foreground/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </HeaderActionTooltip>
-                </div>
-
-                {/* Generate proxies for selection */}
-                {selectedProxyEligibleCount > 0 && (
-                  <HeaderActionTooltip
-                    label={`Generate proxies for ${selectedProxyEligibleCount} selected item${selectedProxyEligibleCount === 1 ? '' : 's'}`}
-                  >
-                    <button
-                      onClick={handleGenerateSelectedProxies}
-                      className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0 border
-                        bg-secondary border-border text-muted-foreground
-                        hover:text-primary hover:bg-primary/10 hover:border-primary/40
-                        transition-colors duration-150"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span className="hidden @[440px]:inline">
-                        Proxy ({selectedProxyEligibleCount})
-                      </span>
-                    </button>
-                  </HeaderActionTooltip>
-                )}
-
-                {/* Delete action */}
-                <HeaderActionTooltip label="Delete selected assets">
+              {/* Missing media indicator */}
+              {currentProjectBrokenMediaIds.length > 0 && (
+                <HeaderActionTooltip label={`View ${currentProjectBrokenMediaIds.length} missing media file${currentProjectBrokenMediaIds.length === 1 ? '' : 's'}`}>
                   <button
-                    onClick={handleDeleteSelected}
+                    onClick={openMissingMediaDialog}
                     className="flex items-center gap-1.5 h-7 px-2.5 rounded-md shrink-0
                       bg-destructive/10 border border-destructive/25 text-destructive
                       hover:bg-destructive/20 hover:border-destructive/40
                       transition-colors duration-150"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span className="hidden @[400px]:inline">Delete</span>
+                    <Link2Off className="w-3.5 h-3.5" />
+                    <span className="hidden @[340px]:inline">{currentProjectBrokenMediaIds.length} Missing</span>
                   </button>
                 </HeaderActionTooltip>
-              </>
-            )}
-          </div>
-        </TooltipProvider>
-      </div>
+              )}
+
+
+              {/* Selection indicator & actions */}
+              {selectedAssetCount > 0 && (
+                <>
+                  <div className="h-4 w-px bg-border hidden @[300px]:block" />
+
+                  {/* Selection badge */}
+                  <div className="flex items-center gap-1 h-7 pl-2 pr-1 rounded-md bg-accent/50 border border-border min-w-0 max-w-full">
+                    <span className="tabular-nums shrink-0">{selectedAssetCount}</span>
+                    <span className="text-muted-foreground hidden @[360px]:inline">selected</span>
+                    <HeaderActionTooltip label="Clear selection">
+                      <button
+                        onClick={clearSelection}
+                        className="ml-0.5 p-1 rounded hover:bg-foreground/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </HeaderActionTooltip>
+                  </div>
+
+                  {/* Bulk actions dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="flex items-center gap-1 h-7 px-2 rounded-md shrink-0
+                          bg-secondary border border-border text-foreground
+                          hover:bg-secondary/80
+                          transition-colors duration-150"
+                        title="Bulk actions"
+                      >
+                        <MoreHorizontal className="w-3.5 h-3.5" />
+                        <span className="hidden @[400px]:inline">Actions</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleAddSelectedToTimeline}>
+                        <ListPlus className="w-3 h-3 mr-2" />
+                        Add to Timeline ({selectedMediaIds.length})
+                      </DropdownMenuItem>
+                      {selectedVideoCount >= 2 && (
+                        <DropdownMenuItem
+                          onClick={handleMergeSelected}
+                          disabled={isMergingRef.current}
+                        >
+                          <Merge className="w-3 h-3 mr-2" />
+                          Merge Selected ({selectedVideoCount})
+                        </DropdownMenuItem>
+                      )}
+                      {selectedProxyEligibleCount > 0 && (
+                        <DropdownMenuItem onClick={handleGenerateSelectedProxies}>
+                          <Zap className="w-3 h-3 mr-2" />
+                          Generate Proxy ({selectedProxyEligibleCount})
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleDeleteSelected}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-3 h-3 mr-2" />
+                        Delete Selected ({selectedAssetCount})
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </div>
+          </TooltipProvider>
+        </div>
+      )}
 
       <Dialog
         open={showImportUrlDialog}
         onOpenChange={(open) => {
-          setShowImportUrlDialog(open)
+          setShowImportUrlDialog(open);
           if (!open && !isImportUrlSubmitting) {
-            setImportUrlValue('')
+            setImportUrlValue('');
           }
         }}
       >
@@ -928,9 +1140,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           <DialogHeader>
             <DialogTitle>Import From URL</DialogTitle>
             <DialogDescription>
-              Paste a direct link to a media file. MP4, WebM, MOV, MP3, WAV, JPG, PNG, GIF, WebP,
-              and SVG links work when the site allows browser downloads. YouTube and similar page
-              URLs usually will not.
+              Paste a direct link to a media file. MP4, WebM, MOV, MP3, WAV, JPG, PNG, GIF, WebP, and SVG links work when the site allows browser downloads. YouTube and similar page URLs usually will not.
             </DialogDescription>
           </DialogHeader>
 
@@ -956,8 +1166,8 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
                 variant="outline"
                 onClick={() => {
                   if (!isImportUrlSubmitting) {
-                    setShowImportUrlDialog(false)
-                    setImportUrlValue('')
+                    setShowImportUrlDialog(false);
+                    setImportUrlValue('');
                   }
                 }}
                 disabled={isImportUrlSubmitting}
@@ -966,9 +1176,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  !currentProjectId || importUrlValue.trim().length === 0 || isImportUrlSubmitting
-                }
+                disabled={!currentProjectId || importUrlValue.trim().length === 0 || isImportUrlSubmitting}
               >
                 {isImportUrlSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Import
@@ -977,6 +1185,22 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ===== Online Media Tab ===== */}
+      {activeTab === 'online' && (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <OnlineMediaTab
+            viewMode={viewMode}
+            itemSize={mediaItemSize}
+            sortBy={sortBy}
+            filterByType={filterByType}
+            onSwitchToLocal={() => setActiveTab('local')}
+          />
+        </div>
+      )}
+
+      {/* ===== Local Media Content ===== */}
+      {activeTab === 'local' && (<>
 
       {/* Error message */}
       {error && (
@@ -1007,43 +1231,35 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
 
       {/* Notification message */}
       {notification && (
-        <div
-          className={`mx-4 mt-3 p-2.5 rounded text-xs animate-in slide-in-from-top-2 duration-200 ${
-            notification.type === 'info'
-              ? 'bg-orange-500/10 border border-orange-500/30'
-              : notification.type === 'warning'
-                ? 'bg-yellow-500/10 border border-yellow-500/30'
-                : notification.type === 'success'
-                  ? 'bg-green-500/10 border border-green-500/30'
-                  : 'bg-destructive/10 border border-destructive/50'
-          }`}
-        >
+        <div className={`mx-4 mt-3 p-2.5 rounded text-xs animate-in slide-in-from-top-2 duration-200 ${
+          notification.type === 'info'
+            ? 'bg-orange-500/10 border border-orange-500/30'
+            : notification.type === 'warning'
+            ? 'bg-yellow-500/10 border border-yellow-500/30'
+            : notification.type === 'success'
+            ? 'bg-green-500/10 border border-green-500/30'
+            : 'bg-destructive/10 border border-destructive/50'
+        }`}>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Info
-                className={`w-3.5 h-3.5 flex-shrink-0 ${
-                  notification.type === 'info'
-                    ? 'text-orange-500'
-                    : notification.type === 'warning'
-                      ? 'text-yellow-500'
-                      : notification.type === 'success'
-                        ? 'text-green-500'
-                        : 'text-destructive'
-                }`}
-              />
-              <p
-                className={`leading-relaxed line-clamp-2 ${
-                  notification.type === 'info'
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : notification.type === 'warning'
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : notification.type === 'success'
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-destructive'
-                }`}
-              >
-                {notification.message}
-              </p>
+              <Info className={`w-3.5 h-3.5 flex-shrink-0 ${
+                notification.type === 'info'
+                  ? 'text-orange-500'
+                  : notification.type === 'warning'
+                  ? 'text-yellow-500'
+                  : notification.type === 'success'
+                  ? 'text-green-500'
+                  : 'text-destructive'
+              }`} />
+              <p className={`leading-relaxed line-clamp-2 ${
+                notification.type === 'info'
+                  ? 'text-orange-600 dark:text-orange-400'
+                  : notification.type === 'warning'
+                  ? 'text-yellow-600 dark:text-yellow-400'
+                  : notification.type === 'success'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-destructive'
+              }`}>{notification.message}</p>
             </div>
             <button
               onClick={clearNotification}
@@ -1090,7 +1306,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
             <HeaderActionTooltip label="Show media library">
               <button
                 onClick={() => {
-                  if (sceneBrowserOpen) closeSceneBrowser()
+                  if (sceneBrowserOpen) closeSceneBrowser();
                 }}
                 aria-pressed={!sceneBrowserOpen}
                 className={cn(
@@ -1107,7 +1323,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
             <HeaderActionTooltip label="Search scenes (Ctrl+Shift+F)">
               <button
                 onClick={() => {
-                  if (!sceneBrowserOpen) openSceneBrowser()
+                  if (!sceneBrowserOpen) openSceneBrowser();
                 }}
                 aria-pressed={sceneBrowserOpen}
                 className={cn(
@@ -1124,139 +1340,159 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           </div>
         </div>
 
-        {!sceneBrowserOpen && (
-          <>
-            {/* Filters and sort */}
-            <div className="@container flex items-center gap-1.5 min-w-0">
-              {/* Filter by type */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`h-6 bg-secondary border text-[10px] px-2 flex-shrink-0 ${
-                      filterByType
-                        ? 'border-primary text-primary hover:bg-primary/10'
-                        : 'border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
-                    }`}
-                  >
-                    <Filter className="w-2.5 h-2.5" />
-                    <span className="hidden @[280px]:inline ml-1">
-                      {filterByType ? filterByType.toUpperCase() : 'ALL'}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-popover border border-border">
-                  <DropdownMenuItem
-                    onClick={() => setFilterByType(null)}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    All Types
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem
-                    onClick={() => setFilterByType('video')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <Video className="w-3 h-3 mr-2" />
-                    Video
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setFilterByType('audio')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <FileAudio className="w-3 h-3 mr-2" />
-                    Audio
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setFilterByType('image')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <ImageIcon className="w-3 h-3 mr-2" />
-                    Image
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        {!sceneBrowserOpen && (<>
 
-              {/* Sort by */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 bg-secondary border border-border text-muted-foreground hover:border-primary/50 hover:text-primary text-[10px] px-2 flex-shrink-0"
-                  >
-                    <SortAsc className="w-2.5 h-2.5" />
-                    <span className="hidden @[280px]:inline ml-1">
-                      {sortBy === 'name' ? 'NAME' : sortBy === 'date' ? 'DATE' : 'SIZE'}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-popover border border-border">
-                  <DropdownMenuItem
-                    onClick={() => setSortBy('date')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    Date (Newest)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setSortBy('name')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    Name (A-Z)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setSortBy('size')}
-                    className="text-xs hover:bg-accent hover:text-accent-foreground"
-                  >
-                    Size (Largest)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
 
-              {/* View mode toggle + item size */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                {viewMode === 'grid' && (
-                  <Slider
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={[mediaItemSize]}
-                    onValueChange={([v]) => setMediaItemSize(v ?? 3)}
-                    className="flex-1 min-w-6 max-w-24"
-                    aria-label="Grid item size"
-                  />
-                )}
-                <div className="flex items-center border border-border rounded bg-secondary flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className={`h-6 w-6 p-0 rounded-none rounded-l ${
-                      viewMode === 'grid'
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Grid3x3 className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className={`h-6 w-6 p-0 rounded-none rounded-r ${
-                      viewMode === 'list'
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <List className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
+        {/* Filters and sort */}
+        <div className="@container flex items-center gap-1.5 min-w-0">
+          {/* Select all checkbox */}
+          <HeaderActionTooltip label={allLocalSelected ? 'Deselect all' : 'Select all'}>
+            <button
+              onClick={handleSelectAll}
+              className={cn(
+                'flex items-center justify-center w-5 h-5 rounded border shrink-0 transition-colors',
+                allLocalSelected
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : someLocalSelected
+                  ? 'bg-primary/50 border-primary text-primary-foreground'
+                  : 'bg-secondary border-border text-muted-foreground hover:border-primary/50',
+              )}
+              aria-label={allLocalSelected ? 'Deselect all' : 'Select all'}
+            >
+              {(allLocalSelected || someLocalSelected) && (
+                <Check className="w-3 h-3" />
+              )}
+            </button>
+          </HeaderActionTooltip>
+
+          {/* Filter by type */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-6 bg-secondary border text-[10px] px-2 flex-shrink-0 ${
+                  filterByType
+                    ? 'border-primary text-primary hover:bg-primary/10'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
+                }`}
+              >
+                <Filter className="w-2.5 h-2.5" />
+                <span className="hidden @[280px]:inline ml-1">
+                  {filterByType ? filterByType.toUpperCase() : 'ALL'}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-popover border border-border">
+              <DropdownMenuItem
+                onClick={() => setFilterByType(null)}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                All Types
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem
+                onClick={() => setFilterByType('video')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                <Video className="w-3 h-3 mr-2" />
+                Video
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setFilterByType('audio')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                <FileAudio className="w-3 h-3 mr-2" />
+                Audio
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setFilterByType('image')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                <ImageIcon className="w-3 h-3 mr-2" />
+                Image
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sort by */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 bg-secondary border border-border text-muted-foreground hover:border-primary/50 hover:text-primary text-[10px] px-2 flex-shrink-0"
+              >
+                <SortAsc className="w-2.5 h-2.5" />
+                <span className="hidden @[280px]:inline ml-1">
+                  {sortBy === 'name' ? 'NAME' : sortBy === 'date' ? 'DATE' : 'SIZE'}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-popover border border-border">
+              <DropdownMenuItem
+                onClick={() => setSortBy('date')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                Date (Newest)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSortBy('name')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                Name (A-Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSortBy('size')}
+                className="text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                Size (Largest)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* View mode toggle + item size */}
+          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+            {viewMode === 'grid' && (
+              <Slider
+                min={1}
+                max={5}
+                step={1}
+                value={[mediaItemSize]}
+                onValueChange={([v]) => setMediaItemSize(v ?? 3)}
+                className="flex-1 min-w-6 max-w-24"
+                aria-label="Grid item size"
+              />
+            )}
+            <div className="flex items-center border border-border rounded bg-secondary flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={`h-6 w-6 p-0 rounded-none rounded-l ${
+                  viewMode === 'grid'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Grid3x3 className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className={`h-6 w-6 p-0 rounded-none rounded-r ${
+                  viewMode === 'list'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <List className="w-3 h-3" />
+              </Button>
             </div>
-          </>
-        )}
+          </div>
+        </div>
+        </>)}
       </div>
 
       {/* Composition navigation banner — shown when inside a sub-composition */}
@@ -1303,14 +1539,12 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
               icon={group.icon}
               items={group.items}
               isOpen={openGroups.has(group.key)}
-              onToggle={(key, open) =>
-                setOpenGroups((prev) => {
-                  const next = new Set(prev)
-                  if (open) next.add(key)
-                  else next.delete(key)
-                  return next
-                })
-              }
+              onToggle={(key, open) => setOpenGroups((prev) => {
+                const next = new Set(prev);
+                if (open) next.add(key);
+                else next.delete(key);
+                return next;
+              })}
               onMediaSelect={onMediaSelect}
               viewMode={viewMode}
               itemSize={mediaItemSize}
@@ -1319,7 +1553,11 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
 
           {/* Loading / empty state when no groups to show */}
           {mediaGroups.length === 0 && (
-            <MediaGrid onMediaSelect={onMediaSelect} viewMode={viewMode} itemSize={mediaItemSize} />
+            <MediaGrid
+              onMediaSelect={onMediaSelect}
+              viewMode={viewMode}
+              itemSize={mediaItemSize}
+            />
           )}
         </div>
 
@@ -1336,27 +1574,13 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
               </div>
               <p className="text-base font-bold tracking-wide text-primary">DROP FILES HERE</p>
               <div className="flex flex-wrap justify-center gap-2 mt-2">
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  MP4
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  WebM
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  MOV
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  MP3
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  WAV
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  JPG
-                </span>
-                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">
-                  PNG
-                </span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">MP4</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">WebM</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">MOV</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">MP3</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">WAV</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">JPG</span>
+                <span className="px-2 py-0.5 bg-secondary border border-border rounded text-xs font-mono text-muted-foreground">PNG</span>
               </div>
             </div>
             <div className="absolute inset-0 overflow-hidden">
@@ -1365,6 +1589,24 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           </div>
         )}
       </div>
+
+      </>)}
+
+      {/* Merge progress bar */}
+      {mergeProgress && mergeProgress.status !== 'done' && (
+        <BackgroundTaskProgress
+          icon={<Merge className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
+          label={mergeProgress.text || 'Merging videos…'}
+          progressAriaLabel="Video merge progress"
+          progressPercent={mergeProgress.progress ?? 0}
+          meta={(
+            <span className="tabular-nums">
+              {Math.round(mergeProgress.progress ?? 0)}%
+            </span>
+          )}
+          fillClassName="bg-orange-500"
+        />
+      )}
 
       {/* Background AI analysis status */}
       {analysisProgress && (
@@ -1377,7 +1619,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           }
           progressAriaLabel="AI analysis progress"
           progressPercent={analysisPercent}
-          meta={
+          meta={(
             <>
               <span className="tabular-nums">{Math.round(analysisPercent)}%</span>
               {!analysisProgress.cancelRequested ? (
@@ -1392,7 +1634,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
                 <span className="text-muted-foreground/80">Cancelling…</span>
               )}
             </>
-          }
+          )}
           trailing={<Sparkles className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />}
           fillClassName="bg-purple-500"
         />
@@ -1405,12 +1647,16 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           label={`Generating ${transcribingCount} ${transcribingCount === 1 ? 'transcript' : 'transcripts'} in background`}
           progressAriaLabel="Transcript generation progress"
           progressPercent={transcribingAvgProgress * 100}
-          meta={
+          meta={(
             <>
               {singleTranscriptionStageLabel && (
-                <span className="hidden sm:inline truncate">{singleTranscriptionStageLabel}</span>
+                <span className="hidden sm:inline truncate">
+                  {singleTranscriptionStageLabel}
+                </span>
               )}
-              <span className="tabular-nums">{Math.round(transcribingAvgProgress * 100)}%</span>
+              <span className="tabular-nums">
+                {Math.round(transcribingAvgProgress * 100)}%
+              </span>
               <button
                 type="button"
                 onClick={handleCancelAllTranscriptions}
@@ -1419,7 +1665,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
                 Cancel all
               </button>
             </>
-          }
+          )}
           fillClassName="bg-blue-500"
         />
       )}
@@ -1431,9 +1677,11 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           label={`Generating ${generatingCount} ${generatingCount === 1 ? 'proxy' : 'proxies'} in background`}
           progressAriaLabel="Proxy generation progress"
           progressPercent={generatingAvgProgress * 100}
-          meta={
+          meta={(
             <>
-              <span className="tabular-nums">{Math.round(generatingAvgProgress * 100)}%</span>
+              <span className="tabular-nums">
+                {Math.round(generatingAvgProgress * 100)}%
+              </span>
               <button
                 type="button"
                 onClick={handleCancelAllProxies}
@@ -1442,7 +1690,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
                 Cancel all
               </button>
             </>
-          }
+          )}
           fillClassName="bg-green-500"
         />
       )}
@@ -1451,9 +1699,9 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
       <AlertDialog
         open={showDeleteDialog}
         onOpenChange={(open) => {
-          setShowDeleteDialog(open)
+          setShowDeleteDialog(open);
           if (!open) {
-            setPendingDeletion({ mediaIds: [], compositionIds: [] })
+            setPendingDeletion({ mediaIds: [], compositionIds: [] });
           }
         }}
       >
@@ -1463,10 +1711,8 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  Are you sure you want to delete{' '}
-                  {deleteSummary ||
-                    `${deleteAssetCount} selected asset${deleteAssetCount === 1 ? '' : 's'}`}
-                  ? This action cannot be undone.
+                  Are you sure you want to delete {deleteSummary || `${deleteAssetCount} selected asset${deleteAssetCount === 1 ? '' : 's'}`}?
+                  This action cannot be undone.
                 </p>
                 {affectedAssetInstanceCount > 0 && (
                   <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
@@ -1474,9 +1720,7 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
                     <div className="text-sm text-yellow-600 dark:text-yellow-400">
                       <p className="font-medium">Linked instances will be removed</p>
                       <p className="text-xs mt-1 text-yellow-600/80 dark:text-yellow-400/80">
-                        {affectedAssetInstanceCount} clip{affectedAssetInstanceCount > 1 ? 's' : ''}{' '}
-                        across the timeline and nested compound clips reference these assets and
-                        will also be deleted.
+                        {affectedAssetInstanceCount} clip{affectedAssetInstanceCount > 1 ? 's' : ''} across the timeline and nested compound clips reference these assets and will also be deleted.
                       </p>
                     </div>
                   </div>
@@ -1486,15 +1730,8 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete{' '}
-              {deleteSummary || `${deleteAssetCount} asset${deleteAssetCount === 1 ? '' : 's'}`}
-              {affectedAssetInstanceCount > 0
-                ? ` & ${affectedAssetInstanceCount} clip${affectedAssetInstanceCount > 1 ? 's' : ''}`
-                : ''}
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete {deleteSummary || `${deleteAssetCount} asset${deleteAssetCount === 1 ? '' : 's'}`}{affectedAssetInstanceCount > 0 ? ` & ${affectedAssetInstanceCount} clip${affectedAssetInstanceCount > 1 ? 's' : ''}` : ''}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1517,5 +1754,5 @@ export const MediaLibrary = memo(function MediaLibrary({ onMediaSelect }: MediaL
         onCancel={() => resolveUnsupportedCodecDialog(false)}
       />
     </div>
-  )
-})
+  );
+});

@@ -35,9 +35,13 @@
     "test:coverage": "vp test run --coverage",
     "changelog:append": "node scripts/changelog-append.mjs",
     "changelog:rollup": "node scripts/changelog-rollup.mjs",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "postinstall": "node scripts/copy-ffmpeg-core.mjs"
   },
   "dependencies": {
+    "@ffmpeg/core-mt": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^5.2.2",
     "@huggingface/transformers": "^4.0.1",
     "@mediabunny/ac3": "^1.34.3",

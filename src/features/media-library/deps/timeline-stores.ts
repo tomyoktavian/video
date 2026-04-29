@@ -12,4 +12,5 @@ export {
   useItemsStore,
   getSynchronizedLinkedItems,
   wouldCreateCompositionCycle,
-} from './timeline-contract'
+  resolveMediaUrl,
+} from './timeline-contract';
