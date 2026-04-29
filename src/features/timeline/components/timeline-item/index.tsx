@@ -1972,7 +1972,6 @@ export const TimelineItem = memo(
     } = useTimelineItemDropHandlers({
       item,
       trackLocked,
-      draggedTransition,
       addEffects,
     });
 
@@ -3020,7 +3019,7 @@ export const TimelineItem = memo(
           updateTimelineItem(item.id, { fadeOut: 0 });
         }
       },
-      [item, trackLocked, updateTimelineItem],
+      [isVisualFadeItem, item, trackLocked, updateTimelineItem],
     );
     const handleAudioFadeHandleDoubleClick = useCallback(
       (handle: AudioFadeHandle) => {
@@ -3080,7 +3079,7 @@ export const TimelineItem = memo(
           });
         }
       },
-      [isVisualFadeItem, item, trackLocked, updateTimelineItem],
+      [item, trackLocked, updateTimelineItem],
     );
     const contentVisualPreviewItem = useMemo<TimelineItemType>(() => {
       if (
@@ -3356,7 +3355,7 @@ export const TimelineItem = memo(
             : undefined,
         );
       },
-      [handleTrimStart],
+      [handleTrimStart, item.id],
     );
 
     const handleContextMenu = useCallback(
