@@ -62,7 +62,7 @@ export const HOTKEY_EDITOR_SECTIONS: readonly HotkeyEditorSection[] = [
     blurb: 'Timeline history, zoom, and UI toggles.',
     items: [
       { label: 'Undo', keys: ['UNDO'] },
-      { label: 'Redo', keys: ['REDO'] },
+      { label: 'Redo', keys: ['REDO', 'REDO_ALT'] },
       { label: 'Zoom in timeline', keys: ['ZOOM_IN'] },
       { label: 'Zoom out timeline', keys: ['ZOOM_OUT'] },
       { label: 'Zoom to fit all content', keys: ['ZOOM_TO_FIT'] },

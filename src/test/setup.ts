@@ -28,6 +28,15 @@ if (typeof testGlobal.ImageData === 'undefined') {
   testGlobal.ImageData = MockImageData as unknown as typeof ImageData
 }
 
+// Mock ResizeObserver for Radix UI and other components
+if (typeof window !== 'undefined' && typeof window.ResizeObserver === 'undefined') {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
+
 afterEach(() => {
   resetAutoKeyframeStore()
 })
