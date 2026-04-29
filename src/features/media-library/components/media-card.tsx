@@ -487,11 +487,17 @@ export const MediaCard = memo(function MediaCard({
                 onQueueStatusChange: (state) => {
                   if (state === 'queued') {
                     store.setTranscriptStatus(target.id, 'queued')
-                    store.setTranscriptProgress(target.id, { stage: 'queued', progress: 0 })
+                    store.setTranscriptProgress(target.id, {
+                      stage: 'queued',
+                      progress: 0,
+                    })
                     return
                   }
                   store.setTranscriptStatus(target.id, 'transcribing')
-                  store.setTranscriptProgress(target.id, { stage: 'loading', progress: 0 })
+                  store.setTranscriptProgress(target.id, {
+                    stage: 'loading',
+                    progress: 0,
+                  })
                 },
                 onProgress: (progress) => {
                   store.setTranscriptProgress(target.id, progress)
@@ -523,7 +529,7 @@ export const MediaCard = memo(function MediaCard({
             if (targets.length === 1) {
               store.showNotification({
                 type: 'success',
-                message: `Transcript ready for "${targets[0]!.fileName}"`,
+                message: `Transcript ready for '${targets[0]!.fileName}'`,
               })
             } else {
               store.showNotification({
@@ -587,7 +593,7 @@ export const MediaCard = memo(function MediaCard({
       const [only] = targets
       store.showNotification({
         type: 'success',
-        message: `Transcript deleted for "${only!.fileName}"`,
+        message: `Transcript deleted for '${only!.fileName}'`,
       })
     } else if (targets.length > 1 && failures === 0) {
       store.showNotification({
@@ -617,7 +623,9 @@ export const MediaCard = memo(function MediaCard({
         return true
       })
       if (analyzable.length > 1) {
-        await mediaAnalysisService.analyzeBatch({ mediaIds: analyzable.map((m) => m.id) })
+        await mediaAnalysisService.analyzeBatch({
+          mediaIds: analyzable.map((m) => m.id),
+        })
       } else if (analyzable.length === 1) {
         await mediaAnalysisService.analyzeMedia(analyzable[0]!)
       } else {
@@ -652,7 +660,10 @@ export const MediaCard = memo(function MediaCard({
         // Resolve blob URL for the media
         const blobUrl = await resolveMediaUrl(media.id)
         if (!blobUrl) {
-          showNotification({ type: 'error', message: 'Failed to resolve media file' })
+          showNotification({
+            type: 'error',
+            message: 'Failed to resolve media file',
+          })
           return
         }
 
@@ -691,7 +702,10 @@ export const MediaCard = memo(function MediaCard({
         const targetTrack = tracks.find((t) => t.kind === trackKindForMedia) ?? tracks[0]
 
         if (!targetTrack) {
-          showNotification({ type: 'warning', message: 'No tracks available in the timeline' })
+          showNotification({
+            type: 'warning',
+            message: 'No tracks available in the timeline',
+          })
           return
         }
 
@@ -749,11 +763,15 @@ export const MediaCard = memo(function MediaCard({
           timelineAddItem(primaryItem)
         }
 
-        showNotification({ type: 'success', message: `Added "${media.fileName}" to timeline` })
+        showNotification({
+          type: 'success',
+          message: `Added '${media.fileName}' to timeline`,
+        })
       } catch {
-        useMediaLibraryStore
-          .getState()
-          .showNotification({ type: 'error', message: 'Failed to add media to timeline' })
+        useMediaLibraryStore.getState().showNotification({
+          type: 'error',
+          message: 'Failed to add media to timeline',
+        })
       }
     },
     [media, mediaType],
