@@ -7,4 +7,4 @@ export {
   removeItemsFromItemsActions,
   addItem,
   addItems,
-} from './timeline-contract';
+} from './timeline-contract'

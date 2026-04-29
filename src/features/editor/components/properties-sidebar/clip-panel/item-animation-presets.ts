@@ -1,11 +1,6 @@
-import type { TimelineItem } from '@/types/timeline';
-import type {
-  AnimatableProperty,
-  EasingConfig,
-  EasingType,
-  ItemKeyframes,
-} from '@/types/keyframe';
-import type { ResolvedTransform } from '@/types/transform';
+import type { TimelineItem } from '@/types/timeline'
+import type { AnimatableProperty, EasingConfig, EasingType, ItemKeyframes } from '@/types/keyframe'
+import type { ResolvedTransform } from '@/types/transform'
 
 export type ItemAnimationPresetId =
   | 'fade'
@@ -15,23 +10,23 @@ export type ItemAnimationPresetId =
   | 'right'
   | 'tilt'
   | 'pop'
-  | 'swing';
+  | 'swing'
 
-export type ItemAnimationPresetOptionId = 'none' | ItemAnimationPresetId;
-export type ItemAnimationPhase = 'intro' | 'outro';
+export type ItemAnimationPresetOptionId = 'none' | ItemAnimationPresetId
+export type ItemAnimationPhase = 'intro' | 'outro'
 
 export interface ItemAnimationPresetOption {
-  id: ItemAnimationPresetOptionId;
-  label: string;
+  id: ItemAnimationPresetOptionId
+  label: string
 }
 
 export interface ItemAnimationKeyframePayload {
-  itemId: string;
-  property: AnimatableProperty;
-  frame: number;
-  value: number;
-  easing?: EasingType;
-  easingConfig?: EasingConfig;
+  itemId: string
+  property: AnimatableProperty
+  frame: number
+  value: number
+  easing?: EasingType
+  easingConfig?: EasingConfig
 }
 
 export const ITEM_ANIMATION_PRESETS: ItemAnimationPresetOption[] = [
@@ -44,58 +39,50 @@ export const ITEM_ANIMATION_PRESETS: ItemAnimationPresetOption[] = [
   { id: 'tilt', label: 'Tilt' },
   { id: 'pop', label: 'Pop' },
   { id: 'swing', label: 'Swing' },
-];
+]
 
-type ItemAnimationProperty = Extract<AnimatableProperty, 'opacity' | 'x' | 'y' | 'rotation'>;
+type ItemAnimationProperty = Extract<AnimatableProperty, 'opacity' | 'x' | 'y' | 'rotation'>
 type ItemAnimationAnchorTransform = Pick<
   ResolvedTransform,
   ItemAnimationProperty | 'width' | 'height'
->;
+>
 
 interface AnimationValuePair {
-  startValue: number;
-  endValue: number;
-  startEasing?: EasingType;
-  startEasingConfig?: EasingConfig;
+  startValue: number
+  endValue: number
+  startEasing?: EasingType
+  startEasingConfig?: EasingConfig
 }
 
-const ITEM_ANIMATION_PROPERTIES: ItemAnimationProperty[] = [
-  'opacity',
-  'x',
-  'y',
-  'rotation',
-];
-const ITEM_ANIMATION_DURATION_SECONDS = 0.45;
-const DEFAULT_END_EASING: EasingType = 'linear';
-const ROTATION_OFFSET_DEGREES = 8;
-const VALUE_EPSILON = 0.01;
+const ITEM_ANIMATION_PROPERTIES: ItemAnimationProperty[] = ['opacity', 'x', 'y', 'rotation']
+const ITEM_ANIMATION_DURATION_SECONDS = 0.45
+const DEFAULT_END_EASING: EasingType = 'linear'
+const ROTATION_OFFSET_DEGREES = 8
+const VALUE_EPSILON = 0.01
 const SOFT_EASE_OUT: EasingConfig = {
   type: 'cubic-bezier',
   bezier: { x1: 0.16, y1: 1, x2: 0.3, y2: 1 },
-};
+}
 const SOFT_EASE_IN: EasingConfig = {
   type: 'cubic-bezier',
   bezier: { x1: 0.7, y1: 0, x2: 0.84, y2: 0 },
-};
+}
 const TITLE_SPRING: EasingConfig = {
   type: 'spring',
   spring: { tension: 220, friction: 18, mass: 0.9 },
-};
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
-function buildOpacityPair(
-  isIntro: boolean,
-  endOpacity: number,
-): AnimationValuePair {
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+function buildOpacityPair(isIntro: boolean, endOpacity: number): AnimationValuePair {
   return {
     startValue: isIntro ? 0 : endOpacity,
     endValue: isIntro ? endOpacity : 0,
     startEasing: 'cubic-bezier',
     startEasingConfig: isIntro ? SOFT_EASE_OUT : SOFT_EASE_IN,
-  };
+  }
 }
 
 function buildMotionPair(
@@ -112,7 +99,7 @@ function buildMotionPair(
     endValue: isIntro ? restingValue : offsetValue,
     startEasing: isIntro ? introEasing : outroEasing,
     startEasingConfig: isIntro ? introEasingConfig : outroEasingConfig,
-  };
+  }
 }
 
 function getKeyframeAtFrame(
@@ -122,21 +109,18 @@ function getKeyframeAtFrame(
 ) {
   return itemKeyframes?.properties
     .find((entry) => entry.property === property)
-    ?.keyframes.find((keyframe) => keyframe.frame === frame);
+    ?.keyframes.find((keyframe) => keyframe.frame === frame)
 }
 
-export function getItemAnimationDurationFrames(
-  itemDurationInFrames: number,
-  fps: number,
-): number {
+export function getItemAnimationDurationFrames(itemDurationInFrames: number, fps: number): number {
   if (itemDurationInFrames <= 1) {
-    return 0;
+    return 0
   }
 
   return Math.max(
     1,
     Math.min(itemDurationInFrames - 1, Math.round(fps * ITEM_ANIMATION_DURATION_SECONDS)),
-  );
+  )
 }
 
 export function getItemAnimationFrameRange(
@@ -144,23 +128,23 @@ export function getItemAnimationFrameRange(
   fps: number,
   phase: ItemAnimationPhase,
 ) {
-  const durationFrames = getItemAnimationDurationFrames(itemDurationInFrames, fps);
+  const durationFrames = getItemAnimationDurationFrames(itemDurationInFrames, fps)
   if (durationFrames <= 0) {
-    return null;
+    return null
   }
 
   if (phase === 'intro') {
     return {
       startFrame: 0,
       endFrame: durationFrames,
-    };
+    }
   }
 
-  const endFrame = itemDurationInFrames - 1;
+  const endFrame = itemDurationInFrames - 1
   return {
     startFrame: Math.max(0, endFrame - durationFrames),
     endFrame,
-  };
+  }
 }
 
 function getItemAnimationValues(
@@ -168,38 +152,38 @@ function getItemAnimationValues(
   phase: ItemAnimationPhase,
   anchorTransform: ItemAnimationAnchorTransform,
 ): Partial<Record<ItemAnimationProperty, AnimationValuePair>> {
-  const xOffset = clamp(anchorTransform.width * 0.12, 32, 120);
-  const yOffset = clamp(anchorTransform.height * 0.2, 24, 96);
-  const popYOffset = clamp(anchorTransform.height * 0.12, 16, 44);
-  const swingRotation = clamp(anchorTransform.width * 0.03, 8, 18);
-  const popRotation = clamp(anchorTransform.width * 0.015, 4, 8);
-  const isIntro = phase === 'intro';
+  const xOffset = clamp(anchorTransform.width * 0.12, 32, 120)
+  const yOffset = clamp(anchorTransform.height * 0.2, 24, 96)
+  const popYOffset = clamp(anchorTransform.height * 0.12, 16, 44)
+  const swingRotation = clamp(anchorTransform.width * 0.03, 8, 18)
+  const popRotation = clamp(anchorTransform.width * 0.015, 4, 8)
+  const isIntro = phase === 'intro'
 
   switch (presetId) {
     case 'fade':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
-      };
+      }
     case 'rise':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
         y: buildMotionPair(isIntro, anchorTransform.y, anchorTransform.y + yOffset),
-      };
+      }
     case 'drop':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
         y: buildMotionPair(isIntro, anchorTransform.y, anchorTransform.y - yOffset),
-      };
+      }
     case 'left':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
         x: buildMotionPair(isIntro, anchorTransform.x, anchorTransform.x - xOffset),
-      };
+      }
     case 'right':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
         x: buildMotionPair(isIntro, anchorTransform.x, anchorTransform.x + xOffset),
-      };
+      }
     case 'tilt':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
@@ -210,7 +194,7 @@ function getItemAnimationValues(
             ? anchorTransform.rotation - ROTATION_OFFSET_DEGREES
             : anchorTransform.rotation + ROTATION_OFFSET_DEGREES,
         ),
-      };
+      }
     case 'pop':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
@@ -218,11 +202,9 @@ function getItemAnimationValues(
         rotation: buildMotionPair(
           isIntro,
           anchorTransform.rotation,
-          isIntro
-            ? anchorTransform.rotation - popRotation
-            : anchorTransform.rotation + popRotation,
+          isIntro ? anchorTransform.rotation - popRotation : anchorTransform.rotation + popRotation,
         ),
-      };
+      }
     case 'swing':
       return {
         opacity: buildOpacityPair(isIntro, anchorTransform.opacity),
@@ -233,12 +215,12 @@ function getItemAnimationValues(
             ? anchorTransform.rotation - swingRotation
             : anchorTransform.rotation + swingRotation,
         ),
-      };
+      }
   }
 }
 
 function isSameValue(left: number, right: number): boolean {
-  return Math.abs(left - right) < VALUE_EPSILON;
+  return Math.abs(left - right) < VALUE_EPSILON
 }
 
 function getManagedItemAnimationProperties(
@@ -248,35 +230,38 @@ function getManagedItemAnimationProperties(
   fps: number,
   anchorTransform: ItemAnimationAnchorTransform,
 ): ItemAnimationProperty[] {
-  const frameRange = getItemAnimationFrameRange(itemDurationInFrames, fps, phase);
+  const frameRange = getItemAnimationFrameRange(itemDurationInFrames, fps, phase)
   if (!itemKeyframes || !frameRange) {
-    return [];
+    return []
   }
 
   const EFFECT_PRESETS: ItemAnimationPresetId[] = [
-    'fade', 'rise', 'drop', 'left', 'right', 'tilt', 'pop', 'swing',
-  ];
+    'fade',
+    'rise',
+    'drop',
+    'left',
+    'right',
+    'tilt',
+    'pop',
+    'swing',
+  ]
 
   return ITEM_ANIMATION_PROPERTIES.filter((property) => {
-    const startKeyframe = getKeyframeAtFrame(
-      itemKeyframes,
-      property,
-      frameRange.startFrame,
-    );
-    const endKeyframe = getKeyframeAtFrame(itemKeyframes, property, frameRange.endFrame);
+    const startKeyframe = getKeyframeAtFrame(itemKeyframes, property, frameRange.startFrame)
+    const endKeyframe = getKeyframeAtFrame(itemKeyframes, property, frameRange.endFrame)
     if (!startKeyframe || !endKeyframe) {
-      return false;
+      return false
     }
 
     return EFFECT_PRESETS.some((preset) => {
-      const values = getItemAnimationValues(preset, phase, anchorTransform)[property];
+      const values = getItemAnimationValues(preset, phase, anchorTransform)[property]
       return (
         !!values &&
         isSameValue(startKeyframe.value, values.startValue) &&
         isSameValue(endKeyframe.value, values.endValue)
-      );
-    });
-  });
+      )
+    })
+  })
 }
 
 export function buildItemAnimationKeyframes({
@@ -287,16 +272,16 @@ export function buildItemAnimationKeyframes({
   anchorTransform,
   itemKeyframes,
 }: {
-  item: TimelineItem;
-  presetId: ItemAnimationPresetOptionId;
-  phase: ItemAnimationPhase;
-  fps: number;
-  anchorTransform: ItemAnimationAnchorTransform;
-  itemKeyframes?: ItemKeyframes;
+  item: TimelineItem
+  presetId: ItemAnimationPresetOptionId
+  phase: ItemAnimationPhase
+  fps: number
+  anchorTransform: ItemAnimationAnchorTransform
+  itemKeyframes?: ItemKeyframes
 }): ItemAnimationKeyframePayload[] {
-  const frameRange = getItemAnimationFrameRange(item.durationInFrames, fps, phase);
+  const frameRange = getItemAnimationFrameRange(item.durationInFrames, fps, phase)
   if (!frameRange) {
-    return [];
+    return []
   }
 
   const managedProperties = getManagedItemAnimationProperties(
@@ -305,32 +290,26 @@ export function buildItemAnimationKeyframes({
     item.durationInFrames,
     fps,
     anchorTransform,
-  );
+  )
   const presetValues =
-    presetId === 'none'
-      ? {}
-      : getItemAnimationValues(presetId, phase, anchorTransform);
+    presetId === 'none' ? {} : getItemAnimationValues(presetId, phase, anchorTransform)
   const propertiesToWrite = new Set<ItemAnimationProperty>([
     ...managedProperties,
     ...(Object.keys(presetValues) as ItemAnimationProperty[]),
-  ]);
+  ])
 
   if (propertiesToWrite.size === 0) {
-    return [];
+    return []
   }
 
-  const payloads: ItemAnimationKeyframePayload[] = [];
+  const payloads: ItemAnimationKeyframePayload[] = []
 
   propertiesToWrite.forEach((property) => {
     const values = presetValues[property] ?? {
       startValue: anchorTransform[property],
       endValue: anchorTransform[property],
-    };
-    const existingEndKeyframe = getKeyframeAtFrame(
-      itemKeyframes,
-      property,
-      frameRange.endFrame,
-    );
+    }
+    const existingEndKeyframe = getKeyframeAtFrame(itemKeyframes, property, frameRange.endFrame)
 
     payloads.push({
       itemId: item.id,
@@ -339,7 +318,7 @@ export function buildItemAnimationKeyframes({
       value: values.startValue,
       easing: values.startEasing ?? 'ease-out',
       easingConfig: values.startEasingConfig,
-    });
+    })
     payloads.push({
       itemId: item.id,
       property,
@@ -347,8 +326,8 @@ export function buildItemAnimationKeyframes({
       value: values.endValue,
       easing: existingEndKeyframe?.easing ?? DEFAULT_END_EASING,
       easingConfig: existingEndKeyframe?.easingConfig,
-    });
-  });
+    })
+  })
 
-  return payloads;
+  return payloads
 }

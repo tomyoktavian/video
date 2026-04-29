@@ -769,9 +769,7 @@
     {
       "version": "2026.03.09",
       "date": "2026-03-09",
-      "highlights": [
-        "New distort and stylize effects with color parameters"
-      ],
+      "highlights": ["New distort and stylize effects with color parameters"],
       "groups": {
         "added": [
           {
@@ -788,10 +786,7 @@
     {
       "version": "2026.02.23",
       "date": "2026-02-23",
-      "highlights": [
-        "Timeline and preview performance overhaul",
-        "Export packet remux fast path"
-      ],
+      "highlights": ["Timeline and preview performance overhaul", "Export packet remux fast path"],
       "groups": {
         "fixed": [
           {

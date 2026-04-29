@@ -1,1 +1,1 @@
-export { useTranscriptViewerDialogStore } from "./store";
+export { useTranscriptViewerDialogStore } from './store'

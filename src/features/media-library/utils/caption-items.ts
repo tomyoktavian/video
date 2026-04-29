@@ -3,9 +3,9 @@ import {
   getEffectiveTrackKindForItem,
   getNextClassicTrackName,
   type TrackKind,
-} from '../deps/timeline-contract';
-import type { MediaTranscriptSegment } from '@/types/storage';
-import type { MediaCaption } from '@/infrastructure/analysis';
+} from '../deps/timeline-contract'
+import type { MediaTranscriptSegment } from '@/types/storage'
+import type { MediaCaption } from '@/infrastructure/analysis'
 import type {
   AudioItem,
   GeneratedCaptionSource,
@@ -13,32 +13,32 @@ import type {
   TimelineItem,
   TimelineTrack,
   VideoItem,
-} from '@/types/timeline';
-import { timelineToSourceFrames } from '../deps/timeline-contract';
+} from '@/types/timeline'
+import { timelineToSourceFrames } from '../deps/timeline-contract'
 
 /**
  * Fallback segment duration when AI captions can't infer an `end` time from
  * the next caption (i.e. for the last caption, or when the sample interval is
  * unknown). Seconds.
  */
-const AI_CAPTION_FALLBACK_DURATION_SEC = 3;
+const AI_CAPTION_FALLBACK_DURATION_SEC = 3
 
 interface BuildCaptionTextItemsOptions {
-  mediaId: string;
-  trackId: string;
-  segments: readonly MediaTranscriptSegment[];
-  clip: AudioItem | VideoItem;
-  timelineFps: number;
-  canvasWidth: number;
-  canvasHeight: number;
-  styleTemplate?: CaptionTextItemTemplate;
+  mediaId: string
+  trackId: string
+  segments: readonly MediaTranscriptSegment[]
+  clip: AudioItem | VideoItem
+  timelineFps: number
+  canvasWidth: number
+  canvasHeight: number
+  styleTemplate?: CaptionTextItemTemplate
   /**
    * Discriminator for the `captionSource.type` stamped on the generated
    * text items. Defaults to `'transcript'` (whisper flow); AI captioning
    * flows pass `'ai-captions'` so later replace/remove operations can tell
    * the two kinds apart on the same clip.
    */
-  sourceType?: GeneratedCaptionSource['type'];
+  sourceType?: GeneratedCaptionSource['type']
 }
 
 export type CaptionTextItemTemplate = Pick<
@@ -57,12 +57,12 @@ export type CaptionTextItemTemplate = Pick<
   | 'textShadow'
   | 'stroke'
   | 'transform'
->;
+>
 
 export interface CaptionableClipRange {
-  clip: AudioItem | VideoItem;
-  startFrame: number;
-  endFrame: number;
+  clip: AudioItem | VideoItem
+  startFrame: number
+  endFrame: number
 }
 
 export function normalizeCaptionSegments(
@@ -74,33 +74,33 @@ export function normalizeCaptionSegments(
       start: Math.max(0, segment.start),
       end: Math.max(segment.start, segment.end),
     }))
-    .filter((segment) => segment.text.length > 0 && segment.end > segment.start);
+    .filter((segment) => segment.text.length > 0 && segment.end > segment.start)
 }
 
 export function getCaptionFrameRange(
   segments: readonly MediaTranscriptSegment[],
   fps: number,
 ): { startFrame: number; endFrame: number } | null {
-  const normalized = normalizeCaptionSegments(segments);
-  const first = normalized[0];
-  const last = normalized.at(-1);
+  const normalized = normalizeCaptionSegments(segments)
+  const first = normalized[0]
+  const last = normalized.at(-1)
 
   if (!first || !last) {
-    return null;
+    return null
   }
 
   return {
     startFrame: Math.round(first.start * fps),
     endFrame: Math.max(Math.round(last.end * fps), Math.round(first.start * fps) + 1),
-  };
+  }
 }
 
 function toSourceStartFrame(seconds: number, sourceFps: number): number {
-  return Math.max(0, Math.floor(seconds * sourceFps));
+  return Math.max(0, Math.floor(seconds * sourceFps))
 }
 
 function toSourceEndFrame(seconds: number, sourceFps: number): number {
-  return Math.max(0, Math.ceil(seconds * sourceFps));
+  return Math.max(0, Math.ceil(seconds * sourceFps))
 }
 
 function sourceFramesToTimelineFramesFloor(
@@ -110,11 +110,11 @@ function sourceFramesToTimelineFramesFloor(
   timelineFps: number,
 ): number {
   if (sourceFrames <= 0) {
-    return 0;
+    return 0
   }
 
-  const sourceSeconds = sourceFrames / sourceFps;
-  return Math.max(0, Math.floor((sourceSeconds * timelineFps) / speed));
+  const sourceSeconds = sourceFrames / sourceFps
+  return Math.max(0, Math.floor((sourceSeconds * timelineFps) / speed))
 }
 
 function sourceFramesToTimelineFramesCeil(
@@ -124,38 +124,34 @@ function sourceFramesToTimelineFramesCeil(
   timelineFps: number,
 ): number {
   if (sourceFrames <= 0) {
-    return 0;
+    return 0
   }
 
-  const sourceSeconds = sourceFrames / sourceFps;
-  return Math.max(0, Math.ceil((sourceSeconds * timelineFps) / speed));
+  const sourceSeconds = sourceFrames / sourceFps
+  return Math.max(0, Math.ceil((sourceSeconds * timelineFps) / speed))
 }
 
 function getClipSourceBounds(
   clip: AudioItem | VideoItem,
   timelineFps: number,
 ): {
-  sourceStart: number;
-  sourceEnd: number;
-  sourceFps: number;
-  speed: number;
+  sourceStart: number
+  sourceEnd: number
+  sourceFps: number
+  speed: number
 } {
-  const speed = clip.speed ?? 1;
-  const sourceStart = clip.sourceStart ?? 0;
-  const sourceFps = clip.sourceFps ?? timelineFps;
-  const derivedSourceEnd = sourceStart + timelineToSourceFrames(
-    clip.durationInFrames,
-    speed,
-    timelineFps,
-    sourceFps,
-  );
+  const speed = clip.speed ?? 1
+  const sourceStart = clip.sourceStart ?? 0
+  const sourceFps = clip.sourceFps ?? timelineFps
+  const derivedSourceEnd =
+    sourceStart + timelineToSourceFrames(clip.durationInFrames, speed, timelineFps, sourceFps)
 
   return {
     sourceStart,
     sourceEnd: clip.sourceEnd ?? derivedSourceEnd,
     sourceFps,
     speed,
-  };
+  }
 }
 
 export function getCaptionRangeForClip(
@@ -163,23 +159,23 @@ export function getCaptionRangeForClip(
   segments: readonly MediaTranscriptSegment[],
   timelineFps: number,
 ): { startFrame: number; endFrame: number } | null {
-  const normalizedSegments = normalizeCaptionSegments(segments);
+  const normalizedSegments = normalizeCaptionSegments(segments)
   if (normalizedSegments.length === 0) {
-    return null;
+    return null
   }
 
-  const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps);
-  let firstFrame: number | null = null;
-  let lastFrame: number | null = null;
+  const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps)
+  let firstFrame: number | null = null
+  let lastFrame: number | null = null
 
   for (const segment of normalizedSegments) {
-    const segmentSourceStart = toSourceStartFrame(segment.start, sourceFps);
-    const segmentSourceEnd = toSourceEndFrame(segment.end, sourceFps);
-    const overlapStart = Math.max(sourceStart, segmentSourceStart);
-    const overlapEnd = Math.min(sourceEnd, segmentSourceEnd);
+    const segmentSourceStart = toSourceStartFrame(segment.start, sourceFps)
+    const segmentSourceEnd = toSourceEndFrame(segment.end, sourceFps)
+    const overlapStart = Math.max(sourceStart, segmentSourceStart)
+    const overlapEnd = Math.min(sourceEnd, segmentSourceEnd)
 
     if (overlapEnd <= overlapStart) {
-      continue;
+      continue
     }
 
     const startOffset = sourceFramesToTimelineFramesFloor(
@@ -187,29 +183,27 @@ export function getCaptionRangeForClip(
       speed,
       sourceFps,
       timelineFps,
-    );
+    )
     const endOffset = sourceFramesToTimelineFramesCeil(
       overlapEnd - sourceStart,
       speed,
       sourceFps,
       timelineFps,
-    );
+    )
 
-    const startFrame = clip.from + Math.min(startOffset, clip.durationInFrames - 1);
-    const endFrame = clip.from + Math.min(
-      clip.durationInFrames,
-      Math.max(startOffset + 1, endOffset),
-    );
+    const startFrame = clip.from + Math.min(startOffset, clip.durationInFrames - 1)
+    const endFrame =
+      clip.from + Math.min(clip.durationInFrames, Math.max(startOffset + 1, endOffset))
 
-    firstFrame = firstFrame === null ? startFrame : Math.min(firstFrame, startFrame);
-    lastFrame = lastFrame === null ? endFrame : Math.max(lastFrame, endFrame);
+    firstFrame = firstFrame === null ? startFrame : Math.min(firstFrame, startFrame)
+    lastFrame = lastFrame === null ? endFrame : Math.max(lastFrame, endFrame)
   }
 
   if (firstFrame === null || lastFrame === null || lastFrame <= firstFrame) {
-    return null;
+    return null
   }
 
-  return { startFrame: firstFrame, endFrame: lastFrame };
+  return { startFrame: firstFrame, endFrame: lastFrame }
 }
 
 export function findCompatibleCaptionTrack(
@@ -218,12 +212,7 @@ export function findCompatibleCaptionTrack(
   startFrame: number,
   endFrame: number,
 ): TimelineTrack | null {
-  return findCompatibleGeneratedTrackForRanges(
-    tracks,
-    items,
-    [{ startFrame, endFrame }],
-    'video',
-  );
+  return findCompatibleGeneratedTrackForRanges(tracks, items, [{ startFrame, endFrame }], 'video')
 }
 
 export function findCompatibleCaptionTrackForRanges(
@@ -231,7 +220,7 @@ export function findCompatibleCaptionTrackForRanges(
   items: readonly TimelineItem[],
   ranges: ReadonlyArray<{ startFrame: number; endFrame: number }>,
 ): TimelineTrack | null {
-  return findCompatibleGeneratedTrackForRanges(tracks, items, ranges, 'video');
+  return findCompatibleGeneratedTrackForRanges(tracks, items, ranges, 'video')
 }
 
 export function findCompatibleGeneratedTrackForRanges(
@@ -240,30 +229,30 @@ export function findCompatibleGeneratedTrackForRanges(
   ranges: ReadonlyArray<{ startFrame: number; endFrame: number }>,
   requiredKind: TrackKind,
 ): TimelineTrack | null {
-  const sortedTracks = [...tracks].sort((a, b) => a.order - b.order);
+  const sortedTracks = [...tracks].sort((a, b) => a.order - b.order)
 
   for (const track of sortedTracks) {
     if (!isGeneratedContentTrackCandidate(track, items, requiredKind)) {
-      continue;
+      continue
     }
 
     const hasOverlap = ranges.some((range) =>
       items.some((item) => {
         if (item.trackId !== track.id) {
-          return false;
+          return false
         }
 
-        const itemEnd = item.from + item.durationInFrames;
-        return item.from < range.endFrame && itemEnd > range.startFrame;
-      })
-    );
+        const itemEnd = item.from + item.durationInFrames
+        return item.from < range.endFrame && itemEnd > range.startFrame
+      }),
+    )
 
     if (!hasOverlap) {
-      return track;
+      return track
     }
   }
 
-  return null;
+  return null
 }
 
 export function isGeneratedContentTrackCandidate(
@@ -272,26 +261,26 @@ export function isGeneratedContentTrackCandidate(
   requiredKind: TrackKind,
 ): boolean {
   if (track.visible === false || track.locked || track.isGroup) {
-    return false;
+    return false
   }
 
-  const effectiveKind = getEffectiveTrackKindForItem(track, items);
+  const effectiveKind = getEffectiveTrackKindForItem(track, items)
   if (requiredKind === 'audio') {
-    return effectiveKind === 'audio';
+    return effectiveKind === 'audio'
   }
 
-  return effectiveKind === 'video' || effectiveKind === null;
+  return effectiveKind === 'video' || effectiveKind === null
 }
 
 export function isCaptionTrackCandidate(
   track: TimelineTrack,
   items: readonly TimelineItem[],
 ): boolean {
-  return isGeneratedContentTrackCandidate(track, items, 'video');
+  return isGeneratedContentTrackCandidate(track, items, 'video')
 }
 
 export function buildCaptionTrack(tracks: readonly TimelineTrack[]): TimelineTrack {
-  const maxOrder = tracks.reduce((highest, track) => Math.max(highest, track.order), -1);
+  const maxOrder = tracks.reduce((highest, track) => Math.max(highest, track.order), -1)
   return {
     id: `track-captions-${Date.now()}`,
     name: getNextClassicTrackName([...tracks], 'video'),
@@ -305,7 +294,7 @@ export function buildCaptionTrack(tracks: readonly TimelineTrack[]): TimelineTra
     volume: 0,
     order: maxOrder + 1,
     items: [],
-  };
+  }
 }
 
 /**
@@ -322,13 +311,10 @@ export function buildCaptionTrackAbove(
   tracks: readonly TimelineTrack[],
   referenceOrder: number,
 ): TimelineTrack {
-  const ordersStrictlyAbove = tracks
-    .map((t) => t.order)
-    .filter((order) => order < referenceOrder);
-  const previousOrder = ordersStrictlyAbove.length > 0
-    ? Math.max(...ordersStrictlyAbove)
-    : referenceOrder - 2;
-  const newOrder = (previousOrder + referenceOrder) / 2;
+  const ordersStrictlyAbove = tracks.map((t) => t.order).filter((order) => order < referenceOrder)
+  const previousOrder =
+    ordersStrictlyAbove.length > 0 ? Math.max(...ordersStrictlyAbove) : referenceOrder - 2
+  const newOrder = (previousOrder + referenceOrder) / 2
 
   return {
     id: `track-captions-${Date.now()}`,
@@ -343,7 +329,7 @@ export function buildCaptionTrackAbove(
     volume: 0,
     order: newOrder,
     items: [],
-  };
+  }
 }
 
 function buildCaptionSource(
@@ -355,7 +341,7 @@ function buildCaptionSource(
     type,
     mediaId,
     clipId,
-  };
+  }
 }
 
 /**
@@ -370,33 +356,34 @@ export function aiCaptionsToSegments(
   captions: readonly MediaCaption[],
   sampleIntervalSec?: number,
 ): MediaTranscriptSegment[] {
-  if (captions.length === 0) return [];
-  const sorted = [...captions].sort((a, b) => a.timeSec - b.timeSec);
-  const fallbackEndDelta = sampleIntervalSec && sampleIntervalSec > 0
-    ? sampleIntervalSec
-    : AI_CAPTION_FALLBACK_DURATION_SEC;
+  if (captions.length === 0) return []
+  const sorted = [...captions].sort((a, b) => a.timeSec - b.timeSec)
+  const fallbackEndDelta =
+    sampleIntervalSec && sampleIntervalSec > 0
+      ? sampleIntervalSec
+      : AI_CAPTION_FALLBACK_DURATION_SEC
 
   return sorted.map((caption, index) => {
-    const next = sorted[index + 1];
-    const start = Math.max(0, caption.timeSec);
-    const end = next !== undefined
-      ? Math.max(start + 0.01, next.timeSec)
-      : start + fallbackEndDelta;
+    const next = sorted[index + 1]
+    const start = Math.max(0, caption.timeSec)
+    const end = next !== undefined ? Math.max(start + 0.01, next.timeSec) : start + fallbackEndDelta
     return {
       text: caption.text,
       start,
       end,
-    };
-  });
+    }
+  })
 }
 
 export function isGeneratedCaptionTextItem(
   item: TimelineItem,
 ): item is TextItem & { captionSource: GeneratedCaptionSource } {
-  return item.type === 'text'
-    && (item.captionSource?.type === 'transcript' || item.captionSource?.type === 'ai-captions')
-    && item.captionSource.clipId.length > 0
-    && item.captionSource.mediaId.length > 0;
+  return (
+    item.type === 'text' &&
+    (item.captionSource?.type === 'transcript' || item.captionSource?.type === 'ai-captions') &&
+    item.captionSource.clipId.length > 0 &&
+    item.captionSource.mediaId.length > 0
+  )
 }
 
 export function findGeneratedCaptionItemsForClip(
@@ -404,11 +391,12 @@ export function findGeneratedCaptionItemsForClip(
   clipId: string,
   sourceType?: GeneratedCaptionSource['type'],
 ): Array<TextItem & { captionSource: GeneratedCaptionSource }> {
-  return items.filter((item): item is TextItem & { captionSource: GeneratedCaptionSource } =>
-    isGeneratedCaptionTextItem(item)
-      && item.captionSource.clipId === clipId
-      && (sourceType === undefined || item.captionSource.type === sourceType)
-  );
+  return items.filter(
+    (item): item is TextItem & { captionSource: GeneratedCaptionSource } =>
+      isGeneratedCaptionTextItem(item) &&
+      item.captionSource.clipId === clipId &&
+      (sourceType === undefined || item.captionSource.type === sourceType),
+  )
 }
 
 function isLegacyGeneratedCaptionItemForClip(
@@ -416,15 +404,17 @@ function isLegacyGeneratedCaptionItemForClip(
   clip: AudioItem | VideoItem,
 ): item is TextItem {
   if (item.type !== 'text' || item.captionSource || item.mediaId !== clip.mediaId) {
-    return false;
+    return false
   }
 
-  const clipEnd = clip.from + clip.durationInFrames;
-  const itemEnd = item.from + item.durationInFrames;
-  return item.from >= clip.from
-    && itemEnd <= clipEnd
-    && item.text.trim().length > 0
-    && item.label === item.text.slice(0, 48);
+  const clipEnd = clip.from + clip.durationInFrames
+  const itemEnd = item.from + item.durationInFrames
+  return (
+    item.from >= clip.from &&
+    itemEnd <= clipEnd &&
+    item.text.trim().length > 0 &&
+    item.label === item.text.slice(0, 48)
+  )
 }
 
 export function findReplaceableCaptionItemsForClip(
@@ -432,22 +422,20 @@ export function findReplaceableCaptionItemsForClip(
   clip: AudioItem | VideoItem,
   sourceType?: GeneratedCaptionSource['type'],
 ): TextItem[] {
-  const generatedCaptionItems = findGeneratedCaptionItemsForClip(items, clip.id, sourceType);
+  const generatedCaptionItems = findGeneratedCaptionItemsForClip(items, clip.id, sourceType)
   if (generatedCaptionItems.length > 0) {
-    return generatedCaptionItems;
+    return generatedCaptionItems
   }
 
   // Legacy fallback only applies to transcript-generated captions (the only
   // kind that predates the `captionSource` discriminator).
   if (sourceType !== undefined && sourceType !== 'transcript') {
-    return [];
+    return []
   }
-  return items.filter((item): item is TextItem => isLegacyGeneratedCaptionItemForClip(item, clip));
+  return items.filter((item): item is TextItem => isLegacyGeneratedCaptionItemForClip(item, clip))
 }
 
-export function getCaptionTextItemTemplate(
-  item: TextItem,
-): CaptionTextItemTemplate {
+export function getCaptionTextItemTemplate(item: TextItem): CaptionTextItemTemplate {
   return {
     fontSize: item.fontSize,
     fontFamily: item.fontFamily,
@@ -463,7 +451,7 @@ export function getCaptionTextItemTemplate(
     textShadow: item.textShadow ? { ...item.textShadow } : undefined,
     stroke: item.stroke ? { ...item.stroke } : undefined,
     transform: item.transform ? { ...item.transform } : undefined,
-  };
+  }
 }
 
 export function buildCaptionTextItems({
@@ -477,17 +465,17 @@ export function buildCaptionTextItems({
   styleTemplate,
   sourceType = 'transcript',
 }: BuildCaptionTextItemsOptions): TextItem[] {
-  const normalizedSegments = normalizeCaptionSegments(segments);
-  const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps);
+  const normalizedSegments = normalizeCaptionSegments(segments)
+  const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps)
 
   return normalizedSegments.flatMap((segment) => {
-    const segmentSourceStart = toSourceStartFrame(segment.start, sourceFps);
-    const segmentSourceEnd = toSourceEndFrame(segment.end, sourceFps);
-    const overlapStart = Math.max(sourceStart, segmentSourceStart);
-    const overlapEnd = Math.min(sourceEnd, segmentSourceEnd);
+    const segmentSourceStart = toSourceStartFrame(segment.start, sourceFps)
+    const segmentSourceEnd = toSourceEndFrame(segment.end, sourceFps)
+    const overlapStart = Math.max(sourceStart, segmentSourceStart)
+    const overlapEnd = Math.min(sourceEnd, segmentSourceEnd)
 
     if (overlapEnd <= overlapStart) {
-      return [];
+      return []
     }
 
     const startOffset = sourceFramesToTimelineFramesFloor(
@@ -495,19 +483,17 @@ export function buildCaptionTextItems({
       speed,
       sourceFps,
       timelineFps,
-    );
+    )
     const endOffset = sourceFramesToTimelineFramesCeil(
       overlapEnd - sourceStart,
       speed,
       sourceFps,
       timelineFps,
-    );
-    const from = clip.from + Math.min(startOffset, clip.durationInFrames - 1);
-    const endFrame = clip.from + Math.min(
-      clip.durationInFrames,
-      Math.max(startOffset + 1, endOffset),
-    );
-    const durationInFrames = Math.max(1, endFrame - from);
+    )
+    const from = clip.from + Math.min(startOffset, clip.durationInFrames - 1)
+    const endFrame =
+      clip.from + Math.min(clip.durationInFrames, Math.max(startOffset + 1, endOffset))
+    const durationInFrames = Math.max(1, endFrame - from)
     const defaultCaptionItem: TextItem = {
       id: crypto.randomUUID(),
       type: 'text',
@@ -545,11 +531,13 @@ export function buildCaptionTextItems({
         rotation: 0,
         opacity: 1,
       },
-    };
+    }
 
-    return [{
-      ...defaultCaptionItem,
-      ...styleTemplate,
-    }];
-  });
+    return [
+      {
+        ...defaultCaptionItem,
+        ...styleTemplate,
+      },
+    ]
+  })
 }

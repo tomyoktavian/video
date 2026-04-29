@@ -6,57 +6,52 @@
  * even when the user navigates away from OnlineMediaTab.
  */
 
-import { create } from "zustand";
+import { create } from 'zustand'
 import {
   downloadAndImportMedia,
   downloadAllMedia,
   cancelAllDownloads,
   buildEpisodeFileName,
   type DownloadProgress,
-} from "../utils/download-utils";
-import type { OnlineEpisode, FetchStatus } from "../components/media-card";
+} from '../utils/download-utils'
+import type { OnlineEpisode, FetchStatus } from '../components/media-card'
 
 interface DownloadStore {
   /** Whether any download is in progress */
-  isDownloading: boolean;
+  isDownloading: boolean
   /** Current download progress (IDM-style) */
-  downloadProgress: DownloadProgress | null;
+  downloadProgress: DownloadProgress | null
   /** URLs currently being downloaded */
-  downloadingUrls: Set<string>;
+  downloadingUrls: Set<string>
   /** URLs that have been successfully downloaded */
-  downloadedUrls: Set<string>;
+  downloadedUrls: Set<string>
 
   /** Persistent online episodes after parsing JSON */
-  onlineEpisodes: OnlineEpisode[];
+  onlineEpisodes: OnlineEpisode[]
   /** Persistent fetch statuses for metadata extraction */
-  fetchStatuses: Record<number, FetchStatus>;
+  fetchStatuses: Record<number, FetchStatus>
 
   // ─── Actions ───────────────────────────────────────────────────────
 
   /** Set online episodes */
   setOnlineEpisodes: (
-    episodes:
-      | OnlineEpisode[]
-      | ((prev: OnlineEpisode[]) => OnlineEpisode[]),
-  ) => void;
+    episodes: OnlineEpisode[] | ((prev: OnlineEpisode[]) => OnlineEpisode[]),
+  ) => void
   /** Set fetch statuses */
   setFetchStatuses: (
     statuses:
       | Record<number, FetchStatus>
       | ((prev: Record<number, FetchStatus>) => Record<number, FetchStatus>),
-  ) => void;
+  ) => void
   /** Update a single episode's metadata */
-  updateEpisodeMetadata: (
-    index: number,
-    metadata: { duration: number; thumbnail: string },
-  ) => void;
+  updateEpisodeMetadata: (index: number, metadata: { duration: number; thumbnail: string }) => void
 
   /** Mark a URL as downloaded */
-  markDownloaded: (url: string) => void;
+  markDownloaded: (url: string) => void
   /** Sync multiple URLs as downloaded (e.g. from existing media library) */
-  syncDownloaded: (urls: string[]) => void;
+  syncDownloaded: (urls: string[]) => void
   /** Reset downloaded tracking */
-  resetDownloaded: () => void;
+  resetDownloaded: () => void
 
   /** Download a single episode */
   startSingleDownload: (
@@ -64,22 +59,22 @@ interface DownloadStore {
     originalIndex: number,
     projectId: string,
     callbacks?: {
-      onSuccess?: () => void;
-      onError?: (error: string) => void;
+      onSuccess?: () => void
+      onError?: (error: string) => void
     },
-  ) => Promise<boolean>;
+  ) => Promise<boolean>
 
   /** Download all pending episodes */
   startBulkDownload: (
     episodes: Array<{ episode: OnlineEpisode; originalIndex: number }>,
     projectId: string,
     callbacks?: {
-      onAllComplete?: (importedCount: number) => void;
+      onAllComplete?: (importedCount: number) => void
     },
-  ) => Promise<number>;
+  ) => Promise<number>
 
   /** Cancel all active downloads */
-  cancelDownload: () => void;
+  cancelDownload: () => void
 }
 
 export const useDownloadStore = create<DownloadStore>()((set, get) => ({
@@ -92,28 +87,26 @@ export const useDownloadStore = create<DownloadStore>()((set, get) => ({
 
   setOnlineEpisodes: (episodes) =>
     set((s) => ({
-      onlineEpisodes:
-        typeof episodes === "function" ? episodes(s.onlineEpisodes) : episodes,
+      onlineEpisodes: typeof episodes === 'function' ? episodes(s.onlineEpisodes) : episodes,
     })),
 
   setFetchStatuses: (statuses) =>
     set((s) => ({
-      fetchStatuses:
-        typeof statuses === "function" ? statuses(s.fetchStatuses) : statuses,
+      fetchStatuses: typeof statuses === 'function' ? statuses(s.fetchStatuses) : statuses,
     })),
 
   updateEpisodeMetadata: (index, metadata) =>
     set((s) => {
-      const next = [...s.onlineEpisodes];
-      const originalIdx = next.findIndex((e) => e.originalIndex === index);
+      const next = [...s.onlineEpisodes]
+      const originalIdx = next.findIndex((e) => e.originalIndex === index)
       if (originalIdx !== -1) {
         next[originalIdx] = {
           ...next[originalIdx],
           duration: metadata.duration,
           thumbnail: metadata.thumbnail,
-        };
+        }
       }
-      return { onlineEpisodes: next };
+      return { onlineEpisodes: next }
     }),
 
   markDownloaded: (url) =>
@@ -123,23 +116,23 @@ export const useDownloadStore = create<DownloadStore>()((set, get) => ({
 
   syncDownloaded: (urls) =>
     set((s) => {
-      const merged = new Set([...s.downloadedUrls, ...urls]);
-      if (merged.size === s.downloadedUrls.size) return s;
-      return { downloadedUrls: merged };
+      const merged = new Set([...s.downloadedUrls, ...urls])
+      if (merged.size === s.downloadedUrls.size) return s
+      return { downloadedUrls: merged }
     }),
 
   resetDownloaded: () => set({ downloadedUrls: new Set() }),
 
   startSingleDownload: async (ep, originalIndex, projectId, callbacks) => {
-    if (!ep.url || get().isDownloading) return false;
+    if (!ep.url || get().isDownloading) return false
 
-    const url = ep.url;
-    const fileName = buildEpisodeFileName(ep, originalIndex);
+    const url = ep.url
+    const fileName = buildEpisodeFileName(ep, originalIndex)
 
     set((s) => ({
       isDownloading: true,
       downloadingUrls: new Set([...s.downloadingUrls, url]),
-    }));
+    }))
 
     try {
       const success = await downloadAndImportMedia({
@@ -151,38 +144,36 @@ export const useDownloadStore = create<DownloadStore>()((set, get) => ({
         onProgress: (progress) => set({ downloadProgress: progress }),
         episodeIndex: 0,
         totalEpisodes: 1,
-      });
+      })
 
       if (success) {
         set((s) => ({
           downloadedUrls: new Set([...s.downloadedUrls, url]),
-        }));
-        callbacks?.onSuccess?.();
+        }))
+        callbacks?.onSuccess?.()
       }
 
-      return success;
+      return success
     } catch (error) {
-      callbacks?.onError?.(
-        error instanceof Error ? error.message : String(error),
-      );
-      return false;
+      callbacks?.onError?.(error instanceof Error ? error.message : String(error))
+      return false
     } finally {
       set((s) => {
-        const next = new Set(s.downloadingUrls);
-        next.delete(url);
+        const next = new Set(s.downloadingUrls)
+        next.delete(url)
         return {
           isDownloading: false,
           downloadingUrls: next,
           downloadProgress: null,
-        };
-      });
+        }
+      })
     }
   },
 
   startBulkDownload: async (episodes, projectId, callbacks) => {
-    if (get().isDownloading) return 0;
+    if (get().isDownloading) return 0
 
-    set({ isDownloading: true });
+    set({ isDownloading: true })
 
     try {
       const count = await downloadAllMedia(episodes, projectId, {
@@ -190,40 +181,38 @@ export const useDownloadStore = create<DownloadStore>()((set, get) => ({
         onEpisodeStart: (url) => {
           set((s) => ({
             downloadingUrls: new Set([...s.downloadingUrls, url]),
-          }));
+          }))
         },
         onEpisodeComplete: (url, success) => {
           set((s) => {
-            const nextDownloading = new Set(s.downloadingUrls);
-            nextDownloading.delete(url);
-            const nextDownloaded = success
-              ? new Set([...s.downloadedUrls, url])
-              : s.downloadedUrls;
+            const nextDownloading = new Set(s.downloadingUrls)
+            nextDownloading.delete(url)
+            const nextDownloaded = success ? new Set([...s.downloadedUrls, url]) : s.downloadedUrls
             return {
               downloadingUrls: nextDownloading,
               downloadedUrls: nextDownloaded,
-            };
-          });
+            }
+          })
         },
-      });
+      })
 
-      callbacks?.onAllComplete?.(count);
-      return count;
+      callbacks?.onAllComplete?.(count)
+      return count
     } finally {
       set({
         isDownloading: false,
         downloadProgress: null,
         downloadingUrls: new Set(),
-      });
+      })
     }
   },
 
   cancelDownload: () => {
-    cancelAllDownloads();
+    cancelAllDownloads()
     set({
       isDownloading: false,
       downloadProgress: null,
       downloadingUrls: new Set(),
-    });
+    })
   },
-}));
+}))
