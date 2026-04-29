@@ -1,0 +1,270 @@
+
+> freecut@2026.04.06 lint
+> vp lint src vite.config.ts src/features/timeline/components/timeline-item/index.tsx
+
+
+  ! eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ,-[src/features/media-library/services/media-library-service.ts:1:1]
+ 1 | ﻿import type { MediaMetadata, ThumbnailData } from '@/types/storage';
+   : ^
+ 2 | import { createLogger } from '@/shared/logging/logger';
+   `----
+  help: Try to remove the irregular whitespace
+
+  ! eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'isAnyDragActiveRef'
+      ,-[src/features/timeline/components/timeline-item/index.tsx:2692:7]
+ 2602 |               activeTool !== "select" ||
+ 2603 |               isAnyDragActiveRef.current
+      :               ^^^^^^^^^|^^^^^^^^
+      :                        `-- useCallback uses `isAnyDragActiveRef` here
+ 2604 |             ) {
+ 2605 |               return;
+ 2606 |             }
+ 2607 |     
+ 2608 |             e.preventDefault();
+ 2609 |             e.stopPropagation();
+ 2610 |     
+ 2611 |             const originalFadeIn = displayedAudioFadeIn;
+ 2612 |             const originalFadeOut = displayedAudioFadeOut;
+ 2613 |             const persistedFadeIn = item.audioFadeIn ?? 0;
+ 2614 |             const persistedFadeOut = item.audioFadeOut ?? 0;
+ 2615 |             const computeFadeSeconds = (clientX: number) => {
+ 2616 |               const rect =
+ 2617 |                 audioControlsRef.current?.getBoundingClientRect() ??
+ 2618 |                 transformRef.current?.getBoundingClientRect();
+ 2619 |               if (!rect) {
+ 2620 |                 return handle === "in" ? originalFadeIn : originalFadeOut;
+ 2621 |               }
+ 2622 |     
+ 2623 |               return getAudioFadeSecondsFromOffset({
+ 2624 |                 handle,
+ 2625 |                 clipWidthPixels: rect.width,
+ 2626 |                 pointerOffsetPixels: clientX - rect.left,
+ 2627 |                 fps,
+ 2628 |                 maxDurationFrames: item.durationInFrames,
+ 2629 |               });
+ 2630 |             };
+ 2631 |     
+ 2632 |             const applyPreview = (nextFadeSeconds: number) => {
+ 2633 |               setAudioFadeEdit({
+ 2634 |                 handle,
+ 2635 |                 previewFadeIn: handle === "in" ? nextFadeSeconds : originalFadeIn,
+ 2636 |                 previewFadeOut:
+ 2637 |                   handle === "out" ? nextFadeSeconds : originalFadeOut,
+ 2638 |                 originalFadeIn,
+ 2639 |                 originalFadeOut,
+ 2640 |                 isCommitting: false,
+ 2641 |               });
+ 2642 |             };
+ 2643 |     
+ 2644 |             const finishEdit = () => {
+ 2645 |               const latestState = audioFadeEditRef.current;
+ 2646 |               const committedFade =
+ 2647 |                 handle === "in"
+ 2648 |                   ? (latestState?.previewFadeIn ?? originalFadeIn)
+ 2649 |                   : (latestState?.previewFadeOut ?? originalFadeOut);
+ 2650 |               audioFadeCleanupRef.current?.();
+ 2651 |               audioFadeCleanupRef.current = null;
+ 2652 |     
+ 2653 |               if (handle === "in") {
+ 2654 |                 if (
+ 2655 |                   Math.abs(committedFade - persistedFadeIn) > AUDIO_FADE_EPSILON
+ 2656 |                 ) {
+ 2657 |                   setAudioFadeEdit((prev) =>
+ 2658 |                     prev ? { ...prev, isCommitting: true } : prev,
+ 2659 |                   );
+ 2660 |                   updateTimelineItem(item.id, { audioFadeIn: committedFade });
+ 2661 |                 } else {
+ 2662 |                   setAudioFadeEdit(null);
+ 2663 |                 }
+ 2664 |               } else if (
+ 2665 |                 Math.abs(committedFade - persistedFadeOut) > AUDIO_FADE_EPSILON
+ 2666 |               ) {
+ 2667 |                 setAudioFadeEdit((prev) =>
+ 2668 |                   prev ? { ...prev, isCommitting: true } : prev,
+ 2669 |                 );
+ 2670 |                 updateTimelineItem(item.id, { audioFadeOut: committedFade });
+ 2671 |               } else {
+ 2672 |                 setAudioFadeEdit(null);
+ 2673 |               }
+ 2674 |             };
+ 2675 |     
+ 2676 |             applyPreview(computeFadeSeconds(e.clientX));
+ 2677 |     
+ 2678 |             const handleWindowMouseMove = (event: MouseEvent) => {
+ 2679 |               applyPreview(computeFadeSeconds(event.clientX));
+ 2680 |             };
+ 2681 |             const handleWindowMouseUp = () => {
+ 2682 |               finishEdit();
+ 2683 |             };
+ 2684 |     
+ 2685 |             window.addEventListener("mousemove", handleWindowMouseMove);
+ 2686 |             window.addEventListener("mouseup", handleWindowMouseUp, { once: true });
+ 2687 |             audioFadeCleanupRef.current = () => {
+ 2688 |               window.removeEventListener("mousemove", handleWindowMouseMove);
+ 2689 |               window.removeEventListener("mouseup", handleWindowMouseUp);
+ 2690 |             };
+ 2691 |           },
+ 2692 | ,->       [
+ 2693 | |           activeTool,
+ 2694 | |           displayedAudioFadeIn,
+ 2695 | |           displayedAudioFadeOut,
+ 2696 | |           fps,
+ 2697 | |           item,
+ 2698 | |           trackLocked,
+ 2699 | |           updateTimelineItem,
+ 2700 | `->       ],
+ 2701 |         );
+      `----
+  help: Either include it or remove the dependency array.
+
+  ! eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'isAnyDragActiveRef'
+      ,-[src/features/timeline/components/timeline-item/index.tsx:2835:7]
+ 2707 |               activeTool !== "select" ||
+ 2708 |               isAnyDragActiveRef.current
+      :               ^^^^^^^^^|^^^^^^^^
+      :                        `-- useCallback uses `isAnyDragActiveRef` here
+ 2709 |             ) {
+ 2710 |               return;
+ 2711 |             }
+ 2712 |     
+ 2713 |             const fadeRatio =
+ 2714 |               handle === "in" ? audioFadeInRatio : audioFadeOutRatio;
+ 2715 |             if (fadeRatio <= 0) {
+ 2716 |               return;
+ 2717 |             }
+ 2718 |     
+ 2719 |             e.preventDefault();
+ 2720 |             e.stopPropagation();
+ 2721 |     
+ 2722 |             const originalFadeInCurve = displayedAudioFadeInCurve;
+ 2723 |             const originalFadeOutCurve = displayedAudioFadeOutCurve;
+ 2724 |             const originalFadeInCurveX = displayedAudioFadeInCurveX;
+ 2725 |             const originalFadeOutCurveX = displayedAudioFadeOutCurveX;
+ 2726 |             const persistedFadeInCurve = item.audioFadeInCurve ?? 0;
+ 2727 |             const persistedFadeOutCurve = item.audioFadeOutCurve ?? 0;
+ 2728 |             const persistedFadeInCurveX = item.audioFadeInCurveX ?? 0.52;
+ 2729 |             const persistedFadeOutCurveX = item.audioFadeOutCurveX ?? 0.52;
+ 2730 |     
+ 2731 |             const computeCurve = (clientX: number, clientY: number) => {
+ 2732 |               const rect = audioControlsRef.current?.getBoundingClientRect();
+ 2733 |               if (!rect) {
+ 2734 |                 return {
+ 2735 |                   curve:
+ 2736 |                     handle === "in" ? originalFadeInCurve : originalFadeOutCurve,
+ 2737 |                   curveX:
+ 2738 |                     handle === "in" ? originalFadeInCurveX : originalFadeOutCurveX,
+ 2739 |                 };
+ 2740 |               }
+ 2741 |     
+ 2742 |               return getAudioFadeCurveFromOffset({
+ 2743 |                 handle,
+ 2744 |                 pointerOffsetX: clientX - rect.left,
+ 2745 |                 pointerOffsetY: clientY - rect.top,
+ 2746 |                 fadePixels: fadeRatio * rect.width,
+ 2747 |                 clipWidthPixels: rect.width,
+ 2748 |                 rowHeight: rect.height,
+ 2749 |               });
+ 2750 |             };
+ 2751 |     
+ 2752 |             const applyPreview = (next: { curve: number; curveX: number }) => {
+ 2753 |               setAudioFadeCurveEdit({
+ 2754 |                 handle,
+ 2755 |                 previewFadeInCurve:
+ 2756 |                   handle === "in" ? next.curve : originalFadeInCurve,
+ 2757 |                 previewFadeOutCurve:
+ 2758 |                   handle === "out" ? next.curve : originalFadeOutCurve,
+ 2759 |                 previewFadeInCurveX:
+ 2760 |                   handle === "in" ? next.curveX : originalFadeInCurveX,
+ 2761 |                 previewFadeOutCurveX:
+ 2762 |                   handle === "out" ? next.curveX : originalFadeOutCurveX,
+ 2763 |                 originalFadeInCurve,
+ 2764 |                 originalFadeOutCurve,
+ 2765 |                 originalFadeInCurveX,
+ 2766 |                 originalFadeOutCurveX,
+ 2767 |                 isCommitting: false,
+ 2768 |               });
+ 2769 |             };
+ 2770 |     
+ 2771 |             const finishEdit = () => {
+ 2772 |               const latestState = audioFadeCurveEditRef.current;
+ 2773 |               const committedCurve =
+ 2774 |                 handle === "in"
+ 2775 |                   ? (latestState?.previewFadeInCurve ?? originalFadeInCurve)
+ 2776 |                   : (latestState?.previewFadeOutCurve ?? originalFadeOutCurve);
+ 2777 |               const committedCurveX =
+ 2778 |                 handle === "in"
+ 2779 |                   ? (latestState?.previewFadeInCurveX ?? originalFadeInCurveX)
+ 2780 |                   : (latestState?.previewFadeOutCurveX ?? originalFadeOutCurveX);
+ 2781 |               audioFadeCurveCleanupRef.current?.();
+ 2782 |               audioFadeCurveCleanupRef.current = null;
+ 2783 |     
+ 2784 |               if (handle === "in") {
+ 2785 |                 if (
+ 2786 |                   Math.abs(committedCurve - persistedFadeInCurve) >
+ 2787 |                     AUDIO_FADE_EPSILON ||
+ 2788 |                   Math.abs(committedCurveX - persistedFadeInCurveX) >
+ 2789 |                     AUDIO_FADE_EPSILON
+ 2790 |                 ) {
+ 2791 |                   setAudioFadeCurveEdit((prev) =>
+ 2792 |                     prev ? { ...prev, isCommitting: true } : prev,
+ 2793 |                   );
+ 2794 |                   updateTimelineItem(item.id, {
+ 2795 |                     audioFadeInCurve: committedCurve,
+ 2796 |                     audioFadeInCurveX: committedCurveX,
+ 2797 |                   });
+ 2798 |                 } else {
+ 2799 |                   setAudioFadeCurveEdit(null);
+ 2800 |                 }
+ 2801 |               } else if (
+ 2802 |                 Math.abs(committedCurve - persistedFadeOutCurve) >
+ 2803 |                   AUDIO_FADE_EPSILON ||
+ 2804 |                 Math.abs(committedCurveX - persistedFadeOutCurveX) >
+ 2805 |                   AUDIO_FADE_EPSILON
+ 2806 |               ) {
+ 2807 |                 setAudioFadeCurveEdit((prev) =>
+ 2808 |                   prev ? { ...prev, isCommitting: true } : prev,
+ 2809 |                 );
+ 2810 |                 updateTimelineItem(item.id, {
+ 2811 |                   audioFadeOutCurve: committedCurve,
+ 2812 |                   audioFadeOutCurveX: committedCurveX,
+ 2813 |                 });
+ 2814 |               } else {
+ 2815 |                 setAudioFadeCurveEdit(null);
+ 2816 |               }
+ 2817 |             };
+ 2818 |     
+ 2819 |             applyPreview(computeCurve(e.clientX, e.clientY));
+ 2820 |     
+ 2821 |             const handleWindowMouseMove = (event: MouseEvent) => {
+ 2822 |               applyPreview(computeCurve(event.clientX, event.clientY));
+ 2823 |             };
+ 2824 |             const handleWindowMouseUp = () => {
+ 2825 |               finishEdit();
+ 2826 |             };
+ 2827 |     
+ 2828 |             window.addEventListener("mousemove", handleWindowMouseMove);
+ 2829 |             window.addEventListener("mouseup", handleWindowMouseUp, { once: true });
+ 2830 |             audioFadeCurveCleanupRef.current = () => {
+ 2831 |               window.removeEventListener("mousemove", handleWindowMouseMove);
+ 2832 |               window.removeEventListener("mouseup", handleWindowMouseUp);
+ 2833 |             };
+ 2834 |           },
+ 2835 | ,->       [
+ 2836 | |           activeTool,
+ 2837 | |           audioFadeInRatio,
+ 2838 | |           audioFadeOutRatio,
+ 2839 | |           displayedAudioFadeInCurve,
+ 2840 | |           displayedAudioFadeInCurveX,
+ 2841 | |           displayedAudioFadeOutCurve,
+ 2842 | |           displayedAudioFadeOutCurveX,
+ 2843 | |           item,
+ 2844 | |           trackLocked,
+ 2845 | |           updateTimelineItem,
+ 2846 | `->       ],
+ 2847 |         );
+      `----
+  help: Either include it or remove the dependency array.
+
+Found 3 warnings and 0 errors.
+Finished in 4.0s on 1434 files with 76 rules using 8 threads.
