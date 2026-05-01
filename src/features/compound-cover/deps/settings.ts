@@ -1,9 +1,5 @@
 /**
- * Cross-feature contract — Custom AI store used by Add Cover to read the
- * Vision Analyzer config (reused for the chat-completions call).
+ * Compatibility adapter that re-exports through settings-contract.
  */
 
-export {
-  useCustomAiStore,
-  getCustomAiVisionAnalyzerConfig,
-} from '@/features/settings/stores/custom-ai-store'
+export * from './settings-contract'
