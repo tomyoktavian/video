@@ -141,7 +141,18 @@ vi.mock('@/features/editor/deps/timeline-store', () => {
     },
   )
 
-  return { useTimelineStore }
+  const useCompositionsStore = Object.assign(
+    (selector: (state: { compositions: unknown[] }) => unknown) => selector({ compositions: [] }),
+    {
+      getState: () => ({
+        compositions: [],
+        compositionById: {},
+        getComposition: () => undefined,
+      }),
+    },
+  )
+
+  return { useTimelineStore, useCompositionsStore }
 })
 
 vi.mock('@/features/editor/deps/project-bundle', () => ({

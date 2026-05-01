@@ -18,7 +18,7 @@ import {
   useTransitionBreakageNotifications,
 } from '@/features/editor/deps/timeline-hooks'
 import { initTransitionChainSubscription } from '@/features/editor/deps/timeline-subscriptions'
-import { useTimelineStore } from '@/features/editor/deps/timeline-store'
+import { useCompositionsStore, useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { importBundleExportDialog } from '@/features/editor/deps/project-bundle'
 import { useMediaLibraryStore } from '@/features/editor/deps/media-library'
 import { useSettingsStore } from '@/features/editor/deps/settings'
@@ -83,6 +83,14 @@ const LazyAddCoverDialog = lazy(() =>
     default: module.AddCoverDialog,
   })),
 )
+const LazyExportLauncherDialog = lazy(() =>
+  import('@/features/editor/components/export-launcher-dialog').then((module) => ({
+    default: module.ExportLauncherDialog,
+  })),
+)
+type ExportLauncherSelection =
+  import('@/features/editor/components/export-launcher-dialog').ExportLauncherSelection
+type CompositionScope = { compositionId: string; compositionName: string }
 
 function preloadExportDialog() {
   return importExportDialog()
@@ -231,6 +239,11 @@ export const LoadedEditor = memo(function LoadedEditor({
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [bundleExportDialogOpen, setBundleExportDialogOpen] = useState(false)
   const [bundleFileHandle, setBundleFileHandle] = useState<FileSystemFileHandle | undefined>()
+  const [exportLauncherOpen, setExportLauncherOpen] = useState(false)
+  const [pendingCompositionScope, setPendingCompositionScope] = useState<CompositionScope | null>(
+    null,
+  )
+  const hasCompositions = useCompositionsStore((s) => s.compositions.length > 0)
   const editorDensity = useSettingsStore((s) => s.editorDensity)
   const snapEnabledPreference = useSettingsStore((s) => s.snapEnabled)
   const editorLayout = getEditorLayout(editorDensity)
@@ -412,37 +425,80 @@ export const LoadedEditor = memo(function LoadedEditor({
     setExportDialogOpen(true)
   }, [])
 
-  const handleExportBundle = useCallback(async () => {
-    void preloadBundleExportDialog()
+  const openBundleExportDialog = useCallback(
+    async (scope: CompositionScope | null) => {
+      void preloadBundleExportDialog()
 
-    // Show native save picker BEFORE opening the modal dialog to avoid
-    // focus-loss conflicts between the native picker and Radix Dialog.
-    if (typeof window.showSaveFilePicker === 'function') {
-      const safeName = project.name
-        .replace(/[<>:"/\\|?*]/g, '_')
-        .replace(/\s+/g, '_')
-        .substring(0, 100)
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: `${safeName}.freecut.zip`,
-          types: [
-            {
-              description: 'FreeCut Project Bundle',
-              accept: { 'application/zip': ['.freecut.zip'] },
-            },
-          ],
-        })
-        setBundleFileHandle(handle)
-      } catch {
-        // User cancelled the picker - don't open the dialog
-        return
+      // Show native save picker BEFORE opening the modal dialog to avoid
+      // focus-loss conflicts between the native picker and Radix Dialog.
+      if (typeof window.showSaveFilePicker === 'function') {
+        const baseName = project.name
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .replace(/\s+/g, '_')
+          .substring(0, 100)
+        const compoundSuffix = scope
+          ? `--${scope.compositionName.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_')}`
+          : ''
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: `${baseName}${compoundSuffix}.freecut.zip`,
+            types: [
+              {
+                description: 'FreeCut Project Bundle',
+                accept: { 'application/zip': ['.freecut.zip'] },
+              },
+            ],
+          })
+          setBundleFileHandle(handle)
+        } catch {
+          // User cancelled the picker - don't open the dialog
+          return
+        }
+      } else {
+        setBundleFileHandle(undefined)
       }
-    } else {
-      setBundleFileHandle(undefined)
-    }
 
-    setBundleExportDialogOpen(true)
-  }, [project.name])
+      setPendingCompositionScope(scope)
+      setBundleExportDialogOpen(true)
+    },
+    [project.name],
+  )
+
+  const handleExportBundle = useCallback(
+    () => openBundleExportDialog(null),
+    [openBundleExportDialog],
+  )
+
+  const handleExportLauncher = useCallback(() => {
+    usePlaybackStore.getState().pause()
+    void preloadExportDialog()
+    void preloadBundleExportDialog()
+    setExportLauncherOpen(true)
+  }, [])
+
+  const handleLauncherSelect = useCallback(
+    async (selection: ExportLauncherSelection) => {
+      setExportLauncherOpen(false)
+
+      let scope: CompositionScope | null = null
+      if (selection.compositionId) {
+        const composition = useCompositionsStore.getState().getComposition(selection.compositionId)
+        if (composition) {
+          scope = { compositionId: composition.id, compositionName: composition.name }
+        }
+      }
+
+      if (selection.format === 'video') {
+        usePlaybackStore.getState().pause()
+        void preloadExportDialog()
+        setPendingCompositionScope(scope)
+        setExportDialogOpen(true)
+      } else {
+        await openBundleExportDialog(scope)
+      }
+    },
+    [openBundleExportDialog],
+  )
 
   // Enable keyboard shortcuts
   useEditorHotkeys({
@@ -477,9 +533,11 @@ export const LoadedEditor = memo(function LoadedEditor({
           projectId={projectId}
           project={project}
           isDirty={isDirty}
+          hasCompositions={hasCompositions}
           onSave={handleSave}
           onExport={handleExport}
           onExportBundle={handleExportBundle}
+          onExportLauncher={handleExportLauncher}
         />
       </InteractionLockRegion>
 
@@ -567,9 +625,25 @@ export const LoadedEditor = memo(function LoadedEditor({
       </div>
 
       <Suspense fallback={null}>
+        {/* Export Launcher Dialog (only shown when project has compound clips) */}
+        {exportLauncherOpen && (
+          <LazyExportLauncherDialog
+            open={exportLauncherOpen}
+            onClose={() => setExportLauncherOpen(false)}
+            onSelect={handleLauncherSelect}
+          />
+        )}
+
         {/* Export Dialog */}
         {exportDialogOpen && (
-          <LazyExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
+          <LazyExportDialog
+            open={exportDialogOpen}
+            onClose={() => {
+              setExportDialogOpen(false)
+              setPendingCompositionScope(null)
+            }}
+            compositionScope={pendingCompositionScope ?? undefined}
+          />
         )}
 
         {/* Bundle Export Dialog */}
@@ -579,10 +653,12 @@ export const LoadedEditor = memo(function LoadedEditor({
             onClose={() => {
               setBundleExportDialogOpen(false)
               setBundleFileHandle(undefined)
+              setPendingCompositionScope(null)
             }}
             projectId={projectId}
             onBeforeExport={handleSave}
             fileHandle={bundleFileHandle}
+            compositionScope={pendingCompositionScope ?? undefined}
           />
         )}
       </Suspense>

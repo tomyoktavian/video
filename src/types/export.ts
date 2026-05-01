@@ -29,6 +29,8 @@ export interface ExtendedExportSettings extends ExportSettings {
   audioContainer?: AudioContainer
   /** When true, ignores in/out points and exports the full timeline */
   renderWholeProject?: boolean
+  /** When set, renders this sub-composition instead of the main timeline */
+  compositionId?: string
 }
 
 export interface CompositionInputProps {

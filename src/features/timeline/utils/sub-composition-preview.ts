@@ -3,6 +3,13 @@ import type { TimelineItem } from '@/types/timeline'
 import { convertTimelineToComposition } from '../deps/export-contract'
 import type { SubComposition } from '../stores/compositions-store'
 
+/**
+ * Label set on the cover image by the compound-cover feature
+ * (`build-cover-items.ts`). Kept as a literal here to avoid a cross-feature
+ * import; if either side changes, `build-cover-items.test.ts` will flag it.
+ */
+const COMPOUND_COVER_IMAGE_LABEL = 'Cover Frame'
+
 function sanitizeTimelineItemForSignature(item: TimelineItem) {
   const serializableItem = {
     ...item,
@@ -111,10 +118,31 @@ export function buildSubCompositionPreviewSignature(
   return JSON.stringify(buildSignatureNode(compositionId, compositionById, new Set()))
 }
 
-export function getSubCompositionThumbnailFrame(durationInFrames: number): number {
+/**
+ * Find the cover image item within a sub-composition. A cover is created by
+ * `insertCover` (compound-cover feature) — it places an image item with a
+ * specific label at frame 0, optionally on a "Cover" track. The label is
+ * the most reliable signal because the user can rename the track.
+ */
+function findCoverImageItem(composition: SubComposition): TimelineItem | null {
+  for (const item of composition.items) {
+    if (item.type === 'image' && item.from === 0 && item.label === COMPOUND_COVER_IMAGE_LABEL) {
+      return item
+    }
+  }
+  return null
+}
+
+export function getSubCompositionThumbnailFrame(composition: SubComposition): number {
+  const cover = findCoverImageItem(composition)
+  if (cover) {
+    // Render mid-cover so any fade-in/out lands on a settled frame.
+    return Math.max(0, Math.floor(cover.durationInFrames / 2))
+  }
+
+  const { durationInFrames } = composition
   if (durationInFrames <= 1) {
     return 0
   }
-
   return Math.min(durationInFrames - 1, Math.max(0, Math.round((durationInFrames - 1) * 0.2)))
 }

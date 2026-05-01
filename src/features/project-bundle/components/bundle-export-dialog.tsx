@@ -18,6 +18,7 @@ import {
   HardDrive,
   FileVideo,
   Download,
+  Layers,
 } from 'lucide-react'
 import type { ExportProgress, ExportResult } from '../types/bundle'
 import {
@@ -28,6 +29,11 @@ import {
 import { formatDuration } from '@/shared/utils/time-utils'
 import { formatBytes } from '@/shared/utils/format-utils'
 
+export interface BundleExportDialogCompositionScope {
+  compositionId: string
+  compositionName: string
+}
+
 export interface BundleExportDialogProps {
   open: boolean
   onClose: () => void
@@ -35,6 +41,8 @@ export interface BundleExportDialogProps {
   onBeforeExport?: () => Promise<void>
   /** Pre-acquired file handle for streaming export (avoids native picker inside modal) */
   fileHandle?: FileSystemFileHandle
+  /** When set, the bundle's media list is restricted to this compound clip's references. */
+  compositionScope?: BundleExportDialogCompositionScope
 }
 
 type ExportStatus = 'idle' | 'saving' | 'exporting' | 'completed' | 'failed'
@@ -60,6 +68,7 @@ export function BundleExportDialog({
   projectId,
   onBeforeExport,
   fileHandle,
+  compositionScope,
 }: BundleExportDialogProps) {
   const [status, setStatus] = useState<ExportStatus>('idle')
   const [progress, setProgress] = useState<ExportProgress>({ percent: 0, stage: 'collecting' })
@@ -113,17 +122,29 @@ export function BundleExportDialog({
       setStatus('exporting')
 
       let exportResult: ExportResult
+      const exportOptions = compositionScope
+        ? { scopeCompositionId: compositionScope.compositionId }
+        : undefined
 
       if (fileHandle) {
         // Streaming path: write directly to the pre-acquired file handle
-        exportResult = await exportProjectBundleStreaming(projectId, fileHandle, (p) => {
-          setProgress(p)
-        })
+        exportResult = await exportProjectBundleStreaming(
+          projectId,
+          fileHandle,
+          (p) => {
+            setProgress(p)
+          },
+          exportOptions,
+        )
       } else {
         // Fallback: in-memory export
-        exportResult = await exportProjectBundle(projectId, (p) => {
-          setProgress(p)
-        })
+        exportResult = await exportProjectBundle(
+          projectId,
+          (p) => {
+            setProgress(p)
+          },
+          exportOptions,
+        )
       }
 
       setResult(exportResult)
@@ -132,7 +153,7 @@ export function BundleExportDialog({
       setError(err instanceof Error ? err.message : 'Export failed')
       setStatus('failed')
     }
-  }, [projectId, onBeforeExport, fileHandle])
+  }, [projectId, onBeforeExport, fileHandle, compositionScope])
 
   // Auto-start export when dialog opens
   useEffect(() => {
@@ -198,6 +219,17 @@ export function BundleExportDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4 overflow-hidden">
+          {compositionScope && (
+            <div
+              className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary"
+              role="status"
+            >
+              <Layers className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                Bundling media for compound: <strong>{compositionScope.compositionName}</strong>
+              </span>
+            </div>
+          )}
           {/* Progress section */}
           {isExporting && (
             <div className="space-y-4 min-w-0">

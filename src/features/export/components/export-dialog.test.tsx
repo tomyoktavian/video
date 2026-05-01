@@ -58,6 +58,9 @@ vi.mock('@/features/export/deps/timeline', () => ({
       inPoint: null,
       outPoint: null,
     }),
+  useCompositionsStore: (
+    selector: (state: { compositionById: Record<string, unknown> }) => unknown,
+  ) => selector({ compositionById: {} }),
 }))
 
 vi.mock('./export-preview-player', () => ({

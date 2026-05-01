@@ -78,7 +78,7 @@ class CompoundClipThumbnailService {
           ...compositionInput,
           tracks: resolvedTracks,
         },
-        frame: getSubCompositionThumbnailFrame(composition.durationInFrames),
+        frame: getSubCompositionThumbnailFrame(composition),
         width: thumbnailDimensions.width,
         height: thumbnailDimensions.height,
         quality: 0.8,

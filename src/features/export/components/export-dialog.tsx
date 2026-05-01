@@ -45,10 +45,19 @@ import {
   type ClientAudioContainer,
 } from '../utils/client-renderer'
 import { ExportPreviewPlayer } from './export-preview-player'
+import { useCompositionsStore } from '@/features/export/deps/timeline'
+import { Layers } from 'lucide-react'
+
+export interface ExportDialogCompositionScope {
+  compositionId: string
+  compositionName: string
+}
 
 export interface ExportDialogProps {
   open: boolean
   onClose: () => void
+  /** When set, the dialog renders the named compound clip instead of the main timeline. */
+  compositionScope?: ExportDialogCompositionScope
 }
 
 type DialogView = 'settings' | 'progress' | 'complete' | 'error' | 'cancelled'
@@ -119,14 +128,24 @@ function getDefaultCodecForFormat(format: 'mp4' | 'webm'): ExportSettings['codec
   return getDefaultVideoCodec(format)
 }
 
-export function ExportDialog({ open, onClose }: ExportDialogProps) {
-  const projectWidth = useProjectStore((s) => s.currentProject?.metadata.width ?? 1920)
-  const projectHeight = useProjectStore((s) => s.currentProject?.metadata.height ?? 1080)
+export function ExportDialog({ open, onClose, compositionScope }: ExportDialogProps) {
+  // Compound-scope export pulls dimensions/duration/fps from the sub-comp store.
+  const scopedComposition = useCompositionsStore((s) =>
+    compositionScope ? s.compositionById[compositionScope.compositionId] : undefined,
+  )
+  const isCompositionScope = Boolean(compositionScope)
+
+  const projectMetadataWidth = useProjectStore((s) => s.currentProject?.metadata.width ?? 1920)
+  const projectMetadataHeight = useProjectStore((s) => s.currentProject?.metadata.height ?? 1080)
+  const projectWidth = scopedComposition?.width ?? projectMetadataWidth
+  const projectHeight = scopedComposition?.height ?? projectMetadataHeight
+
   // Timeline state for in/out points and duration calculation
-  const fps = useTimelineStore((s) => s.fps)
+  const timelineFps = useTimelineStore((s) => s.fps)
   const items = useTimelineStore((s) => s.items)
   const inPoint = useTimelineStore((s) => s.inPoint)
   const outPoint = useTimelineStore((s) => s.outPoint)
+  const fps = scopedComposition?.fps ?? timelineFps
 
   const [settings, setSettings] = useState<ExportSettings>({
     codec: getDefaultCodecForFormat('mp4'),
@@ -143,24 +162,33 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const [renderWholeProject, setRenderWholeProject] = useState(false)
   const wasOpenRef = useRef(false)
 
-  // Calculate timeline duration from items
+  // Calculate timeline duration from items, or use the sub-comp's own duration when scoped.
   const timelineDurationFrames = useMemo(() => {
+    if (scopedComposition) return scopedComposition.durationInFrames
     if (items.length === 0) return 0
     return Math.max(...items.map((item) => item.from + item.durationInFrames))
-  }, [items])
+  }, [items, scopedComposition])
 
-  // Check if in/out points are set
-  const hasInOutPoints = inPoint !== null && outPoint !== null && outPoint > inPoint
+  // Check if in/out points are set (ignored for sub-comp scope).
+  const hasInOutPoints =
+    !isCompositionScope && inPoint !== null && outPoint !== null && outPoint > inPoint
 
-  // Calculate export range
+  // Calculate export range. Sub-comp scope always exports the full sub-comp duration.
   const exportRange = useMemo(() => {
-    if (renderWholeProject || !hasInOutPoints) {
+    if (isCompositionScope || renderWholeProject || !hasInOutPoints) {
       return { start: 0, end: timelineDurationFrames, duration: timelineDurationFrames }
     }
     const start = inPoint ?? 0
     const end = outPoint ?? timelineDurationFrames
     return { start, end, duration: end - start }
-  }, [renderWholeProject, hasInOutPoints, inPoint, outPoint, timelineDurationFrames])
+  }, [
+    isCompositionScope,
+    renderWholeProject,
+    hasInOutPoints,
+    inPoint,
+    outPoint,
+    timelineDurationFrames,
+  ])
 
   const resolutionOptions = useMemo(
     () => getResolutionOptions(projectWidth, projectHeight),
@@ -244,7 +272,8 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
       mode: exportMode,
       videoContainer: exportMode === 'video' ? videoContainer : undefined,
       audioContainer: exportMode === 'audio' ? audioContainer : undefined,
-      renderWholeProject,
+      renderWholeProject: isCompositionScope ? true : renderWholeProject,
+      compositionId: compositionScope?.compositionId,
     }
     await startExport(extendedSettings)
   }
@@ -396,7 +425,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const getTitle = () => {
     switch (view) {
       case 'settings':
-        return 'Export Video'
+        return compositionScope ? 'Export Compound Clip' : 'Export Video'
       case 'progress':
         return (
           <span className="flex items-center gap-2">
@@ -459,6 +488,17 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
         {/* Settings View */}
         {view === 'settings' && (
           <div className="space-y-6 py-4">
+            {compositionScope && (
+              <div
+                className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary"
+                role="status"
+              >
+                <Layers className="h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  Exporting compound clip: <strong>{compositionScope.compositionName}</strong>
+                </span>
+              </div>
+            )}
             {/* Export Mode: Video or Audio Toggle Group */}
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Export Type</Label>
@@ -495,7 +535,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Export Range</span>
+                  <span className="text-sm font-medium">
+                    {isCompositionScope ? 'Compound Range' : 'Export Range'}
+                  </span>
                 </div>
                 {hasInOutPoints && (
                   <div className="flex items-center gap-2">
@@ -530,11 +572,15 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                   </div>
                 </div>
               </div>
-              {hasInOutPoints && !renderWholeProject && (
+              {isCompositionScope ? (
+                <p className="text-xs text-muted-foreground">
+                  Exporting the full compound clip — timeline in/out points don&apos;t apply.
+                </p>
+              ) : hasInOutPoints && !renderWholeProject ? (
                 <p className="text-xs text-muted-foreground">
                   Exporting in/out range. Toggle above to export the full timeline.
                 </p>
-              )}
+              ) : null}
             </div>
 
             {/* Video Export Settings */}

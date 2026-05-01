@@ -22,11 +22,46 @@ import {
 
 import { createLogger } from '@/shared/logging/logger'
 import { convertTimelineForBundle } from './bundle-timeline'
+import {
+  collectSubCompositionMediaIds,
+  useCompositionsStore,
+} from '@/features/project-bundle/deps/timeline'
 
 const logger = createLogger('BundleExportService')
 
 // App version - should be imported from a config
 const APP_VERSION = '1.0.0'
+
+export interface BundleExportOptions {
+  /** When set, the bundle's media list is restricted to media referenced by this compound clip. */
+  scopeCompositionId?: string
+}
+
+/**
+ * Resolve the media-id list for a bundle export, optionally narrowing the
+ * scope to a single compound clip's recursive media dependencies.
+ */
+async function resolveBundleMediaIds(
+  projectId: string,
+  options: BundleExportOptions | undefined,
+): Promise<{ mediaIds: string[]; scope: BundleManifest['scope'] }> {
+  const scopeCompositionId = options?.scopeCompositionId
+  if (!scopeCompositionId) {
+    return { mediaIds: await getProjectMediaIds(projectId), scope: undefined }
+  }
+
+  const compositionById = useCompositionsStore.getState().compositionById
+  const composition = compositionById[scopeCompositionId]
+  if (!composition) {
+    throw new Error(`Compound clip not found: ${scopeCompositionId}`)
+  }
+
+  const mediaIds = collectSubCompositionMediaIds(scopeCompositionId, compositionById)
+  return {
+    mediaIds,
+    scope: { compositionId: composition.id, compositionName: composition.name },
+  }
+}
 
 /**
  * Export a project as a bundle
@@ -34,6 +69,7 @@ const APP_VERSION = '1.0.0'
 export async function exportProjectBundle(
   projectId: string,
   onProgress?: (progress: ExportProgress) => void,
+  options?: BundleExportOptions,
 ): Promise<ExportResult> {
   onProgress?.({ percent: 0, stage: 'collecting' })
 
@@ -43,8 +79,8 @@ export async function exportProjectBundle(
     throw new Error(`Project not found: ${projectId}`)
   }
 
-  // Step 2: Get all media IDs for this project
-  const mediaIds = await getProjectMediaIds(projectId)
+  // Step 2: Get media IDs for this bundle (optionally scoped to a compound clip)
+  const { mediaIds, scope } = await resolveBundleMediaIds(projectId, options)
   onProgress?.({ percent: 10, stage: 'collecting' })
 
   // Step 3: Collect media metadata
@@ -78,6 +114,7 @@ export async function exportProjectBundle(
     projectName: project.name,
     media: [],
     checksum: '', // Computed at end
+    ...(scope && { scope }),
   }
 
   // Track unique filenames in bundle
@@ -232,6 +269,7 @@ export async function exportProjectBundleStreaming(
   projectId: string,
   fileHandle: FileSystemFileHandle,
   onProgress?: (progress: ExportProgress) => void,
+  options?: BundleExportOptions,
 ): Promise<ExportResult> {
   const writable = await fileHandle.createWritable()
   let totalSize = 0
@@ -247,8 +285,8 @@ export async function exportProjectBundleStreaming(
       throw new Error(`Project not found: ${projectId}`)
     }
 
-    // Step 2: Get all media IDs for this project
-    const mediaIds = await getProjectMediaIds(projectId)
+    // Step 2: Get media IDs for this bundle (optionally scoped to a compound clip)
+    const { mediaIds, scope } = await resolveBundleMediaIds(projectId, options)
     onProgress?.({ percent: 10, stage: 'collecting' })
 
     // Step 3: Collect media metadata
@@ -284,6 +322,7 @@ export async function exportProjectBundleStreaming(
       projectName: project.name,
       media: [],
       checksum: '',
+      ...(scope && { scope }),
     }
 
     const usedFilenames = new Set<string>()

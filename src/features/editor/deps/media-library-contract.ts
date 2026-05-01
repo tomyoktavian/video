@@ -17,6 +17,8 @@ export {
   setMediaDragData,
 } from '@/features/media-library/utils/drag-data-cache'
 
+export { compoundClipThumbnailService } from '@/features/media-library/services/compound-clip-thumbnail-service'
+
 export const importProxyService = () => import('@/features/media-library/services/proxy-service')
 export const importMediaLibraryService = () =>
   import('@/features/media-library/services/media-library-service')

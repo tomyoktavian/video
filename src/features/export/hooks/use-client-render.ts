@@ -29,7 +29,11 @@ import {
 } from '../utils/client-renderer'
 import { renderComposition, renderAudioOnly } from '../utils/client-render-engine'
 import { convertTimelineToComposition } from '../utils/timeline-to-composition'
-import { useTimelineStore } from '@/features/export/deps/timeline'
+import {
+  buildSubCompositionInput,
+  useCompositionsStore,
+  useTimelineStore,
+} from '@/features/export/deps/timeline'
 import { useProjectStore } from '@/features/export/deps/projects'
 import { resolveMediaUrls, getMaxSourceVideoBitrate } from '@/features/export/deps/media-library'
 import { usePlaybackStore } from '@/shared/state/playback'
@@ -269,18 +273,46 @@ export function useClientRender(): UseClientRenderReturn {
         // Create abort controller for cancellation
         abortControllerRef.current = new AbortController()
 
-        // Read current state from stores
+        // Determine export scope. When `compositionId` is set, render that
+        // sub-composition's contents instead of the main timeline.
+        const scopedCompositionId = isExtendedSettings(settings)
+          ? settings.compositionId
+          : undefined
+        const scopedComposition = scopedCompositionId
+          ? useCompositionsStore.getState().getComposition(scopedCompositionId)
+          : undefined
+
+        if (scopedCompositionId && !scopedComposition) {
+          throw new Error(`Compound clip not found: ${scopedCompositionId}`)
+        }
+
+        // Read current state from stores. For composition-scoped exports we read
+        // the sub-comp's tracks/items/etc.; otherwise we read the main timeline.
         const state = useTimelineStore.getState()
-        const { tracks, items, transitions, fps, inPoint, outPoint, keyframes } = state
+        const tracks = scopedComposition ? scopedComposition.tracks : state.tracks
+        const items = scopedComposition ? scopedComposition.items : state.items
+        const transitions = scopedComposition ? scopedComposition.transitions : state.transitions
+        const keyframes = scopedComposition ? scopedComposition.keyframes : state.keyframes
+        const fps = scopedComposition ? scopedComposition.fps : state.fps
+        const inPoint = scopedComposition ? null : state.inPoint
+        const outPoint = scopedComposition ? null : state.outPoint
 
         // Get project metadata (background color and native resolution)
         const currentProject = useProjectStore.getState().currentProject
-        const busAudioEq = usePlaybackStore.getState().busAudioEq
-        const masterBusDb = usePlaybackStore.getState().masterBusDb
-        const backgroundColor = currentProject?.metadata?.backgroundColor
-        // Use PROJECT resolution for composition (transform calculations match preview)
-        const projectWidth = currentProject?.metadata?.width ?? 1920
-        const projectHeight = currentProject?.metadata?.height ?? 1080
+        const busAudioEq = scopedComposition
+          ? scopedComposition.busAudioEq
+          : usePlaybackStore.getState().busAudioEq
+        const masterBusDb = scopedComposition ? undefined : usePlaybackStore.getState().masterBusDb
+        const backgroundColor = scopedComposition
+          ? scopedComposition.backgroundColor
+          : currentProject?.metadata?.backgroundColor
+        // Use composition resolution for sub-comp scope, project resolution otherwise.
+        const projectWidth = scopedComposition
+          ? scopedComposition.width
+          : (currentProject?.metadata?.width ?? 1920)
+        const projectHeight = scopedComposition
+          ? scopedComposition.height
+          : (currentProject?.metadata?.height ?? 1080)
 
         // Determine export mode and container from extended settings
         const exportMode = isExtendedSettings(settings) ? settings.mode : 'video'
@@ -290,9 +322,10 @@ export function useClientRender(): UseClientRenderReturn {
           ? settings.renderWholeProject
           : false
 
-        // When renderWholeProject is true, ignore in/out points
-        const effectiveInPoint = renderWholeProject ? null : inPoint
-        const effectiveOutPoint = renderWholeProject ? null : outPoint
+        // When renderWholeProject is true, ignore in/out points. Composition scope
+        // never applies in/out points (always renders full sub-comp duration).
+        const effectiveInPoint = scopedComposition ? null : renderWholeProject ? null : inPoint
+        const effectiveOutPoint = scopedComposition ? null : renderWholeProject ? null : outPoint
 
         event.merge({
           mode: exportMode,
@@ -307,6 +340,7 @@ export function useClientRender(): UseClientRenderReturn {
           videoContainer,
           audioContainer,
           projectId: currentProject?.id,
+          compositionId: scopedCompositionId,
         })
 
         // Map settings to client-compatible settings
@@ -398,22 +432,28 @@ export function useClientRender(): UseClientRenderReturn {
           event.set('optimizedVideoBitrate', clientSettings.videoBitrate)
         }
 
-        // Convert timeline to Composition format (handles I/O point trimming)
-        // Use PROJECT resolution so transforms match preview (will scale to export res later)
-        const composition = convertTimelineToComposition(
-          tracks,
-          items,
-          transitions,
-          fps,
-          projectWidth,
-          projectHeight,
-          effectiveInPoint,
-          effectiveOutPoint,
-          keyframes,
-          backgroundColor,
-          busAudioEq,
-          masterBusDb,
-        )
+        // Convert timeline to Composition format (handles I/O point trimming).
+        // For sub-comp scope, use the dedicated builder (no in/out clamping)
+        // and layer in the sub-comp's audio bus settings.
+        const composition = scopedComposition
+          ? {
+              ...buildSubCompositionInput(scopedComposition),
+              busAudioEq,
+            }
+          : convertTimelineToComposition(
+              tracks,
+              items,
+              transitions,
+              fps,
+              projectWidth,
+              projectHeight,
+              effectiveInPoint,
+              effectiveOutPoint,
+              keyframes,
+              backgroundColor,
+              busAudioEq,
+              masterBusDb,
+            )
 
         const totalCompositionItems = composition.tracks.reduce(
           (sum, t) => sum + (t.items?.length ?? 0),

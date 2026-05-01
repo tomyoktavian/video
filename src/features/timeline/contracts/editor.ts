@@ -12,6 +12,14 @@ export { useTimelineSettingsStore } from '../stores/timeline-settings-store'
 export { useItemsStore } from '../stores/items-store'
 export { useKeyframesStore } from '../stores/keyframes-store'
 export { useCompositionsStore } from '../stores/compositions-store'
+export type { SubComposition } from '../stores/compositions-store'
+export { useCompositionNavigationStore } from '../stores/composition-navigation-store'
+export {
+  buildSubCompositionInput,
+  buildSubCompositionPreviewSignature,
+  collectSubCompositionMediaIds,
+  getSubCompositionThumbnailFrame,
+} from '../utils/sub-composition-preview'
 export { useTimelineCommandStore } from '../stores/timeline-command-store'
 export { captureSnapshot } from '../stores/commands/snapshot'
 export { Timeline } from '../components/timeline'

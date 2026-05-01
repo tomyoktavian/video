@@ -37,6 +37,11 @@ export interface BundleManifest {
   projectName: string
   media: BundleMediaEntry[]
   checksum: string // SHA-256 of manifest (excluding this field)
+  /** When set, this bundle's media list was filtered to a specific compound clip. */
+  scope?: {
+    compositionId: string
+    compositionName: string
+  }
 }
 
 /**

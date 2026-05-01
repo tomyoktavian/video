@@ -43,18 +43,22 @@ interface ToolbarProps {
     fps: number
   }
   isDirty?: boolean
+  hasCompositions?: boolean
   onSave?: () => Promise<void>
   onExport?: () => void
   onExportBundle?: () => void
+  onExportLauncher?: () => void
 }
 
 export const Toolbar = memo(function Toolbar({
   projectId,
   project,
   isDirty = false,
+  hasCompositions = false,
   onSave,
   onExport,
   onExportBundle,
+  onExportLauncher,
 }: ToolbarProps) {
   const navigate = useNavigate()
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
@@ -206,25 +210,37 @@ export const Toolbar = memo(function Toolbar({
           Save
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1.5 glow-primary-sm">
-              <Download className="h-4 w-4" />
-              Export
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onExport} className="gap-2">
-              <Video className="h-4 w-4" />
-              Export Video
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onExportBundle} className="gap-2">
-              <FolderArchive className="h-4 w-4" />
-              Download Project (.zip)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {hasCompositions ? (
+          <Button
+            size="sm"
+            className="gap-1.5 glow-primary-sm"
+            onClick={onExportLauncher}
+            aria-label="Export"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="gap-1.5 glow-primary-sm">
+                <Download className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onExport} className="gap-2">
+                <Video className="h-4 w-4" />
+                Export Video
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportBundle} className="gap-2">
+                <FolderArchive className="h-4 w-4" />
+                Download Project (.zip)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   )
