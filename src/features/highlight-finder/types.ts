@@ -43,6 +43,12 @@ export interface HighlightFinderRequest {
   clipDurationSec: number
   /** Optional override for the system prompt. Empty string = use default. */
   systemPromptOverride?: string
+  /**
+   * ISO-639-1 code (e.g. `'id'`, `'en'`) requesting that the AI write the
+   * `title` field in this language regardless of the source content. Empty
+   * string or `'auto'` = match the source language.
+   */
+  titleLanguage?: string
   signal?: AbortSignal
 }
 

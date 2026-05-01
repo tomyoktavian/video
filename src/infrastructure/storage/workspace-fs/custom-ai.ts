@@ -64,6 +64,13 @@ export interface CustomAiVisionAnalyzerConfig {
    * automatically and does not need to live in this prompt.
    */
   highlightFinderPrompt: string
+  /**
+   * Override the built-in system prompt sent to /chat/completions for the
+   * Add Cover feature (Vlog-style title text generation for compound clips).
+   * Empty string = use the default prompt. The user message (transcript or
+   * free-form context) is appended automatically by the adapter.
+   */
+  coverFinderPrompt: string
   cachedModels: ReadonlyArray<CustomAiCachedModel>
   lastLoadedAt: number | null
 }
@@ -98,6 +105,7 @@ export const DEFAULT_CUSTOM_AI_CONFIG: CustomAiConfig = {
     apiKey: '',
     model: '',
     highlightFinderPrompt: '',
+    coverFinderPrompt: '',
     cachedModels: [],
     lastLoadedAt: null,
   },
@@ -159,6 +167,7 @@ function normalizeVisionAnalyzer(value: unknown): CustomAiVisionAnalyzerConfig {
     model: typeof raw.model === 'string' ? raw.model : '',
     highlightFinderPrompt:
       typeof raw.highlightFinderPrompt === 'string' ? raw.highlightFinderPrompt : '',
+    coverFinderPrompt: typeof raw.coverFinderPrompt === 'string' ? raw.coverFinderPrompt : '',
     cachedModels: normalizeCachedModels(raw.cachedModels),
     lastLoadedAt:
       typeof lastLoadedAtRaw === 'number' && Number.isFinite(lastLoadedAtRaw)

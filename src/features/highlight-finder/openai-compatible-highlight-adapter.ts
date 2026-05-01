@@ -7,6 +7,10 @@
 
 import { getCustomAiVisionAnalyzerConfig } from './deps/settings'
 import { createLogger } from '@/shared/logging/logger'
+import {
+  WHISPER_AUTO_LANGUAGE_VALUE,
+  WHISPER_LANGUAGE_OPTIONS,
+} from '@/shared/utils/whisper-settings'
 
 import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from './system-prompt'
 import type { AiHighlight, HighlightFinderRequest } from './types'
@@ -131,13 +135,30 @@ function buildClipBlock(
   return lines.join('\n')
 }
 
+function resolveLanguageLabel(code: string | undefined): string | null {
+  if (!code) return null
+  const normalized = code.trim().toLowerCase()
+  if (!normalized || normalized === WHISPER_AUTO_LANGUAGE_VALUE || normalized === '') return null
+  const match = WHISPER_LANGUAGE_OPTIONS.find((option) => option.value === normalized)
+  // Fall back to the raw code so callers can pass any tag the model recognises
+  // (e.g. a region-specific subtag) even if it isn't in the curated whisper list.
+  return match ? match.label : code.trim()
+}
+
 function buildUserMessage(request: HighlightFinderRequest): string {
-  const header = [
+  const headerLines = [
     `Pick exactly ${request.targetCount} highlights.`,
     `Each highlight must be approximately ${request.clipDurationSec.toFixed(1)} seconds long. Trim to the nearest sentence or scene boundary within ±20% of this target.`,
     'Return JSON only, matching the schema in the system prompt. Use the mediaId values exactly as listed.',
-    '',
-  ].join('\n')
+  ]
+  const languageLabel = resolveLanguageLabel(request.titleLanguage)
+  if (languageLabel) {
+    headerLines.push(
+      `Write the \`title\` field in ${languageLabel} regardless of the source language. Keep \`rationale\` in English.`,
+    )
+  }
+  headerLines.push('')
+  const header = headerLines.join('\n')
 
   // Try with transcripts first.
   const fullBlocks = request.clips.map((clip, i) =>

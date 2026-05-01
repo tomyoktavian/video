@@ -10,9 +10,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  WHISPER_AUTO_LANGUAGE_VALUE,
+  WHISPER_LANGUAGE_OPTIONS,
+} from '@/shared/utils/whisper-settings'
 import { useEditorStore } from '@/app/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
@@ -60,6 +65,7 @@ export function HighlightFinderDialog() {
   const [targetCount, setTargetCount] = useState<number>(DEFAULT_TARGET_COUNT)
   const [clipDuration, setClipDuration] = useState<number>(DEFAULT_CLIP_DURATION_SEC)
   const [addSubtitles, setAddSubtitles] = useState(true)
+  const [titleLanguage, setTitleLanguage] = useState<string>(WHISPER_AUTO_LANGUAGE_VALUE)
   const [isRunning, setIsRunning] = useState(false)
   const [progressLabel, setProgressLabel] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -70,6 +76,7 @@ export function HighlightFinderDialog() {
     if (!isOpen) return
     setTargetCount(DEFAULT_TARGET_COUNT)
     setClipDuration(DEFAULT_CLIP_DURATION_SEC)
+    setTitleLanguage(WHISPER_AUTO_LANGUAGE_VALUE)
     setErrorMessage(null)
     setProgressLabel('')
   }, [isOpen])
@@ -165,6 +172,9 @@ export function HighlightFinderDialog() {
         selectedItemIds,
         targetCount,
         clipDurationSec: clipDuration,
+        ...(titleLanguage && titleLanguage !== WHISPER_AUTO_LANGUAGE_VALUE
+          ? { titleLanguage }
+          : {}),
         signal: controller.signal,
       })
 
@@ -275,7 +285,16 @@ export function HighlightFinderDialog() {
       setIsRunning(false)
       setProgressLabel('')
     }
-  }, [canRun, selectedItemIds, targetCount, clipDuration, addSubtitles, showNotification, close])
+  }, [
+    canRun,
+    selectedItemIds,
+    targetCount,
+    clipDuration,
+    addSubtitles,
+    titleLanguage,
+    showNotification,
+    close,
+  ])
 
   const handleCancel = useCallback(() => {
     abortRef.current?.abort()
@@ -292,7 +311,7 @@ export function HighlightFinderDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange} modal>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-lg"
         hideCloseButton={isRunning}
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
@@ -385,7 +404,7 @@ export function HighlightFinderDialog() {
 
           <div className="flex items-center justify-between py-0.5">
             <Label htmlFor="add-subtitles-switch" className="text-sm cursor-pointer">
-              Add subtitles &amp; title card
+              Add subtitles
             </Label>
             <Switch
               id="add-subtitles-switch"
@@ -393,6 +412,25 @@ export function HighlightFinderDialog() {
               onCheckedChange={setAddSubtitles}
               disabled={isRunning}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Compound clip name language
+            </Label>
+            <Combobox
+              value={titleLanguage}
+              onValueChange={setTitleLanguage}
+              options={WHISPER_LANGUAGE_OPTIONS}
+              placeholder="Auto-detect from source"
+              searchPlaceholder="Search languages..."
+              emptyMessage="No languages match that search."
+              disabled={isRunning}
+            />
+            <p className="text-xs text-muted-foreground">
+              AI writes the compound clip name (used as its title) in this language regardless of
+              the source. Subtitles always stay in the source language.
+            </p>
           </div>
 
           {summary.length > 0 ? (

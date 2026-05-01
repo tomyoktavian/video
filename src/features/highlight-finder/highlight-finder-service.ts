@@ -30,6 +30,12 @@ export interface PrepareHighlightsParams {
   selectedItemIds: readonly string[]
   targetCount: number
   clipDurationSec: number
+  /**
+   * ISO-639-1 code (e.g. `'id'`, `'en'`) requesting the AI write the
+   * `title` field in this language regardless of the source. `'auto'`,
+   * `''`, or omitted = match source language.
+   */
+  titleLanguage?: string
   signal?: AbortSignal
 }
 
@@ -218,7 +224,7 @@ function resolveHighlights(
 export async function prepareHighlights(
   params: PrepareHighlightsParams,
 ): Promise<PreparedHighlights> {
-  const { selectedItemIds, targetCount, clipDurationSec, signal } = params
+  const { selectedItemIds, targetCount, clipDurationSec, titleLanguage, signal } = params
   const { contexts, skippedComps } = await buildClipContexts(selectedItemIds)
 
   if (contexts.length === 0) {
@@ -246,6 +252,7 @@ export async function prepareHighlights(
     clips: contexts,
     targetCount,
     clipDurationSec,
+    ...(titleLanguage ? { titleLanguage } : {}),
     ...(signal ? { signal } : {}),
   })
 

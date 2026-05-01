@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react'
-import { Layers, Trash2, ChevronRight } from 'lucide-react'
+import { Layers, Sparkles, Trash2, ChevronRight } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   ContextMenu,
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/shared/ui/cn'
 import { useEditorStore } from '@/app/state/editor'
+import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
 import {
   deleteCompoundClips,
   getCompoundClipDeletionImpact,
@@ -134,6 +135,10 @@ export function CompositionsSection() {
     setEditValue(comp.name)
   }, [])
 
+  const handleAddCover = useCallback((comp: SubComposition) => {
+    useAddCoverDialogStore.getState().open(comp.id)
+  }, [])
+
   const handleCommitRename = useCallback((id: string) => {
     if (renameCancelledRef.current) {
       renameCancelledRef.current = false
@@ -162,10 +167,18 @@ export function CompositionsSection() {
             onEnter: () => handleEnter(comp),
             onDelete: () => handleDeleteRequest(comp),
             onStartRename: () => handleStartRename(comp),
+            onAddCover: () => handleAddCover(comp),
           },
         ]),
       ),
-    [compositions, handleCompositionSelect, handleDeleteRequest, handleEnter, handleStartRename],
+    [
+      compositions,
+      handleAddCover,
+      handleCompositionSelect,
+      handleDeleteRequest,
+      handleEnter,
+      handleStartRename,
+    ],
   )
 
   const deleteImpact = deleteTarget
@@ -230,6 +243,7 @@ export function CompositionsSection() {
                 onEnter={handlers.onEnter}
                 onDelete={handlers.onDelete}
                 onStartRename={handlers.onStartRename}
+                onAddCover={handlers.onAddCover}
                 onCommitRename={handleCommitRename}
                 onCancelRename={handleCancelRename}
               />
@@ -295,6 +309,7 @@ interface CompositionCardProps {
   onEnter: () => void
   onDelete: () => void
   onStartRename: () => void
+  onAddCover: () => void
   onCommitRename: (id: string) => void
   onCancelRename: () => void
 }
@@ -312,6 +327,7 @@ const CompositionCard = memo(function CompositionCard({
   onEnter,
   onDelete,
   onStartRename,
+  onAddCover,
   onCommitRename,
   onCancelRename,
 }: CompositionCardProps) {
@@ -537,6 +553,10 @@ const CompositionCard = memo(function CompositionCard({
 
         <ContextMenuContent>
           <ContextMenuItem onClick={onEnter}>Enter Compound Clip</ContextMenuItem>
+          <ContextMenuItem onClick={onAddCover}>
+            <Sparkles className="mr-2 h-3 w-3" />
+            Add Cover…
+          </ContextMenuItem>
           <ContextMenuItem onClick={onStartRename}>Rename</ContextMenuItem>
           <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
             Delete

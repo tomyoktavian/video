@@ -1,35 +1,19 @@
 /**
- * Builds subtitle + title-card text items for a highlight plan at ABSOLUTE
- * main-timeline positions. Items are added to the main timeline first, then
- * passed to `createPreComp` as companions — which repositions them to
- * comp-internal coordinates (`from = item.from - minFrom`) automatically.
+ * Builds subtitle text items for a highlight plan at ABSOLUTE main-timeline
+ * positions. Items are added to the main timeline first, then passed to
+ * `createPreComp` as companions — which repositions them to comp-internal
+ * coordinates (`from = item.from - minFrom`) automatically.
  *
- * Subtitle items  — one per transcript segment, bottom-centre, white bold.
- * Title-card item — AI-vibe-matched text preset, top-centre, first ~3 s.
+ * One subtitle TextItem per transcript segment, bottom-centre, white bold.
+ *
+ * The AI-generated `plan.title` is intentionally NOT rendered as a TextItem
+ * here — it's used directly as the resulting compound clip's name (via
+ * `createPreComp(plan.title, …)` in the highlight-actions module).
  */
 
-import { buildTextStylePresetTemplate } from '@/shared/typography/text-style-presets'
-import type { TextStylePresetId } from '@/shared/typography/text-style-preset-ids'
 import type { TextItem, TimelineItem, TimelineTrack } from '@/types/timeline'
 
 import type { HighlightFinderClipContext, ResolvedHighlightPlan } from './types'
-
-// ---------------------------------------------------------------------------
-// Vibe → preset mapping
-// ---------------------------------------------------------------------------
-
-const VIBE_TO_PRESET: Record<string, TextStylePresetId> = {
-  clean: 'clean-title',
-  bold: 'poster',
-  energetic: 'neon',
-  cinematic: 'cinematic',
-  modern: 'outline-pill',
-}
-
-function resolvePreset(vibe: string | undefined): TextStylePresetId {
-  if (!vibe) return 'clean-title'
-  return VIBE_TO_PRESET[vibe.toLowerCase()] ?? 'clean-title'
-}
 
 // ---------------------------------------------------------------------------
 // Track helpers (inline — no cross-feature import needed)
@@ -87,7 +71,7 @@ function buildNewTrack(tracks: readonly TimelineTrack[], name: string): Timeline
 // ---------------------------------------------------------------------------
 
 export interface BuildHighlightTextItemsOptions {
-  /** The resolved plan for this highlight (used for splitFrames, fps, titleStyle, source times). */
+  /** The resolved plan for this highlight (used for splitFrames, fps, source times). */
   plan: ResolvedHighlightPlan
   /** Clip context (transcript segments) for this highlight. */
   context: HighlightFinderClipContext
@@ -117,6 +101,8 @@ export function buildHighlightTextItems({
   const textItems: TextItem[] = []
   const tracksToAdd: TimelineTrack[] = []
 
+  if (!addSubtitles) return { textItems, tracksToAdd }
+
   // Working copies so track/item additions are visible to subsequent lookups.
   let workingTracks: TimelineTrack[] = [...existingTracks]
   const workingItems: TimelineItem[] = [...existingItems]
@@ -124,53 +110,6 @@ export function buildHighlightTextItems({
   const planFrom = plan.splitFrames[0]
   const compDurationInFrames = plan.splitFrames[1] - plan.splitFrames[0]
   const fps = plan.fps
-  const canvas = { width: canvasWidth, height: canvasHeight, fps }
-
-  // ------------------------------------------------------------------
-  // Title card (top of screen, AI-vibe preset, first ~3s)
-  // Positioned at planFrom on the main timeline; createPreComp will
-  // reposition to from=0 inside the comp automatically.
-  // ------------------------------------------------------------------
-  const presetId = resolvePreset(plan.titleStyle)
-  const presetTemplate = buildTextStylePresetTemplate(presetId, canvas)
-  const titleDuration = Math.min(Math.round(3 * fps), compDurationInFrames)
-
-  const titleRanges = [{ from: planFrom, end: planFrom + titleDuration }]
-  let titleTrack = findCompatibleTrack(workingTracks, workingItems, titleRanges)
-  if (!titleTrack) {
-    titleTrack = buildNewTrack(workingTracks, 'Highlight Titles')
-    tracksToAdd.push(titleTrack)
-    workingTracks = [...workingTracks, titleTrack].sort((a, b) => a.order - b.order)
-  }
-
-  const titleItem = {
-    ...presetTemplate,
-    id: crypto.randomUUID(),
-    type: 'text' as const,
-    trackId: titleTrack.id,
-    from: planFrom,
-    durationInFrames: titleDuration,
-    text: plan.title,
-    label: plan.title.slice(0, 48),
-    color: presetTemplate.color ?? '#ffffff',
-    transform: {
-      ...(presetTemplate.transform ?? {}),
-      x: 0,
-      // transform.y is offset from canvas center (resolveTransform): negative = up.
-      y: -Math.round(canvasHeight * 0.35),
-      width: canvasWidth * 0.85,
-      height: canvasHeight * 0.18,
-      rotation: 0,
-      opacity: 1,
-    },
-  } satisfies TextItem
-  textItems.push(titleItem)
-  workingItems.push(titleItem)
-
-  // ------------------------------------------------------------------
-  // Subtitle items (bottom of screen, transcript segments)
-  // ------------------------------------------------------------------
-  if (!addSubtitles) return { textItems, tracksToAdd }
 
   const segments = context.transcriptSegments.filter(
     (s) => s.end > plan.sourceStartSec && s.start < plan.sourceEndSec,

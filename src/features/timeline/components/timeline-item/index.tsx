@@ -1709,6 +1709,7 @@ export const TimelineItem = memo(
       handleCreatePreComp,
       handleEnterComposition,
       handleDissolveComposition,
+      handleAddCover,
       handleDetectScenes,
       handleFindHighlights,
       canFindHighlights,
@@ -3052,6 +3053,7 @@ export const TimelineItem = memo(
           isCompositionItem={isCompositionItem}
           onEnterComposition={handleEnterComposition}
           onDissolveComposition={handleDissolveComposition}
+          onAddCover={handleAddCover}
           canCreatePreComp={isSelected}
           onCreatePreComp={handleCreatePreComp}
           canFindHighlights={canFindHighlights}

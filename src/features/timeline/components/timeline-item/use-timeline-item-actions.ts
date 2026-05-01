@@ -12,6 +12,7 @@ import { usePlaybackStore } from '@/shared/state/playback'
 import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
 import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
+import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
 import { getTextItemPlainText } from '@/shared/utils/text-item-spans'
 import { scheduleAfterPaint } from '@/shared/utils/schedule-after-paint'
 import {
@@ -440,6 +441,13 @@ export function useTimelineItemActions({
     dissolvePreComp(item.id)
   }, [isCompositionItem, item.id])
 
+  const handleAddCover = useCallback(() => {
+    if (!isCompositionItem || !compositionId) {
+      return
+    }
+    useAddCoverDialogStore.getState().open(compositionId)
+  }, [isCompositionItem, compositionId])
+
   const sceneDetectionAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -617,6 +625,7 @@ export function useTimelineItemActions({
     handleCreatePreComp,
     handleEnterComposition,
     handleDissolveComposition,
+    handleAddCover,
     handleDetectScenes,
     handleFindHighlights,
     canFindHighlights,

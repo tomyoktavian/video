@@ -61,6 +61,7 @@ interface ItemContextMenuProps {
   isCompositionItem?: boolean
   onEnterComposition?: () => void
   onDissolveComposition?: () => void
+  onAddCover?: () => void
   /** Whether multiple items are selected (enables pre-comp creation) */
   canCreatePreComp?: boolean
   onCreatePreComp?: () => void
@@ -121,6 +122,7 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
+  onAddCover,
   canCreatePreComp,
   onCreatePreComp,
   canFindHighlights,
@@ -185,6 +187,7 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       isCompositionItem={isCompositionItem}
       onEnterComposition={onEnterComposition}
       onDissolveComposition={onDissolveComposition}
+      onAddCover={onAddCover}
       canCreatePreComp={canCreatePreComp}
       onCreatePreComp={onCreatePreComp}
       canFindHighlights={canFindHighlights}
@@ -267,6 +270,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
+  onAddCover,
   canCreatePreComp,
   onCreatePreComp,
   canFindHighlights,
@@ -481,6 +485,12 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {isCompositionItem && onDissolveComposition && (
           <ContextMenuItem onClick={onDissolveComposition}>Dissolve Compound Clip</ContextMenuItem>
         )}
+        {isCompositionItem && onAddCover && (
+          <ContextMenuItem onClick={onAddCover}>
+            <Sparkles className="mr-2 h-3 w-3" />
+            Add Cover…
+          </ContextMenuItem>
+        )}
         {canCreatePreComp && onCreatePreComp && (
           <ContextMenuItem onClick={onCreatePreComp}>Create Compound Clip</ContextMenuItem>
         )}
@@ -496,7 +506,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
             Find Highlights…
           </ContextMenuItem>
         )}
-        {((isCompositionItem && (onEnterComposition || onDissolveComposition)) ||
+        {((isCompositionItem && (onEnterComposition || onDissolveComposition || onAddCover)) ||
           (canCreatePreComp && onCreatePreComp) ||
           onFindHighlights) && <ContextMenuSeparator />}
 

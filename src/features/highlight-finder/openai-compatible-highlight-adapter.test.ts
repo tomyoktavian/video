@@ -103,4 +103,57 @@ describe('buildUserMessage', () => {
     expect(message).toContain('A man enters')
     expect(message).not.toContain(giantText)
   })
+
+  it('appends a language directive for the title field when titleLanguage is an ISO code', () => {
+    const message = buildUserMessage({
+      clips: [baseClip],
+      targetCount: 1,
+      clipDurationSec: 5,
+      titleLanguage: 'id',
+    })
+    expect(message).toContain('Indonesian')
+    expect(message.toLowerCase()).toContain('title')
+    // rationale should stay English regardless of title language
+    expect(message).toContain('rationale')
+  })
+
+  it('omits the language directive when titleLanguage is auto, empty, or missing', () => {
+    const expectNoDirective = (message: string) => {
+      expect(message).not.toMatch(/Write the `title` field in/)
+    }
+
+    expectNoDirective(
+      buildUserMessage({
+        clips: [baseClip],
+        targetCount: 1,
+        clipDurationSec: 5,
+      }),
+    )
+    expectNoDirective(
+      buildUserMessage({
+        clips: [baseClip],
+        targetCount: 1,
+        clipDurationSec: 5,
+        titleLanguage: 'auto',
+      }),
+    )
+    expectNoDirective(
+      buildUserMessage({
+        clips: [baseClip],
+        targetCount: 1,
+        clipDurationSec: 5,
+        titleLanguage: '',
+      }),
+    )
+  })
+
+  it('falls back to the raw code when an unrecognised language tag is passed', () => {
+    const message = buildUserMessage({
+      clips: [baseClip],
+      targetCount: 1,
+      clipDurationSec: 5,
+      titleLanguage: 'jv-XX',
+    })
+    expect(message).toContain('jv-XX')
+  })
 })

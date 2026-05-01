@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { fetchCustomAiModels } from '@/features/editor/deps/media-library-contract'
 import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/highlight-finder'
+import { DEFAULT_COVER_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/compound-cover'
 
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 
@@ -62,9 +63,11 @@ export function VisionAnalyzerSection() {
     !visionAnalyzer.apiKey &&
     !visionAnalyzer.model &&
     !visionAnalyzer.highlightFinderPrompt &&
+    !visionAnalyzer.coverFinderPrompt &&
     visionAnalyzer.cachedModels.length === 0
 
   const promptIsCustom = visionAnalyzer.highlightFinderPrompt.trim().length > 0
+  const coverPromptIsCustom = visionAnalyzer.coverFinderPrompt.trim().length > 0
 
   return (
     <div className="space-y-3">
@@ -162,9 +165,41 @@ export function VisionAnalyzerSection() {
         </p>
       </div>
 
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm">Cover Text Prompt</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
+            onClick={() => setVisionAnalyzer({ coverFinderPrompt: '' })}
+            disabled={!coverPromptIsCustom}
+            aria-label="Reset Cover Text prompt to default"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset prompt
+          </Button>
+        </div>
+        <Textarea
+          value={visionAnalyzer.coverFinderPrompt}
+          onChange={(event) => setVisionAnalyzer({ coverFinderPrompt: event.target.value })}
+          placeholder={DEFAULT_COVER_FINDER_SYSTEM_PROMPT}
+          rows={6}
+          spellCheck={false}
+          className="min-h-32 resize-y font-mono text-[11px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Customize the system prompt sent to the chat model for <strong>Add Cover</strong> on
+          compound clips. Leave empty to use the default. The user message (transcript or manual
+          context) is appended automatically.
+        </p>
+      </div>
+
       <p className="text-xs text-muted-foreground">
-        Used by <strong>Analyze with AI → Custom AI</strong> (per-frame vision captioning) and by{' '}
-        <strong>Highlight Finder</strong> (text-only reasoning over captions + transcripts).
+        Used by <strong>Analyze with AI → Custom AI</strong> (per-frame vision captioning),{' '}
+        <strong>Highlight Finder</strong> (text reasoning over captions + transcripts), and{' '}
+        <strong>Add Cover</strong> (Vlog-style title generation for compound clips).
       </p>
 
       <div className="flex justify-end">

@@ -171,6 +171,7 @@ describe('workspace-fs custom-ai', () => {
         apiKey: 'sk-vision',
         model: 'gpt-4o-mini',
         highlightFinderPrompt: 'Pick only highlights that include laughter.',
+        coverFinderPrompt: '',
         cachedModels: [{ id: 'gpt-4o-mini' }, { id: 'gpt-4o', label: 'GPT-4o' }],
         lastLoadedAt: 1700000002000,
       },

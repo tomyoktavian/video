@@ -39,6 +39,7 @@ import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog
 import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
+import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
 import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
 const logger = createLogger('Editor')
 const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId'
@@ -75,6 +76,11 @@ const LazyTranscriptViewerDialog = lazy(() =>
 const LazyHighlightFinderDialog = lazy(() =>
   import('@/features/editor/deps/highlight-finder').then((module) => ({
     default: module.HighlightFinderDialog,
+  })),
+)
+const LazyAddCoverDialog = lazy(() =>
+  import('@/features/editor/deps/compound-cover').then((module) => ({
+    default: module.AddCoverDialog,
   })),
 )
 
@@ -175,6 +181,7 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   const ttsGenerateDialogOpen = useTtsGenerateDialogStore((s) => s.isOpen)
   const transcriptViewerDialogOpen = useTranscriptViewerDialogStore((s) => s.isOpen)
   const highlightFinderDialogOpen = useHighlightFinderDialogStore((s) => s.isOpen)
+  const addCoverDialogOpen = useAddCoverDialogStore((s) => s.isOpen)
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
     (s) => s.isOpen && s.projectId === projectId,
   )
@@ -204,6 +211,11 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
       {highlightFinderDialogOpen && (
         <Suspense fallback={null}>
           <LazyHighlightFinderDialog />
+        </Suspense>
+      )}
+      {addCoverDialogOpen && (
+        <Suspense fallback={null}>
+          <LazyAddCoverDialog />
         </Suspense>
       )}
     </>
