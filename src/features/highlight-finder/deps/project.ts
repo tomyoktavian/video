@@ -1,4 +1,4 @@
-import { useProjectStore } from '@/features/projects/stores/project-store'
+import { useProjectStore } from './project-contract'
 
 export function getCanvasSize(): { width: number; height: number } {
   const project = useProjectStore.getState().currentProject

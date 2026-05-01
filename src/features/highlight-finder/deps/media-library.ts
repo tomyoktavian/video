@@ -1,5 +1,5 @@
 /**
- * Cross-feature contract — media library store used by Highlight Finder.
+ * Compatibility adapter that re-exports through media-library-contract.
  */
 
-export { useMediaLibraryStore } from '@/features/media-library/stores/media-library-store'
+export * from './media-library-contract'

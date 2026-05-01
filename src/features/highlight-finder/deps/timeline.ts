@@ -1,5 +1,5 @@
 /**
- * Cross-feature contract — timeline state & mutators used by Highlight Finder.
+ * Compatibility adapter that re-exports through timeline-contract.
  */
 
-export { useTimelineStore } from '@/features/timeline/stores/timeline-store'
+export { useTimelineStore } from './timeline-contract'
