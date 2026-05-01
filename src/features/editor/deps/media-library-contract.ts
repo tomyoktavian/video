@@ -9,6 +9,10 @@ export { getSharedProxyKey } from '@/features/media-library/utils/proxy-key'
 export { cleanupBlobUrls } from '@/features/media-library/utils/media-resolver'
 export { getMediaTranscriptionModelOptions } from '@/features/media-library/transcription/registry'
 export {
+  fetchCustomAiModels,
+  fetchCustomAiVoices,
+} from '@/features/media-library/transcription/openai-compatible-adapter'
+export {
   clearMediaDragData,
   setMediaDragData,
 } from '@/features/media-library/utils/drag-data-cache'

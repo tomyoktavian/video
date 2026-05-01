@@ -57,6 +57,7 @@ export const WORKSPACE_SCHEMA_VERSION = '2.0'
 export const README_FILENAME = 'README.md'
 export const MARKER_FILENAME = '.freecut-workspace.json'
 export const INDEX_FILENAME = 'index.json'
+export const CUSTOM_AI_FILENAME = 'custom-ai.json'
 
 export const PROJECTS_DIR = 'projects'
 export const MEDIA_DIR = 'media'
@@ -433,6 +434,11 @@ export function legacyTranscriptPath(mediaId: string): string[] {
 
 export function cacheMetaPath(dir: string[]): string[] {
   return [...dir, CACHE_META_FILENAME]
+}
+
+/** Segments for `{workspace}/custom-ai.json` — workspace-scoped Custom AI config. */
+export function customAiPath(): string[] {
+  return [CUSTOM_AI_FILENAME]
 }
 
 /** Segments for `content/{hash[0:2]}/{hash}/`. Sharded by hash prefix. */

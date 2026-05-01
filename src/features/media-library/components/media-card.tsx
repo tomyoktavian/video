@@ -49,6 +49,7 @@ import {
   TRANSCRIPTION_OOM_HINT,
 } from '@/shared/utils/transcription-cancellation'
 import { TranscribeDialog, type TranscribeDialogValues } from './transcribe-dialog'
+import { AnalyzeDialog, type AnalyzeDialogValues } from './analyze-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
 import {
   useItemsStore,
@@ -319,6 +320,9 @@ export const MediaCard = memo(function MediaCard({
   const isTaggable = !isOnline && (mediaType === 'video' || mediaType === 'image')
   const [transcribeDialogOpen, setTranscribeDialogOpen] = useState(false)
   const [transcribeErrorMessage, setTranscribeErrorMessage] = useState<string | null>(null)
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false)
+  const [analyzeErrorMessage, setAnalyzeErrorMessage] = useState<string | null>(null)
+  const analysisProgress = useMediaLibraryStore((s) => s.analysisProgress)
 
   const episodeThumbnail = onlineEpisode?.thumbnail
   const mediaIdAttr = media?.id
@@ -481,7 +485,8 @@ export const MediaCard = memo(function MediaCard({
             const previousStatus = previousStatusById.get(target.id) ?? 'idle'
             try {
               await mediaTranscriptionService.transcribeMedia(target.id, {
-                model: values.model,
+                providerId: values.provider === 'custom' ? 'openai-compatible' : 'browser-whisper',
+                model: values.provider === 'custom' ? values.customModelId : values.model,
                 quantization: values.quantization,
                 language: values.language || undefined,
                 onQueueStatusChange: (state) => {
@@ -611,32 +616,53 @@ export const MediaCard = memo(function MediaCard({
     }
   }
 
-  const handleAnalyzeWithAI = useCallback(
-    async (e: React.MouseEvent) => {
-      e.stopPropagation()
-      const store = useMediaLibraryStore.getState()
-      const analyzable = getTargetMediaItems().filter((m) => {
-        const type = getMediaType(m.mimeType)
-        if (type !== 'video' && type !== 'image') return false
-        if (store.brokenMediaIds?.includes(m.id)) return false
-        if (store.importingIds?.includes(m.id)) return false
-        return true
-      })
-      if (analyzable.length > 1) {
-        await mediaAnalysisService.analyzeBatch({
-          mediaIds: analyzable.map((m) => m.id),
+  const handleAnalyzeWithAI = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    setAnalyzeErrorMessage(null)
+    setAnalyzeDialogOpen(true)
+  }, [])
+
+  const handleStartAnalyze = useCallback(
+    (values: AnalyzeDialogValues) => {
+      const providerId =
+        values.provider === 'custom' ? 'openai-compatible-vision' : 'lfm-captioning'
+
+      void (async () => {
+        const store = useMediaLibraryStore.getState()
+        const analyzable = getTargetMediaItems().filter((m) => {
+          const type = getMediaType(m.mimeType)
+          if (type !== 'video' && type !== 'image') return false
+          if (store.brokenMediaIds?.includes(m.id)) return false
+          if (store.importingIds?.includes(m.id)) return false
+          return true
         })
-      } else if (analyzable.length === 1) {
-        await mediaAnalysisService.analyzeMedia(analyzable[0]!)
-      } else {
-        const type = getMediaType(media?.mimeType ?? '')
-        if (type === 'video' || type === 'image') {
-          await mediaAnalysisService.analyzeMedia(media!)
+
+        try {
+          if (analyzable.length > 1) {
+            await mediaAnalysisService.analyzeBatch({
+              mediaIds: analyzable.map((m) => m.id),
+              providerId,
+            })
+          } else if (analyzable.length === 1) {
+            await mediaAnalysisService.analyzeMedia(analyzable[0]!, { providerId })
+          } else {
+            const type = getMediaType(media?.mimeType ?? '')
+            if (type === 'video' || type === 'image') {
+              await mediaAnalysisService.analyzeMedia(media!, { providerId })
+            }
+          }
+          setAnalyzeDialogOpen(false)
+        } catch (error) {
+          setAnalyzeErrorMessage(error instanceof Error ? error.message : 'Failed to analyze media')
         }
-      }
+      })()
     },
     [media, getTargetMediaItems],
   )
+
+  const handleCancelAnalyze = useCallback(() => {
+    mediaAnalysisService.requestCancel()
+  }, [])
 
   const handleShowTranscript = useCallback(
     (e: React.MouseEvent) => {
@@ -1100,6 +1126,58 @@ export const MediaCard = memo(function MediaCard({
     />
   )
 
+  const analysisActive = analysisProgress !== null
+  const analysisPercent = analysisProgress
+    ? (() => {
+        const total = Math.max(1, analysisProgress.total)
+        // Blend item-level + frame-level progress so the bar moves while a
+        // single long video is being captioned. itemFraction = items already
+        // done; frameFraction = how far through the in-flight item we are.
+        const itemFraction = analysisProgress.completed / total
+        const sub = analysisProgress.subProgress
+        const frameFraction =
+          sub && sub.totalFrames > 0 ? sub.framesAnalyzed / sub.totalFrames / total : 0
+        return Math.round(Math.min(100, (itemFraction + frameFraction) * 100))
+      })()
+    : null
+  const analysisLabel = (() => {
+    if (!analysisProgress) return 'Analyzing…'
+    if (analysisProgress.cancelRequested) return 'Cancelling…'
+    const sub = analysisProgress.subProgress
+    if (sub && sub.totalFrames > 0) {
+      const stageLabel =
+        sub.stage === 'loading-model'
+          ? 'Loading model'
+          : sub.stage === 'captioning'
+            ? 'Captioning'
+            : sub.stage
+      const itemPart =
+        analysisProgress.total > 1
+          ? ` (item ${Math.min(analysisProgress.completed + 1, analysisProgress.total)}/${analysisProgress.total})`
+          : ''
+      return `${stageLabel} ${sub.framesAnalyzed}/${sub.totalFrames} frames${itemPart}…`
+    }
+    return `Analyzing ${analysisProgress.completed}/${analysisProgress.total}…`
+  })()
+
+  const analyzeDialog = (
+    <AnalyzeDialog
+      open={analyzeDialogOpen}
+      onOpenChange={(next) => {
+        if (!next) setAnalyzeErrorMessage(null)
+        setAnalyzeDialogOpen(next)
+      }}
+      fileName={fileName}
+      hasCaptions={hasCaptions}
+      isRunning={analysisActive}
+      progressPercent={analysisPercent}
+      progressLabel={analysisLabel}
+      errorMessage={analyzeErrorMessage}
+      onStart={handleStartAnalyze}
+      onCancel={handleCancelAnalyze}
+    />
+  )
+
   const actionMenuItems = isOnline ? (
     <>
       <ContextMenuItem
@@ -1158,6 +1236,7 @@ export const MediaCard = memo(function MediaCard({
     return (
       <>
         {transcribeDialog}
+        {analyzeDialog}
         <ContextMenu onOpenChange={handleContextMenuOpenChange}>
           <ContextMenuTrigger asChild disabled={isImporting}>
             <div
@@ -1341,6 +1420,7 @@ export const MediaCard = memo(function MediaCard({
   return (
     <>
       {transcribeDialog}
+      {analyzeDialog}
       <ContextMenu onOpenChange={handleContextMenuOpenChange}>
         <ContextMenuTrigger asChild disabled={isImporting}>
           <div

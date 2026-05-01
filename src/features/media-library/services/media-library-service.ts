@@ -1542,6 +1542,13 @@ class MediaLibraryService {
        * same source bytes skip re-analysis.
        */
       contentHash?: string
+      /**
+       * Captioning provider id (lfm-captioning | openai-compatible-vision | …).
+       * Recorded in the envelope params so cache-hit checks can require an
+       * exact provider match — different providers produce different text
+       * even on identical source bytes.
+       */
+      providerId?: string
     },
   ): Promise<MediaMetadata> {
     const existingEnvelope = await readAiOutput(mediaId, 'captions').catch(() => undefined)
@@ -1563,6 +1570,7 @@ class MediaLibraryService {
         options?.imageEmbeddingModel ?? existingEnvelope?.data.imageEmbeddingModel,
       imageEmbeddingDim: options?.imageEmbeddingDim ?? existingEnvelope?.data.imageEmbeddingDim,
       contentHash: options?.contentHash ?? existingEnvelope?.data.contentHash,
+      providerId: options?.providerId,
     }
 
     try {
@@ -1577,6 +1585,7 @@ class MediaLibraryService {
         imageEmbeddingModel: resolvedOptions.imageEmbeddingModel,
         imageEmbeddingDim: resolvedOptions.imageEmbeddingDim,
         contentHash: resolvedOptions.contentHash,
+        providerId: resolvedOptions.providerId,
       })
     } catch (error) {
       logger.warn(

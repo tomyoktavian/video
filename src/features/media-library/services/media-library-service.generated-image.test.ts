@@ -72,6 +72,27 @@ vi.mock('@/infrastructure/storage', () => ({
   getMediaForProject: vi.fn(),
   deleteTranscript: vi.fn(),
   saveTranscript: vi.fn(),
+  loadCustomAiConfig: vi.fn(async () => ({
+    captionMaker: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      language: '',
+      cachedModels: [],
+      lastLoadedAt: null,
+    },
+  })),
+  saveCustomAiConfig: vi.fn(async () => undefined),
+  DEFAULT_CUSTOM_AI_CONFIG: {
+    captionMaker: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      language: '',
+      cachedModels: [],
+      lastLoadedAt: null,
+    },
+  },
 }))
 
 vi.mock('./opfs-service', () => ({

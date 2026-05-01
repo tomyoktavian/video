@@ -46,6 +46,7 @@ import {
   importMediaLibraryService,
   useMediaLibraryStore,
 } from '@/features/editor/deps/media-library'
+import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import {
   findCompatibleTrackForItemType,
@@ -76,6 +77,7 @@ import {
   musicgenService,
   type MusicgenModelId,
 } from '../services/musicgen-service'
+import { customTtsService } from '../services/custom-tts-service'
 
 const DEFAULT_PROMPT = 'Welcome to freecut. This voice was generated locally in the browser.'
 
@@ -280,6 +282,11 @@ export const AiPanel = memo(function AiPanel() {
   const selectMedia = useMediaLibraryStore((state) => state.selectMedia)
   const showNotification = useMediaLibraryStore((state) => state.showNotification)
 
+  const customTtsConfig = useCustomAiStore((s) => s.textToSpeech)
+  const isCustomTtsConfigured = Boolean(
+    customTtsConfig.baseUrl.trim() && customTtsConfig.apiKey.trim() && customTtsConfig.model.trim(),
+  )
+
   const [ttsText, setTtsText] = useState(DEFAULT_PROMPT)
   const [ttsEngine, setTtsEngine] = useState<StoredTtsEngine>(() => getStoredTtsEngine())
   const [ttsKokoroVoice, setTtsKokoroVoice] = useState<KokoroTtsVoice>('af_heart')
@@ -335,9 +342,15 @@ export const AiPanel = memo(function AiPanel() {
 
   const isKokoroSupported = kokoroTtsService.isSupported()
   const isMossSupported = mossTtsService.isSupported()
-  const supportsNativeTtsSpeed = ttsEngine === 'kokoro'
+  const isCustomTtsEngine = ttsEngine === 'custom'
+  const supportsNativeTtsSpeed = ttsEngine === 'kokoro' || isCustomTtsEngine
   const effectiveTtsSpeed = supportsNativeTtsSpeed ? ttsSpeed : 1
-  const isTtsSupported = ttsEngine === 'kokoro' ? isKokoroSupported : isMossSupported
+  const isTtsSupported =
+    ttsEngine === 'kokoro'
+      ? isKokoroSupported
+      : ttsEngine === 'moss'
+        ? isMossSupported
+        : isCustomTtsConfigured && customTtsService.isSupported()
   const isMusicSupported = musicgenService.isSupported()
   const trimmedTtsText = ttsText.trim()
   const trimmedMusicPrompt = musicPrompt.trim()
@@ -356,7 +369,7 @@ export const AiPanel = memo(function AiPanel() {
   const anyMusicSaving = musicGenerations.some((generation) => generation.saving)
   const text = ttsText
   const setText = setTtsText
-  const voice = ttsEngine === 'kokoro' ? ttsKokoroVoice : ttsMossVoice
+  const voice = ttsEngine === 'kokoro' ? ttsKokoroVoice : ttsEngine === 'moss' ? ttsMossVoice : ''
   const speed = ttsSpeed
   const setSpeed = setTtsSpeed
   const isGenerating = isTtsGenerating
@@ -366,8 +379,10 @@ export const AiPanel = memo(function AiPanel() {
   const totalBytes = totalTtsBytes
   const anySaving = anyTtsSaving
   const trimmedText = trimmedTtsText
-  const currentTtsBackendLabel = ttsEngine === 'kokoro' ? 'WebGPU' : 'CPU'
-  const currentTtsRuntimeLabel = ttsEngine === 'kokoro' ? 'Kokoro TTS Best' : 'MOSS Nano'
+  const currentTtsBackendLabel =
+    ttsEngine === 'kokoro' ? 'WebGPU' : ttsEngine === 'moss' ? 'CPU' : 'Network'
+  const currentTtsRuntimeLabel =
+    ttsEngine === 'kokoro' ? 'Kokoro TTS Best' : ttsEngine === 'moss' ? 'MOSS Nano' : 'Custom AI'
 
   // --- actions ---
 
@@ -384,14 +399,16 @@ export const AiPanel = memo(function AiPanel() {
       setTtsError(
         ttsEngine === 'kokoro'
           ? 'WebGPU is required for Kokoro TTS. Try Chrome 113+, Edge 113+, or Safari 26+.'
-          : 'Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.',
+          : ttsEngine === 'moss'
+            ? 'Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.'
+            : 'Custom AI TTS is not configured. Open Settings → AI → Custom AI → Text to Speech.',
       )
       return
     }
 
     setTtsError(null)
     setIsTtsGenerating(true)
-    setTtsProgress('Preparing local TTS...')
+    setTtsProgress(ttsEngine === 'custom' ? 'Calling Custom AI TTS...' : 'Preparing local TTS...')
 
     try {
       const result =
@@ -403,23 +420,36 @@ export const AiPanel = memo(function AiPanel() {
               model: ttsModel,
               onProgress: setTtsProgress,
             })
-          : await mossTtsService.generateSpeechFile({
-              text: trimmedTtsText,
-              voice: ttsMossVoice,
-              speed: effectiveTtsSpeed,
-              onProgress: setTtsProgress,
-            })
+          : ttsEngine === 'moss'
+            ? await mossTtsService.generateSpeechFile({
+                text: trimmedTtsText,
+                voice: ttsMossVoice,
+                speed: effectiveTtsSpeed,
+                onProgress: setTtsProgress,
+              })
+            : await customTtsService.generateSpeechFile({
+                text: trimmedTtsText,
+                speed: effectiveTtsSpeed,
+                onProgress: setTtsProgress,
+              })
 
       const { blob, file, duration } = result
 
       const objectUrl = URL.createObjectURL(blob)
       generationUrlsRef.current.add(objectUrl)
+      const customVoiceLabel = customTtsConfig.voice.trim() || 'alloy'
       const voiceLabel =
         ttsEngine === 'kokoro'
           ? getKokoroTtsVoiceOption(ttsKokoroVoice).label
-          : getMossTtsVoiceOption(ttsMossVoice).label
+          : ttsEngine === 'moss'
+            ? getMossTtsVoiceOption(ttsMossVoice).label
+            : customVoiceLabel
       const modelLabel =
-        ttsEngine === 'kokoro' ? getKokoroTtsModelOption(ttsModel).label : 'Multilingual Nano'
+        ttsEngine === 'kokoro'
+          ? getKokoroTtsModelOption(ttsModel).label
+          : ttsEngine === 'moss'
+            ? 'Multilingual Nano'
+            : customTtsConfig.model || 'Custom AI'
       const engineTags =
         ttsEngine === 'kokoro'
           ? [
@@ -429,7 +459,15 @@ export const AiPanel = memo(function AiPanel() {
               `kokoro-quality:${ttsModel}`,
               `kokoro-voice:${ttsKokoroVoice}`,
             ]
-          : ['ai-generated', 'moss-tts', 'tts-engine:moss', `moss-voice:${ttsMossVoice}`]
+          : ttsEngine === 'moss'
+            ? ['ai-generated', 'moss-tts', 'tts-engine:moss', `moss-voice:${ttsMossVoice}`]
+            : [
+                'ai-generated',
+                'custom-ai-tts',
+                'tts-engine:custom',
+                `custom-tts-model:${customTtsConfig.model}`,
+                `custom-tts-voice:${customVoiceLabel}`,
+              ]
 
       const generation: AudioGeneration = {
         id: crypto.randomUUID(),
@@ -459,6 +497,8 @@ export const AiPanel = memo(function AiPanel() {
     }
   }, [
     currentProjectId,
+    customTtsConfig.model,
+    customTtsConfig.voice,
     effectiveTtsSpeed,
     isTtsSupported,
     trimmedTtsText,
@@ -713,7 +753,9 @@ export const AiPanel = memo(function AiPanel() {
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
                 {ttsEngine === 'kokoro'
                   ? 'WebGPU is not available in this browser. Kokoro TTS needs Chrome 113+, Edge 113+, or Safari 26+.'
-                  : 'Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.'}
+                  : ttsEngine === 'moss'
+                    ? 'Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.'
+                    : 'Configure Base URL, API key, and model in Settings → AI → Custom AI → Text to Speech.'}
               </div>
             )}
 
@@ -747,40 +789,54 @@ export const AiPanel = memo(function AiPanel() {
                     <SelectItem value="moss" className="text-xs">
                       MOSS Nano (20 languages, CPU)
                     </SelectItem>
+                    <SelectItem value="custom" className="text-xs">
+                      Custom AI (OpenAI-compatible)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Voice</Label>
-                  <Select
-                    value={voice}
-                    onValueChange={(value) => {
-                      if (ttsEngine === 'kokoro') {
-                        setTtsKokoroVoice(value as KokoroTtsVoice)
-                      } else {
-                        setTtsMossVoice(value as MossTtsVoice)
-                      }
-                    }}
-                    disabled={isGenerating}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {(ttsEngine === 'kokoro'
-                        ? KOKORO_TTS_VOICE_OPTIONS
-                        : MOSS_TTS_VOICE_OPTIONS
-                      ).map((option) => (
-                        <SelectItem key={option.value} value={option.value} className="text-xs">
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {!isCustomTtsEngine && (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Voice</Label>
+                    <Select
+                      value={voice}
+                      onValueChange={(value) => {
+                        if (ttsEngine === 'kokoro') {
+                          setTtsKokoroVoice(value as KokoroTtsVoice)
+                        } else {
+                          setTtsMossVoice(value as MossTtsVoice)
+                        }
+                      }}
+                      disabled={isGenerating}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {(ttsEngine === 'kokoro'
+                          ? KOKORO_TTS_VOICE_OPTIONS
+                          : MOSS_TTS_VOICE_OPTIONS
+                        ).map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="text-xs">
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {isCustomTtsEngine && isCustomTtsConfigured && (
+                <div className="rounded-md border border-border/60 bg-secondary/30 px-2.5 py-2 text-[11px] text-muted-foreground">
+                  Model <span className="text-foreground">{customTtsConfig.model}</span> · Voice{' '}
+                  <span className="text-foreground">
+                    {customTtsConfig.voice.trim() || 'alloy (default)'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -813,7 +869,9 @@ export const AiPanel = memo(function AiPanel() {
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {currentTtsRuntimeLabel} runs locally in the browser on {currentTtsBackendLabel}.
+              {isCustomTtsEngine
+                ? `${currentTtsRuntimeLabel} sends each request to your configured ${currentTtsBackendLabel} endpoint.`
+                : `${currentTtsRuntimeLabel} runs locally in the browser on ${currentTtsBackendLabel}.`}
             </p>
 
             {progress && (

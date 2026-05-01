@@ -38,6 +38,7 @@ import { ProjectUpgradeDialog } from './project-upgrade-dialog'
 import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
 import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
+import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
 import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
 const logger = createLogger('Editor')
 const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId'
@@ -69,6 +70,11 @@ const LazyProjectMediaMatchDialog = lazy(() =>
 const LazyTranscriptViewerDialog = lazy(() =>
   import('@/features/editor/components/transcript-viewer-dialog').then((module) => ({
     default: module.TranscriptViewerDialog,
+  })),
+)
+const LazyHighlightFinderDialog = lazy(() =>
+  import('@/features/highlight-finder/components/highlight-finder-dialog').then((module) => ({
+    default: module.HighlightFinderDialog,
   })),
 )
 
@@ -168,6 +174,7 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   const clearKeyframesDialogOpen = useClearKeyframesDialogStore((s) => s.isOpen)
   const ttsGenerateDialogOpen = useTtsGenerateDialogStore((s) => s.isOpen)
   const transcriptViewerDialogOpen = useTranscriptViewerDialogStore((s) => s.isOpen)
+  const highlightFinderDialogOpen = useHighlightFinderDialogStore((s) => s.isOpen)
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
     (s) => s.isOpen && s.projectId === projectId,
   )
@@ -192,6 +199,11 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
       {transcriptViewerDialogOpen && (
         <Suspense fallback={null}>
           <LazyTranscriptViewerDialog />
+        </Suspense>
+      )}
+      {highlightFinderDialogOpen && (
+        <Suspense fallback={null}>
+          <LazyHighlightFinderDialog />
         </Suspense>
       )}
     </>

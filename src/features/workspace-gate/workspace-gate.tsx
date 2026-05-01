@@ -34,6 +34,7 @@ import { createLogger } from '@/shared/logging/logger'
 import { WorkspaceGateSplash } from './workspace-gate-splash'
 import { usePathname } from './use-pathname'
 import { autoPurgeExpiredTrash } from './deps/trash-auto-purge'
+import { hydrateCustomAiStore } from './deps/settings-contract'
 
 /**
  * Routes that read/write the workspace and therefore need the gate to be
@@ -65,6 +66,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     } catch (error) {
       logger.warn('bootstrapWorkspace failed', error)
     }
+    await hydrateCustomAiStore()
     // Fire the auto-purge sweep for long-trashed projects in the
     // background — it touches disk and we don't want it to block the
     // app render. Wrapped in setTimeout so it runs after first paint.

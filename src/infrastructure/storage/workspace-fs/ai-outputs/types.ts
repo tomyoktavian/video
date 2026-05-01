@@ -12,6 +12,7 @@ import type {
   MediaTranscript,
   MediaTranscriptModel,
   MediaTranscriptQuantization,
+  MediaTranscriptSegment,
 } from '@/types/storage'
 
 /**
@@ -61,7 +62,7 @@ export interface TranscriptPayload {
   quantization: MediaTranscriptQuantization
   modelVariant: MediaTranscriptModel
   text: string
-  segments: Array<{ text: string; start: number; end: number }>
+  segments: MediaTranscriptSegment[]
 }
 
 export type CaptionsPayload = {

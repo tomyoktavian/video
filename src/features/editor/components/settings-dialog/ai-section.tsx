@@ -2,6 +2,13 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
   useSettingsStore,
   CAPTIONING_INTERVAL_BOUNDS,
   DEFAULT_CAPTIONING_INTERVAL_SECONDS,
@@ -9,6 +16,9 @@ import {
   type CaptioningIntervalUnit,
 } from '@/features/editor/deps/settings'
 import { cn } from '@/shared/ui/cn'
+import { CaptionMakerSection } from './caption-maker-section'
+import { TextToSpeechSection } from './text-to-speech-section'
+import { VisionAnalyzerSection } from './vision-analyzer-section'
 
 const ESTIMATE_REFERENCE_DURATION_SEC = 60
 const ESTIMATE_REFERENCE_FPS = 30
@@ -22,7 +32,7 @@ function formatCaptionEstimate(unit: CaptioningIntervalUnit, value: number): str
   return `~${sceneCount} ${sceneCount === 1 ? 'scene' : 'scenes'} per 1-min clip at ${ESTIMATE_REFERENCE_FPS}fps`
 }
 
-export function AiSection() {
+function LocalAiTab() {
   const captioningIntervalUnit = useSettingsStore((s) => s.captioningIntervalUnit)
   const captioningIntervalValue = useSettingsStore((s) => s.captioningIntervalValue)
   const setSetting = useSettingsStore((s) => s.setSetting)
@@ -98,5 +108,47 @@ export function AiSection() {
         </p>
       </div>
     </div>
+  )
+}
+
+function CustomAiTab() {
+  return (
+    <Accordion type="single" collapsible defaultValue="caption-maker" className="w-full">
+      <AccordionItem value="caption-maker">
+        <AccordionTrigger>Caption Maker</AccordionTrigger>
+        <AccordionContent>
+          <CaptionMakerSection />
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="text-to-speech">
+        <AccordionTrigger>Text to Speech</AccordionTrigger>
+        <AccordionContent>
+          <TextToSpeechSection />
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="vision-analyzer">
+        <AccordionTrigger>Vision Analyzer</AccordionTrigger>
+        <AccordionContent>
+          <VisionAnalyzerSection />
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  )
+}
+
+export function AiSection() {
+  return (
+    <Tabs defaultValue="local" className="w-full">
+      <TabsList>
+        <TabsTrigger value="local">Local AI</TabsTrigger>
+        <TabsTrigger value="custom">Custom AI</TabsTrigger>
+      </TabsList>
+      <TabsContent value="local">
+        <LocalAiTab />
+      </TabsContent>
+      <TabsContent value="custom">
+        <CustomAiTab />
+      </TabsContent>
+    </Tabs>
   )
 }

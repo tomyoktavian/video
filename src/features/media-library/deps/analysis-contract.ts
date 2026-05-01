@@ -5,7 +5,14 @@
  * future providers) stay in one auditable place for the boundary checker.
  */
 
-export { captionVideo, captionImage } from '@/infrastructure/analysis'
+export {
+  captionVideo,
+  captionImage,
+  captionVideoWith,
+  captionImageWith,
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
+} from '@/infrastructure/analysis'
 export type { MediaCaption, CaptioningProgress, CaptioningOptions } from '@/infrastructure/analysis'
 export {
   embeddingsProvider,

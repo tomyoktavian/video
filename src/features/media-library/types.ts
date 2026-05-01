@@ -106,6 +106,17 @@ export interface MediaLibraryState {
     total: number
     completed: number
     cancelRequested: boolean
+    /**
+     * Optional per-frame progress for the in-flight item. Lets the analyze
+     * dialog show "captioning 47/120 frames…" while a single media item runs
+     * — without this, the bar would idle at 0% until the entire item
+     * finishes (and a 1-hour video at 3s interval is a long wait).
+     */
+    subProgress?: {
+      stage: string
+      framesAnalyzed: number
+      totalFrames: number
+    }
   } | null
 }
 
@@ -213,4 +224,12 @@ export interface MediaLibraryActions {
   requestAnalysisCancel: () => void
   /** Clear analysisProgress when the run is done. */
   endAnalysisRun: () => void
+  /**
+   * Update the per-frame sub-progress for the in-flight item. Pass null
+   * (default) to clear it when transitioning between items so the dialog
+   * doesn't stick on a stale frame counter.
+   */
+  setAnalysisSubProgress: (
+    sub: { stage: string; framesAnalyzed: number; totalFrames: number } | null,
+  ) => void
 }

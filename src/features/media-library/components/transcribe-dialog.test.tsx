@@ -9,6 +9,17 @@ const settingsStoreState = vi.hoisted(() => ({
   defaultWhisperLanguage: '',
 }))
 
+const customAiStoreState = vi.hoisted(() => ({
+  captionMaker: {
+    baseUrl: '',
+    apiKey: '',
+    model: '',
+    language: '',
+    cachedModels: [] as ReadonlyArray<{ id: string; label?: string }>,
+    lastLoadedAt: null as number | null,
+  },
+}))
+
 const editorStoreState = vi.hoisted(() => ({
   clearMediaSkimPreview: vi.fn(),
   clearCompoundClipSkimPreview: vi.fn(),
@@ -24,6 +35,8 @@ const playbackStoreState = vi.hoisted(() => ({
 vi.mock('@/features/media-library/deps/settings-contract', () => ({
   useSettingsStore: (selector: (state: typeof settingsStoreState) => unknown) =>
     selector(settingsStoreState),
+  useCustomAiStore: (selector: (state: typeof customAiStoreState) => unknown) =>
+    selector(customAiStoreState),
 }))
 
 vi.mock('@/app/state/editor', () => ({

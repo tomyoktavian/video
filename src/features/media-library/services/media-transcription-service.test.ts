@@ -21,6 +21,39 @@ vi.mock('@/infrastructure/storage', () => ({
   getTranscript: getTranscriptMock,
   getTranscriptMediaIds: vi.fn(),
   saveTranscript: saveTranscriptMock,
+  // Custom AI config defaults — needed because the transcription service's
+  // module graph pulls in `useCustomAiStore`, which initializes from
+  // `DEFAULT_CUSTOM_AI_CONFIG` at import time.
+  DEFAULT_CUSTOM_AI_CONFIG: {
+    captionMaker: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      language: '',
+      cachedModels: [],
+      lastLoadedAt: null,
+    },
+    textToSpeech: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      voice: '',
+      language: '',
+      cachedModels: [],
+      cachedVoices: [],
+      lastLoadedAt: null,
+    },
+    visionAnalyzer: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      highlightFinderPrompt: '',
+      cachedModels: [],
+      lastLoadedAt: null,
+    },
+  },
+  loadCustomAiConfig: vi.fn(async () => ({})),
+  saveCustomAiConfig: vi.fn(async () => undefined),
 }))
 
 vi.mock('@/shared/state/selection', () => ({
@@ -57,14 +90,19 @@ vi.mock('@/features/media-library/deps/settings-contract', () => ({
   },
 }))
 
-vi.mock('../transcription/registry', () => ({
-  getDefaultMediaTranscriptionAdapter: () => ({
+vi.mock('../transcription/registry', () => {
+  const adapterStub = {
     createTranscriber: () => ({
       transcribe: transcribeMock,
     }),
-  }),
-  getMediaTranscriptionModelLabel: () => 'Tiny',
-}))
+  }
+  return {
+    DEFAULT_MEDIA_TRANSCRIPTION_ADAPTER_ID: 'browser-whisper',
+    getDefaultMediaTranscriptionAdapter: () => adapterStub,
+    getMediaTranscriptionAdapter: () => adapterStub,
+    getMediaTranscriptionModelLabel: () => 'Tiny',
+  }
+})
 
 vi.mock('./media-library-service', () => ({
   mediaLibraryService: {

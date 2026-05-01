@@ -74,6 +74,13 @@ interface SaveCaptionsInput {
    * registered as a ref-holder.
    */
   contentHash?: string
+  /**
+   * Captioning provider id (e.g. lfm-captioning, openai-compatible-vision).
+   * Persisted into envelope `params` so cache-hit checks can require an exact
+   * provider match — otherwise switching from local to cloud (or vice versa)
+   * would silently reuse the wrong text.
+   */
+  providerId?: string
 }
 
 /** Options common to most read/write helpers. */
@@ -197,8 +204,12 @@ export async function saveCaptions(input: SaveCaptionsInput): Promise<MediaCapti
       kind: 'captions',
       service: input.service,
       model: input.model,
-      params:
-        input.sampleIntervalSec !== undefined ? { sampleIntervalSec: input.sampleIntervalSec } : {},
+      params: {
+        ...(input.sampleIntervalSec !== undefined
+          ? { sampleIntervalSec: input.sampleIntervalSec }
+          : {}),
+        ...(input.providerId ? { providerId: input.providerId } : {}),
+      },
       data,
     })
 
@@ -211,10 +222,12 @@ export async function saveCaptions(input: SaveCaptionsInput): Promise<MediaCapti
           kind: 'captions',
           service: input.service,
           model: input.model,
-          params:
-            input.sampleIntervalSec !== undefined
+          params: {
+            ...(input.sampleIntervalSec !== undefined
               ? { sampleIntervalSec: input.sampleIntervalSec }
-              : {},
+              : {}),
+            ...(input.providerId ? { providerId: input.providerId } : {}),
+          },
           data,
         })
         mirrorWritten = true

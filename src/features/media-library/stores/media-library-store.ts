@@ -447,6 +447,18 @@ const newStore: MediaLibraryStoreApi =
         endAnalysisRun: () => {
           set({ analysisProgress: null })
         },
+
+        setAnalysisSubProgress: (sub) => {
+          set((state) => {
+            if (!state.analysisProgress) return state
+            return {
+              analysisProgress: {
+                ...state.analysisProgress,
+                ...(sub ? { subProgress: sub } : { subProgress: undefined }),
+              },
+            }
+          })
+        },
       }),
       {
         name: 'MediaLibraryStore',

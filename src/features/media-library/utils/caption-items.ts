@@ -23,6 +23,74 @@ import { timelineToSourceFrames } from '../deps/timeline-contract'
  */
 const AI_CAPTION_FALLBACK_DURATION_SEC = 3
 
+/**
+ * Word-grouping thresholds for breaking a Whisper segment into smaller
+ * caption chunks ("TikTok/CapCut style") so each chunk lights up tightly
+ * with the spoken words. A new chunk opens when one of these limits is hit.
+ */
+const TARGET_WORDS_PER_CHUNK = 4
+const MAX_WORDS_PER_CHUNK = 5
+const MAX_CHUNK_SECONDS = 1.5
+const NATURAL_BREAK_GAP_SECONDS = 0.25
+const CLAUSE_BREAK_PATTERN = /[.!?,;:]\s*$/
+const SENTENCE_END_PATTERN = /[.!?]\s*$/
+
+interface CaptionChunk {
+  text: string
+  start: number
+  end: number
+}
+
+export function subdivideSegmentIntoWordGroups(segment: MediaTranscriptSegment): CaptionChunk[] {
+  const words = segment.words
+  if (!words || words.length === 0) {
+    return [{ text: segment.text, start: segment.start, end: segment.end }]
+  }
+
+  const chunks: CaptionChunk[] = []
+  let bucket: typeof words = []
+
+  const flush = () => {
+    if (bucket.length === 0) return
+    const first = bucket[0]!
+    const last = bucket.at(-1)!
+    chunks.push({
+      text: bucket
+        .map((w) => w.text.trim())
+        .filter(Boolean)
+        .join(' '),
+      start: first.start,
+      end: last.end,
+    })
+    bucket = []
+  }
+
+  for (const word of words) {
+    const previous = bucket.at(-1)
+    if (previous) {
+      const first = bucket[0]!
+      const gap = word.start - previous.end
+      const bucketDuration = previous.end - first.start
+      const reachedMax = bucket.length >= MAX_WORDS_PER_CHUNK
+      const wouldExceedDuration = word.end - first.start > MAX_CHUNK_SECONDS
+      const sentenceBreak = SENTENCE_END_PATTERN.test(previous.text)
+      const reachedTargetWithBreakSignal =
+        bucket.length >= TARGET_WORDS_PER_CHUNK &&
+        (gap >= NATURAL_BREAK_GAP_SECONDS ||
+          CLAUSE_BREAK_PATTERN.test(previous.text) ||
+          bucketDuration >= MAX_CHUNK_SECONDS)
+
+      if (reachedMax || wouldExceedDuration || sentenceBreak || reachedTargetWithBreakSignal) {
+        flush()
+      }
+    }
+    bucket.push(word)
+  }
+  flush()
+
+  return chunks.filter((chunk) => chunk.text.length > 0 && chunk.end >= chunk.start)
+}
+
 interface BuildCaptionTextItemsOptions {
   mediaId: string
   trackId: string
@@ -69,11 +137,23 @@ export function normalizeCaptionSegments(
   segments: readonly MediaTranscriptSegment[],
 ): MediaTranscriptSegment[] {
   return segments
-    .map((segment) => ({
-      text: segment.text.trim(),
-      start: Math.max(0, segment.start),
-      end: Math.max(segment.start, segment.end),
-    }))
+    .map((segment) => {
+      const start = Math.max(0, segment.start)
+      const end = Math.max(start, segment.end)
+      const words = segment.words
+        ?.map((word) => ({
+          text: word.text.trim(),
+          start: Math.max(0, word.start),
+          end: Math.max(Math.max(0, word.start), word.end),
+        }))
+        .filter((word) => word.text.length > 0 && word.end >= word.start)
+      return {
+        text: segment.text.trim(),
+        start,
+        end,
+        ...(words && words.length > 0 ? { words } : {}),
+      }
+    })
     .filter((segment) => segment.text.length > 0 && segment.end > segment.start)
 }
 
@@ -96,11 +176,11 @@ export function getCaptionFrameRange(
 }
 
 function toSourceStartFrame(seconds: number, sourceFps: number): number {
-  return Math.max(0, Math.floor(seconds * sourceFps))
+  return Math.max(0, Math.round(seconds * sourceFps))
 }
 
 function toSourceEndFrame(seconds: number, sourceFps: number): number {
-  return Math.max(0, Math.ceil(seconds * sourceFps))
+  return Math.max(0, Math.round(seconds * sourceFps))
 }
 
 function sourceFramesToTimelineFramesFloor(
@@ -468,76 +548,78 @@ export function buildCaptionTextItems({
   const normalizedSegments = normalizeCaptionSegments(segments)
   const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps)
 
-  return normalizedSegments.flatMap((segment) => {
-    const segmentSourceStart = toSourceStartFrame(segment.start, sourceFps)
-    const segmentSourceEnd = toSourceEndFrame(segment.end, sourceFps)
-    const overlapStart = Math.max(sourceStart, segmentSourceStart)
-    const overlapEnd = Math.min(sourceEnd, segmentSourceEnd)
+  return normalizedSegments.flatMap((segment) =>
+    subdivideSegmentIntoWordGroups(segment).flatMap((chunk) => {
+      const chunkSourceStart = toSourceStartFrame(chunk.start, sourceFps)
+      const chunkSourceEnd = toSourceEndFrame(chunk.end, sourceFps)
+      const overlapStart = Math.max(sourceStart, chunkSourceStart)
+      const overlapEnd = Math.min(sourceEnd, chunkSourceEnd)
 
-    if (overlapEnd <= overlapStart) {
-      return []
-    }
+      if (overlapEnd <= overlapStart) {
+        return []
+      }
 
-    const startOffset = sourceFramesToTimelineFramesFloor(
-      overlapStart - sourceStart,
-      speed,
-      sourceFps,
-      timelineFps,
-    )
-    const endOffset = sourceFramesToTimelineFramesCeil(
-      overlapEnd - sourceStart,
-      speed,
-      sourceFps,
-      timelineFps,
-    )
-    const from = clip.from + Math.min(startOffset, clip.durationInFrames - 1)
-    const endFrame =
-      clip.from + Math.min(clip.durationInFrames, Math.max(startOffset + 1, endOffset))
-    const durationInFrames = Math.max(1, endFrame - from)
-    const defaultCaptionItem: TextItem = {
-      id: crypto.randomUUID(),
-      type: 'text',
-      textRole: 'caption',
-      trackId,
-      from,
-      durationInFrames,
-      mediaId,
-      captionSource: buildCaptionSource(mediaId, clip.id, sourceType),
-      label: segment.text.slice(0, 48),
-      text: segment.text,
-      fontSize: Math.max(36, Math.round(canvasHeight * 0.045)),
-      fontFamily: 'Inter',
-      fontWeight: 'semibold',
-      fontStyle: 'normal',
-      underline: false,
-      color: '#ffffff',
-      // backgroundColor: 'rgba(0, 0, 0, 0.55)',
-      backgroundColor: 'transparent',
-      textAlign: 'center',
-      verticalAlign: 'middle',
-      lineHeight: 1.15,
-      letterSpacing: 0,
-      textShadow: {
-        offsetX: 0,
-        offsetY: 3,
-        blur: 10,
-        color: 'rgba(0, 0, 0, 0.75)',
-      },
-      transform: {
-        x: 0,
-        y: Math.round(canvasHeight * 0.32),
-        width: canvasWidth * 0.82,
-        height: canvasHeight * 0.16,
-        rotation: 0,
-        opacity: 1,
-      },
-    }
+      const startOffset = sourceFramesToTimelineFramesFloor(
+        overlapStart - sourceStart,
+        speed,
+        sourceFps,
+        timelineFps,
+      )
+      const endOffset = sourceFramesToTimelineFramesCeil(
+        overlapEnd - sourceStart,
+        speed,
+        sourceFps,
+        timelineFps,
+      )
+      const from = clip.from + Math.min(startOffset, clip.durationInFrames - 1)
+      const endFrame =
+        clip.from + Math.min(clip.durationInFrames, Math.max(startOffset + 1, endOffset))
+      const durationInFrames = Math.max(1, endFrame - from)
+      const defaultCaptionItem: TextItem = {
+        id: crypto.randomUUID(),
+        type: 'text',
+        textRole: 'caption',
+        trackId,
+        from,
+        durationInFrames,
+        mediaId,
+        captionSource: buildCaptionSource(mediaId, clip.id, sourceType),
+        label: chunk.text.slice(0, 48),
+        text: chunk.text,
+        fontSize: Math.max(36, Math.round(canvasHeight * 0.045)),
+        fontFamily: 'Inter',
+        fontWeight: 'semibold',
+        fontStyle: 'normal',
+        underline: false,
+        color: '#ffffff',
+        // backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        backgroundColor: 'transparent',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        lineHeight: 1.15,
+        letterSpacing: 0,
+        textShadow: {
+          offsetX: 0,
+          offsetY: 3,
+          blur: 10,
+          color: 'rgba(0, 0, 0, 0.75)',
+        },
+        transform: {
+          x: 0,
+          y: Math.round(canvasHeight * 0.32),
+          width: canvasWidth * 0.82,
+          height: canvasHeight * 0.16,
+          rotation: 0,
+          opacity: 1,
+        },
+      }
 
-    return [
-      {
-        ...defaultCaptionItem,
-        ...styleTemplate,
-      },
-    ]
-  })
+      return [
+        {
+          ...defaultCaptionItem,
+          ...styleTemplate,
+        },
+      ]
+    }),
+  )
 }

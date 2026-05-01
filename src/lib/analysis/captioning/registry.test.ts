@@ -12,6 +12,10 @@ describe('mediaCaptioningProviderRegistry', () => {
       id: 'lfm-captioning',
       label: 'LFM 2.5 VL',
     })
-    expect(mediaCaptioningProviderRegistry.list()).toHaveLength(1)
+    // LFM (default) + openai-compatible-vision (added when Custom AI vision shipped).
+    expect(mediaCaptioningProviderRegistry.list()).toHaveLength(2)
+    expect(mediaCaptioningProviderRegistry.list().map((p) => p.id)).toContain(
+      'openai-compatible-vision',
+    )
   })
 })

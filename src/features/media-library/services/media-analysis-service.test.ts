@@ -17,6 +17,16 @@ let storeState: ReturnType<typeof createStoreState>
 vi.mock('../deps/analysis', () => ({
   captionImage: captionImageMock,
   captionVideo: captionVideoMock,
+  captionImageWith: (
+    _providerId: string | undefined,
+    ...args: Parameters<typeof captionImageMock>
+  ) => captionImageMock(...args),
+  captionVideoWith: (
+    _providerId: string | undefined,
+    ...args: Parameters<typeof captionVideoMock>
+  ) => captionVideoMock(...args),
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID: 'lfm-captioning',
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID: 'openai-compatible-vision',
   EMBEDDING_MODEL_ID: 'embed-model',
   EMBEDDING_MODEL_DIM: 384,
   CLIP_MODEL_ID: 'clip-model',
@@ -102,6 +112,7 @@ function createStoreState() {
     endAnalysisRun: vi.fn(() => {
       storeState.analysisProgress = null
     }),
+    setAnalysisSubProgress: vi.fn(),
     setTaggingMedia: vi.fn(),
     updateMediaCaptions: vi.fn(),
     showNotification: vi.fn(),

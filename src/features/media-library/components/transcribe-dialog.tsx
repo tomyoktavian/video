@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useSettingsStore } from '@/features/media-library/deps/settings-contract'
+import { useCustomAiStore, useSettingsStore } from '@/features/media-library/deps/settings-contract'
+import { cn } from '@/shared/ui/cn'
 import { getMediaTranscriptionModelOptions } from '../transcription/registry'
 import {
   getWhisperLanguageSelectValue,
@@ -31,8 +32,13 @@ import {
 } from '@/shared/utils/whisper-settings'
 import type { MediaTranscriptModel, MediaTranscriptQuantization } from '@/types/storage'
 
+export type TranscribeDialogProvider = 'local' | 'custom'
+
 export interface TranscribeDialogValues {
+  provider: TranscribeDialogProvider
   model: MediaTranscriptModel
+  /** Custom-AI model id when `provider === 'custom'`; empty otherwise. */
+  customModelId: string
   quantization: MediaTranscriptQuantization
   language: string
 }
@@ -65,6 +71,7 @@ export function TranscribeDialog({
   const defaultModel = useSettingsStore((s) => s.defaultWhisperModel)
   const defaultQuantization = useSettingsStore((s) => s.defaultWhisperQuantization)
   const defaultLanguage = useSettingsStore((s) => s.defaultWhisperLanguage)
+  const customCaptionMaker = useCustomAiStore((s) => s.captionMaker)
   const clearMediaSkimPreview = useEditorStore((s) => s.clearMediaSkimPreview)
   const clearCompoundClipSkimPreview = useEditorStore((s) => s.clearCompoundClipSkimPreview)
   const beginTranscriptionDialog = useEditorStore((s) => s.beginTranscriptionDialog)
@@ -72,6 +79,7 @@ export function TranscribeDialog({
 
   const modelOptions = useMemo(() => getMediaTranscriptionModelOptions(), [])
 
+  const [provider, setProvider] = useState<TranscribeDialogProvider>('local')
   const [model, setModel] = useState<MediaTranscriptModel>(() =>
     normalizeSelectableWhisperModel(defaultModel),
   )
@@ -79,13 +87,22 @@ export function TranscribeDialog({
   const [languageValue, setLanguageValue] = useState<string>(() =>
     getWhisperLanguageSelectValue(defaultLanguage),
   )
+  const [customLanguageValue, setCustomLanguageValue] = useState<string>(() =>
+    getWhisperLanguageSelectValue(customCaptionMaker.language),
+  )
 
   useEffect(() => {
     if (!open) return
+    setProvider('local')
     setModel(normalizeSelectableWhisperModel(defaultModel))
     setQuantization(defaultQuantization)
     setLanguageValue(getWhisperLanguageSelectValue(defaultLanguage))
-  }, [open, defaultLanguage, defaultModel, defaultQuantization])
+    setCustomLanguageValue(getWhisperLanguageSelectValue(customCaptionMaker.language))
+  }, [open, defaultLanguage, defaultModel, defaultQuantization, customCaptionMaker.language])
+
+  const customConfigured = Boolean(
+    customCaptionMaker.baseUrl && customCaptionMaker.apiKey && customCaptionMaker.model,
+  )
 
   useEffect(() => {
     if (!open) return
@@ -107,8 +124,20 @@ export function TranscribeDialog({
   ])
 
   const handleStart = () => {
+    if (provider === 'custom') {
+      onStart({
+        provider: 'custom',
+        model,
+        customModelId: customCaptionMaker.model,
+        quantization,
+        language: getWhisperLanguageSettingValue(customLanguageValue),
+      })
+      return
+    }
     onStart({
+      provider: 'local',
       model,
+      customModelId: '',
       quantization,
       language: getWhisperLanguageSettingValue(languageValue),
     })
@@ -143,58 +172,112 @@ export function TranscribeDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-sm">Model</Label>
-            <Select
-              value={model}
-              onValueChange={(value) => setModel(value as MediaTranscriptModel)}
-              disabled={isRunning}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {modelOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center rounded-md border border-border bg-secondary p-0.5">
+            {(['local', 'custom'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setProvider(value)}
+                disabled={isRunning}
+                className={cn(
+                  'flex-1 rounded px-2.5 py-1 text-xs transition-colors disabled:opacity-50',
+                  provider === value
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {value === 'local' ? 'Local AI' : 'Custom AI'}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-sm">Quantization</Label>
-            <Select
-              value={quantization}
-              onValueChange={(value) => setQuantization(value as MediaTranscriptQuantization)}
-              disabled={isRunning}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {WHISPER_QUANTIZATION_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {provider === 'local' ? (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Model</Label>
+                <Select
+                  value={model}
+                  onValueChange={(value) => setModel(value as MediaTranscriptModel)}
+                  disabled={isRunning}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modelOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-sm">Language</Label>
-            <Combobox
-              value={languageValue}
-              onValueChange={setLanguageValue}
-              options={WHISPER_LANGUAGE_OPTIONS}
-              placeholder="Auto-detect"
-              searchPlaceholder="Search languages..."
-              emptyMessage="No languages match that search."
-              disabled={isRunning}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">Quantization</Label>
+                <Select
+                  value={quantization}
+                  onValueChange={(value) => setQuantization(value as MediaTranscriptQuantization)}
+                  disabled={isRunning}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WHISPER_QUANTIZATION_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm">Language</Label>
+                <Combobox
+                  value={languageValue}
+                  onValueChange={setLanguageValue}
+                  options={WHISPER_LANGUAGE_OPTIONS}
+                  placeholder="Auto-detect"
+                  searchPlaceholder="Search languages..."
+                  emptyMessage="No languages match that search."
+                  disabled={isRunning}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {customConfigured ? (
+                <p className="text-xs text-muted-foreground">
+                  Using model{' '}
+                  <span className="font-medium text-foreground">{customCaptionMaker.model}</span>{' '}
+                  via {customCaptionMaker.baseUrl}.
+                </p>
+              ) : (
+                <p
+                  role="alert"
+                  className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
+                >
+                  Configure base URL, API key, and model in Settings → AI → Custom AI before
+                  running.
+                </p>
+              )}
+
+              <div className="space-y-1.5">
+                <Label className="text-sm">Language</Label>
+                <Combobox
+                  value={customLanguageValue}
+                  onValueChange={setCustomLanguageValue}
+                  options={WHISPER_LANGUAGE_OPTIONS}
+                  placeholder="Auto-detect"
+                  searchPlaceholder="Search languages..."
+                  emptyMessage="No languages match that search."
+                  disabled={isRunning}
+                />
+              </div>
+            </>
+          )}
 
           {errorMessage && !isRunning && (
             <div
@@ -241,7 +324,9 @@ export function TranscribeDialog({
               <Button variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleStart}>Start Transcription</Button>
+              <Button onClick={handleStart} disabled={provider === 'custom' && !customConfigured}>
+                Start Transcription
+              </Button>
             </>
           )}
         </DialogFooter>

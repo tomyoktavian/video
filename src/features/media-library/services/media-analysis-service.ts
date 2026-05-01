@@ -11,8 +11,9 @@
 
 import type { MediaMetadata } from '@/types/storage'
 import {
-  captionVideo,
-  captionImage,
+  captionVideoWith,
+  captionImageWith,
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
   type MediaCaption,
   embeddingsProvider,
   EMBEDDING_MODEL_ID,
@@ -55,6 +56,15 @@ export interface AnalyzeBatchOptions {
   onlyMissing?: boolean
   /** Optional filter for which media to consider (e.g. a single scope id). */
   mediaIds?: readonly string[]
+  /**
+   * Captioning provider id (e.g. 'lfm-captioning', 'openai-compatible-vision').
+   * Defaults to the local LFM provider.
+   */
+  providerId?: string
+}
+
+export interface AnalyzeMediaOptions {
+  providerId?: string
 }
 
 class MediaAnalysisService {
@@ -70,18 +80,22 @@ class MediaAnalysisService {
    * 1-item run so the background progress bar shows a concrete 0→100%
    * instead of a pulsing indeterminate bar.
    */
-  async analyzeMedia(mediaOrId: string | MediaMetadata): Promise<boolean> {
+  async analyzeMedia(
+    mediaOrId: string | MediaMetadata,
+    options?: AnalyzeMediaOptions,
+  ): Promise<boolean> {
     const store = useMediaLibraryStore.getState()
     const media =
       typeof mediaOrId === 'string' ? store.mediaItems.find((m) => m.id === mediaOrId) : mediaOrId
     if (!media) return false
 
+    const providerId = options?.providerId ?? DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID
     const ownsRun = !this.batchInFlight && !store.analysisProgress
     if (ownsRun) {
       store.beginAnalysisRun(1)
     }
     try {
-      const ok = await this.analyzeOne(media)
+      const ok = await this.analyzeOne(media, providerId)
       if (ownsRun) {
         useMediaLibraryStore.getState().incrementAnalysisCompleted(1)
       }
@@ -93,7 +107,7 @@ class MediaAnalysisService {
     }
   }
 
-  private async analyzeOne(media: MediaMetadata): Promise<boolean> {
+  private async analyzeOne(media: MediaMetadata, providerId: string): Promise<boolean> {
     const store = useMediaLibraryStore.getState()
     const mediaType = getMediaType(media.mimeType)
     if (mediaType !== 'video' && mediaType !== 'image') return false
@@ -125,7 +139,7 @@ class MediaAnalysisService {
         const cached = await getCaptionsByContentHash(contentHash, sampleIntervalSec).catch(
           () => undefined,
         )
-        if (cached && this.isCacheCompatible(cached, sampleIntervalSec)) {
+        if (cached && this.isCacheCompatible(cached, sampleIntervalSec, providerId)) {
           // Treat an adopt failure as a cache miss and fall through to a full
           // run rather than aborting the whole analysis.
           let adopted: Awaited<ReturnType<typeof adoptCaptionsFromCache>> | undefined
@@ -169,37 +183,67 @@ class MediaAnalysisService {
         return undefined
       }
 
-      if (mediaType === 'video') {
-        const blobUrl = await mediaLibraryService.getMediaBlobUrl(media.id)
-        if (!blobUrl) throw new Error('Could not load media file')
+      const reportSubProgress = (info: {
+        stage: string
+        framesAnalyzed: number
+        totalFrames: number
+      }) => {
+        useMediaLibraryStore.getState().setAnalysisSubProgress(info)
+      }
 
-        const video = document.createElement('video')
-        video.muted = true
-        video.preload = 'auto'
-        video.src = blobUrl
+      try {
+        if (mediaType === 'video') {
+          const blobUrl = await mediaLibraryService.getMediaBlobUrl(media.id)
+          if (!blobUrl) throw new Error('Could not load media file')
 
-        await new Promise<void>((resolve, reject) => {
-          video.onloadedmetadata = () => resolve()
-          video.onerror = () => reject(new Error('Failed to load video'))
-        })
+          const video = document.createElement('video')
+          video.muted = true
+          video.preload = 'auto'
+          video.src = blobUrl
 
-        try {
-          captions = await captionVideo(video, {
-            sampleIntervalSec,
-            saveThumbnail: stageThumbnail,
+          await new Promise<void>((resolve, reject) => {
+            video.onloadedmetadata = () => resolve()
+            video.onerror = () => reject(new Error('Failed to load video'))
           })
-        } finally {
-          video.src = ''
-          URL.revokeObjectURL(blobUrl)
-        }
-      } else {
-        const blobUrl = await mediaLibraryService.getMediaBlobUrl(media.id)
-        if (!blobUrl) throw new Error('Could not load media file')
 
-        const response = await fetch(blobUrl)
-        const blob = await response.blob()
-        URL.revokeObjectURL(blobUrl)
-        captions = await captionImage(blob, { saveThumbnail: stageThumbnail })
+          try {
+            captions = await captionVideoWith(providerId, video, {
+              sampleIntervalSec,
+              saveThumbnail: stageThumbnail,
+              onProgress: (progress) => {
+                reportSubProgress({
+                  stage: progress.stage,
+                  framesAnalyzed: progress.framesAnalyzed,
+                  totalFrames: progress.totalFrames,
+                })
+              },
+            })
+          } finally {
+            video.src = ''
+            URL.revokeObjectURL(blobUrl)
+          }
+        } else {
+          const blobUrl = await mediaLibraryService.getMediaBlobUrl(media.id)
+          if (!blobUrl) throw new Error('Could not load media file')
+
+          const response = await fetch(blobUrl)
+          const blob = await response.blob()
+          URL.revokeObjectURL(blobUrl)
+          captions = await captionImageWith(providerId, blob, {
+            saveThumbnail: stageThumbnail,
+            onProgress: (progress) => {
+              reportSubProgress({
+                stage: progress.stage,
+                framesAnalyzed: progress.framesAnalyzed,
+                totalFrames: progress.totalFrames,
+              })
+            },
+          })
+        }
+      } finally {
+        // Clear sub-progress so the next item (or the close-out) doesn't
+        // show stale frame counts.
+        useMediaLibraryStore.getState().setAnalysisSubProgress(null)
       }
 
       if (captions.length > 0) {
@@ -211,6 +255,18 @@ class MediaAnalysisService {
 
         const thumbBlobs = captions.map((_, index) => stagedThumbnailBlobs.get(index) ?? null)
 
+        // Local AI post-processing (text embeddings + CLIP image embeddings)
+        // is gated on the local LFM provider. When the user picks Custom AI
+        // the entire path stays cloud — no transformers.js / WebGPU / WASM
+        // models are touched. Trade-off: scene-browser semantic search and
+        // image similarity rely on those embeddings, so they only work for
+        // captions generated with Local AI. Keyword search on the caption
+        // text itself works regardless of provider.
+        const useLocalEmbeddings = providerId === DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID
+
+        // Dominant-color palette is pure pixel statistics (no model loaded),
+        // so we keep it on for both providers — it powers ∆E color search
+        // independently of CLIP and adds no cross-device compatibility risk.
         const colorResults = await Promise.all(
           thumbBlobs.map(async (blob) => {
             if (!blob) return { phrase: '', palette: [] as const }
@@ -232,42 +288,49 @@ class MediaAnalysisService {
           return next
         })
 
-        try {
-          await embeddingsProvider.ensureReady()
+        if (useLocalEmbeddings) {
+          try {
+            await embeddingsProvider.ensureReady()
 
-          const transcript = await getTranscript(media.id).catch(() => null)
+            const transcript = await getTranscript(media.id).catch(() => null)
 
-          const texts = captions.map((caption, i) =>
-            buildEmbeddingText({
-              caption: { text: caption.text, timeSec: caption.timeSec },
-              sceneData: caption.sceneData,
-              transcriptSegments: transcript?.segments,
-              colorPhrase: colorResults[i]?.phrase ?? '',
-            }),
-          )
+            const texts = captions.map((caption, i) =>
+              buildEmbeddingText({
+                caption: { text: caption.text, timeSec: caption.timeSec },
+                sceneData: caption.sceneData,
+                transcriptSegments: transcript?.segments,
+                colorPhrase: colorResults[i]?.phrase ?? '',
+              }),
+            )
 
-          const vectors = await embeddingsProvider.embedBatch(texts)
-          if (vectors.length === captions.length) {
-            await saveCaptionEmbeddings(media.id, vectors, EMBEDDING_MODEL_DIM, {
-              contentHash,
-              sampleIntervalSec,
+            const vectors = await embeddingsProvider.embedBatch(texts)
+            if (vectors.length === captions.length) {
+              await saveCaptionEmbeddings(media.id, vectors, EMBEDDING_MODEL_DIM, {
+                contentHash,
+                sampleIntervalSec,
+              })
+              embeddingModel = EMBEDDING_MODEL_ID
+              embeddingDim = EMBEDDING_MODEL_DIM
+              captionsWithEmbeddings = captionsWithEmbeddings.map((caption, i) => ({
+                ...caption,
+                embedding: Array.from(vectors[i]!),
+              }))
+            }
+          } catch (error) {
+            store.showNotification({
+              type: 'warning',
+              message: `Semantic indexing skipped for "${media.fileName}" — keyword search still works.`,
             })
-            embeddingModel = EMBEDDING_MODEL_ID
-            embeddingDim = EMBEDDING_MODEL_DIM
-            captionsWithEmbeddings = captionsWithEmbeddings.map((caption, i) => ({
-              ...caption,
-              embedding: Array.from(vectors[i]!),
-            }))
+            void error
           }
-        } catch (error) {
-          store.showNotification({
-            type: 'warning',
-            message: `Semantic indexing skipped for "${media.fileName}" — keyword search still works.`,
-          })
-          void error
         }
 
         try {
+          if (!useLocalEmbeddings) {
+            // Skip CLIP entirely on the Custom AI path — keeps the run
+            // network-only, no HuggingFace model download.
+            throw new Error('skip-clip')
+          }
           const validBlobs = thumbBlobs.filter((b): b is Blob => b !== null)
           if (validBlobs.length > 0 && validBlobs.length === captions.length) {
             await clipProvider.ensureReady()
@@ -310,6 +373,7 @@ class MediaAnalysisService {
           imageEmbeddingModel,
           imageEmbeddingDim,
           contentHash,
+          providerId,
         })
         store.updateMediaCaptions(media.id, captionsWithEmbeddings)
 
@@ -322,6 +386,7 @@ class MediaAnalysisService {
         await mediaLibraryService.updateMediaCaptions(media.id, [], {
           sampleIntervalSec,
           contentHash,
+          providerId,
         })
         store.updateMediaCaptions(media.id, [])
         await deleteCaptionThumbnails(media.id)
@@ -357,6 +422,7 @@ class MediaAnalysisService {
       return { analyzed: 0, skipped: 0, failed: 0 }
     }
     this.batchInFlight = true
+    const providerId = options.providerId ?? DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID
 
     const store = useMediaLibraryStore.getState()
     const all = store.mediaItems
@@ -403,8 +469,12 @@ class MediaAnalysisService {
           useMediaLibraryStore.getState().incrementAnalysisCompleted(cancelled)
           break
         }
-        logger.info('batch analyzing media', { mediaId: media.id, fileName: media.fileName })
-        const ok = await this.analyzeOne(media)
+        logger.info('batch analyzing media', {
+          mediaId: media.id,
+          fileName: media.fileName,
+          providerId,
+        })
+        const ok = await this.analyzeOne(media, providerId)
         if (ok) analyzed += 1
         else failed += 1
         useMediaLibraryStore.getState().incrementAnalysisCompleted(1)
@@ -476,8 +546,18 @@ class MediaAnalysisService {
   private isCacheCompatible(
     envelope: Awaited<ReturnType<typeof getCaptionsByContentHash>>,
     sampleIntervalSec: number,
+    providerId: string,
   ): boolean {
     if (!envelope) return false
+
+    // Provider gate. Captions written before the provider field landed are
+    // treated as the local LFM provider so legacy caches still adopt for the
+    // local path; switching to a different provider always re-runs.
+    const envProvider =
+      (envelope.params as { providerId?: string }).providerId ??
+      DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID
+    if (envProvider !== providerId) return false
+
     const envInterval = (envelope.params as { sampleIntervalSec?: number }).sampleIntervalSec
     if (envInterval === undefined) {
       // Legacy cache (pre-versioning): fall back to the interval recorded in

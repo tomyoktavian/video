@@ -1710,6 +1710,8 @@ export const TimelineItem = memo(
       handleEnterComposition,
       handleDissolveComposition,
       handleDetectScenes,
+      handleFindHighlights,
+      canFindHighlights,
     } = useTimelineItemActions({
       item,
       isBroken,
@@ -3052,6 +3054,8 @@ export const TimelineItem = memo(
           onDissolveComposition={handleDissolveComposition}
           canCreatePreComp={isSelected}
           onCreatePreComp={handleCreatePreComp}
+          canFindHighlights={canFindHighlights}
+          onFindHighlights={handleFindHighlights}
           canDetectScenes={item.type === 'video' && !!item.mediaId && !isBroken}
           isDetectingScenes={isSceneDetectionActive}
           onDetectScenes={handleDetectScenes}

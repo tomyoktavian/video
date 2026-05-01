@@ -137,10 +137,20 @@ export type MediaTranscriptModel =
 
 export type MediaTranscriptQuantization = 'hybrid' | 'fp32' | 'fp16' | 'q8' | 'q4'
 
+export type MediaTranscriptProviderId = 'browser-whisper' | 'openai-compatible'
+
+export interface MediaTranscriptWord {
+  text: string
+  start: number
+  end: number
+}
+
 export interface MediaTranscriptSegment {
   text: string
   start: number
   end: number
+  /** Word-level timing when the provider returns it. Absent on legacy transcripts. */
+  words?: MediaTranscriptWord[]
 }
 
 export interface MediaTranscript {
@@ -153,6 +163,10 @@ export interface MediaTranscript {
   segments: MediaTranscriptSegment[]
   createdAt: number
   updatedAt: number
+  /** Which transcription adapter produced this transcript. Absent on legacy records (assume `browser-whisper`). */
+  provider?: MediaTranscriptProviderId
+  /** Free-form model id used when `provider !== 'browser-whisper'` (e.g. `whisper-1`, `gpt-4o-transcribe`). */
+  customModelId?: string
 }
 
 // Density tier for filmstrip thumbnails

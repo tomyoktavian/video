@@ -409,6 +409,166 @@ describe('caption-items', () => {
     })
   })
 
+  it('subdivides a segment with word-level timing into 3-5 word caption chunks', () => {
+    const clip: VideoItem = {
+      id: 'clip-words',
+      type: 'video',
+      trackId: 'track-1',
+      from: 0,
+      durationInFrames: 300,
+      label: 'Clip',
+      mediaId: 'media-1',
+      src: 'blob:test',
+      sourceStart: 0,
+      sourceEnd: 300,
+      sourceDuration: 300,
+      sourceFps: 30,
+      speed: 1,
+    }
+
+    const items = buildCaptionTextItems({
+      mediaId: 'media-1',
+      trackId: 'track-captions',
+      segments: [
+        {
+          text: 'halo semua selamat datang di video saya',
+          start: 0.0,
+          end: 4.0,
+          words: [
+            { text: 'halo', start: 0.0, end: 0.4 },
+            { text: 'semua', start: 0.5, end: 0.9 },
+            { text: 'selamat', start: 1.0, end: 1.4 },
+            { text: 'datang', start: 1.5, end: 1.9 },
+            { text: 'di', start: 2.0, end: 2.2 },
+            { text: 'video', start: 2.3, end: 2.7 },
+            { text: 'saya', start: 2.8, end: 3.2 },
+          ],
+        },
+      ],
+      clip,
+      timelineFps: 30,
+      canvasWidth: 1920,
+      canvasHeight: 1080,
+    })
+
+    expect(items.length).toBeGreaterThanOrEqual(2)
+    // The combined word texts must equal the source segment text (modulo
+    // whitespace) so no words are dropped or duplicated by chunking.
+    expect(
+      items
+        .map((item) => item.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('halo semua selamat datang di video saya')
+    // Each chunk must hold no more than 5 words.
+    for (const item of items) {
+      expect(item.text.split(/\s+/).length).toBeLessThanOrEqual(5)
+    }
+    // First chunk lights up at the first word's frame, not at segment.start
+    // rounded — this is what makes captions match speech.
+    expect(items[0]?.from).toBe(Math.round(0.0 * 30))
+  })
+
+  it('emits a single chunk per segment when no word timing is provided', () => {
+    const clip: VideoItem = {
+      id: 'clip-no-words',
+      type: 'video',
+      trackId: 'track-1',
+      from: 0,
+      durationInFrames: 300,
+      label: 'Clip',
+      mediaId: 'media-1',
+      src: 'blob:test',
+      sourceStart: 0,
+      sourceEnd: 300,
+      sourceDuration: 300,
+      sourceFps: 30,
+      speed: 1,
+    }
+
+    const items = buildCaptionTextItems({
+      mediaId: 'media-1',
+      trackId: 'track-captions',
+      segments: [{ text: 'one long sentence with many words', start: 0, end: 3 }],
+      clip,
+      timelineFps: 30,
+      canvasWidth: 1920,
+      canvasHeight: 1080,
+    })
+
+    expect(items).toHaveLength(1)
+    expect(items[0]?.text).toBe('one long sentence with many words')
+  })
+
+  it('opens a new chunk on a sentence-ending word', () => {
+    const clip: VideoItem = {
+      id: 'clip-sentence',
+      type: 'video',
+      trackId: 'track-1',
+      from: 0,
+      durationInFrames: 600,
+      label: 'Clip',
+      mediaId: 'media-1',
+      src: 'blob:test',
+      sourceStart: 0,
+      sourceEnd: 600,
+      sourceDuration: 600,
+      sourceFps: 30,
+      speed: 1,
+    }
+
+    const items = buildCaptionTextItems({
+      mediaId: 'media-1',
+      trackId: 'track-captions',
+      segments: [
+        {
+          text: 'oke siap. lanjut',
+          start: 0,
+          end: 2.5,
+          words: [
+            { text: 'oke', start: 0.0, end: 0.4 },
+            { text: 'siap.', start: 0.5, end: 0.9 },
+            { text: 'lanjut', start: 1.2, end: 1.6 },
+          ],
+        },
+      ],
+      clip,
+      timelineFps: 30,
+      canvasWidth: 1920,
+      canvasHeight: 1080,
+    })
+
+    expect(items.map((item) => item.text)).toEqual(['oke siap.', 'lanjut'])
+  })
+
+  it('preserves words through normalizeCaptionSegments', () => {
+    const normalized = normalizeCaptionSegments([
+      {
+        text: '  hi  ',
+        start: 0,
+        end: 0.9,
+        words: [
+          { text: 'hi', start: 0, end: 0.4 },
+          { text: '', start: 0.5, end: 0.6 },
+          { text: 'there', start: 0.6, end: 0.9 },
+        ],
+      },
+    ])
+
+    expect(normalized).toEqual([
+      {
+        text: 'hi',
+        start: 0,
+        end: 0.9,
+        words: [
+          { text: 'hi', start: 0, end: 0.4 },
+          { text: 'there', start: 0.6, end: 0.9 },
+        ],
+      },
+    ])
+  })
+
   it('falls back to legacy generated caption detection when source metadata is missing', () => {
     const clip: VideoItem = {
       id: 'clip-legacy',

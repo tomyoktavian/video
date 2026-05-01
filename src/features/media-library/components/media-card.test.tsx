@@ -42,17 +42,35 @@ const mediaStoreState = vi.hoisted(() => ({
   setTaggingMedia: vi.fn(),
   updateMediaCaptions: vi.fn(),
   showNotification: vi.fn(),
-  analysisProgress: null as null | { total: number; completed: number; cancelRequested: boolean },
+  analysisProgress: null as null | {
+    total: number
+    completed: number
+    cancelRequested: boolean
+    subProgress?: { stage: string; framesAnalyzed: number; totalFrames: number }
+  },
   beginAnalysisRun: vi.fn(),
   incrementAnalysisCompleted: vi.fn(),
   requestAnalysisCancel: vi.fn(),
   endAnalysisRun: vi.fn(),
+  setAnalysisSubProgress: vi.fn(),
 }))
 
-const analysisMocks = vi.hoisted(() => ({
-  captionVideo: vi.fn(),
-  captionImage: vi.fn(),
-}))
+const analysisMocks = vi.hoisted(() => {
+  const captionVideo = vi.fn()
+  const captionImage = vi.fn()
+  return {
+    captionVideo,
+    captionImage,
+    // Forwards to the same mocks regardless of provider id — tests stub
+    // the resolved value directly on captionVideo/captionImage.
+    captionVideoWith: (_providerId: string | undefined, ...args: Parameters<typeof captionVideo>) =>
+      captionVideo(...args),
+    captionImageWith: (_providerId: string | undefined, ...args: Parameters<typeof captionImage>) =>
+      captionImage(...args),
+    DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID: 'lfm-captioning',
+    OPENAI_COMPATIBLE_VISION_PROVIDER_ID: 'openai-compatible-vision',
+  }
+})
 
 const editorStoreState = vi.hoisted(() => ({
   setSourcePreviewMediaId: vi.fn(),
@@ -204,14 +222,62 @@ const settingsStoreState = vi.hoisted(() => ({
   captioningIntervalValue: 3,
 }))
 
-vi.mock('../deps/settings-contract', () => ({
-  useSettingsStore: {
-    getState: () => settingsStoreState,
-  },
-  resolveCaptioningIntervalSec: (unit: 'seconds' | 'frames', value: number, fps: number) =>
-    unit === 'seconds' ? value : value / (fps > 0 ? fps : 30),
-  DEFAULT_CAPTIONING_INTERVAL_SECONDS: 3,
-}))
+vi.mock('../deps/settings-contract', () => {
+  const customAiStoreState = {
+    captionMaker: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      language: '',
+      cachedModels: [] as ReadonlyArray<{ id: string; label?: string }>,
+      lastLoadedAt: null as number | null,
+    },
+    visionAnalyzer: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      highlightFinderPrompt: '',
+      cachedModels: [] as ReadonlyArray<{ id: string; label?: string }>,
+      lastLoadedAt: null as number | null,
+    },
+  }
+  const useCustomAiStoreMock = (selector?: (s: typeof customAiStoreState) => unknown) =>
+    selector ? selector(customAiStoreState) : customAiStoreState
+  useCustomAiStoreMock.getState = () => customAiStoreState
+
+  return {
+    useSettingsStore: {
+      getState: () => settingsStoreState,
+    },
+    resolveCaptioningIntervalSec: (unit: 'seconds' | 'frames', value: number, fps: number) =>
+      unit === 'seconds' ? value : value / (fps > 0 ? fps : 30),
+    DEFAULT_CAPTIONING_INTERVAL_SECONDS: 3,
+    useCustomAiStore: useCustomAiStoreMock,
+    getCustomAiCaptionMakerConfig: () => customAiStoreState.captionMaker,
+    getCustomAiVisionAnalyzerConfig: () => customAiStoreState.visionAnalyzer,
+  }
+})
+
+vi.mock('./analyze-dialog', async () => {
+  const { useEffect } = await import('react')
+  return {
+    AnalyzeDialog: ({
+      open,
+      onStart,
+    }: {
+      open: boolean
+      onStart: (values: { provider: 'local' | 'custom' }) => void
+    }) => {
+      // Existing tests expect "Analyze with AI" to trigger analysis directly.
+      // The new dialog asks the user to pick a provider — for the test mock,
+      // auto-confirm with the local provider so the analyze flow proceeds.
+      useEffect(() => {
+        if (open) onStart({ provider: 'local' })
+      }, [open, onStart])
+      return open ? <div data-testid="analyze-dialog" /> : null
+    },
+  }
+})
 
 vi.mock('@/infrastructure/storage', () => ({
   saveCaptionThumbnail: vi.fn(async () => undefined),

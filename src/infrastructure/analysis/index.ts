@@ -6,7 +6,14 @@
 export { detectScenes, clearSceneCache } from '@/lib/analysis'
 export type { SceneCut, SceneDetectionProgress, VerificationModel } from '@/lib/analysis'
 export { getSceneVerificationModelLabel, getSceneVerificationModelOptions } from '@/lib/analysis'
-export { captionVideo, captionImage } from '@/lib/analysis'
+export {
+  captionVideo,
+  captionImage,
+  captionVideoWith,
+  captionImageWith,
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
+} from '@/lib/analysis'
 export type { MediaCaption, CaptioningProgress, CaptioningOptions } from '@/lib/analysis'
 export {
   embeddingsProvider,

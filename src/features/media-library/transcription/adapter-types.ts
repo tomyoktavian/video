@@ -1,14 +1,23 @@
 import type { MediaTranscriptModel } from '@/types/storage'
-import type { TranscribeOptions } from './types'
-import type { TranscribeStream } from './browser-transcriber'
+import type { TranscribeOptions, TranscriptSegment } from './types'
 
 export interface MediaTranscriptionModelOption {
   value: MediaTranscriptModel
   label: string
 }
 
+/**
+ * Minimal surface every transcription stream must expose so the service
+ * layer can collect segments and cancel mid-flight without knowing the
+ * adapter implementation.
+ */
+export interface MediaTranscribeStream extends AsyncIterable<TranscriptSegment> {
+  collect(): Promise<TranscriptSegment[]>
+  cancel(message?: string): void
+}
+
 export interface MediaTranscriber {
-  transcribe(file: File, runtimeOptions?: TranscribeOptions): TranscribeStream
+  transcribe(file: File, runtimeOptions?: TranscribeOptions): MediaTranscribeStream
 }
 
 export interface MediaTranscriptionAdapter {

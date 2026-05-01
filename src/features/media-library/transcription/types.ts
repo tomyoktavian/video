@@ -3,10 +3,18 @@ import type { MediaTranscriptModel, MediaTranscriptQuantization } from '@/types/
 export type WhisperModel = MediaTranscriptModel
 export type QuantizationType = MediaTranscriptQuantization
 
+export interface TranscriptWord {
+  text: string
+  start: number
+  end: number
+}
+
 export interface TranscriptSegment {
   text: string
   start: number
   end: number
+  /** Per-word timing when the provider returns it. Absent on legacy paths. */
+  words?: TranscriptWord[]
 }
 
 export interface TranscribeProgress {
@@ -20,7 +28,8 @@ export interface TranscribeRuntimeInfo {
 }
 
 export interface TranscribeOptions {
-  model?: WhisperModel
+  /** Local-Whisper paths use the `WhisperModel` union; custom adapters accept any string. */
+  model?: WhisperModel | string
   language?: string
   quantization?: QuantizationType
   onSegment?: (segment: TranscriptSegment) => void

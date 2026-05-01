@@ -4,3 +4,4 @@
 export { useTimelineStore } from './stores/timeline-store'
 export { useZoomStore } from './stores/zoom-store'
 export { Timeline } from './components/timeline'
+export { applyHighlightPlans, type CreatedCompInfo } from './stores/actions/highlight-actions'

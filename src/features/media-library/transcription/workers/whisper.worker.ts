@@ -249,6 +249,75 @@ async function processNext(): Promise<void> {
   }
 }
 
+/**
+ * Word-grouping thresholds for converting Transformers.js word-level
+ * timestamps into segments. Tuned to mirror the Custom AI grouping in
+ * `openai-compatible-adapter.ts` so downstream caption-builder behavior
+ * is consistent across providers.
+ */
+const WORD_GROUP_GAP_SECONDS = 0.6
+const MAX_WORDS_PER_SEGMENT = 12
+const SENTENCE_END = /[.!?]\s*$/
+
+interface PipelineChunk {
+  text: string
+  timestamp: [number | null, number | null]
+}
+
+interface RawSegment {
+  text: string
+  start: number
+  end: number
+  words?: Array<{ text: string; start: number; end: number }>
+}
+
+function groupWordChunksIntoSegments(
+  chunks: readonly PipelineChunk[],
+  chunkOffset: number,
+): RawSegment[] {
+  const segments: RawSegment[] = []
+  let bucket: Array<{ text: string; start: number; end: number }> = []
+
+  const flush = () => {
+    if (bucket.length === 0) return
+    const first = bucket[0]!
+    const last = bucket.at(-1)!
+    segments.push({
+      text: bucket
+        .map((w) => w.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+      start: first.start,
+      end: last.end,
+      words: bucket,
+    })
+    bucket = []
+  }
+
+  for (const chunk of chunks) {
+    const start = (chunk.timestamp[0] ?? 0) + chunkOffset
+    const end = (chunk.timestamp[1] ?? chunk.timestamp[0] ?? 0) + chunkOffset
+    const text = chunk.text
+    if (text.trim().length === 0 || end < start) continue
+
+    const previous = bucket.at(-1)
+    if (previous) {
+      const gap = start - previous.end
+      if (
+        gap > WORD_GROUP_GAP_SECONDS ||
+        SENTENCE_END.test(previous.text) ||
+        bucket.length >= MAX_WORDS_PER_SEGMENT
+      ) {
+        flush()
+      }
+    }
+    bucket.push({ text, start, end })
+  }
+  flush()
+  return segments
+}
+
 async function transcribeChunk(chunk: PCMChunk): Promise<void> {
   if (!asrPipeline) {
     return
@@ -263,27 +332,64 @@ async function transcribeChunk(chunk: PCMChunk): Promise<void> {
 
   postMain({ type: 'progress', event: { stage: 'transcribing', progress: 0 } })
 
-  const result = await asrPipeline(chunk.samples, {
+  const baseOptions = {
     sampling_rate: 16_000,
-    return_timestamps: true,
     chunk_length_s: 30,
     stride_length_s: 5,
     ...(language ? { language } : {}),
-  })
+  } as const
 
-  const output = result as {
-    chunks?: Array<{ text: string; timestamp: [number | null, number | null] }>
+  let wordLevel = true
+  let result: unknown
+  try {
+    result = await asrPipeline(chunk.samples, {
+      ...baseOptions,
+      return_timestamps: 'word',
+    })
+  } catch (error) {
+    // Models without cross-attention metadata (or quantizations that drop
+    // the alignment heads) reject `return_timestamps: 'word'`. Fall back to
+    // segment-level timestamps so transcription still works — captions will
+    // use the wider segment timing instead of tight word grouping.
+    logger.warn(
+      `[FreeCut transcription] word-level timestamps unavailable, falling back to segment timestamps: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    )
+    wordLevel = false
+    result = await asrPipeline(chunk.samples, {
+      ...baseOptions,
+      return_timestamps: true,
+    })
   }
 
-  for (const segment of output.chunks ?? []) {
-    postMain({
-      type: 'segment',
-      segment: {
-        text: segment.text,
-        start: (segment.timestamp[0] ?? 0) + chunk.timestamp,
-        end: (segment.timestamp[1] ?? 0) + chunk.timestamp,
-      },
-    })
+  const output = result as { chunks?: PipelineChunk[] }
+  const rawChunks = output.chunks ?? []
+
+  if (wordLevel) {
+    const grouped = groupWordChunksIntoSegments(rawChunks, chunk.timestamp)
+    for (const segment of grouped) {
+      postMain({
+        type: 'segment',
+        segment: {
+          text: segment.text,
+          start: segment.start,
+          end: segment.end,
+          ...(segment.words ? { words: segment.words } : {}),
+        },
+      })
+    }
+  } else {
+    for (const segment of rawChunks) {
+      postMain({
+        type: 'segment',
+        segment: {
+          text: segment.text,
+          start: (segment.timestamp[0] ?? 0) + chunk.timestamp,
+          end: (segment.timestamp[1] ?? 0) + chunk.timestamp,
+        },
+      })
+    }
   }
 
   postMain({ type: 'progress', event: { stage: 'transcribing', progress: 1 } })

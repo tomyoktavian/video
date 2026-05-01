@@ -25,6 +25,15 @@ import {
   setStoredTtsEngine,
   type StoredTtsEngine,
 } from '@/shared/utils/tts-settings'
+
+// This dialog only offers local engines. If the persisted value is the
+// AI-panel-only 'custom' engine, snap to the local default so the dialog
+// never has to render a Custom AI option.
+type LocalTtsEngine = Exclude<StoredTtsEngine, 'custom'>
+function getStoredLocalTtsEngine(): LocalTtsEngine {
+  const value = getStoredTtsEngine()
+  return value === 'custom' ? 'kokoro' : value
+}
 import {
   importMediaLibraryService,
   useMediaLibraryStore,
@@ -240,7 +249,7 @@ export const TtsGenerateDialog = memo(function TtsGenerateDialog() {
   const showNotification = useMediaLibraryStore((state) => state.showNotification)
 
   const [text, setText] = useState('')
-  const [engine, setEngine] = useState<StoredTtsEngine>(() => getStoredTtsEngine())
+  const [engine, setEngine] = useState<LocalTtsEngine>(() => getStoredLocalTtsEngine())
   const [kokoroVoice, setKokoroVoice] = useState<KokoroTtsVoice>('af_heart')
   const [mossVoice, setMossVoice] = useState<MossTtsVoice>('Xiaoyu')
   const model: KokoroTtsModel = KOKORO_TTS_BEST_MODEL
@@ -267,7 +276,7 @@ export const TtsGenerateDialog = memo(function TtsGenerateDialog() {
         resultUrlRef.current = null
       }
       setText(initialText)
-      setEngine(getStoredTtsEngine())
+      setEngine(getStoredLocalTtsEngine())
       setError(null)
       setProgress(null)
       setResult(null)
@@ -507,7 +516,7 @@ export const TtsGenerateDialog = memo(function TtsGenerateDialog() {
               </div>
               <Select
                 value={engine}
-                onValueChange={(value) => setEngine(value as StoredTtsEngine)}
+                onValueChange={(value) => setEngine(value as LocalTtsEngine)}
                 disabled={isGenerating || isInserting}
               >
                 <SelectTrigger className="h-8 text-xs">

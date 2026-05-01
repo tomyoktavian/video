@@ -1,4 +1,5 @@
 import { memo, ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -63,6 +64,9 @@ interface ItemContextMenuProps {
   /** Whether multiple items are selected (enables pre-comp creation) */
   canCreatePreComp?: boolean
   onCreatePreComp?: () => void
+  /** Whether at least one selected item has captions or a transcript ready. */
+  canFindHighlights?: boolean
+  onFindHighlights?: () => void
   /** Whether this item is a text item (enables generate audio option) */
   isTextItem?: boolean
   onGenerateAudioFromText?: () => void
@@ -119,6 +123,8 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   onDissolveComposition,
   canCreatePreComp,
   onCreatePreComp,
+  canFindHighlights,
+  onFindHighlights,
   isTextItem,
   onGenerateAudioFromText,
   canDetectScenes,
@@ -181,6 +187,8 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       onDissolveComposition={onDissolveComposition}
       canCreatePreComp={canCreatePreComp}
       onCreatePreComp={onCreatePreComp}
+      canFindHighlights={canFindHighlights}
+      onFindHighlights={onFindHighlights}
       isTextItem={isTextItem}
       onGenerateAudioFromText={onGenerateAudioFromText}
       canDetectScenes={canDetectScenes}
@@ -261,6 +269,8 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   onDissolveComposition,
   canCreatePreComp,
   onCreatePreComp,
+  canFindHighlights,
+  onFindHighlights,
   isTextItem,
   onGenerateAudioFromText,
   canDetectScenes,
@@ -474,8 +484,21 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canCreatePreComp && onCreatePreComp && (
           <ContextMenuItem onClick={onCreatePreComp}>Create Compound Clip</ContextMenuItem>
         )}
+        {onFindHighlights && (
+          <ContextMenuItem
+            onClick={canFindHighlights ? onFindHighlights : undefined}
+            disabled={!canFindHighlights}
+            title={
+              canFindHighlights ? undefined : 'Generate both AI captions and a transcript first.'
+            }
+          >
+            <Sparkles className="mr-2 h-3 w-3" />
+            Find Highlights…
+          </ContextMenuItem>
+        )}
         {((isCompositionItem && (onEnterComposition || onDissolveComposition)) ||
-          (canCreatePreComp && onCreatePreComp)) && <ContextMenuSeparator />}
+          (canCreatePreComp && onCreatePreComp) ||
+          onFindHighlights) && <ContextMenuSeparator />}
 
         <ContextMenuItem
           onClick={onRippleDelete}

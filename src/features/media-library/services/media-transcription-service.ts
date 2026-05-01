@@ -7,11 +7,18 @@ import {
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useSelectionStore } from '@/shared/state/selection'
 import { createLogger } from '@/shared/logging/logger'
-import type { MediaTranscript, MediaTranscriptModel } from '@/types/storage'
+import type {
+  MediaTranscript,
+  MediaTranscriptModel,
+  MediaTranscriptProviderId,
+} from '@/types/storage'
 import type { AudioItem, TextItem, TimelineItem, TimelineTrack, VideoItem } from '@/types/timeline'
+import type { MediaTranscriber } from '../transcription/adapter-types'
 import type { TranscriptSegment, TranscribeOptions } from '../transcription/types'
 import {
+  DEFAULT_MEDIA_TRANSCRIPTION_ADAPTER_ID,
   getDefaultMediaTranscriptionAdapter,
+  getMediaTranscriptionAdapter,
   getMediaTranscriptionModelLabel,
 } from '../transcription/registry'
 import { mediaLibraryService } from './media-library-service'
@@ -58,8 +65,9 @@ type QueueState = 'queued' | 'running'
 
 interface TranscriptionRequestOptions {
   language?: string
-  model?: MediaTranscriptModel
+  model?: MediaTranscriptModel | string
   quantization?: TranscribeOptions['quantization']
+  providerId?: MediaTranscriptProviderId
   onProgress?: TranscribeOptions['onProgress']
   onQueueStatusChange?: (state: QueueState) => void
 }
@@ -72,7 +80,8 @@ interface QueuedTranscriptionListener {
 interface QueuedTranscriptionJob {
   mediaId: string
   requestKey: string
-  model: MediaTranscriptModel
+  providerId: MediaTranscriptProviderId
+  model: string
   quantization: NonNullable<TranscribeOptions['quantization']>
   language?: string
   listeners: QueuedTranscriptionListener[]
@@ -86,11 +95,7 @@ interface QueuedTranscriptionJob {
 }
 
 class MediaTranscriptionService {
-  private readonly adapter = getDefaultMediaTranscriptionAdapter()
-  private readonly transcriber = this.adapter.createTranscriber({
-    model: DEFAULT_MODEL,
-    quantization: DEFAULT_QUANTIZATION,
-  })
+  private readonly transcribers = new Map<MediaTranscriptProviderId, MediaTranscriber>()
   private activeJob: QueuedTranscriptionJob | null = null
   private queue: QueuedTranscriptionJob[] = []
 
@@ -101,16 +106,37 @@ class MediaTranscriptionService {
     await deleteTranscript(mediaId)
   }
 
+  private getTranscriber(providerId: MediaTranscriptProviderId): MediaTranscriber {
+    let transcriber = this.transcribers.get(providerId)
+    if (!transcriber) {
+      const adapter =
+        providerId === DEFAULT_MEDIA_TRANSCRIPTION_ADAPTER_ID
+          ? getDefaultMediaTranscriptionAdapter()
+          : getMediaTranscriptionAdapter(providerId)
+      const initialOptions: TranscribeOptions =
+        providerId === 'browser-whisper'
+          ? { model: DEFAULT_MODEL, quantization: DEFAULT_QUANTIZATION }
+          : {}
+      transcriber = adapter.createTranscriber(initialOptions)
+      this.transcribers.set(providerId, transcriber)
+    }
+    return transcriber
+  }
+
   async transcribeMedia(
     mediaId: string,
     options: TranscriptionRequestOptions = {},
   ): Promise<MediaTranscript> {
     const settings = useSettingsStore.getState()
-    const model = options.model ?? settings.defaultWhisperModel ?? DEFAULT_MODEL
+    const providerId: MediaTranscriptProviderId = options.providerId ?? 'browser-whisper'
+    const isCustom = providerId !== 'browser-whisper'
+    const model: string = isCustom
+      ? (options.model ?? '').toString()
+      : (options.model ?? settings.defaultWhisperModel ?? DEFAULT_MODEL)
     const quantization =
       options.quantization ?? settings.defaultWhisperQuantization ?? DEFAULT_QUANTIZATION
     const language = normalizeWhisperLanguage(options.language ?? settings.defaultWhisperLanguage)
-    const requestKey = `${mediaId}:${model}:${quantization}:${language ?? 'auto'}`
+    const requestKey = `${providerId}:${mediaId}:${model}:${quantization}:${language ?? 'auto'}`
     const listener: QueuedTranscriptionListener = {
       onProgress: options.onProgress,
       onQueueStatusChange: options.onQueueStatusChange,
@@ -125,6 +151,7 @@ class MediaTranscriptionService {
     const job = this.createJob({
       mediaId,
       requestKey,
+      providerId,
       model,
       quantization,
       language,
@@ -173,6 +200,7 @@ class MediaTranscriptionService {
   private createJob({
     mediaId,
     requestKey,
+    providerId,
     model,
     quantization,
     language,
@@ -180,7 +208,8 @@ class MediaTranscriptionService {
   }: {
     mediaId: string
     requestKey: string
-    model: MediaTranscriptModel
+    providerId: MediaTranscriptProviderId
+    model: string
     quantization: NonNullable<TranscribeOptions['quantization']>
     language?: string
     listener: QueuedTranscriptionListener
@@ -195,6 +224,7 @@ class MediaTranscriptionService {
     return {
       mediaId,
       requestKey,
+      providerId,
       model,
       quantization,
       language,
@@ -298,7 +328,7 @@ class MediaTranscriptionService {
             lastModified: media.fileLastModified ?? Date.now(),
           })
 
-    const stream = this.transcriber.transcribe(file, {
+    const stream = this.getTranscriber(job.providerId).transcribe(file, {
       model: job.model,
       language: job.language,
       quantization: job.quantization,
@@ -309,13 +339,14 @@ class MediaTranscriptionService {
       },
     })
     job.stream = stream
-    const segments = await stream.collect()
+    const segments: TranscriptSegment[] = await stream.collect()
     this.throwIfCancelled(job)
 
+    const isCustom = job.providerId !== 'browser-whisper'
     const transcript: MediaTranscript = {
       id: mediaId,
       mediaId,
-      model: job.model,
+      model: isCustom ? DEFAULT_MODEL : (job.model as MediaTranscriptModel),
       language: job.language,
       quantization: job.quantization,
       text: segments
@@ -327,16 +358,28 @@ class MediaTranscriptionService {
         text: segment.text.trim(),
         start: segment.start,
         end: segment.end,
+        ...(segment.words && segment.words.length > 0
+          ? {
+              words: segment.words.map((word) => ({
+                text: word.text,
+                start: word.start,
+                end: word.end,
+              })),
+            }
+          : {}),
       })),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      provider: job.providerId,
+      ...(isCustom ? { customModelId: job.model } : {}),
     }
 
     await saveTranscript(transcript)
     logger.info('Saved transcript', {
       mediaId,
       segments: transcript.segments.length,
-      model: getMediaTranscriptionModelLabel(transcript.model),
+      provider: job.providerId,
+      model: isCustom ? job.model : getMediaTranscriptionModelLabel(transcript.model),
     })
     return transcript
   }

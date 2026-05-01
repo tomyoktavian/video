@@ -2,11 +2,16 @@ import { useCallback, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import type { TimelineItem as TimelineItemType } from '@/types/timeline'
 import type { AnimatableProperty } from '@/types/keyframe'
-import type { MediaTranscriptModel, MediaTranscriptQuantization } from '@/types/storage'
+import type {
+  MediaTranscriptModel,
+  MediaTranscriptProviderId,
+  MediaTranscriptQuantization,
+} from '@/types/storage'
 import { useSelectionStore } from '@/shared/state/selection'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
 import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
+import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
 import { getTextItemPlainText } from '@/shared/utils/text-item-spans'
 import { scheduleAfterPaint } from '@/shared/utils/schedule-after-paint'
 import {
@@ -185,12 +190,14 @@ export function useTimelineItemActions({
 
   const handleCaptionGeneration = useCallback(
     (
-      model: MediaTranscriptModel,
+      model: MediaTranscriptModel | string,
       options?: {
         forceTranscription?: boolean
         replaceExisting?: boolean
         quantization?: MediaTranscriptQuantization
         language?: string
+        providerId?: MediaTranscriptProviderId
+        modelLabel?: string
         onError?: (error: unknown) => void
       },
     ) => {
@@ -204,20 +211,35 @@ export function useTimelineItemActions({
       const previousStatus = store.transcriptStatus.get(mediaId) ?? 'idle'
       const forceTranscription = options?.forceTranscription ?? false
       const replaceExisting = options?.replaceExisting ?? false
+      const providerId: MediaTranscriptProviderId = options?.providerId ?? 'browser-whisper'
+      const isCustomProvider = providerId !== 'browser-whisper'
+      const modelLabel =
+        options?.modelLabel ??
+        (isCustomProvider
+          ? String(model)
+          : getMediaTranscriptionModelLabel(model as MediaTranscriptModel))
 
       const run = async () => {
         let updatedTranscriptStatus = previousStatus
 
         try {
           const existingTranscript = await mediaTranscriptionService.getTranscript(mediaId)
+          const existingProvider = existingTranscript?.provider ?? 'browser-whisper'
+          const existingIdentity = isCustomProvider
+            ? (existingTranscript?.customModelId ?? '')
+            : (existingTranscript?.model ?? '')
           const needsTranscription =
-            forceTranscription || !existingTranscript || existingTranscript.model !== model
+            forceTranscription ||
+            !existingTranscript ||
+            existingProvider !== providerId ||
+            existingIdentity !== String(model)
 
           if (needsTranscription) {
             store.setTranscriptStatus(mediaId, 'queued')
             store.setTranscriptProgress(mediaId, { stage: 'queued', progress: 0 })
 
             await mediaTranscriptionService.transcribeMedia(mediaId, {
+              providerId,
               model,
               quantization: options?.quantization,
               language: options?.language || undefined,
@@ -253,10 +275,10 @@ export function useTimelineItemActions({
           const successMessage = replaceExisting
             ? result.insertedItemCount > 0
               ? result.removedItemCount > 0
-                ? `Updated captions on this segment with ${getMediaTranscriptionModelLabel(model)}`
-                : `Refreshed captions on this segment with ${getMediaTranscriptionModelLabel(model)}`
+                ? `Updated captions on this segment with ${modelLabel}`
+                : `Refreshed captions on this segment with ${modelLabel}`
               : `Removed captions from this segment`
-            : `Added captions to this segment with ${getMediaTranscriptionModelLabel(model)}`
+            : `Added captions to this segment with ${modelLabel}`
 
           store.showNotification({
             type: 'success',
@@ -297,20 +319,28 @@ export function useTimelineItemActions({
   const handleCaptionsFromDialog = useCallback(
     (
       values: {
+        provider?: 'local' | 'custom'
         model: MediaTranscriptModel
+        customModelId?: string
         quantization: MediaTranscriptQuantization
         language: string
       },
       hasExistingCaptions: boolean,
       onError?: (error: unknown) => void,
     ) => {
-      handleCaptionGeneration(values.model, {
+      const isCustom = values.provider === 'custom'
+      const targetModel: MediaTranscriptModel | string = isCustom
+        ? (values.customModelId ?? '')
+        : values.model
+      handleCaptionGeneration(targetModel, {
         // The dialog path is always "generate fresh captions". Reusing the
         // current transcript is handled explicitly by "Insert Existing Captions".
         forceTranscription: true,
         replaceExisting: hasExistingCaptions,
         quantization: values.quantization,
         language: values.language,
+        providerId: isCustom ? 'openai-compatible' : 'browser-whisper',
+        ...(isCustom ? { modelLabel: values.customModelId } : {}),
         onError,
       })
     },
@@ -367,10 +397,29 @@ export function useTimelineItemActions({
   const sourceStart = 'sourceStart' in item ? item.sourceStart : undefined
   const clipFrom = item.from
 
+  // Highlight Finder requires both AI captions AND a ready transcript so the
+  // video-clipper output (title card + subtitles) has all the data it needs.
+  const canFindHighlights = (() => {
+    if (item.type !== 'video' && item.type !== 'audio') return false
+    if (!item.mediaId) return false
+    const mediaStore = useMediaLibraryStore.getState()
+    const media = mediaStore.mediaById[item.mediaId]
+    if (!media) return false
+    const hasCaptions = (media.aiCaptions?.length ?? 0) > 0
+    const hasTranscript = mediaStore.transcriptStatus.get(item.mediaId) === 'ready'
+    return hasCaptions && hasTranscript
+  })()
+
   const handleCreatePreComp = useCallback(() => {
     // Capture selection synchronously - context menu close may clear it before the dynamic import resolves.
     const ids = useSelectionStore.getState().selectedItemIds
     createPreComp(undefined, ids)
+  }, [])
+
+  const handleFindHighlights = useCallback(() => {
+    const ids = useSelectionStore.getState().selectedItemIds
+    if (ids.length === 0) return
+    useHighlightFinderDialogStore.getState().open(ids)
   }, [])
 
   const compositionId = item.compositionId
@@ -569,5 +618,7 @@ export function useTimelineItemActions({
     handleEnterComposition,
     handleDissolveComposition,
     handleDetectScenes,
+    handleFindHighlights,
+    canFindHighlights,
   }
 }

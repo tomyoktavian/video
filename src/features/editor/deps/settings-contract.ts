@@ -10,6 +10,18 @@ export {
   resolveCaptioningIntervalSec,
 } from '@/features/settings/stores/settings-store'
 export type { CaptioningIntervalUnit } from '@/features/settings/stores/settings-store'
+export {
+  useCustomAiStore,
+  getCustomAiCaptionMakerConfig,
+  getCustomAiTextToSpeechConfig,
+  getCustomAiVisionAnalyzerConfig,
+} from '@/features/settings/stores/custom-ai-store'
+export type {
+  CustomAiCachedModel,
+  CustomAiCaptionMakerConfig,
+  CustomAiTextToSpeechConfig,
+  CustomAiVisionAnalyzerConfig,
+} from '@/features/settings/stores/custom-ai-store'
 export { LocalInferenceUnloadControl } from '@/features/settings/components/local-inference-unload-control'
 export { LocalModelCacheControl } from '@/features/settings/components/local-model-cache-control'
 export { useResolvedHotkeys } from '@/features/settings/hooks/use-resolved-hotkeys'

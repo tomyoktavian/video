@@ -8,8 +8,10 @@
 
 import {
   getDefaultMediaCaptioningProvider,
+  getMediaCaptioningProvider,
   mediaCaptioningProviderRegistry,
   DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
 } from './captioning/registry'
 import type {
   CaptioningOptions,
@@ -20,7 +22,11 @@ import type {
 
 export type { CaptioningOptions, CaptioningProgress, MediaCaption, MediaCaptioningProvider }
 
-export { mediaCaptioningProviderRegistry, DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID }
+export {
+  mediaCaptioningProviderRegistry,
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
+}
 
 export async function captionVideo(
   video: HTMLVideoElement,
@@ -34,4 +40,20 @@ export async function captionImage(
   options?: CaptioningOptions,
 ): Promise<MediaCaption[]> {
   return getDefaultMediaCaptioningProvider().captionImage(imageBlob, options)
+}
+
+export async function captionVideoWith(
+  providerId: string | undefined,
+  video: HTMLVideoElement,
+  options?: CaptioningOptions,
+): Promise<MediaCaption[]> {
+  return getMediaCaptioningProvider(providerId).captionVideo(video, options)
+}
+
+export async function captionImageWith(
+  providerId: string | undefined,
+  imageBlob: Blob,
+  options?: CaptioningOptions,
+): Promise<MediaCaption[]> {
+  return getMediaCaptioningProvider(providerId).captionImage(imageBlob, options)
 }

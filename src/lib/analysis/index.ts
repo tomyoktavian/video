@@ -21,7 +21,14 @@ export {
 } from './histogram-scene-detection'
 export type { HistogramDetectOptions } from './histogram-scene-detection'
 export { seekVideo, deduplicateCuts } from './scene-detection-utils'
-export { captionVideo, captionImage } from './media-tagger'
+export {
+  captionVideo,
+  captionImage,
+  captionVideoWith,
+  captionImageWith,
+  DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
+  OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
+} from './media-tagger'
 export type { MediaCaption, CaptioningProgress, CaptioningOptions } from './media-tagger'
 export {
   embeddingsProvider,
