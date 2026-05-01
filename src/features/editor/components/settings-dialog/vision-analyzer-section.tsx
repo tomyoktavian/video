@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { fetchCustomAiModels } from '@/features/editor/deps/media-library-contract'
-import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from '@/features/highlight-finder/system-prompt'
+import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/highlight-finder'
 
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 

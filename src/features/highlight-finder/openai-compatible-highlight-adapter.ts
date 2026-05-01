@@ -5,7 +5,7 @@
  * config is reused for both vision captioning and highlight reasoning.
  */
 
-import { getCustomAiVisionAnalyzerConfig } from '@/features/settings/stores/custom-ai-store'
+import { getCustomAiVisionAnalyzerConfig } from './deps/settings'
 import { createLogger } from '@/shared/logging/logger'
 
 import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from './system-prompt'

@@ -73,7 +73,7 @@ const LazyTranscriptViewerDialog = lazy(() =>
   })),
 )
 const LazyHighlightFinderDialog = lazy(() =>
-  import('@/features/highlight-finder/components/highlight-finder-dialog').then((module) => ({
+  import('@/features/editor/deps/highlight-finder').then((module) => ({
     default: module.HighlightFinderDialog,
   })),
 )
