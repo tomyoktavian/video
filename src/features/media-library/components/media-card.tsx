@@ -383,6 +383,15 @@ export const MediaCard = memo(function MediaCard({
     [mediaId, isOnline],
   )
 
+  const handleSelectionCheckboxChange = useCallback(() => {
+    if (isOnline || !mediaId) return
+    useMediaLibraryStore.getState().toggleMediaSelection(mediaId)
+  }, [isOnline, mediaId])
+
+  const stopCheckboxPropagation = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation()
+  }, [])
+
   const handleOpenTranscribeDialog = (e: React.MouseEvent) => {
     e.stopPropagation()
     setTranscribeErrorMessage(null)
@@ -1313,6 +1322,20 @@ export const MediaCard = memo(function MediaCard({
                     }
               }
             >
+              {/* Selection checkbox (local only) */}
+              {!isOnline && !isImporting && (
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={handleSelectionCheckboxChange}
+                  onClick={stopCheckboxPropagation}
+                  onMouseDown={stopCheckboxPropagation}
+                  onPointerDown={stopCheckboxPropagation}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer shrink-0"
+                  aria-label={`Select ${fileName}`}
+                />
+              )}
               {/* Thumbnail */}
               <div
                 ref={thumbnailContainerRef}
@@ -1525,6 +1548,21 @@ export const MediaCard = memo(function MediaCard({
               {/* Selection glow - subtle overlay only */}
               {selected && !isImporting && (
                 <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
+              )}
+
+              {/* Selection checkbox (local only) */}
+              {!isOnline && !isImporting && (
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={handleSelectionCheckboxChange}
+                  onClick={stopCheckboxPropagation}
+                  onMouseDown={stopCheckboxPropagation}
+                  onPointerDown={stopCheckboxPropagation}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="absolute top-1 left-1 z-20 h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer"
+                  aria-label={`Select ${fileName}`}
+                />
               )}
 
               {/* Importing overlay */}

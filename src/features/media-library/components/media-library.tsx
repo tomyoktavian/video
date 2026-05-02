@@ -176,9 +176,51 @@ const MediaTypeGroup = memo(function MediaTypeGroup({
   itemSize,
 }: MediaTypeGroupProps) {
   const Icon = GROUP_ICONS[icon]
+  const itemIdSet = useMemo(() => new Set(items.map((i) => i.id)), [items])
+  const groupSelectedCount = useMediaLibraryStore(
+    useCallback(
+      (s) => {
+        let count = 0
+        for (const id of s.selectedMediaIds) {
+          if (itemIdSet.has(id)) count++
+        }
+        return count
+      },
+      [itemIdSet],
+    ),
+  )
+  const allSelected = items.length > 0 && groupSelectedCount === items.length
+  const someSelected = groupSelectedCount > 0 && !allSelected
+  const checkboxRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
+
+  const handleToggleGroupSelection = useCallback(() => {
+    const store = useMediaLibraryStore.getState()
+    const current = store.selectedMediaIds
+    const next = allSelected
+      ? current.filter((id) => !itemIdSet.has(id))
+      : [...new Set([...current, ...items.map((i) => i.id)])]
+    store.setSelection({ mediaIds: next, compositionIds: store.selectedCompositionIds })
+  }, [allSelected, itemIdSet, items])
+
   return (
     <Collapsible open={isOpen} onOpenChange={(open) => onToggle(groupKey, open)}>
       <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-secondary/50 rounded-md px-2 -mx-2 transition-colors">
+        <input
+          ref={checkboxRef}
+          type="checkbox"
+          checked={allSelected}
+          onChange={handleToggleGroupSelection}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="h-3 w-3 rounded border-border accent-primary cursor-pointer"
+          aria-label={`Select all ${label}`}
+        />
         <ChevronRight
           className={cn(
             'w-3 h-3 text-muted-foreground transition-transform',
