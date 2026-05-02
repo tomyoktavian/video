@@ -7,12 +7,20 @@ function isStoredTtsEngine(value: string): value is StoredTtsEngine {
   return value === 'kokoro' || value === 'moss' || value === 'custom'
 }
 
-export function getStoredTtsEngine(): StoredTtsEngine {
+/**
+ * Read the user's saved TTS engine choice. When no value is stored (first
+ * run, after a clear, etc.) the optional `fallback` argument decides — pass
+ * `'custom'` when the Custom AI Text-to-Speech module is configured to make
+ * Custom AI the default for fresh installs.
+ */
+export function getStoredTtsEngine(
+  fallback: StoredTtsEngine = DEFAULT_TTS_ENGINE,
+): StoredTtsEngine {
   try {
     const value = localStorage.getItem(TTS_ENGINE_STORAGE_KEY)
-    return value && isStoredTtsEngine(value) ? value : DEFAULT_TTS_ENGINE
+    return value && isStoredTtsEngine(value) ? value : fallback
   } catch {
-    return DEFAULT_TTS_ENGINE
+    return fallback
   }
 }
 

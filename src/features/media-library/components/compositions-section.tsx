@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react'
-import { Layers, Sparkles, Trash2, ChevronRight } from 'lucide-react'
+import { Layers, RotateCw, Sparkles, Trash2, ChevronRight } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   ContextMenu,
@@ -20,6 +20,7 @@ import {
 import { cn } from '@/shared/ui/cn'
 import { useEditorStore } from '@/app/state/editor'
 import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
+import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
 import {
   deleteCompoundClips,
   getCompoundClipDeletionImpact,
@@ -139,6 +140,10 @@ export function CompositionsSection() {
     useAddCoverDialogStore.getState().open(comp.id)
   }, [])
 
+  const handleRegenerateNarration = useCallback((comp: SubComposition) => {
+    useRegenerateNarrationDialogStore.getState().open(comp.id)
+  }, [])
+
   const handleCommitRename = useCallback((id: string) => {
     if (renameCancelledRef.current) {
       renameCancelledRef.current = false
@@ -168,6 +173,7 @@ export function CompositionsSection() {
             onDelete: () => handleDeleteRequest(comp),
             onStartRename: () => handleStartRename(comp),
             onAddCover: () => handleAddCover(comp),
+            onRegenerateNarration: () => handleRegenerateNarration(comp),
           },
         ]),
       ),
@@ -177,6 +183,7 @@ export function CompositionsSection() {
       handleCompositionSelect,
       handleDeleteRequest,
       handleEnter,
+      handleRegenerateNarration,
       handleStartRename,
     ],
   )
@@ -244,6 +251,7 @@ export function CompositionsSection() {
                 onDelete={handlers.onDelete}
                 onStartRename={handlers.onStartRename}
                 onAddCover={handlers.onAddCover}
+                onRegenerateNarration={handlers.onRegenerateNarration}
                 onCommitRename={handleCommitRename}
                 onCancelRename={handleCancelRename}
               />
@@ -310,6 +318,7 @@ interface CompositionCardProps {
   onDelete: () => void
   onStartRename: () => void
   onAddCover: () => void
+  onRegenerateNarration: () => void
   onCommitRename: (id: string) => void
   onCancelRename: () => void
 }
@@ -328,6 +337,7 @@ const CompositionCard = memo(function CompositionCard({
   onDelete,
   onStartRename,
   onAddCover,
+  onRegenerateNarration,
   onCommitRename,
   onCancelRename,
 }: CompositionCardProps) {
@@ -557,6 +567,12 @@ const CompositionCard = memo(function CompositionCard({
             <Sparkles className="mr-2 h-3 w-3" />
             Add Cover…
           </ContextMenuItem>
+          {composition.spoilerMetadata && (
+            <ContextMenuItem onClick={onRegenerateNarration}>
+              <RotateCw className="mr-2 h-3 w-3" />
+              Regenerate Narration…
+            </ContextMenuItem>
+          )}
           <ContextMenuItem onClick={onStartRename}>Rename</ContextMenuItem>
           <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
             Delete
@@ -640,6 +656,16 @@ const CompositionCard = memo(function CompositionCard({
 
       <ContextMenuContent>
         <ContextMenuItem onClick={onEnter}>Enter Compound Clip</ContextMenuItem>
+        <ContextMenuItem onClick={onAddCover}>
+          <Sparkles className="mr-2 h-3 w-3" />
+          Add Cover…
+        </ContextMenuItem>
+        {composition.spoilerMetadata && (
+          <ContextMenuItem onClick={onRegenerateNarration}>
+            <RotateCw className="mr-2 h-3 w-3" />
+            Regenerate Narration…
+          </ContextMenuItem>
+        )}
         <ContextMenuItem onClick={onStartRename}>Rename</ContextMenuItem>
         <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
           Delete

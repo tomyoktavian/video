@@ -34,6 +34,49 @@ const logger = createLogger('OpenAiCompatibleAdapter')
  */
 const AUDIO_EXTRACTION_SIZE_THRESHOLD_BYTES = 22 * 1024 * 1024
 
+/**
+ * Target output size for extracted audio. The OpenAI / litellm Whisper API
+ * caps uploads at 25 MB (26214400 bytes). We aim for 22 MB to leave room
+ * for the multipart envelope overhead. Long films (1+ hour) hit this cap
+ * at the default 64 kbps; we lower the bitrate below {@link MIN_BITRATE_BPS}
+ * before chunking the source.
+ */
+const TARGET_UPLOAD_BYTES = 22 * 1024 * 1024
+const MIN_BITRATE_BPS = 16_000
+const MAX_BITRATE_BPS = 64_000
+
+/**
+ * Compute the highest bitrate that keeps the encoded file under
+ * {@link TARGET_UPLOAD_BYTES} given the source duration. Returns
+ * {@link MAX_BITRATE_BPS} when the duration is unknown / very short.
+ */
+function pickBitrateForDuration(durationSec: number): number {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) return MAX_BITRATE_BPS
+  const idealBitrate = Math.floor((TARGET_UPLOAD_BYTES * 8) / durationSec)
+  // Round down to the nearest 1 kbps so the encoder gets a clean number.
+  const roundedKbps = Math.floor(idealBitrate / 1000) * 1000
+  return Math.max(MIN_BITRATE_BPS, Math.min(MAX_BITRATE_BPS, roundedKbps))
+}
+
+/**
+ * Models that have stricter constraints than `whisper-1`:
+ *   - Only accept mp3 / mp4 / mpeg / mpga / m4a / wav / webm (NO ogg/opus).
+ *   - Only support `response_format` of `json` or `text` (NO verbose_json).
+ *   - Do NOT support `timestamp_granularities[]` — return only the full text.
+ *
+ * For these models we force AAC (m4a) extraction, drop verbose_json, and
+ * synthesize a single segment from the returned text. Per-segment timestamps
+ * are not available from these models.
+ *
+ * The match is intentionally loose: any provider routing prefix (e.g.
+ * `openai/`, `azure/`) before the model name still triggers the path.
+ */
+const TIMESTAMPLESS_TRANSCRIBE_MODEL_PATTERN = /(?:^|\/)gpt-4o(?:-mini)?-transcribe(?:-|$)/i
+
+function isTimestamplessTranscribeModel(model: string): boolean {
+  return TIMESTAMPLESS_TRANSCRIBE_MODEL_PATTERN.test(model.trim())
+}
+
 interface OpenAiVerboseSegment {
   text?: string
   start?: number
@@ -207,41 +250,70 @@ class OpenAiCompatibleTranscribeStream implements MediaTranscribeStream {
   }
 
   /**
-   * Decide whether to upload the file as-is or to extract a compact MP3
-   * audio track first. Video sources always get extracted (they include
-   * frame data the API doesn't need); audio sources only when they cross
-   * the API size cap with headroom for multipart overhead.
+   * Decide whether to upload the file as-is or to extract a compact audio
+   * track first. Video sources always get extracted (they include frame
+   * data the API doesn't need); audio sources only when they cross the API
+   * size cap with headroom for multipart overhead.
+   *
+   * Bitrate scales with the source duration so the encoded blob stays under
+   * the API's 25 MB cap even for hour-long films. Pass `forceAac: true` for
+   * models (gpt-4o-*-transcribe) that reject Opus/Ogg uploads.
    */
-  private async prepareUploadPayload(): Promise<{ blob: Blob; fileName: string }> {
+  private async prepareUploadPayload(options: {
+    forceAac: boolean
+  }): Promise<{ blob: Blob; fileName: string }> {
     const isVideo = this.file.type.startsWith('video/')
     const overSizeLimit = this.file.size > AUDIO_EXTRACTION_SIZE_THRESHOLD_BYTES
-    if (!isVideo && !overSizeLimit) {
+    if (!isVideo && !overSizeLimit && !options.forceAac) {
       return { blob: this.file, fileName: this.file.name }
     }
 
-    try {
-      const extracted = await extractAudioForUpload(this.file, this.file.name, {
-        signal: this.controller?.signal,
-      })
-      logger.info('Extracted audio for Custom AI upload', {
-        sourceBytes: this.file.size,
-        sourceMime: this.file.type,
-        outputBytes: extracted.blob.size,
-        outputMime: extracted.mimeType,
-      })
-      return { blob: extracted.blob, fileName: extracted.fileName }
-    } catch (error) {
-      if (this.cancelled) throw new Error(this.cancelMessage)
-      // For pure-audio sources we can fall back to the original blob — the
-      // API may still accept it. Video sources have no useful fallback.
-      if (!isVideo && !overSizeLimit) {
-        logger.warn('Audio extraction failed, falling back to original audio file', error)
-        return { blob: this.file, fileName: this.file.name }
+    const durationSec = await this.estimateMediaDurationSec()
+    let bitrate = pickBitrateForDuration(durationSec)
+
+    // Allow up to two automatic retries with a halved bitrate if the
+    // encoder's actual output exceeds the 22 MB target (rare, happens with
+    // VBR encoders + dense audio). Keeps the call below the 25 MB API cap.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const extracted = await extractAudioForUpload(this.file, this.file.name, {
+          bitrate,
+          ...(this.controller?.signal ? { signal: this.controller.signal } : {}),
+          ...(options.forceAac ? { preferredCodecs: ['aac'] } : {}),
+        })
+        logger.info('Extracted audio for Custom AI upload', {
+          sourceBytes: this.file.size,
+          sourceMime: this.file.type,
+          outputBytes: extracted.blob.size,
+          outputMime: extracted.mimeType,
+          forceAac: options.forceAac,
+          bitrate,
+          durationSec,
+          attempt,
+        })
+        if (extracted.blob.size <= TARGET_UPLOAD_BYTES || bitrate <= MIN_BITRATE_BPS) {
+          return { blob: extracted.blob, fileName: extracted.fileName }
+        }
+        bitrate = Math.max(MIN_BITRATE_BPS, Math.floor(bitrate / 2))
+        logger.warn(
+          `Encoded audio still too large (${extracted.blob.size} bytes); retrying with bitrate ${bitrate}`,
+        )
+      } catch (error) {
+        if (this.cancelled) throw new Error(this.cancelMessage)
+        if (!isVideo && !overSizeLimit) {
+          logger.warn('Audio extraction failed, falling back to original audio file', error)
+          return { blob: this.file, fileName: this.file.name }
+        }
+        throw error instanceof Error
+          ? new Error(`Failed to extract audio for upload: ${error.message}`)
+          : new Error('Failed to extract audio for upload')
       }
-      throw error instanceof Error
-        ? new Error(`Failed to extract audio for upload: ${error.message}`)
-        : new Error('Failed to extract audio for upload')
     }
+
+    throw new Error(
+      'Failed to extract audio under the 25 MB API limit even at the lowest bitrate. ' +
+        'Try splitting the source media into shorter clips and transcribing each one.',
+    )
   }
 
   private async run(): Promise<TranscriptSegment[]> {
@@ -256,19 +328,27 @@ class OpenAiCompatibleTranscribeStream implements MediaTranscribeStream {
       throw new Error('Custom AI model is not selected — load and pick a model in Settings → AI')
     }
 
+    const isTimestampless = isTimestamplessTranscribeModel(requestedModel)
+
     this.options.onProgress?.({ stage: 'loading', progress: 0 })
 
     this.controller = new AbortController()
 
-    const uploadPayload = await this.prepareUploadPayload()
+    const uploadPayload = await this.prepareUploadPayload({ forceAac: isTimestampless })
     if (this.cancelled) throw new Error(this.cancelMessage)
 
     const form = new FormData()
     form.append('file', uploadPayload.blob, uploadPayload.fileName)
     form.append('model', requestedModel)
-    form.append('response_format', 'verbose_json')
-    form.append('timestamp_granularities[]', 'word')
-    form.append('timestamp_granularities[]', 'segment')
+    if (isTimestampless) {
+      // gpt-4o(-mini)-transcribe only supports `json` or `text`. Sending
+      // `verbose_json` or `timestamp_granularities[]` produces a 400.
+      form.append('response_format', 'json')
+    } else {
+      form.append('response_format', 'verbose_json')
+      form.append('timestamp_granularities[]', 'word')
+      form.append('timestamp_granularities[]', 'segment')
+    }
 
     const language = (this.options.language ?? config.language ?? '').trim()
     if (language) form.append('language', language)
@@ -304,13 +384,85 @@ class OpenAiCompatibleTranscribeStream implements MediaTranscribeStream {
 
     if (this.cancelled) throw new Error(this.cancelMessage)
 
-    const segments = parseSegments(payload)
+    const segments = isTimestampless
+      ? buildSingleSegmentFromText(payload, await this.estimateMediaDurationSec())
+      : parseSegments(payload)
     this.options.onProgress?.({ stage: 'transcribing', progress: 1 })
     for (const segment of segments) {
       this.options.onSegment?.(segment)
     }
     return segments
   }
+
+  /**
+   * Best-effort source duration in seconds — used both for selecting the
+   * extraction bitrate (so the encoded blob fits the API's 25 MB cap) and
+   * as the `end` of the synthesized single segment when the model returns
+   * text only. Falls back to 0 if the duration can't be probed (callers
+   * tolerate this).
+   *
+   * Bounded by a 1.5s timeout so jsdom and other environments without media
+   * decoding don't stall the pipeline.
+   */
+  private async estimateMediaDurationSec(): Promise<number> {
+    if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      return 0
+    }
+    return new Promise<number>((resolve) => {
+      let url: string | null = null
+      let element: HTMLMediaElement | null = null
+      let resolved = false
+
+      const cleanup = () => {
+        if (element) {
+          element.src = ''
+          element.removeAttribute('src')
+          element.load?.()
+          element = null
+        }
+        if (url) {
+          URL.revokeObjectURL(url)
+          url = null
+        }
+      }
+
+      const finish = (value: number) => {
+        if (resolved) return
+        resolved = true
+        cleanup()
+        resolve(Number.isFinite(value) && value > 0 ? value : 0)
+      }
+
+      try {
+        url = URL.createObjectURL(this.file)
+        const isVideo = this.file.type.startsWith('video/')
+        element = isVideo ? document.createElement('video') : document.createElement('audio')
+        element.preload = 'metadata'
+        element.addEventListener('loadedmetadata', () => finish(element?.duration ?? 0), {
+          once: true,
+        })
+        element.addEventListener('error', () => finish(0), { once: true })
+        element.src = url
+      } catch {
+        finish(0)
+      }
+
+      setTimeout(() => finish(0), 1500)
+    })
+  }
+}
+
+/**
+ * Synthesize a single transcript segment covering the whole media when the
+ * provider returned only `{ text }` (no segments, no words).
+ */
+function buildSingleSegmentFromText(
+  payload: OpenAiVerboseResponse,
+  durationSec: number,
+): TranscriptSegment[] {
+  const text = typeof payload.text === 'string' ? payload.text.trim() : ''
+  if (!text) return []
+  return [{ text, start: 0, end: durationSec > 0 ? durationSec : 0 }]
 }
 
 class OpenAiCompatibleTranscriber implements MediaTranscriber {

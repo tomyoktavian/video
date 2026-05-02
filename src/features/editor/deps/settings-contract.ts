@@ -9,12 +9,20 @@ export {
   DEFAULT_CAPTIONING_INTERVAL_SECONDS,
   resolveCaptioningIntervalSec,
 } from '@/features/settings/stores/settings-store'
-export type { CaptioningIntervalUnit } from '@/features/settings/stores/settings-store'
+export type {
+  CaptioningIntervalUnit,
+  SubtitleGranularity,
+} from '@/features/settings/stores/settings-store'
 export {
   useCustomAiStore,
   getCustomAiCaptionMakerConfig,
   getCustomAiTextToSpeechConfig,
   getCustomAiVisionAnalyzerConfig,
+  isCaptionMakerConfigured,
+  isVisionAnalyzerConfigured,
+  isTextToSpeechConfigured,
+  isAnyCustomAiConfigured,
+  isAllCustomAiConfigured,
 } from '@/features/settings/stores/custom-ai-store'
 export type {
   CustomAiCachedModel,

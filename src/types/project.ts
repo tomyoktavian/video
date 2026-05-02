@@ -269,6 +269,29 @@ export interface ProjectTimeline {
     durationInFrames: number
     backgroundColor?: string
     busAudioEq?: AudioEqSettings
+    spoilerMetadata?: {
+      version: 1
+      generatedAt: number
+      segments: ReadonlyArray<{
+        index: number
+        narrationText: string
+        narrationItemId: string
+        videoItemId: string
+        originalAudioItemId: string | null
+        subtitleItemIds: ReadonlyArray<string>
+        sourceClipRange: { start: number; end: number }
+      }>
+      voiceId: string | null
+      speed: number
+      language: string
+      scriptTitle: string
+      scriptSynopsis?: string
+      granularity: 'word' | 'phrase' | 'sentence'
+      addSubtitles: boolean
+      generateCover: boolean
+      includeOriginalAudio: boolean
+      sourceFilmMediaId: string
+    }
   }>
   // Keyframe animations
   keyframes?: Array<{

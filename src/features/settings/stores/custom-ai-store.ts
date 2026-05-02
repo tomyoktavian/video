@@ -100,6 +100,20 @@ export const useCustomAiStore = create<CustomAiStore>()((set, get) => ({
 export async function hydrateCustomAiStore(): Promise<void> {
   try {
     const config = await loadCustomAiConfig()
+    // Stale `custom:<id>` voice values from the removed Custom Voice Library
+    // would otherwise be sent literally to the TTS provider. Reset to empty
+    // so the service falls back to the default voice.
+    if (config.textToSpeech.voice.startsWith('custom:')) {
+      const sanitized: CustomAiConfig = {
+        ...config,
+        textToSpeech: { ...config.textToSpeech, voice: '' },
+      }
+      useCustomAiStore.getState().replaceConfig(sanitized)
+      void saveCustomAiConfig(sanitized).catch((error) => {
+        logger.warn('persist sanitized customAi config failed', error)
+      })
+      return
+    }
     useCustomAiStore.getState().replaceConfig(config)
   } catch (error) {
     logger.warn('hydrateCustomAiStore failed', error)
@@ -129,3 +143,11 @@ export type {
   CustomAiTextToSpeechConfig,
   CustomAiVisionAnalyzerConfig,
 }
+
+export {
+  isAllCustomAiConfigured,
+  isAnyCustomAiConfigured,
+  isCaptionMakerConfigured,
+  isTextToSpeechConfigured,
+  isVisionAnalyzerConfigured,
+} from '../utils/custom-ai-status'

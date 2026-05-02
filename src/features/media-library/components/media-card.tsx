@@ -51,6 +51,7 @@ import {
 import { TranscribeDialog, type TranscribeDialogValues } from './transcribe-dialog'
 import { AnalyzeDialog, type AnalyzeDialogValues } from './analyze-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
+import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
 import {
   useItemsStore,
   useTimelineStore,
@@ -61,6 +62,7 @@ import {
   addItems as timelineAddItems,
 } from '../deps/timeline'
 import { useProjectStore } from '../deps/projects'
+import { isAllCustomAiConfigured, useCustomAiStore } from '../deps/settings-contract'
 
 export interface OnlineEpisode {
   url?: string
@@ -104,12 +106,21 @@ interface MediaCardActionMenuProps {
   hasTranscript: boolean
   isTaggable: boolean
   isTagging: boolean
+  isVideoMedia: boolean
+  /**
+   * True only when ALL three Custom AI modules (Caption Maker + Vision
+   * Analyzer + Text to Speech) are configured. Spoiler Generator is
+   * Custom-AI-only — no Local AI fallback — so the menu item is disabled
+   * with an informative label until everything is set up.
+   */
+  spoilerCustomAiReady: boolean
   onGenerateProxy: (event: React.MouseEvent) => void | Promise<void>
   onDeleteProxy: (event: React.MouseEvent) => Promise<void>
   onGenerateTranscript: (event: React.MouseEvent) => void | Promise<void>
   onShowTranscript: (event: React.MouseEvent) => void
   onDeleteTranscript: (event: React.MouseEvent) => Promise<void>
   onAnalyzeWithAI: (event: React.MouseEvent) => void
+  onGenerateSpoiler?: (event: React.MouseEvent) => void
   onAddToTimeline?: (event: React.MouseEvent) => void
   onDelete: (event: React.MouseEvent) => void
 }
@@ -127,12 +138,15 @@ function MediaCardActionMenuItems({
   hasTranscript,
   isTaggable,
   isTagging,
+  isVideoMedia,
+  spoilerCustomAiReady,
   onGenerateProxy,
   onDeleteProxy,
   onGenerateTranscript,
   onShowTranscript,
   onDeleteTranscript,
   onAnalyzeWithAI,
+  onGenerateSpoiler,
   onAddToTimeline,
   onDelete,
 }: MediaCardActionMenuProps) {
@@ -230,14 +244,30 @@ function MediaCardActionMenuItems({
     )
   }
 
-  if (showAiGroup) {
+  const showSpoilerItem = !isBroken && !isTranscribing && isVideoMedia && !!onGenerateSpoiler
+  const spoilerEnabled = spoilerCustomAiReady && hasTranscript
+  const spoilerLabel = !spoilerCustomAiReady
+    ? 'Generate Spoiler (configure Custom AI first)'
+    : !hasTranscript
+      ? 'Generate Spoiler (transcribe first)'
+      : 'Generate Spoiler'
+
+  if (showAiGroup || showSpoilerItem) {
     groups.push(
       <Fragment key="ai">
         <ContextMenuLabel>AI</ContextMenuLabel>
-        <ContextMenuItem onClick={onAnalyzeWithAI}>
-          <Sparkles className="w-3 h-3 mr-2" />
-          Analyze with AI
-        </ContextMenuItem>
+        {showAiGroup && (
+          <ContextMenuItem onClick={onAnalyzeWithAI}>
+            <Sparkles className="w-3 h-3 mr-2" />
+            Analyze with AI
+          </ContextMenuItem>
+        )}
+        {showSpoilerItem && (
+          <ContextMenuItem onClick={onGenerateSpoiler} disabled={!spoilerEnabled}>
+            <Sparkles className="w-3 h-3 mr-2" />
+            {spoilerLabel}
+          </ContextMenuItem>
+        )}
       </Fragment>,
     )
   }
@@ -621,6 +651,23 @@ export const MediaCard = memo(function MediaCard({
     setAnalyzeErrorMessage(null)
     setAnalyzeDialogOpen(true)
   }, [])
+
+  const handleGenerateSpoiler = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!media) return
+      useSpoilerGeneratorDialogStore.getState().open(media.id)
+    },
+    [media],
+  )
+
+  const spoilerCustomAiReady = useCustomAiStore((s) =>
+    isAllCustomAiConfigured({
+      captionMaker: s.captionMaker,
+      textToSpeech: s.textToSpeech,
+      visionAnalyzer: s.visionAnalyzer,
+    }),
+  )
 
   const handleStartAnalyze = useCallback(
     (values: AnalyzeDialogValues) => {
@@ -1207,12 +1254,15 @@ export const MediaCard = memo(function MediaCard({
       hasTranscript={hasTranscript}
       isTaggable={isTaggable}
       isTagging={isTagging}
+      isVideoMedia={mediaType === 'video'}
+      spoilerCustomAiReady={spoilerCustomAiReady}
       onGenerateProxy={handleGenerateProxy}
       onDeleteProxy={handleDeleteProxy}
       onGenerateTranscript={handleOpenTranscribeDialog}
       onShowTranscript={handleShowTranscript}
       onDeleteTranscript={handleDeleteTranscript}
       onAnalyzeWithAI={handleAnalyzeWithAI}
+      onGenerateSpoiler={!isOnline && media ? handleGenerateSpoiler : undefined}
       onAddToTimeline={!isOnline && media ? handleAddToTimeline : undefined}
       onDelete={handleDelete}
     />

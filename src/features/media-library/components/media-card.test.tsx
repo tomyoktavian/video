@@ -245,6 +245,9 @@ vi.mock('../deps/settings-contract', () => {
     selector ? selector(customAiStoreState) : customAiStoreState
   useCustomAiStoreMock.getState = () => customAiStoreState
 
+  const isFilled = (cfg: { baseUrl: string; apiKey: string; model: string }): boolean =>
+    cfg.baseUrl.trim().length > 0 && cfg.apiKey.trim().length > 0 && cfg.model.trim().length > 0
+
   return {
     useSettingsStore: {
       getState: () => settingsStoreState,
@@ -255,6 +258,20 @@ vi.mock('../deps/settings-contract', () => {
     useCustomAiStore: useCustomAiStoreMock,
     getCustomAiCaptionMakerConfig: () => customAiStoreState.captionMaker,
     getCustomAiVisionAnalyzerConfig: () => customAiStoreState.visionAnalyzer,
+    isCaptionMakerConfigured: (cfg: { baseUrl: string; apiKey: string; model: string }) =>
+      isFilled(cfg),
+    isVisionAnalyzerConfigured: (cfg: { baseUrl: string; apiKey: string; model: string }) =>
+      isFilled(cfg),
+    isTextToSpeechConfigured: (cfg: { baseUrl: string; apiKey: string; model: string }) =>
+      isFilled(cfg),
+    isAllCustomAiConfigured: (config: {
+      captionMaker: { baseUrl: string; apiKey: string; model: string }
+      textToSpeech?: { baseUrl: string; apiKey: string; model: string }
+      visionAnalyzer: { baseUrl: string; apiKey: string; model: string }
+    }) =>
+      isFilled(config.captionMaker) &&
+      (config.textToSpeech ? isFilled(config.textToSpeech) : false) &&
+      isFilled(config.visionAnalyzer),
   }
 })
 

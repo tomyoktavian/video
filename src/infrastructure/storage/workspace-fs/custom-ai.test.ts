@@ -172,6 +172,7 @@ describe('workspace-fs custom-ai', () => {
         model: 'gpt-4o-mini',
         highlightFinderPrompt: 'Pick only highlights that include laughter.',
         coverFinderPrompt: '',
+        scriptWriterPrompt: '',
         cachedModels: [{ id: 'gpt-4o-mini' }, { id: 'gpt-4o', label: 'GPT-4o' }],
         lastLoadedAt: 1700000002000,
       },

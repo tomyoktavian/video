@@ -46,7 +46,10 @@ import {
   importMediaLibraryService,
   useMediaLibraryStore,
 } from '@/features/editor/deps/media-library'
-import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
+import {
+  isTextToSpeechConfigured,
+  useCustomAiStore,
+} from '@/features/editor/deps/settings-contract'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import {
   findCompatibleTrackForItemType,
@@ -283,12 +286,14 @@ export const AiPanel = memo(function AiPanel() {
   const showNotification = useMediaLibraryStore((state) => state.showNotification)
 
   const customTtsConfig = useCustomAiStore((s) => s.textToSpeech)
-  const isCustomTtsConfigured = Boolean(
-    customTtsConfig.baseUrl.trim() && customTtsConfig.apiKey.trim() && customTtsConfig.model.trim(),
-  )
+  const isCustomTtsConfigured = isTextToSpeechConfigured(customTtsConfig)
 
   const [ttsText, setTtsText] = useState(DEFAULT_PROMPT)
-  const [ttsEngine, setTtsEngine] = useState<StoredTtsEngine>(() => getStoredTtsEngine())
+  const [ttsEngine, setTtsEngine] = useState<StoredTtsEngine>(() =>
+    // First-run users with Custom TTS configured default to 'custom'; users
+    // who explicitly chose kokoro/moss before keep their stored preference.
+    getStoredTtsEngine(isCustomTtsConfigured ? 'custom' : 'kokoro'),
+  )
   const [ttsKokoroVoice, setTtsKokoroVoice] = useState<KokoroTtsVoice>('af_heart')
   const [ttsMossVoice, setTtsMossVoice] = useState<MossTtsVoice>('Xiaoyu')
   const ttsModel: KokoroTtsModel = KOKORO_TTS_BEST_MODEL
@@ -830,12 +835,10 @@ export const AiPanel = memo(function AiPanel() {
               )}
 
               {isCustomTtsEngine && isCustomTtsConfigured && (
-                <div className="rounded-md border border-border/60 bg-secondary/30 px-2.5 py-2 text-[11px] text-muted-foreground">
-                  Model <span className="text-foreground">{customTtsConfig.model}</span> · Voice{' '}
-                  <span className="text-foreground">
-                    {customTtsConfig.voice.trim() || 'alloy (default)'}
-                  </span>
-                </div>
+                <CustomTtsConfigSummary
+                  model={customTtsConfig.model}
+                  voiceValue={customTtsConfig.voice}
+                />
               )}
             </div>
 
@@ -1132,6 +1135,16 @@ export const AiPanel = memo(function AiPanel() {
     </div>
   )
 })
+
+function CustomTtsConfigSummary({ model, voiceValue }: { model: string; voiceValue: string }) {
+  const voiceLabel = voiceValue.trim() || 'alloy (default)'
+  return (
+    <div className="rounded-md border border-border/60 bg-secondary/30 px-2.5 py-2 text-[11px] text-muted-foreground">
+      Model <span className="text-foreground">{model}</span> · Voice{' '}
+      <span className="text-foreground">{voiceLabel}</span>
+    </div>
+  )
+}
 
 // --- Row component ---
 

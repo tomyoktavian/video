@@ -61,11 +61,13 @@ export function TextToSpeechSection() {
 
   const hasDiscoveredVoices = voiceOptions.length > 0
   const canLoad = Boolean(textToSpeech.baseUrl.trim() && textToSpeech.apiKey.trim())
+
+  const selectedVoice = textToSpeech.voice.trim()
   const canPreview = Boolean(
     textToSpeech.baseUrl.trim() &&
     textToSpeech.apiKey.trim() &&
     textToSpeech.model.trim() &&
-    textToSpeech.voice.trim(),
+    selectedVoice,
   )
 
   const handleLoad = useCallback(async () => {
@@ -193,7 +195,8 @@ export function TextToSpeechSection() {
 
   const previewLoading = previewVoice !== null && !previewPlaying
   const isPreviewingCurrentVoice =
-    previewPlaying && previewVoice !== null && previewVoice === textToSpeech.voice.trim()
+    previewPlaying && previewVoice !== null && previewVoice === selectedVoice
+  const previewLabel = isPreviewingCurrentVoice ? 'Stop preview' : 'Play preview'
 
   const isPristine =
     !textToSpeech.baseUrl &&
@@ -284,11 +287,7 @@ export function TextToSpeechSection() {
             ) : (
               <Play className="h-3 w-3" />
             )}
-            {previewLoading
-              ? 'Generating…'
-              : isPreviewingCurrentVoice
-                ? 'Stop preview'
-                : 'Play preview'}
+            {previewLoading ? 'Generating…' : previewLabel}
           </Button>
         </div>
         {hasDiscoveredVoices ? (

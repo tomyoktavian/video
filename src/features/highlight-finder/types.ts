@@ -11,10 +11,25 @@
 
 import type { MediaCaption } from '@/infrastructure/analysis'
 
+export interface TranscriptWordLite {
+  text: string
+  /** Source-media seconds. */
+  start: number
+  /** Source-media seconds. */
+  end: number
+}
+
 export interface TranscriptSegmentLite {
   text: string
   start: number
   end: number
+  /**
+   * Word-level timing when the source transcript exposes it. Used by the
+   * subtitle splitter to drive per-word / per-phrase / per-sentence
+   * granularity. Absent on legacy transcripts and providers like
+   * `gpt-4o-transcribe` that omit timestamps.
+   */
+  words?: readonly TranscriptWordLite[]
 }
 
 export interface HighlightFinderClipContext {

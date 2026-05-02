@@ -39,7 +39,9 @@ import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog
 import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
+import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
 import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
+import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
 import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
 const logger = createLogger('Editor')
 const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId'
@@ -76,6 +78,16 @@ const LazyTranscriptViewerDialog = lazy(() =>
 const LazyHighlightFinderDialog = lazy(() =>
   import('@/features/editor/deps/highlight-finder').then((module) => ({
     default: module.HighlightFinderDialog,
+  })),
+)
+const LazySpoilerGeneratorDialog = lazy(() =>
+  import('@/features/editor/deps/spoiler-generator').then((module) => ({
+    default: module.SpoilerGeneratorDialog,
+  })),
+)
+const LazyRegenerateNarrationDialog = lazy(() =>
+  import('@/features/editor/deps/spoiler-generator').then((module) => ({
+    default: module.RegenerateNarrationDialog,
   })),
 )
 const LazyAddCoverDialog = lazy(() =>
@@ -189,7 +201,9 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   const ttsGenerateDialogOpen = useTtsGenerateDialogStore((s) => s.isOpen)
   const transcriptViewerDialogOpen = useTranscriptViewerDialogStore((s) => s.isOpen)
   const highlightFinderDialogOpen = useHighlightFinderDialogStore((s) => s.isOpen)
+  const spoilerGeneratorDialogOpen = useSpoilerGeneratorDialogStore((s) => s.isOpen)
   const addCoverDialogOpen = useAddCoverDialogStore((s) => s.isOpen)
+  const regenerateNarrationDialogOpen = useRegenerateNarrationDialogStore((s) => s.isOpen)
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
     (s) => s.isOpen && s.projectId === projectId,
   )
@@ -221,9 +235,19 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
           <LazyHighlightFinderDialog />
         </Suspense>
       )}
+      {spoilerGeneratorDialogOpen && (
+        <Suspense fallback={null}>
+          <LazySpoilerGeneratorDialog />
+        </Suspense>
+      )}
       {addCoverDialogOpen && (
         <Suspense fallback={null}>
           <LazyAddCoverDialog />
+        </Suspense>
+      )}
+      {regenerateNarrationDialogOpen && (
+        <Suspense fallback={null}>
+          <LazyRegenerateNarrationDialog />
         </Suspense>
       )}
     </>

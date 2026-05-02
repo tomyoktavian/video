@@ -71,6 +71,14 @@ export interface CustomAiVisionAnalyzerConfig {
    * free-form context) is appended automatically by the adapter.
    */
   coverFinderPrompt: string
+  /**
+   * Override the built-in system prompt sent to /chat/completions for the
+   * Auto Spoiler Generator's Script Writer (full-transcript narrative
+   * generation for movie spoilers). Empty string = use the default prompt.
+   * The user message (transcript + target duration + language directive) is
+   * appended automatically by the adapter.
+   */
+  scriptWriterPrompt: string
   cachedModels: ReadonlyArray<CustomAiCachedModel>
   lastLoadedAt: number | null
 }
@@ -106,6 +114,7 @@ export const DEFAULT_CUSTOM_AI_CONFIG: CustomAiConfig = {
     model: '',
     highlightFinderPrompt: '',
     coverFinderPrompt: '',
+    scriptWriterPrompt: '',
     cachedModels: [],
     lastLoadedAt: null,
   },
@@ -168,6 +177,7 @@ function normalizeVisionAnalyzer(value: unknown): CustomAiVisionAnalyzerConfig {
     highlightFinderPrompt:
       typeof raw.highlightFinderPrompt === 'string' ? raw.highlightFinderPrompt : '',
     coverFinderPrompt: typeof raw.coverFinderPrompt === 'string' ? raw.coverFinderPrompt : '',
+    scriptWriterPrompt: typeof raw.scriptWriterPrompt === 'string' ? raw.scriptWriterPrompt : '',
     cachedModels: normalizeCachedModels(raw.cachedModels),
     lastLoadedAt:
       typeof lastLoadedAtRaw === 'number' && Number.isFinite(lastLoadedAtRaw)

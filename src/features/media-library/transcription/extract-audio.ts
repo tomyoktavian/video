@@ -34,6 +34,12 @@ export interface ExtractAudioForUploadOptions {
   channels?: number
   /** Output sample rate in Hz. Defaults to 16000 (Whisper-native). */
   sampleRate?: number
+  /**
+   * Override the default codec preference order. Some transcription models
+   * (e.g. OpenAI's `gpt-4o-transcribe` and `gpt-4o-mini-transcribe`) do not
+   * accept Opus/Ogg uploads — pass `['aac']` to force `.m4a` output.
+   */
+  preferredCodecs?: readonly AudioCodec[]
   signal?: AbortSignal
 }
 
@@ -85,8 +91,94 @@ function deriveFileName(originalName: string, extension: string): string {
 }
 
 /**
+ * Negative-timestamp errors from Mediabunny look like:
+ *   "Timestamps must be non-negative (got -0.0000625s)."
+ * Concatenated/merged MP4 files often have sub-millisecond negative
+ * timestamps at splice points. We detect this specific failure and retry
+ * the conversion with `trim.start = 0.01` to skip the malformed prefix
+ * (10 ms is inaudible and well past any plausible splice artifact).
+ */
+const NEGATIVE_TIMESTAMP_PATTERN = /Timestamps must be non-negative/i
+const TIMESTAMP_RECOVERY_TRIM_START_SEC = 0.01
+
+interface RunConversionParams {
+  source: Blob
+  plan: CodecPlan
+  channels: number
+  sampleRate: number
+  bitrate: number
+  trimStart?: number
+  onProgress?: (progress: number) => void
+  signal?: AbortSignal
+}
+
+async function runConversionOnce(params: RunConversionParams): Promise<ArrayBuffer> {
+  const input = new Input({
+    formats: ALL_FORMATS,
+    source: new BlobSource(params.source),
+  })
+  try {
+    const output = new Output({
+      format: params.plan.format,
+      target: new BufferTarget(),
+    })
+
+    const conversion = await Conversion.init({
+      input,
+      output,
+      video: { discard: true },
+      audio: {
+        codec: params.plan.codec,
+        bitrate: params.bitrate,
+        numberOfChannels: params.channels,
+        sampleRate: params.sampleRate,
+      },
+      ...(params.trimStart !== undefined ? { trim: { start: params.trimStart } } : {}),
+    })
+
+    if (!conversion.isValid) {
+      const reasons = conversion.discardedTracks
+        .filter((t) => t.reason !== 'discarded_by_user')
+        .map((t) => t.reason)
+        .join(', ')
+      throw new Error(
+        `Audio extraction is not possible for this file${reasons ? ` (${reasons})` : ''}`,
+      )
+    }
+
+    if (params.onProgress) {
+      conversion.onProgress = (progress) => params.onProgress?.(progress)
+    }
+
+    const onAbort = () => {
+      void conversion.cancel()
+    }
+    params.signal?.addEventListener('abort', onAbort, { once: true })
+
+    try {
+      await conversion.execute()
+    } finally {
+      params.signal?.removeEventListener('abort', onAbort)
+    }
+
+    const buffer = output.target.buffer
+    if (!buffer) {
+      throw new Error('Audio extraction finished without producing data')
+    }
+    return buffer
+  } finally {
+    const disposable = input as unknown as { [Symbol.dispose]?: () => void }
+    disposable[Symbol.dispose]?.()
+  }
+}
+
+/**
  * Decode the source file and re-encode just the audio track using the
  * first browser-supported codec from {@link PREFERRED_OUTPUT_CODECS}.
+ *
+ * Includes an automatic retry path for merged/concatenated MP4 files whose
+ * splice points produce sub-millisecond negative timestamps that Mediabunny
+ * refuses by default — see {@link NEGATIVE_TIMESTAMP_PATTERN}.
  */
 export async function extractAudioForUpload(
   source: Blob,
@@ -97,7 +189,8 @@ export async function extractAudioForUpload(
   const sampleRate = options.sampleRate ?? 16_000
   const bitrate = options.bitrate ?? 64_000
 
-  const codec = await getFirstEncodableAudioCodec([...PREFERRED_OUTPUT_CODECS], {
+  const codecCandidates = options.preferredCodecs ?? PREFERRED_OUTPUT_CODECS
+  const codec = await getFirstEncodableAudioCodec([...codecCandidates], {
     numberOfChannels: channels,
     sampleRate,
     bitrate,
@@ -107,70 +200,36 @@ export async function extractAudioForUpload(
   }
   const plan = buildCodecPlan(codec)
 
-  const input = new Input({
-    formats: ALL_FORMATS,
-    source: new BlobSource(source),
-  })
+  const baseParams: Omit<RunConversionParams, 'trimStart'> = {
+    source,
+    plan,
+    channels,
+    sampleRate,
+    bitrate,
+    ...(options.onProgress ? { onProgress: options.onProgress } : {}),
+    ...(options.signal ? { signal: options.signal } : {}),
+  }
+
+  let buffer: ArrayBuffer
   try {
-    const output = new Output({
-      format: plan.format,
-      target: new BufferTarget(),
-    })
-
-    const conversion = await Conversion.init({
-      input,
-      output,
-      video: { discard: true },
-      audio: {
-        codec: plan.codec,
-        bitrate,
-        numberOfChannels: channels,
-        sampleRate,
-      },
-    })
-
-    if (!conversion.isValid) {
-      // Filter out the deliberate video discard — surfacing it in the
-      // error message would mislead users into thinking video discard
-      // is the problem.
-      const reasons = conversion.discardedTracks
-        .filter((t) => t.reason !== 'discarded_by_user')
-        .map((t) => t.reason)
-        .join(', ')
-      throw new Error(
-        `Audio extraction is not possible for this file${reasons ? ` (${reasons})` : ''}`,
-      )
+    buffer = await runConversionOnce(baseParams)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (NEGATIVE_TIMESTAMP_PATTERN.test(message)) {
+      // Retry with a tiny start trim that pushes the conversion past the
+      // negative-timestamp splice prefix in concatenated MP4 files.
+      buffer = await runConversionOnce({
+        ...baseParams,
+        trimStart: TIMESTAMP_RECOVERY_TRIM_START_SEC,
+      })
+    } else {
+      throw error
     }
+  }
 
-    if (options.onProgress) {
-      conversion.onProgress = (progress) => options.onProgress?.(progress)
-    }
-
-    const onAbort = () => {
-      void conversion.cancel()
-    }
-    options.signal?.addEventListener('abort', onAbort, { once: true })
-
-    try {
-      await conversion.execute()
-    } finally {
-      options.signal?.removeEventListener('abort', onAbort)
-    }
-
-    const buffer = output.target.buffer
-    if (!buffer) {
-      throw new Error('Audio extraction finished without producing data')
-    }
-    return {
-      blob: new Blob([buffer], { type: plan.mimeType }),
-      fileName: deriveFileName(fileName, plan.extension),
-      mimeType: plan.mimeType,
-    }
-  } finally {
-    // `Input` implements Disposable but TS targets without using-statements
-    // need an explicit cleanup call. The class exposes no public `dispose`,
-    // so Symbol.dispose is the documented hook.
-    const disposable = input as unknown as { [Symbol.dispose]?: () => void }
-    disposable[Symbol.dispose]?.()
+  return {
+    blob: new Blob([buffer], { type: plan.mimeType }),
+    fileName: deriveFileName(fileName, plan.extension),
+    mimeType: plan.mimeType,
   }
 }

@@ -44,7 +44,7 @@ export function GeneralSection() {
         <Label className="text-sm">Auto-save</Label>
         <Switch
           checked={autoSaveInterval > 0}
-          onCheckedChange={(v) => setSetting('autoSaveInterval', v ? 5 : 0)}
+          onCheckedChange={(v) => setSetting('autoSaveInterval', v ? 2 : 0)}
         />
       </div>
       {autoSaveInterval > 0 && (
@@ -53,10 +53,10 @@ export function GeneralSection() {
           <div className="w-32 flex items-center gap-2">
             <Slider
               value={[autoSaveInterval]}
-              onValueChange={([v]) => setSetting('autoSaveInterval', v || 5)}
-              min={5}
+              onValueChange={([v]) => setSetting('autoSaveInterval', v || 2)}
+              min={2}
               max={30}
-              step={5}
+              step={1}
             />
             <span className="text-xs text-muted-foreground w-6">{autoSaveInterval}m</span>
           </div>

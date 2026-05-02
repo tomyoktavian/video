@@ -12,7 +12,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { useEditorStore } from '@/app/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
-import { useCustomAiStore } from '@/features/media-library/deps/settings-contract'
+import {
+  isVisionAnalyzerConfigured,
+  useCustomAiStore,
+} from '@/features/media-library/deps/settings-contract'
 import { cn } from '@/shared/ui/cn'
 
 export type AnalyzeDialogProvider = 'local' | 'custom'
@@ -56,12 +59,18 @@ export function AnalyzeDialog({
   const beginTranscriptionDialog = useEditorStore((s) => s.beginTranscriptionDialog)
   const endTranscriptionDialog = useEditorStore((s) => s.endTranscriptionDialog)
 
-  const [provider, setProvider] = useState<AnalyzeDialogProvider>('local')
+  const customConfigured = isVisionAnalyzerConfigured(visionAnalyzer)
+
+  const [provider, setProvider] = useState<AnalyzeDialogProvider>(
+    customConfigured ? 'custom' : 'local',
+  )
 
   useEffect(() => {
     if (!open) return
-    setProvider('local')
-  }, [open])
+    // Default to Custom AI when Vision Analyzer is configured; manual Local
+    // switch lasts only for this dialog session.
+    setProvider(customConfigured ? 'custom' : 'local')
+  }, [open, customConfigured])
 
   useEffect(() => {
     if (!open) return
@@ -81,10 +90,6 @@ export function AnalyzeDialog({
     endTranscriptionDialog,
     open,
   ])
-
-  const customConfigured = Boolean(
-    visionAnalyzer.baseUrl && visionAnalyzer.apiKey && visionAnalyzer.model,
-  )
 
   const handleStart = () => {
     onStart({ provider })

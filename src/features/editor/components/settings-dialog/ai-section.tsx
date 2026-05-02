@@ -14,7 +14,9 @@ import {
   DEFAULT_CAPTIONING_INTERVAL_SECONDS,
   resolveCaptioningIntervalSec,
   type CaptioningIntervalUnit,
+  type SubtitleGranularity,
 } from '@/features/editor/deps/settings'
+import { isAnyCustomAiConfigured, useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { cn } from '@/shared/ui/cn'
 import { CaptionMakerSection } from './caption-maker-section'
 import { TextToSpeechSection } from './text-to-speech-section'
@@ -136,19 +138,94 @@ function CustomAiTab() {
   )
 }
 
-export function AiSection() {
+const SUBTITLE_GRANULARITY_OPTIONS: ReadonlyArray<{
+  value: SubtitleGranularity
+  label: string
+  description: string
+}> = [
+  {
+    value: 'word',
+    label: 'Per word',
+    description: 'Karaoke style — one word per text item, lights up with the spoken syllable.',
+  },
+  {
+    value: 'phrase',
+    label: 'Per phrase (default)',
+    description: '4–5 word groups, TikTok / CapCut style. Easiest to read for short-form clips.',
+  },
+  {
+    value: 'sentence',
+    label: 'Per sentence',
+    description: 'Full sentence per line, movie-subtitle style. Best for long-form / cinematic.',
+  },
+]
+
+function SubtitleOutputSection() {
+  const granularity = useSettingsStore((s) => s.defaultSubtitleGranularity)
+  const setSetting = useSettingsStore((s) => s.setSetting)
+
   return (
-    <Tabs defaultValue="local" className="w-full">
-      <TabsList>
-        <TabsTrigger value="local">Local AI</TabsTrigger>
-        <TabsTrigger value="custom">Custom AI</TabsTrigger>
-      </TabsList>
-      <TabsContent value="local">
-        <LocalAiTab />
-      </TabsContent>
-      <TabsContent value="custom">
-        <CustomAiTab />
-      </TabsContent>
-    </Tabs>
+    <div className="mb-3 space-y-2 rounded-lg border border-border bg-secondary/30 p-3">
+      <div className="space-y-0.5">
+        <Label className="text-sm">Subtitle output granularity</Label>
+        <p className="text-xs text-muted-foreground">
+          Berlaku untuk semua pembuatan subtitle: <strong>Generate Captions</strong> di clip,{' '}
+          <strong>Highlight Finder</strong>, dan <strong>Auto Spoiler Generator</strong>. Dapat
+          di-override per-run di dialog masing-masing.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {SUBTITLE_GRANULARITY_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setSetting('defaultSubtitleGranularity', option.value)}
+            className={cn(
+              'rounded-md border px-2.5 py-1 text-xs transition-colors',
+              granularity === option.value
+                ? 'border-primary/40 bg-primary/15 text-primary'
+                : 'border-border text-muted-foreground hover:text-foreground',
+            )}
+            title={option.description}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {SUBTITLE_GRANULARITY_OPTIONS.find((o) => o.value === granularity)?.description}
+      </p>
+    </div>
+  )
+}
+
+export function AiSection() {
+  const anyCustomConfigured = useCustomAiStore((s) =>
+    isAnyCustomAiConfigured({
+      captionMaker: s.captionMaker,
+      textToSpeech: s.textToSpeech,
+      visionAnalyzer: s.visionAnalyzer,
+    }),
+  )
+  // `key` forces re-mount when the configured signal flips so Radix Tabs
+  // picks up the new `defaultValue` without requiring the user to close
+  // and reopen the settings dialog.
+  const initialTab = anyCustomConfigured ? 'custom' : 'local'
+  return (
+    <div className="w-full">
+      <SubtitleOutputSection />
+      <Tabs key={initialTab} defaultValue={initialTab} className="w-full">
+        <TabsList>
+          <TabsTrigger value="local">Local AI</TabsTrigger>
+          <TabsTrigger value="custom">Custom AI</TabsTrigger>
+        </TabsList>
+        <TabsContent value="local">
+          <LocalAiTab />
+        </TabsContent>
+        <TabsContent value="custom">
+          <CustomAiTab />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }

@@ -720,6 +720,7 @@ export async function saveTimeline(projectId: string): Promise<void> {
             durationInFrames: c.durationInFrames,
             ...(c.backgroundColor && { backgroundColor: c.backgroundColor }),
             ...(c.busAudioEq && { busAudioEq: c.busAudioEq }),
+            ...(c.spoilerMetadata && { spoilerMetadata: c.spoilerMetadata }),
           })),
         }
       })(),
@@ -958,6 +959,7 @@ export async function loadTimeline(
             durationInFrames: c.durationInFrames,
             ...(c.backgroundColor && { backgroundColor: c.backgroundColor }),
             ...(c.busAudioEq && { busAudioEq: c.busAudioEq }),
+            ...(c.spoilerMetadata && { spoilerMetadata: c.spoilerMetadata }),
           })),
         )
       } else {

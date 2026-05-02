@@ -102,11 +102,21 @@ async function buildClipContexts(
     )
     const transcriptSegments: TranscriptSegmentLite[] = allTranscript
       .filter((seg) => seg.end >= sourceStartSec && seg.start <= sourceEndSec)
-      .map((seg) => ({
-        text: seg.text,
-        start: Math.max(seg.start, sourceStartSec),
-        end: Math.min(seg.end, sourceEndSec),
-      }))
+      .map((seg) => {
+        const words = seg.words
+          ?.filter((word) => word.end >= sourceStartSec && word.start <= sourceEndSec)
+          .map((word) => ({
+            text: word.text,
+            start: word.start,
+            end: word.end,
+          }))
+        return {
+          text: seg.text,
+          start: Math.max(seg.start, sourceStartSec),
+          end: Math.min(seg.end, sourceEndSec),
+          ...(words && words.length > 0 ? { words } : {}),
+        }
+      })
 
     contexts.push({
       itemId: item.id,

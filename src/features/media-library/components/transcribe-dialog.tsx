@@ -20,7 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useCustomAiStore, useSettingsStore } from '@/features/media-library/deps/settings-contract'
+import {
+  isCaptionMakerConfigured,
+  useCustomAiStore,
+  useSettingsStore,
+} from '@/features/media-library/deps/settings-contract'
 import { cn } from '@/shared/ui/cn'
 import { getMediaTranscriptionModelOptions } from '../transcription/registry'
 import {
@@ -79,7 +83,11 @@ export function TranscribeDialog({
 
   const modelOptions = useMemo(() => getMediaTranscriptionModelOptions(), [])
 
-  const [provider, setProvider] = useState<TranscribeDialogProvider>('local')
+  const customConfigured = isCaptionMakerConfigured(customCaptionMaker)
+
+  const [provider, setProvider] = useState<TranscribeDialogProvider>(
+    customConfigured ? 'custom' : 'local',
+  )
   const [model, setModel] = useState<MediaTranscriptModel>(() =>
     normalizeSelectableWhisperModel(defaultModel),
   )
@@ -93,16 +101,21 @@ export function TranscribeDialog({
 
   useEffect(() => {
     if (!open) return
-    setProvider('local')
+    // Default to Custom AI when configured; user can manually switch to Local
+    // for the duration of this dialog session, but the choice resets each open.
+    setProvider(customConfigured ? 'custom' : 'local')
     setModel(normalizeSelectableWhisperModel(defaultModel))
     setQuantization(defaultQuantization)
     setLanguageValue(getWhisperLanguageSelectValue(defaultLanguage))
     setCustomLanguageValue(getWhisperLanguageSelectValue(customCaptionMaker.language))
-  }, [open, defaultLanguage, defaultModel, defaultQuantization, customCaptionMaker.language])
-
-  const customConfigured = Boolean(
-    customCaptionMaker.baseUrl && customCaptionMaker.apiKey && customCaptionMaker.model,
-  )
+  }, [
+    open,
+    customConfigured,
+    defaultLanguage,
+    defaultModel,
+    defaultQuantization,
+    customCaptionMaker.language,
+  ])
 
   useEffect(() => {
     if (!open) return

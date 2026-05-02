@@ -13,6 +13,12 @@
 
 import type { TextItem, TimelineItem, TimelineTrack } from '@/types/timeline'
 
+import {
+  DEFAULT_SUBTITLE_GRANULARITY,
+  buildSubtitleTextItem,
+  subdivideSegmentIntoWordGroups,
+  type SubtitleGranularity,
+} from './deps/media-library'
 import type { HighlightFinderClipContext, ResolvedHighlightPlan } from './types'
 
 // ---------------------------------------------------------------------------
@@ -78,6 +84,13 @@ export interface BuildHighlightTextItemsOptions {
   addSubtitles: boolean
   canvasWidth: number
   canvasHeight: number
+  /**
+   * How to subdivide each transcript segment into individual subtitle text
+   * items. Defaults to `'phrase'` (4-5 word groups). When the transcript
+   * has no word-level timing, all modes fall back to one TextItem per
+   * segment regardless.
+   */
+  granularity?: SubtitleGranularity
   /** Current main-timeline tracks (updated across multiple plan iterations). */
   existingTracks: readonly TimelineTrack[]
   /** Current main-timeline items (updated across multiple plan iterations). */
@@ -95,6 +108,7 @@ export function buildHighlightTextItems({
   addSubtitles,
   canvasWidth,
   canvasHeight,
+  granularity = DEFAULT_SUBTITLE_GRANULARITY,
   existingTracks,
   existingItems,
 }: BuildHighlightTextItemsOptions): BuildHighlightTextItemsResult {
@@ -116,14 +130,37 @@ export function buildHighlightTextItems({
   )
   if (segments.length === 0) return { textItems, tracksToAdd }
 
-  const subtitleRanges = segments.map((s) => {
-    const relStart = Math.max(s.start - plan.sourceStartSec, 0)
-    const relEnd = Math.min(s.end - plan.sourceStartSec, compDurationInFrames / fps)
-    return {
-      from: planFrom + Math.round(relStart * fps),
-      end: planFrom + Math.max(1, Math.round(relEnd * fps)),
-    }
-  })
+  // Subdivide each transcript segment by the requested granularity. When
+  // word-level timing is missing the chunker degrades gracefully to one
+  // chunk per segment with the segment's own start/end.
+  const chunks = segments.flatMap((seg) =>
+    subdivideSegmentIntoWordGroups(
+      {
+        text: seg.text,
+        start: seg.start,
+        end: seg.end,
+        ...(seg.words ? { words: [...seg.words] } : {}),
+      },
+      granularity,
+    ),
+  )
+  if (chunks.length === 0) return { textItems, tracksToAdd }
+
+  const subtitleEndCapSec = compDurationInFrames / fps
+  const planSubtitlePlacements = chunks
+    .map((chunk) => {
+      const relStart = Math.max(chunk.start - plan.sourceStartSec, 0)
+      const relEnd = Math.min(chunk.end - plan.sourceStartSec, subtitleEndCapSec)
+      if (relEnd <= relStart) return null
+      return {
+        text: chunk.text.trim(),
+        from: planFrom + Math.round(relStart * fps),
+        end: planFrom + Math.max(1, Math.round(relEnd * fps)),
+      }
+    })
+    .filter((entry): entry is { text: string; from: number; end: number } => entry !== null)
+
+  if (planSubtitlePlacements.length === 0) return { textItems, tracksToAdd }
 
   const allSubtitleRange = [{ from: planFrom, end: planFrom + compDurationInFrames }]
   let subtitleTrack = findCompatibleTrack(workingTracks, workingItems, allSubtitleRange)
@@ -133,47 +170,16 @@ export function buildHighlightTextItems({
     workingTracks = [...workingTracks, subtitleTrack].sort((a, b) => a.order - b.order)
   }
 
-  const subtitleFontSize = Math.max(32, Math.round(canvasHeight * 0.042))
-
-  for (const range of subtitleRanges) {
-    const seg = segments[subtitleRanges.indexOf(range)]
-    if (!seg) continue
-    const durationInFrames = Math.max(1, range.end - range.from)
-    const subtitleItem: TextItem = {
-      id: crypto.randomUUID(),
-      type: 'text',
+  for (const placement of planSubtitlePlacements) {
+    if (!placement.text) continue
+    const subtitleItem = buildSubtitleTextItem({
       trackId: subtitleTrack.id,
-      from: range.from,
-      durationInFrames,
-      text: seg.text.trim(),
-      label: seg.text.trim().slice(0, 48),
-      fontSize: subtitleFontSize,
-      fontFamily: 'Inter',
-      fontWeight: 'semibold',
-      fontStyle: 'normal',
-      underline: false,
-      color: '#ffffff',
-      backgroundColor: 'transparent',
-      textAlign: 'center',
-      verticalAlign: 'middle',
-      lineHeight: 1.15,
-      letterSpacing: 0,
-      textShadow: {
-        offsetX: 0,
-        offsetY: 2,
-        blur: 8,
-        color: 'rgba(0, 0, 0, 0.85)',
-      },
-      transform: {
-        x: 0,
-        // transform.y is offset from canvas center (resolveTransform): positive = down.
-        y: Math.round(canvasHeight * 0.35),
-        width: canvasWidth * 0.82,
-        height: canvasHeight * 0.14,
-        rotation: 0,
-        opacity: 1,
-      },
-    }
+      from: placement.from,
+      durationInFrames: Math.max(1, placement.end - placement.from),
+      text: placement.text,
+      canvasWidth,
+      canvasHeight,
+    })
     textItems.push(subtitleItem)
     workingItems.push(subtitleItem)
   }

@@ -30,6 +30,7 @@ import {
   isCaptionTrackCandidate,
   getCaptionTextItemTemplate,
   getCaptionRangeForClip,
+  type SubtitleGranularity,
 } from '../utils/caption-items'
 import { useProjectStore } from '@/features/media-library/deps/projects'
 import { useTimelineStore } from '@/features/media-library/deps/timeline-stores'
@@ -54,6 +55,13 @@ type CaptionableClip = AudioItem | VideoItem
 interface InsertTranscriptAsCaptionsOptions {
   clipIds?: readonly string[]
   replaceExisting?: boolean
+  /**
+   * How to subdivide each transcript segment into caption text items.
+   * Defaults to `useSettingsStore.defaultSubtitleGranularity` (`'phrase'`
+   * out of the box). Pass `'word'` for karaoke or `'sentence'` for
+   * movie-style full-line subtitles.
+   */
+  granularity?: SubtitleGranularity
 }
 
 interface InsertTranscriptAsCaptionsResult {
@@ -432,6 +440,8 @@ class MediaTranscriptionService {
 
     const canvasWidth = project?.metadata.width ?? 1920
     const canvasHeight = project?.metadata.height ?? 1080
+    const granularity =
+      options.granularity ?? useSettingsStore.getState().defaultSubtitleGranularity
     const newTracks: TimelineTrack[] = [...timeline.tracks]
     const generatedCaptionIdsToRemove = options.replaceExisting
       ? new Set(
@@ -484,6 +494,7 @@ class MediaTranscriptionService {
         timelineFps: timeline.fps,
         canvasWidth,
         canvasHeight,
+        granularity,
         styleTemplate: existingGeneratedCaptions[0]
           ? getCaptionTextItemTemplate(existingGeneratedCaptions[0])
           : undefined,

@@ -1,0 +1,1 @@
+export { useSpoilerGeneratorDialogStore } from './store'

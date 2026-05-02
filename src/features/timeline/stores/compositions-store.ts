@@ -6,6 +6,36 @@ import type { ItemKeyframes } from '@/types/keyframe'
 import { normalizeSubComposition } from '../utils/sub-composition-normalizer'
 
 /**
+ * Generation metadata stamped on compounds produced by the Spoiler Generator.
+ * Defined as a structural type here (rather than imported from the feature)
+ * to keep this store dependency-free; the spoiler-generator feature owns the
+ * authoritative `SpoilerCompositionMetadata` type and casts on read.
+ */
+export interface SubCompositionSpoilerMetadata {
+  version: 1
+  generatedAt: number
+  segments: ReadonlyArray<{
+    index: number
+    narrationText: string
+    narrationItemId: string
+    videoItemId: string
+    originalAudioItemId: string | null
+    subtitleItemIds: ReadonlyArray<string>
+    sourceClipRange: { start: number; end: number }
+  }>
+  voiceId: string | null
+  speed: number
+  language: string
+  scriptTitle: string
+  scriptSynopsis?: string
+  granularity: 'word' | 'phrase' | 'sentence'
+  addSubtitles: boolean
+  generateCover: boolean
+  includeOriginalAudio: boolean
+  sourceFilmMediaId: string
+}
+
+/**
  * Sub-composition data — a self-contained mini-timeline stored independently.
  * Multiple CompositionItem instances can reference the same compositionId,
  * enabling reuse of pre-comp contents across the project.
@@ -23,6 +53,12 @@ export interface SubComposition {
   durationInFrames: number
   backgroundColor?: string
   busAudioEq?: AudioEqSettings
+  /**
+   * Present only on compounds produced by the Spoiler Generator. Enables
+   * "Regenerate Narration…" right-click to rebuild TTS audio + subtitles
+   * in place. Manually-created pre-comps leave this undefined.
+   */
+  spoilerMetadata?: SubCompositionSpoilerMetadata
 }
 
 function buildCompositionsMediaDependencyIds(compositions: SubComposition[]): string[] {

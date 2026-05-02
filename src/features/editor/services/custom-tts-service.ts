@@ -18,10 +18,7 @@ const SPEED_MAX = 4
 interface GenerateSpeechOptions {
   text: string
   speed: number
-  /**
-   * Override the voice from the saved settings. Used by the settings
-   * dialog to preview a voice before committing to it.
-   */
+  /** Override the voice from the saved settings (used by the settings preview). */
   voice?: string
   onProgress?: (message: string | null) => void
   signal?: AbortSignal
@@ -65,7 +62,7 @@ async function generateSpeechFile({
   if (!apiKey) throw new Error('Custom TTS API key is not configured.')
   if (!model) throw new Error('Custom TTS model is not selected.')
 
-  const voice = (voiceOverride?.trim() || config.voice.trim() || DEFAULT_VOICE).trim()
+  const voice = voiceOverride?.trim() || config.voice.trim() || DEFAULT_VOICE
   const language = config.language.trim()
   const url = `${trimTrailingSlash(baseUrl)}/audio/speech`
 

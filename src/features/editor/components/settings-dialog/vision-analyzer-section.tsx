@@ -10,6 +10,7 @@ import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { fetchCustomAiModels } from '@/features/editor/deps/media-library-contract'
 import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/highlight-finder'
 import { DEFAULT_COVER_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/compound-cover'
+import { DEFAULT_SCRIPT_WRITER_SYSTEM_PROMPT } from '@/features/editor/deps/spoiler-generator'
 
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 
@@ -64,10 +65,12 @@ export function VisionAnalyzerSection() {
     !visionAnalyzer.model &&
     !visionAnalyzer.highlightFinderPrompt &&
     !visionAnalyzer.coverFinderPrompt &&
+    !visionAnalyzer.scriptWriterPrompt &&
     visionAnalyzer.cachedModels.length === 0
 
   const promptIsCustom = visionAnalyzer.highlightFinderPrompt.trim().length > 0
   const coverPromptIsCustom = visionAnalyzer.coverFinderPrompt.trim().length > 0
+  const scriptPromptIsCustom = visionAnalyzer.scriptWriterPrompt.trim().length > 0
 
   return (
     <div className="space-y-3">
@@ -196,10 +199,44 @@ export function VisionAnalyzerSection() {
         </p>
       </div>
 
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm">Script Writer Prompt</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
+            onClick={() => setVisionAnalyzer({ scriptWriterPrompt: '' })}
+            disabled={!scriptPromptIsCustom}
+            aria-label="Reset Script Writer prompt to default"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset prompt
+          </Button>
+        </div>
+        <Textarea
+          value={visionAnalyzer.scriptWriterPrompt}
+          onChange={(event) => setVisionAnalyzer({ scriptWriterPrompt: event.target.value })}
+          placeholder={DEFAULT_SCRIPT_WRITER_SYSTEM_PROMPT}
+          rows={8}
+          spellCheck={false}
+          className="min-h-32 resize-y font-mono text-[11px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Customize the system prompt sent to the chat model for{' '}
+          <strong>Auto Spoiler Generator</strong> (full-transcript narrative scriptwriting). Leave
+          empty to use the default. The user message (transcript + duration target + language) is
+          appended automatically. Use a long-context model (e.g. Claude Sonnet 4.6, GPT-4o, Gemini
+          2.5 Pro) for 1–2 hour films.
+        </p>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         Used by <strong>Analyze with AI → Custom AI</strong> (per-frame vision captioning),{' '}
-        <strong>Highlight Finder</strong> (text reasoning over captions + transcripts), and{' '}
-        <strong>Add Cover</strong> (Vlog-style title generation for compound clips).
+        <strong>Highlight Finder</strong> (text reasoning over captions + transcripts),{' '}
+        <strong>Add Cover</strong> (Vlog-style title generation for compound clips), and{' '}
+        <strong>Auto Spoiler Generator</strong> (full-transcript script writing).
       </p>
 
       <div className="flex justify-end">

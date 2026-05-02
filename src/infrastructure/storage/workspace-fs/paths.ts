@@ -13,6 +13,7 @@
  * ├── README.md
  * ├── .freecut-workspace.json
  * ├── index.json
+ * ├── custom-ai.json                    # workspace-scoped Custom AI config
  * ├── projects/
  * │   └── {id}/
  * │       ├── project.json
@@ -440,6 +441,8 @@ export function cacheMetaPath(dir: string[]): string[] {
 export function customAiPath(): string[] {
   return [CUSTOM_AI_FILENAME]
 }
+
+export const CUSTOM_AI_DIR = 'custom-ai'
 
 /** Segments for `content/{hash[0:2]}/{hash}/`. Sharded by hash prefix. */
 export function contentDir(hash: string): string[] {
