@@ -395,6 +395,7 @@ export function useTimelineItemActions({
     if (item.type !== 'video' && item.type !== 'audio') return
     if (!item.mediaId || isBroken) return
 
+    const mediaId = item.mediaId
     const items = useItemsStore.getState().items
     const clip = items.find((entry) => entry.id === item.id)
     if (clip?.type !== 'video' && clip?.type !== 'audio') return
@@ -409,10 +410,50 @@ export function useTimelineItemActions({
       return
     }
 
+    // Captions count as "transcript-sourced" if their captionSource.type is
+    // 'transcript', or if they're legacy (no captionSource — those predate the
+    // discriminator and were always transcript-generated).
+    const removedTranscriptCaptions = captionItems.some(
+      (entry) => !entry.captionSource || entry.captionSource.type === 'transcript',
+    )
+
     removeItems(captionItems.map((entry) => entry.id))
+
+    // If we just removed transcript-sourced captions and no other clip of this
+    // media still has transcript-sourced captions, wipe the workspace transcript
+    // too so the next "Generate Captions" starts in a clean "Generate Transcript"
+    // state instead of a "Refresh Transcript" prompt.
+    if (removedTranscriptCaptions && store.transcriptStatus.get(mediaId) === 'ready') {
+      const itemsAfter = useItemsStore.getState().items
+      const otherClips = itemsAfter.filter(
+        (entry) =>
+          (entry.type === 'audio' || entry.type === 'video') &&
+          entry.mediaId === mediaId &&
+          entry.id !== item.id,
+      )
+      const otherTranscriptCaptionsExist = otherClips.some(
+        (other) =>
+          (other.type === 'audio' || other.type === 'video') &&
+          findReplaceableCaptionItemsForClip(itemsAfter, other, 'transcript').length > 0,
+      )
+
+      if (!otherTranscriptCaptionsExist) {
+        mediaTranscriptionService
+          .deleteTranscript(mediaId)
+          .then(() => {
+            const next = useMediaLibraryStore.getState()
+            next.setTranscriptStatus(mediaId, 'idle')
+            next.clearTranscriptProgress(mediaId)
+          })
+          .catch((error) => {
+            logger.warn('failed to delete transcript after delete captions', error)
+          })
+      }
+    }
+
     store.showNotification({
       type: 'success',
-      message: `Removed captions from this segment`,
+      message: 'Removed captions from this segment',
     })
   }, [isBroken, item.id, item.mediaId, item.type])
 

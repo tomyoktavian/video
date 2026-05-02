@@ -9,10 +9,7 @@ export {
   DEFAULT_CAPTIONING_INTERVAL_SECONDS,
   resolveCaptioningIntervalSec,
 } from '@/features/settings/stores/settings-store'
-export type {
-  CaptioningIntervalUnit,
-  SubtitleGranularity,
-} from '@/features/settings/stores/settings-store'
+export type { CaptioningIntervalUnit } from '@/features/settings/stores/settings-store'
 export {
   useCustomAiStore,
   getCustomAiCaptionMakerConfig,

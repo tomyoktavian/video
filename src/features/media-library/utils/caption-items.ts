@@ -24,26 +24,9 @@ import { timelineToSourceFrames } from '../deps/timeline-contract'
 const AI_CAPTION_FALLBACK_DURATION_SEC = 3
 
 /**
- * Subtitle display granularity:
- *   - `'word'` — one text item per spoken word (karaoke-style, requires
- *     word-level timing from the transcript).
- *   - `'phrase'` — 4-5 word chunks ("TikTok/CapCut" style); the historical
- *     default and most readable for short-form content.
- *   - `'sentence'` — one text item per sentence (`.!?…` boundary); best for
- *     long-form / movie-style subtitles.
- *
- * When word-level timing is unavailable (legacy transcripts, providers like
- * `gpt-4o-transcribe` that omit timestamps), all modes fall back to a single
- * chunk per segment so the caller still gets usable output.
- */
-export type SubtitleGranularity = 'word' | 'phrase' | 'sentence'
-
-export const DEFAULT_SUBTITLE_GRANULARITY: SubtitleGranularity = 'phrase'
-
-/**
- * Word-grouping thresholds for the `'phrase'` mode. A new chunk opens when
- * any of these limits is hit. Tweaking these here changes the global feel
- * of phrase-mode subtitles.
+ * Word-grouping thresholds for the TikTok/CapCut-style phrase chunker. A new
+ * chunk opens when any of these limits is hit. Tweaking these changes the
+ * global feel of generated subtitles.
  */
 const TARGET_WORDS_PER_CHUNK = 4
 const MAX_WORDS_PER_CHUNK = 5
@@ -59,63 +42,13 @@ interface CaptionChunk {
 }
 
 /**
- * Break a transcript segment into per-word caption chunks. Each word becomes
- * its own chunk timed to the word's `start`/`end`. Useful for karaoke /
- * reaction-style captions.
+ * Break a Whisper transcript segment into 4-5 word "phrase" chunks
+ * (TikTok/CapCut style). When word-level timing is unavailable (legacy
+ * transcripts, providers like `gpt-4o-transcribe` that omit timestamps),
+ * falls back to a single chunk per segment so the caller still gets
+ * usable output.
  */
-function chunkSegmentPerWord(segment: MediaTranscriptSegment): CaptionChunk[] {
-  const words = segment.words
-  if (!words || words.length === 0) {
-    return [{ text: segment.text, start: segment.start, end: segment.end }]
-  }
-  return words
-    .map((word) => ({
-      text: word.text.trim(),
-      start: word.start,
-      end: Math.max(word.end, word.start),
-    }))
-    .filter((chunk) => chunk.text.length > 0 && chunk.end >= chunk.start)
-}
-
-/**
- * Break a transcript segment into per-sentence caption chunks. A new chunk
- * opens after any word ending with `.`, `!`, `?`, or `…`. Falls back to the
- * raw segment text when the model returned no per-word timing.
- */
-function chunkSegmentPerSentence(segment: MediaTranscriptSegment): CaptionChunk[] {
-  const words = segment.words
-  if (!words || words.length === 0) {
-    return [{ text: segment.text, start: segment.start, end: segment.end }]
-  }
-  const chunks: CaptionChunk[] = []
-  let bucket: typeof words = []
-  const flush = () => {
-    if (bucket.length === 0) return
-    const first = bucket[0]!
-    const last = bucket.at(-1)!
-    chunks.push({
-      text: bucket
-        .map((w) => w.text.trim())
-        .filter(Boolean)
-        .join(' '),
-      start: first.start,
-      end: last.end,
-    })
-    bucket = []
-  }
-  for (const word of words) {
-    bucket.push(word)
-    if (SENTENCE_END_PATTERN.test(word.text)) flush()
-  }
-  flush()
-  return chunks.filter((chunk) => chunk.text.length > 0 && chunk.end >= chunk.start)
-}
-
-/**
- * Break a transcript segment into 4-5 word "phrase" chunks (the historical
- * default). Re-exported for consumers that want this behaviour explicitly.
- */
-function chunkSegmentPerPhrase(segment: MediaTranscriptSegment): CaptionChunk[] {
+export function subdivideSegmentIntoWordGroups(segment: MediaTranscriptSegment): CaptionChunk[] {
   const words = segment.words
   if (!words || words.length === 0) {
     return [{ text: segment.text, start: segment.start, end: segment.end }]
@@ -165,26 +98,6 @@ function chunkSegmentPerPhrase(segment: MediaTranscriptSegment): CaptionChunk[] 
   return chunks.filter((chunk) => chunk.text.length > 0 && chunk.end >= chunk.start)
 }
 
-/**
- * Break a Whisper transcript segment into smaller caption chunks based on
- * the requested {@link SubtitleGranularity}. Defaults to `'phrase'` for
- * backward compatibility with the previous implementation.
- */
-export function subdivideSegmentIntoWordGroups(
-  segment: MediaTranscriptSegment,
-  granularity: SubtitleGranularity = DEFAULT_SUBTITLE_GRANULARITY,
-): CaptionChunk[] {
-  switch (granularity) {
-    case 'word':
-      return chunkSegmentPerWord(segment)
-    case 'sentence':
-      return chunkSegmentPerSentence(segment)
-    case 'phrase':
-    default:
-      return chunkSegmentPerPhrase(segment)
-  }
-}
-
 interface BuildCaptionTextItemsOptions {
   mediaId: string
   trackId: string
@@ -201,12 +114,6 @@ interface BuildCaptionTextItemsOptions {
    * the two kinds apart on the same clip.
    */
   sourceType?: GeneratedCaptionSource['type']
-  /**
-   * How aggressively to subdivide each transcript segment into individual
-   * caption text items. Defaults to `'phrase'` (4-5 word groups, the
-   * historical behaviour).
-   */
-  granularity?: SubtitleGranularity
 }
 
 export type CaptionTextItemTemplate = Pick<
@@ -705,13 +612,12 @@ export function buildCaptionTextItems({
   canvasHeight,
   styleTemplate,
   sourceType = 'transcript',
-  granularity = DEFAULT_SUBTITLE_GRANULARITY,
 }: BuildCaptionTextItemsOptions): TextItem[] {
   const normalizedSegments = normalizeCaptionSegments(segments)
   const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps)
 
   return normalizedSegments.flatMap((segment) =>
-    subdivideSegmentIntoWordGroups(segment, granularity).flatMap((chunk) => {
+    subdivideSegmentIntoWordGroups(segment).flatMap((chunk) => {
       const chunkSourceStart = toSourceStartFrame(chunk.start, sourceFps)
       const chunkSourceEnd = toSourceEndFrame(chunk.end, sourceFps)
       const overlapStart = Math.max(sourceStart, chunkSourceStart)

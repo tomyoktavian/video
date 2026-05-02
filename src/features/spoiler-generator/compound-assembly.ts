@@ -14,8 +14,7 @@
  * to the volume mixer.
  *
  * Subtitle items use shared word-grouping + styling helpers (`buildSubtitleTextItem`,
- * `subdivideSegmentIntoWordGroups`) so the look matches Highlight Finder
- * and respects the global `defaultSubtitleGranularity` setting.
+ * `subdivideSegmentIntoWordGroups`) so the look matches Highlight Finder.
  */
 
 import type { MediaTranscriptSegment, MediaMetadata } from '@/types/storage'
@@ -29,12 +28,7 @@ import {
   useItemsStore,
   useTimelineSettingsStore,
 } from './deps/timeline'
-import {
-  DEFAULT_SUBTITLE_GRANULARITY,
-  buildSubtitleTextItem,
-  subdivideSegmentIntoWordGroups,
-} from './deps/media-library'
-import type { SubtitleGranularity } from './deps/settings'
+import { buildSubtitleTextItem, subdivideSegmentIntoWordGroups } from './deps/media-library'
 import type { SpoilerCompositionMetadata, TtsBatchOutcome } from './types'
 
 /**
@@ -104,12 +98,6 @@ export interface AssembleSingleCompoundParams {
    */
   includeOriginalAudio?: boolean
   /**
-   * Word-grouping granularity for subtitles. Defaults to
-   * {@link DEFAULT_SUBTITLE_GRANULARITY} when omitted. The orchestrator
-   * normally reads this from the global settings store.
-   */
-  subtitleGranularity?: SubtitleGranularity
-  /**
    * Optional generation context to stamp onto the resulting `SubComposition`
    * as `spoilerMetadata`. Powers the "Regenerate Narration…" right-click
    * action. When omitted (e.g. tests), the compound is still created without
@@ -121,7 +109,6 @@ export interface AssembleSingleCompoundParams {
     language: string
     scriptTitle: string
     scriptSynopsis?: string
-    granularity: SubtitleGranularity
     addSubtitles: boolean
     generateCover: boolean
     includeOriginalAudio: boolean
@@ -186,7 +173,6 @@ function buildSubtitleItemsForSegment(params: {
   fps: number
   canvasWidth: number
   canvasHeight: number
-  granularity: SubtitleGranularity
   transcript: readonly MediaTranscriptSegment[] | undefined
 }): TextItem[] {
   const {
@@ -197,7 +183,6 @@ function buildSubtitleItemsForSegment(params: {
     fps,
     canvasWidth,
     canvasHeight,
-    granularity,
     transcript,
   } = params
 
@@ -223,15 +208,12 @@ function buildSubtitleItemsForSegment(params: {
   const items: TextItem[] = []
 
   for (const seg of transcript) {
-    const chunks = subdivideSegmentIntoWordGroups(
-      {
-        text: seg.text,
-        start: seg.start,
-        end: seg.end,
-        ...(seg.words ? { words: [...seg.words] } : {}),
-      },
-      granularity,
-    )
+    const chunks = subdivideSegmentIntoWordGroups({
+      text: seg.text,
+      start: seg.start,
+      end: seg.end,
+      ...(seg.words ? { words: [...seg.words] } : {}),
+    })
     for (const chunk of chunks) {
       const text = chunk.text.trim()
       if (!text) continue
@@ -259,7 +241,6 @@ function buildSubtitleItemsForSegment(params: {
 function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems {
   const sourceFps = params.sourceMedia.fps || params.fps
   const sourceDurationFrames = Math.max(1, Math.round(params.sourceMedia.duration * sourceFps))
-  const granularity = params.subtitleGranularity ?? DEFAULT_SUBTITLE_GRANULARITY
   const includeOriginalAudio = params.includeOriginalAudio ?? true
 
   const itemsState = useItemsStore.getState()
@@ -387,7 +368,6 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
         fps: params.fps,
         canvasWidth: params.canvasWidth,
         canvasHeight: params.canvasHeight,
-        granularity,
         transcript: params.narrationTranscriptsById?.get(segment.index),
       })
       textItems.push(...segmentSubtitles)
@@ -479,7 +459,6 @@ export function assembleSingleCompound(
       language: ctx.language,
       scriptTitle: ctx.scriptTitle,
       ...(ctx.scriptSynopsis !== undefined ? { scriptSynopsis: ctx.scriptSynopsis } : {}),
-      granularity: ctx.granularity,
       addSubtitles: ctx.addSubtitles,
       generateCover: ctx.generateCover,
       includeOriginalAudio: ctx.includeOriginalAudio,

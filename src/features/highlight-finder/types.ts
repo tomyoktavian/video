@@ -25,9 +25,8 @@ export interface TranscriptSegmentLite {
   end: number
   /**
    * Word-level timing when the source transcript exposes it. Used by the
-   * subtitle splitter to drive per-word / per-phrase / per-sentence
-   * granularity. Absent on legacy transcripts and providers like
-   * `gpt-4o-transcribe` that omit timestamps.
+   * subtitle splitter to time individual phrase chunks. Absent on legacy
+   * transcripts and providers like `gpt-4o-transcribe` that omit timestamps.
    */
   words?: readonly TranscriptWordLite[]
 }

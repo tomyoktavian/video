@@ -22,7 +22,6 @@ describe('buildSubtitleItemsForSegment — transcript fallback', () => {
       fps: 30,
       canvasWidth: 1080,
       canvasHeight: 1920,
-      granularity: 'phrase',
       transcript: undefined,
     })
     expect(items).toEqual([])
@@ -37,7 +36,6 @@ describe('buildSubtitleItemsForSegment — transcript fallback', () => {
       fps: 30,
       canvasWidth: 1080,
       canvasHeight: 1920,
-      granularity: 'word',
       transcript: undefined,
     })
     expect(items).toHaveLength(1)
@@ -61,7 +59,7 @@ describe('buildSubtitleItemsForSegment — word-level transcript', () => {
     },
   ]
 
-  it('emits one item per word when granularity = "word"', () => {
+  it('groups short narration into a single phrase chunk', () => {
     const items = buildSubtitleItemsForSegment({
       trackId: 'track-sub',
       segment: { ...baseSegment, narration: 'Hello world friend.' },
@@ -70,14 +68,11 @@ describe('buildSubtitleItemsForSegment — word-level transcript', () => {
       fps: 30,
       canvasWidth: 1080,
       canvasHeight: 1920,
-      granularity: 'word',
       transcript,
     })
-    expect(items).toHaveLength(3)
-    expect(items.map((i) => i.text)).toEqual(['Hello', 'world', 'friend.'])
+    expect(items).toHaveLength(1)
+    expect(items[0]!.text).toBe('Hello world friend.')
     expect(items[0]!.from).toBe(100)
-    expect(items[1]!.from).toBe(115)
-    expect(items[2]!.from).toBe(130)
   })
 
   it('uses shadow-only styling — transparent background + textShadow', () => {
@@ -89,7 +84,6 @@ describe('buildSubtitleItemsForSegment — word-level transcript', () => {
       fps: 30,
       canvasWidth: 1080,
       canvasHeight: 1920,
-      granularity: 'word',
       transcript,
     })
     const first = items[0]!
@@ -113,7 +107,6 @@ describe('buildSubtitleItemsForSegment — word-level transcript', () => {
       fps: 30,
       canvasWidth: 1080,
       canvasHeight: 1920,
-      granularity: 'word',
       transcript,
     })
     for (const item of items) {

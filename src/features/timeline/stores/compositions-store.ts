@@ -28,7 +28,6 @@ export interface SubCompositionSpoilerMetadata {
   language: string
   scriptTitle: string
   scriptSynopsis?: string
-  granularity: 'word' | 'phrase' | 'sentence'
   addSubtitles: boolean
   generateCover: boolean
   includeOriginalAudio: boolean

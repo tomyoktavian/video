@@ -12,7 +12,6 @@ export { mediaTranscriptionService } from '@/features/media-library/services/med
 export { useMediaLibraryStore } from '@/features/media-library'
 export {
   subdivideSegmentIntoWordGroups,
-  DEFAULT_SUBTITLE_GRANULARITY,
   buildSubtitleTextItem,
 } from '@/features/media-library/utils/caption-items'
 export type { SubtitleTextItemInput } from '@/features/media-library/utils/caption-items'

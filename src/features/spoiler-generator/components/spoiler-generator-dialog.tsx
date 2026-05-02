@@ -21,8 +21,6 @@ import {
   isTextToSpeechConfigured,
   isVisionAnalyzerConfigured,
   useCustomAiStore,
-  useSettingsStore,
-  type SubtitleGranularity,
 } from '../deps/settings'
 import { useMediaLibraryStore } from '../deps/media-library'
 import { runSpoilerPipeline } from '../spoiler-orchestrator'
@@ -48,12 +46,6 @@ const NARRATION_LANGUAGE_OPTIONS: ComboboxOption[] = [
 const CLIP_DURATION_BOUNDS = { min: 5, max: 90 }
 const TTS_SPEED_BOUNDS = { min: 0.5, max: 2.0 }
 
-const GRANULARITY_OPTIONS: ComboboxOption[] = [
-  { value: 'word', label: 'Word (karaoke)' },
-  { value: 'phrase', label: 'Phrase (TikTok / CapCut)' },
-  { value: 'sentence', label: 'Sentence' },
-]
-
 export function SpoilerGeneratorDialog() {
   const isOpen = useSpoilerGeneratorDialogStore((s) => s.isOpen)
   const mediaId = useSpoilerGeneratorDialogStore((s) => s.mediaId)
@@ -62,7 +54,6 @@ export function SpoilerGeneratorDialog() {
   const captionMaker = useCustomAiStore((s) => s.captionMaker)
   const visionAnalyzer = useCustomAiStore((s) => s.visionAnalyzer)
   const textToSpeech = useCustomAiStore((s) => s.textToSpeech)
-  const defaultGranularity = useSettingsStore((s) => s.defaultSubtitleGranularity)
   const mediaById = useMediaLibraryStore((s) => s.mediaById)
   const transcriptStatus = useMediaLibraryStore((s) => s.transcriptStatus)
 
@@ -73,8 +64,6 @@ export function SpoilerGeneratorDialog() {
   const [generateCover, setGenerateCover] = useState(false)
   const [addSubtitles, setAddSubtitles] = useState(false)
   const [includeOriginalAudio, setIncludeOriginalAudio] = useState(true)
-  const [subtitleGranularity, setSubtitleGranularity] =
-    useState<SubtitleGranularity>(defaultGranularity)
   const [ttsSpeed, setTtsSpeed] = useState<number>(1)
   const [voicePreset, setVoicePreset] = useState<string>('')
 
@@ -90,10 +79,9 @@ export function SpoilerGeneratorDialog() {
     setErrorMessage(null)
     setIsRunning(false)
     setVoicePreset(textToSpeech.voice || '')
-    setSubtitleGranularity(defaultGranularity)
     setTtsSpeed(1)
     setIncludeOriginalAudio(true)
-  }, [isOpen, textToSpeech.voice, defaultGranularity])
+  }, [isOpen, textToSpeech.voice])
 
   const media = mediaId ? mediaById[mediaId] : null
   const transcriptReady = mediaId ? transcriptStatus.get(mediaId) === 'ready' : false
@@ -133,7 +121,6 @@ export function SpoilerGeneratorDialog() {
           generateCover,
           addSubtitles,
           includeOriginalAudio,
-          subtitleGranularity,
           voiceSpeed: ttsSpeed,
           ...(voicePreset ? { voicePreset } : {}),
         },
@@ -161,7 +148,6 @@ export function SpoilerGeneratorDialog() {
     generateCover,
     addSubtitles,
     includeOriginalAudio,
-    subtitleGranularity,
     ttsSpeed,
     voicePreset,
   ])
@@ -335,18 +321,6 @@ export function SpoilerGeneratorDialog() {
                   onCheckedChange={setAddSubtitles}
                 />
               </div>
-
-              {addSubtitles && (
-                <div className="space-y-1.5 pl-1 border-l-2 border-muted">
-                  <Label className="text-xs text-muted-foreground">Subtitle granularity</Label>
-                  <Combobox
-                    value={subtitleGranularity}
-                    options={GRANULARITY_OPTIONS}
-                    onValueChange={(value) => setSubtitleGranularity(value as SubtitleGranularity)}
-                    placeholder="Select granularity"
-                  />
-                </div>
-              )}
 
               <div className="flex items-center justify-between">
                 <div>

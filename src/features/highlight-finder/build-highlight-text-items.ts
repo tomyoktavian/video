@@ -13,12 +13,7 @@
 
 import type { TextItem, TimelineItem, TimelineTrack } from '@/types/timeline'
 
-import {
-  DEFAULT_SUBTITLE_GRANULARITY,
-  buildSubtitleTextItem,
-  subdivideSegmentIntoWordGroups,
-  type SubtitleGranularity,
-} from './deps/media-library'
+import { buildSubtitleTextItem, subdivideSegmentIntoWordGroups } from './deps/media-library'
 import type { HighlightFinderClipContext, ResolvedHighlightPlan } from './types'
 
 // ---------------------------------------------------------------------------
@@ -84,13 +79,6 @@ export interface BuildHighlightTextItemsOptions {
   addSubtitles: boolean
   canvasWidth: number
   canvasHeight: number
-  /**
-   * How to subdivide each transcript segment into individual subtitle text
-   * items. Defaults to `'phrase'` (4-5 word groups). When the transcript
-   * has no word-level timing, all modes fall back to one TextItem per
-   * segment regardless.
-   */
-  granularity?: SubtitleGranularity
   /** Current main-timeline tracks (updated across multiple plan iterations). */
   existingTracks: readonly TimelineTrack[]
   /** Current main-timeline items (updated across multiple plan iterations). */
@@ -108,7 +96,6 @@ export function buildHighlightTextItems({
   addSubtitles,
   canvasWidth,
   canvasHeight,
-  granularity = DEFAULT_SUBTITLE_GRANULARITY,
   existingTracks,
   existingItems,
 }: BuildHighlightTextItemsOptions): BuildHighlightTextItemsResult {
@@ -130,19 +117,16 @@ export function buildHighlightTextItems({
   )
   if (segments.length === 0) return { textItems, tracksToAdd }
 
-  // Subdivide each transcript segment by the requested granularity. When
+  // Subdivide each transcript segment into 4-5 word phrase chunks. When
   // word-level timing is missing the chunker degrades gracefully to one
   // chunk per segment with the segment's own start/end.
   const chunks = segments.flatMap((seg) =>
-    subdivideSegmentIntoWordGroups(
-      {
-        text: seg.text,
-        start: seg.start,
-        end: seg.end,
-        ...(seg.words ? { words: [...seg.words] } : {}),
-      },
-      granularity,
-    ),
+    subdivideSegmentIntoWordGroups({
+      text: seg.text,
+      start: seg.start,
+      end: seg.end,
+      ...(seg.words ? { words: [...seg.words] } : {}),
+    }),
   )
   if (chunks.length === 0) return { textItems, tracksToAdd }
 

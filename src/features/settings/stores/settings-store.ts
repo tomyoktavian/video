@@ -45,12 +45,6 @@ interface AppSettings {
   captioningIntervalUnit: CaptioningIntervalUnit
   captioningIntervalValue: number
 
-  // Subtitle output granularity used by every caption-generating flow:
-  // Generate Captions on a clip, Highlight Finder subtitles, and Spoiler
-  // Generator subtitle track. `'word'` = karaoke; `'phrase'` (default) =
-  // 4-5 word TikTok/CapCut groups; `'sentence'` = movie-style full lines.
-  defaultSubtitleGranularity: SubtitleGranularity
-
   // Scene Browser — how caption search matches queries. `semantic` uses a
   // sentence-transformer model to rank by meaning; `keyword` uses
   // substring + fuzzy-prefix matching on caption text.
@@ -58,20 +52,6 @@ interface AppSettings {
 
   // Keyboard shortcuts
   hotkeyOverrides: HotkeyOverrideMap
-}
-
-export type SubtitleGranularity = 'word' | 'phrase' | 'sentence'
-
-const SUBTITLE_GRANULARITY_VALUES: ReadonlySet<SubtitleGranularity> = new Set([
-  'word',
-  'phrase',
-  'sentence',
-])
-
-function normalizeSubtitleGranularity(value: unknown): SubtitleGranularity {
-  return typeof value === 'string' && SUBTITLE_GRANULARITY_VALUES.has(value as SubtitleGranularity)
-    ? (value as SubtitleGranularity)
-    : 'phrase'
 }
 
 export type CaptionSearchMode = 'keyword' | 'semantic'
@@ -160,9 +140,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   captioningIntervalUnit: 'seconds',
   captioningIntervalValue: DEFAULT_CAPTIONING_INTERVAL_SECONDS,
 
-  // Subtitle output defaults — phrase = 4-5 word groups (TikTok/CapCut style)
-  defaultSubtitleGranularity: 'phrase',
-
   // Scene Browser defaults
   captionSearchMode: 'keyword',
 
@@ -205,9 +182,6 @@ export const useSettingsStore = create<SettingsStore>()(
                 state.captioningIntervalUnit,
               ),
             }
-          }
-          if (key === 'defaultSubtitleGranularity') {
-            return { defaultSubtitleGranularity: normalizeSubtitleGranularity(value) }
           }
           return { [key]: value }
         }),
@@ -289,9 +263,6 @@ export const useSettingsStore = create<SettingsStore>()(
             captioningIntervalUnit,
           ),
           captionSearchMode: normalizeCaptionSearchMode(typedState.captionSearchMode),
-          defaultSubtitleGranularity: normalizeSubtitleGranularity(
-            typedState.defaultSubtitleGranularity,
-          ),
         }
       },
     },

@@ -275,7 +275,6 @@ export function applyNarrationRegen(params: ApplyNarrationRegenParams): Narratio
           fps,
           canvasWidth: composition.width,
           canvasHeight: composition.height,
-          granularity: metadata.granularity,
           transcript: undefined,
         })
         for (const item of newSubtitleItems) itemsToAdd.push(item)

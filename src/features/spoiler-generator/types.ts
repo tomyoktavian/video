@@ -7,7 +7,6 @@
  */
 
 import type { MediaTranscriptSegment } from '@/types/storage'
-import type { SubtitleGranularity } from './deps/settings'
 
 /** Time range in source-media seconds. */
 export interface SpoilerSegmentRange {
@@ -112,11 +111,6 @@ export interface SpoilerInput {
    * original soundtrack bleeding through.
    */
   includeOriginalAudio: boolean
-  /**
-   * Subtitle word-grouping granularity. When undefined, the orchestrator
-   * falls back to the global `defaultSubtitleGranularity` setting.
-   */
-  subtitleGranularity?: SubtitleGranularity
   /** TTS voice id; falls back to config voice when undefined. */
   voicePreset?: string
   /** TTS speed multiplier (0.25 .. 4.0). Undefined = provider default (1.0). */
@@ -147,8 +141,6 @@ export interface SpoilerCompositionMetadata {
   scriptTitle: string
   /** Optional one-paragraph synopsis from the script. */
   scriptSynopsis?: string
-  /** Subtitle granularity used at generation time. */
-  granularity: SubtitleGranularity
   /** Whether subtitles were generated. */
   addSubtitles: boolean
   /** Whether a cover was inserted. */

@@ -29,11 +29,7 @@ import {
   mediaLibraryService,
   mediaTranscriptionService,
 } from './deps/media-library'
-import {
-  getCustomAiCaptionMakerConfig,
-  isCaptionMakerConfigured,
-  useSettingsStore,
-} from './deps/settings'
+import { getCustomAiCaptionMakerConfig, isCaptionMakerConfigured } from './deps/settings'
 import { getTranscript } from './deps/transcription'
 import { useProjectStore } from './deps/project'
 import { useTimelineSettingsStore } from './deps/timeline'
@@ -339,9 +335,6 @@ async function stageAssembleCompound(
   if (!ctx.sourceMedia) throw new Error('Source media metadata not available.')
   if (!ctx.sourceBlobUrl) throw new Error('Source media blob URL not available.')
 
-  const granularity =
-    ctx.input.subtitleGranularity ?? useSettingsStore.getState().defaultSubtitleGranularity
-
   const result = assembleSingleCompound({
     name: script.title || 'Spoiler',
     sourceMedia: ctx.sourceMedia,
@@ -357,14 +350,12 @@ async function stageAssembleCompound(
     canvasHeight: ctx.canvasHeight,
     insertSubtitles: ctx.input.addSubtitles,
     includeOriginalAudio: ctx.input.includeOriginalAudio,
-    subtitleGranularity: granularity,
     metadataContext: {
       voiceId: ctx.input.voicePreset ?? null,
       speed: ctx.input.voiceSpeed ?? 1,
       language: ctx.input.narrationLanguage,
       scriptTitle: script.title || 'Spoiler',
       ...(script.synopsis ? { scriptSynopsis: script.synopsis } : {}),
-      granularity,
       addSubtitles: ctx.input.addSubtitles,
       generateCover: ctx.input.generateCover,
       includeOriginalAudio: ctx.input.includeOriginalAudio,

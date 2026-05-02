@@ -22,7 +22,7 @@ import { useEditorStore } from '@/app/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
 
-import { useCustomAiStore, useSettingsStore } from '../deps/settings-contract'
+import { useCustomAiStore } from '../deps/settings-contract'
 import { useTimelineStore } from '../deps/timeline'
 import { useMediaLibraryStore } from '../deps/media-library'
 import { applyHighlightPlans } from '../deps/timeline-actions'
@@ -54,7 +54,6 @@ export function HighlightFinderDialog() {
   const close = useHighlightFinderDialogStore((s) => s.close)
 
   const visionAnalyzer = useCustomAiStore((s) => s.visionAnalyzer)
-  const subtitleGranularity = useSettingsStore((s) => s.defaultSubtitleGranularity)
   const items = useTimelineStore((s) => s.items)
   const fps = useTimelineStore((s) => s.fps)
   const mediaById = useMediaLibraryStore((s) => s.mediaById)
@@ -209,7 +208,6 @@ export function HighlightFinderDialog() {
           plan,
           context,
           addSubtitles,
-          granularity: subtitleGranularity,
           canvasWidth,
           canvasHeight,
           existingTracks: workingTracks,
