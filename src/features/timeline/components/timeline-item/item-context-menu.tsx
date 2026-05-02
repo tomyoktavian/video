@@ -57,6 +57,7 @@ interface ItemContextMenuProps {
   isGeneratingCaptions?: boolean
   onOpenCaptionDialog?: () => void
   onApplyCaptionsFromTranscript?: () => void
+  onDeleteCaptions?: () => void
   /** Whether this item is a composition item (enables enter/dissolve options) */
   isCompositionItem?: boolean
   onEnterComposition?: () => void
@@ -119,6 +120,7 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   isGeneratingCaptions,
   onOpenCaptionDialog,
   onApplyCaptionsFromTranscript,
+  onDeleteCaptions,
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
@@ -184,6 +186,7 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       isGeneratingCaptions={isGeneratingCaptions}
       onOpenCaptionDialog={onOpenCaptionDialog}
       onApplyCaptionsFromTranscript={onApplyCaptionsFromTranscript}
+      onDeleteCaptions={onDeleteCaptions}
       isCompositionItem={isCompositionItem}
       onEnterComposition={onEnterComposition}
       onDissolveComposition={onDissolveComposition}
@@ -267,6 +270,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   isGeneratingCaptions,
   onOpenCaptionDialog,
   onApplyCaptionsFromTranscript,
+  onDeleteCaptions,
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
@@ -459,7 +463,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           <>
             {isGeneratingCaptions ? (
               <ContextMenuItem disabled>Updating captions...</ContextMenuItem>
-            ) : hasTranscript && onApplyCaptionsFromTranscript ? (
+            ) : hasCaptions && hasTranscript && onApplyCaptionsFromTranscript ? (
               <ContextMenuSub>
                 <ContextMenuSubTrigger>Captions</ContextMenuSubTrigger>
                 <ContextMenuSubContent className="w-56">
@@ -469,6 +473,17 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
                   <ContextMenuItem onClick={onOpenCaptionDialog}>
                     {captionActionLabel}
                   </ContextMenuItem>
+                  {onDeleteCaptions && (
+                    <>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        onClick={onDeleteCaptions}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        Delete Captions
+                      </ContextMenuItem>
+                    </>
+                  )}
                 </ContextMenuSubContent>
               </ContextMenuSub>
             ) : (

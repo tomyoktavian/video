@@ -128,7 +128,7 @@ describe('ItemContextMenu captions', () => {
     expect(onOpenCaptionDialog).toHaveBeenCalledTimes(1)
   })
 
-  it('shows a Captions submenu with Insert + Generate when a transcript already exists', () => {
+  it('shows a flat "Generate Captions" item when a transcript exists but no captions are present', () => {
     const onOpenCaptionDialog = vi.fn()
     const onApplyCaptionsFromTranscript = vi.fn()
 
@@ -140,23 +140,38 @@ describe('ItemContextMenu captions', () => {
       onApplyCaptionsFromTranscript,
     })
 
-    expect(screen.getByText('Captions')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Insert Existing Captions' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Generate Captions' })).toBeInTheDocument()
+    const item = screen.getByRole('button', { name: 'Generate Captions' })
+    expect(item).toBeInTheDocument()
+    expect(screen.queryByText('Captions')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Insert Existing Captions' }),
+    ).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Insert Existing Captions' }))
-    expect(onApplyCaptionsFromTranscript).toHaveBeenCalledTimes(1)
+    fireEvent.click(item)
+    expect(onOpenCaptionDialog).toHaveBeenCalledTimes(1)
   })
 
-  it('labels the generate item "Regenerate Captions" when the clip already has captions', () => {
+  it('shows a Captions submenu with Insert, Regenerate, and Delete when captions already exist', () => {
+    const onOpenCaptionDialog = vi.fn()
+    const onApplyCaptionsFromTranscript = vi.fn()
+    const onDeleteCaptions = vi.fn()
+
     renderContextMenu({
       canManageCaptions: true,
       hasCaptions: true,
       hasTranscript: true,
-      onOpenCaptionDialog: vi.fn(),
-      onApplyCaptionsFromTranscript: vi.fn(),
+      onOpenCaptionDialog,
+      onApplyCaptionsFromTranscript,
+      onDeleteCaptions,
     })
 
+    expect(screen.getByText('Captions')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Insert Existing Captions' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Regenerate Captions' })).toBeInTheDocument()
+
+    const deleteItem = screen.getByRole('button', { name: 'Delete Captions' })
+    expect(deleteItem).toBeInTheDocument()
+    fireEvent.click(deleteItem)
+    expect(onDeleteCaptions).toHaveBeenCalledTimes(1)
   })
 })

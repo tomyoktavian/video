@@ -1706,6 +1706,7 @@ export const TimelineItem = memo(
       handleGenerateAudioFromText,
       handleCaptionsFromDialog,
       handleApplyCaptionsFromTranscript,
+      handleDeleteCaptions,
       handleCreatePreComp,
       handleEnterComposition,
       handleDissolveComposition,
@@ -3050,6 +3051,7 @@ export const TimelineItem = memo(
             setCaptionDialogOpen(true)
           }}
           onApplyCaptionsFromTranscript={handleApplyCaptionsFromTranscript}
+          onDeleteCaptions={handleDeleteCaptions}
           isCompositionItem={isCompositionItem}
           onEnterComposition={handleEnterComposition}
           onDissolveComposition={handleDissolveComposition}

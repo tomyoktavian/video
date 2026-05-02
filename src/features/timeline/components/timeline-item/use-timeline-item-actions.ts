@@ -22,6 +22,7 @@ import {
 } from '@/shared/utils/transcription-cancellation'
 import { useMediaLibraryStore } from '@/features/timeline/deps/media-library-store'
 import {
+  findReplaceableCaptionItemsForClip,
   getMediaTranscriptionModelLabel,
   mediaTranscriptionService,
 } from '@/features/timeline/deps/media-transcription-service'
@@ -31,6 +32,7 @@ import { useCompositionNavigationStore } from '../../stores/composition-navigati
 import {
   insertFreezeFrame,
   linkItems,
+  removeItems,
   splitItemAtFrames,
   unlinkItems,
 } from '../../stores/actions/item-actions'
@@ -389,6 +391,31 @@ export function useTimelineItemActions({
     void run()
   }, [isBroken, item.id, item.mediaId, item.type])
 
+  const handleDeleteCaptions = useCallback(() => {
+    if (item.type !== 'video' && item.type !== 'audio') return
+    if (!item.mediaId || isBroken) return
+
+    const items = useItemsStore.getState().items
+    const clip = items.find((entry) => entry.id === item.id)
+    if (clip?.type !== 'video' && clip?.type !== 'audio') return
+
+    const captionItems = findReplaceableCaptionItemsForClip(items, clip)
+    const store = useMediaLibraryStore.getState()
+    if (captionItems.length === 0) {
+      store.showNotification({
+        type: 'info',
+        message: 'No captions found on this segment',
+      })
+      return
+    }
+
+    removeItems(captionItems.map((entry) => entry.id))
+    store.showNotification({
+      type: 'success',
+      message: `Removed captions from this segment`,
+    })
+  }, [isBroken, item.id, item.mediaId, item.type])
+
   const isSceneDetectionActive = segmentOverlays.some(
     (overlay) => overlay.id === SCENE_DETECTION_OVERLAY_ID,
   )
@@ -622,6 +649,7 @@ export function useTimelineItemActions({
     handleGenerateAudioFromText,
     handleCaptionsFromDialog,
     handleApplyCaptionsFromTranscript,
+    handleDeleteCaptions,
     handleCreatePreComp,
     handleEnterComposition,
     handleDissolveComposition,

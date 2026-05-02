@@ -32,3 +32,4 @@ export {
 export type { OrphanedClipInfo } from '../types'
 export type { ExtractedMediaFileEntry } from '../utils/file-drop'
 export { getMediaType, getMimeType } from '../utils/validation'
+export { findReplaceableCaptionItemsForClip } from '../utils/caption-items'
