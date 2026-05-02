@@ -26,9 +26,9 @@ import type { CoverTextSuggestion } from '../types'
 
 import { FramePicker } from './frame-picker'
 
-const DEFAULT_COVER_DURATION_SEC = 3
-const COVER_DURATION_MIN = 1
-const COVER_DURATION_MAX = 10
+const DEFAULT_COVER_DURATION_SEC = 0.5
+const COVER_DURATION_MIN = 0.5
+const COVER_DURATION_MAX = 5
 
 type TextMode = 'transcript' | 'manual-prompt' | 'manual-text'
 

@@ -5,9 +5,8 @@ import { Slider } from '@/components/ui/slider'
 import { cn } from '@/shared/ui/cn'
 
 import {
-  generateFilmstripFrames,
+  generateFilmstripFramesStreaming,
   renderCoverFrame,
-  revokeFilmstripFrames,
   type FilmstripFrame,
 } from '../frame-extraction'
 import { useCompositionsStore } from '../deps/timeline'
@@ -20,6 +19,76 @@ interface FramePickerProps {
 
 const FILMSTRIP_THUMB_COUNT = 14
 
+function closeBitmaps(frames: readonly FilmstripFrame[]) {
+  for (const f of frames) {
+    try {
+      f.bitmap.close()
+    } catch {
+      // already closed
+    }
+  }
+}
+
+function FilmstripThumbnail({ bitmap }: { bitmap: ImageBitmap }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    const ctx = canvas.getContext('bitmaprenderer')
+    if (ctx) {
+      // `transferFromImageBitmap` consumes the bitmap. Clone first so the
+      // parent component still owns the original for cleanup.
+      void createImageBitmap(bitmap).then((clone) => {
+        if (!canvasRef.current) {
+          clone.close()
+          return
+        }
+        ctx.transferFromImageBitmap(clone)
+      })
+      return
+    }
+    // Fallback for browsers without bitmaprenderer.
+    const ctx2d = canvas.getContext('2d')
+    if (ctx2d) {
+      ctx2d.drawImage(bitmap, 0, 0)
+    }
+  }, [bitmap])
+
+  return <canvas ref={canvasRef} className="h-full w-auto" />
+}
+
+function PreviewCanvas({ bitmap }: { bitmap: ImageBitmap | null }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !bitmap) return
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    const ctx = canvas.getContext('bitmaprenderer')
+    if (ctx) {
+      void createImageBitmap(bitmap).then((clone) => {
+        if (!canvasRef.current) {
+          clone.close()
+          return
+        }
+        ctx.transferFromImageBitmap(clone)
+      })
+      return
+    }
+    const ctx2d = canvas.getContext('2d')
+    if (ctx2d) {
+      ctx2d.drawImage(bitmap, 0, 0)
+    }
+  }, [bitmap])
+
+  if (!bitmap) return null
+  return <canvas ref={canvasRef} className="h-full w-full object-contain" />
+}
+
 export function FramePicker({ compositionId, selectedFrame, onChange }: FramePickerProps) {
   const composition = useCompositionsStore((s) => s.compositionById[compositionId])
 
@@ -27,38 +96,52 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
   const [filmstripLoading, setFilmstripLoading] = useState(false)
   const [filmstripError, setFilmstripError] = useState<string | null>(null)
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewBitmap, setPreviewBitmap] = useState<ImageBitmap | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
-  const previewUrlRef = useRef<string | null>(null)
+  const previewBitmapRef = useRef<ImageBitmap | null>(null)
   const previewSeqRef = useRef(0)
 
-  // Filmstrip generation — once per compositionId.
+  // Filmstrip generation — once per compositionId. Frames stream in
+  // progressively as the worker finishes them.
   useEffect(() => {
     let cancelled = false
-    let frames: FilmstripFrame[] = []
+    const collected: FilmstripFrame[] = []
 
-    const run = async () => {
-      setFilmstripLoading(true)
-      setFilmstripError(null)
-      try {
-        frames = await generateFilmstripFrames(compositionId, FILMSTRIP_THUMB_COUNT)
+    setFilmstrip([])
+    setFilmstripLoading(true)
+    setFilmstripError(null)
+
+    const handle = generateFilmstripFramesStreaming(
+      compositionId,
+      FILMSTRIP_THUMB_COUNT,
+      (frame) => {
         if (cancelled) {
-          revokeFilmstripFrames(frames)
+          frame.bitmap.close()
           return
         }
-        setFilmstrip(frames)
-      } catch (error) {
-        if (cancelled) return
-        setFilmstripError(error instanceof Error ? error.message : 'Failed to load filmstrip')
-      } finally {
-        if (!cancelled) setFilmstripLoading(false)
-      }
-    }
+        collected.push(frame)
+        // Sort by frame number so the strip stays left-to-right even if
+        // frames arrive out of order (they shouldn't, but be defensive).
+        const sorted = [...collected].sort((a, b) => a.frame - b.frame)
+        setFilmstrip(sorted)
+      },
+    )
 
-    void run()
+    handle.promise
+      .then(() => {
+        if (!cancelled) setFilmstripLoading(false)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setFilmstripError(error instanceof Error ? error.message : 'Failed to load filmstrip')
+        setFilmstripLoading(false)
+      })
+
     return () => {
       cancelled = true
-      revokeFilmstripFrames(frames)
+      handle.cancel()
+      closeBitmaps(collected)
       setFilmstrip([])
     }
   }, [compositionId])
@@ -72,12 +155,22 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
         try {
           const blob = await renderCoverFrame(compositionId, selectedFrame, { width: 720 })
           if (seq !== previewSeqRef.current) return
-          const url = URL.createObjectURL(blob)
-          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-          previewUrlRef.current = url
-          setPreviewUrl(url)
+          const bitmap = await createImageBitmap(blob)
+          if (seq !== previewSeqRef.current) {
+            bitmap.close()
+            return
+          }
+          if (previewBitmapRef.current) previewBitmapRef.current.close()
+          previewBitmapRef.current = bitmap
+          setPreviewBitmap(bitmap)
         } catch {
-          if (seq === previewSeqRef.current) setPreviewUrl(null)
+          if (seq === previewSeqRef.current) {
+            if (previewBitmapRef.current) {
+              previewBitmapRef.current.close()
+              previewBitmapRef.current = null
+            }
+            setPreviewBitmap(null)
+          }
         } finally {
           if (seq === previewSeqRef.current) setPreviewLoading(false)
         }
@@ -92,9 +185,9 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
   // Final cleanup on unmount.
   useEffect(() => {
     return () => {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current)
-        previewUrlRef.current = null
+      if (previewBitmapRef.current) {
+        previewBitmapRef.current.close()
+        previewBitmapRef.current = null
       }
     }
   }, [])
@@ -105,12 +198,8 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
   return (
     <div className="space-y-2">
       <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border bg-black">
-        {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt="Cover frame preview"
-            className="h-full w-full object-contain"
-          />
+        {previewBitmap ? (
+          <PreviewCanvas bitmap={previewBitmap} />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
             {previewLoading ? (
@@ -123,7 +212,7 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
             )}
           </div>
         )}
-        {previewLoading && previewUrl ? (
+        {previewLoading && previewBitmap ? (
           <div className="absolute right-2 top-2 rounded-md bg-black/60 p-1">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
           </div>
@@ -165,7 +254,7 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
                   )}
                   aria-label={`Use frame ${frame.frame}`}
                 >
-                  <img src={frame.blobUrl} alt="" className="h-full w-auto" draggable={false} />
+                  <FilmstripThumbnail bitmap={frame.bitmap} />
                 </button>
               )
             })}
