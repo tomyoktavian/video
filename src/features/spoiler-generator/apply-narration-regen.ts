@@ -276,6 +276,13 @@ export function applyNarrationRegen(params: ApplyNarrationRegenParams): Narratio
           canvasWidth: composition.width,
           canvasHeight: composition.height,
           transcript: undefined,
+          ...(typeof metadata.wordsPerCaption === 'number'
+            ? { wordsPerCaption: metadata.wordsPerCaption }
+            : metadata.captionGranularity === 'phrase'
+              ? { wordsPerCaption: 5 }
+              : metadata.captionGranularity === 'word'
+                ? { wordsPerCaption: 1 }
+                : {}),
         })
         for (const item of newSubtitleItems) itemsToAdd.push(item)
         nextSubtitleIds = newSubtitleItems.map((item) => item.id)

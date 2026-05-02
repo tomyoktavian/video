@@ -49,6 +49,7 @@ function renderTrackHeader(track: TimelineTrack, onToggleDisabled = vi.fn()) {
       onDeleteEmptyTracks={() => undefined}
       onMoveTrackUp={vi.fn()}
       onMoveTrackDown={vi.fn()}
+      onGenerateTrackCaptions={() => undefined}
     />,
   )
 
@@ -120,6 +121,7 @@ describe('TrackHeader', () => {
         onDeleteEmptyTracks={() => undefined}
         onMoveTrackUp={() => undefined}
         onMoveTrackDown={() => undefined}
+        onGenerateTrackCaptions={() => undefined}
       />,
     )
 
@@ -144,6 +146,7 @@ describe('TrackHeader', () => {
         onDeleteEmptyTracks={() => undefined}
         onMoveTrackUp={() => undefined}
         onMoveTrackDown={() => undefined}
+        onGenerateTrackCaptions={() => undefined}
       />,
     )
 

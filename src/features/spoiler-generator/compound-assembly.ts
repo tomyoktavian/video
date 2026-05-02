@@ -91,6 +91,11 @@ export interface AssembleSingleCompoundParams {
   /** Whether to insert subtitle text items per segment. */
   insertSubtitles: boolean
   /**
+   * Words per subtitle text item. Only consulted when
+   * `insertSubtitles === true`. Defaults to `1` (karaoke).
+   */
+  wordsPerCaption?: number
+  /**
    * When false, the dedicated "Spoiler Original Audio" track is omitted —
    * only the narration audio is mounted. Defaults to true. Tradeoff: with the
    * track off, the user can't rebalance original-audio independently from
@@ -110,6 +115,7 @@ export interface AssembleSingleCompoundParams {
     scriptTitle: string
     scriptSynopsis?: string
     addSubtitles: boolean
+    wordsPerCaption?: number
     generateCover: boolean
     includeOriginalAudio: boolean
   }
@@ -174,6 +180,7 @@ function buildSubtitleItemsForSegment(params: {
   canvasWidth: number
   canvasHeight: number
   transcript: readonly MediaTranscriptSegment[] | undefined
+  wordsPerCaption?: number
 }): TextItem[] {
   const {
     trackId,
@@ -184,36 +191,53 @@ function buildSubtitleItemsForSegment(params: {
     canvasWidth,
     canvasHeight,
     transcript,
+    wordsPerCaption = 1,
   } = params
 
-  // Fallback: no transcript (provider didn't return word timing, or the
-  // narration transcription failed). Show the full narration text across
-  // the whole segment as a single subtitle item.
+  // Fallback path: no transcript (provider didn't return word timing, or the
+  // narration transcription failed). Synthesize chunk timing from the
+  // narration text + segment duration via the chunker. For wordsPerCaption=1
+  // this is karaoke; for higher N it groups N text tokens per item with
+  // approximate timing.
   if (!transcript || transcript.length === 0) {
     const text = segment.narration.trim()
     if (!text) return []
-    return [
-      buildSubtitleTextItem({
+    const segmentEndFrame = cursorFrame + segmentDurationFrames
+    const segmentDurationSec = segmentDurationFrames / fps
+    const synthChunks = subdivideSegmentIntoWordGroups(
+      { text, start: 0, end: segmentDurationSec },
+      wordsPerCaption,
+    )
+    return synthChunks.map((chunk) => {
+      const fromFrame = cursorFrame + Math.max(0, Math.round(chunk.start * fps))
+      const endFrame = cursorFrame + Math.max(1, Math.round(chunk.end * fps))
+      const clampedFrom = Math.min(fromFrame, segmentEndFrame - 1)
+      const clampedEnd = Math.min(Math.max(clampedFrom + 1, endFrame), segmentEndFrame)
+      const durationInFrames = Math.max(1, clampedEnd - clampedFrom)
+      return buildSubtitleTextItem({
         trackId,
-        from: cursorFrame,
-        durationInFrames: segmentDurationFrames,
-        text,
+        from: clampedFrom,
+        durationInFrames,
+        text: chunk.text,
         canvasWidth,
         canvasHeight,
-      }),
-    ]
+      })
+    })
   }
 
   const segmentEndFrame = cursorFrame + segmentDurationFrames
   const items: TextItem[] = []
 
   for (const seg of transcript) {
-    const chunks = subdivideSegmentIntoWordGroups({
-      text: seg.text,
-      start: seg.start,
-      end: seg.end,
-      ...(seg.words ? { words: [...seg.words] } : {}),
-    })
+    const chunks = subdivideSegmentIntoWordGroups(
+      {
+        text: seg.text,
+        start: seg.start,
+        end: seg.end,
+        ...(seg.words ? { words: [...seg.words] } : {}),
+      },
+      wordsPerCaption,
+    )
     for (const chunk of chunks) {
       const text = chunk.text.trim()
       if (!text) continue
@@ -369,6 +393,9 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
         canvasWidth: params.canvasWidth,
         canvasHeight: params.canvasHeight,
         transcript: params.narrationTranscriptsById?.get(segment.index),
+        ...(typeof params.wordsPerCaption === 'number'
+          ? { wordsPerCaption: params.wordsPerCaption }
+          : {}),
       })
       textItems.push(...segmentSubtitles)
       for (const item of segmentSubtitles) segmentSubtitleIds.push(item.id)
@@ -460,6 +487,7 @@ export function assembleSingleCompound(
       scriptTitle: ctx.scriptTitle,
       ...(ctx.scriptSynopsis !== undefined ? { scriptSynopsis: ctx.scriptSynopsis } : {}),
       addSubtitles: ctx.addSubtitles,
+      ...(typeof ctx.wordsPerCaption === 'number' ? { wordsPerCaption: ctx.wordsPerCaption } : {}),
       generateCover: ctx.generateCover,
       includeOriginalAudio: ctx.includeOriginalAudio,
       sourceFilmMediaId: params.sourceMediaId,

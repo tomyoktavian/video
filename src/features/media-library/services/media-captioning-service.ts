@@ -36,6 +36,12 @@ interface InsertAiCaptionsOptions {
   replaceExisting?: boolean
   /** Sample interval reported by the captioning provider — used to size trailing caption duration. */
   sampleIntervalSec?: number
+  /**
+   * Words per caption. AI captions never carry word-level timing so the
+   * chunker synthesizes timing from each segment's text; accepted here so
+   * callers don't need to special-case the AI path.
+   */
+  wordsPerCaption?: number
 }
 
 export interface InsertAiCaptionsResult {
@@ -165,6 +171,9 @@ class MediaCaptioningService {
         styleTemplate: existingGeneratedCaptions[0]
           ? getCaptionTextItemTemplate(existingGeneratedCaptions[0])
           : undefined,
+        ...(typeof options.wordsPerCaption === 'number'
+          ? { wordsPerCaption: options.wordsPerCaption }
+          : {}),
       })
       logger.info('buildCaptionTextItems produced items', {
         clipId: clip.id,

@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MediaTranscriptModel, MediaTranscriptQuantization } from '@/types/storage'
+
+// Bounds mirrored from media-library's `caption-items` to keep this store
+// free of cross-feature imports. Update in lockstep with that file.
+const DEFAULT_WORDS_PER_CAPTION = 1
+const MAX_WORDS_PER_CAPTION = 20
 import {
   DEFAULT_WHISPER_LANGUAGE,
   DEFAULT_WHISPER_MODEL,
@@ -40,6 +45,10 @@ interface AppSettings {
   defaultWhisperQuantization: MediaTranscriptQuantization
   defaultWhisperLanguage: string
 
+  // Caption render-time default — words per caption text item. `1` =
+  // karaoke (one word per clip); higher = bigger phrase chunks.
+  defaultWordsPerCaption: number
+
   // AI captioning — interval between sampled frames when running LFM captions.
   // Frames mode is converted to seconds at capture time using media.fps.
   captioningIntervalUnit: CaptioningIntervalUnit
@@ -58,6 +67,19 @@ export type CaptionSearchMode = 'keyword' | 'semantic'
 
 function normalizeCaptionSearchMode(value: unknown): CaptionSearchMode {
   return value === 'semantic' ? 'semantic' : 'keyword'
+}
+
+function normalizeWordsPerCaption(value: unknown, legacy?: unknown): number {
+  // Migration from the previous boolean-ish `defaultCaptionGranularity`
+  // setting: 'word' → 1 (karaoke), 'phrase' → 5 (traditional caption).
+  if (typeof value !== 'number' && (legacy === 'word' || legacy === 'phrase')) {
+    return legacy === 'phrase' ? 5 : 1
+  }
+  const numeric =
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.floor(value)
+      : DEFAULT_WORDS_PER_CAPTION
+  return Math.min(MAX_WORDS_PER_CAPTION, Math.max(1, numeric))
 }
 
 export type CaptioningIntervalUnit = 'seconds' | 'frames'
@@ -136,6 +158,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultWhisperQuantization: DEFAULT_WHISPER_QUANTIZATION,
   defaultWhisperLanguage: DEFAULT_WHISPER_LANGUAGE,
 
+  // Caption render-time defaults
+  defaultWordsPerCaption: DEFAULT_WORDS_PER_CAPTION,
+
   // AI captioning defaults
   captioningIntervalUnit: 'seconds',
   captioningIntervalValue: DEFAULT_CAPTIONING_INTERVAL_SECONDS,
@@ -164,6 +189,9 @@ export const useSettingsStore = create<SettingsStore>()(
         set((state) => {
           if (key === 'defaultWhisperModel') {
             return { [key]: normalizeSelectableWhisperModel(value as MediaTranscriptModel) }
+          }
+          if (key === 'defaultWordsPerCaption') {
+            return { defaultWordsPerCaption: normalizeWordsPerCaption(value) }
           }
           if (key === 'captioningIntervalUnit') {
             const unit = normalizeCaptioningIntervalUnit(value)
@@ -263,6 +291,10 @@ export const useSettingsStore = create<SettingsStore>()(
             captioningIntervalUnit,
           ),
           captionSearchMode: normalizeCaptionSearchMode(typedState.captionSearchMode),
+          defaultWordsPerCaption: normalizeWordsPerCaption(
+            typedState.defaultWordsPerCaption,
+            (typedState as { defaultCaptionGranularity?: unknown }).defaultCaptionGranularity,
+          ),
         }
       },
     },

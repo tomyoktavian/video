@@ -264,6 +264,17 @@ async function stageTranscribeNarration(
       })
       if (transcript.segments.length > 0) {
         transcripts.set(success.index, transcript.segments)
+        const wordsCount = transcript.segments.reduce(
+          (sum, seg) => sum + (seg.words?.length ?? 0),
+          0,
+        )
+        logger.info(
+          `Narration transcribed for segment ${success.index}: ${transcript.segments.length} segments, ${wordsCount} words`,
+        )
+      } else {
+        logger.warn(
+          `Narration transcript empty for segment ${success.index} — subtitle will fall back to script text`,
+        )
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') throw err
@@ -349,6 +360,9 @@ async function stageAssembleCompound(
     canvasWidth: ctx.canvasWidth,
     canvasHeight: ctx.canvasHeight,
     insertSubtitles: ctx.input.addSubtitles,
+    ...(typeof ctx.input.wordsPerCaption === 'number'
+      ? { wordsPerCaption: ctx.input.wordsPerCaption }
+      : {}),
     includeOriginalAudio: ctx.input.includeOriginalAudio,
     metadataContext: {
       voiceId: ctx.input.voicePreset ?? null,
@@ -357,6 +371,9 @@ async function stageAssembleCompound(
       scriptTitle: script.title || 'Spoiler',
       ...(script.synopsis ? { scriptSynopsis: script.synopsis } : {}),
       addSubtitles: ctx.input.addSubtitles,
+      ...(typeof ctx.input.wordsPerCaption === 'number'
+        ? { wordsPerCaption: ctx.input.wordsPerCaption }
+        : {}),
       generateCover: ctx.input.generateCover,
       includeOriginalAudio: ctx.input.includeOriginalAudio,
     },

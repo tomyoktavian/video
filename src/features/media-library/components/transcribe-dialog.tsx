@@ -35,6 +35,8 @@ import {
   WHISPER_QUANTIZATION_OPTIONS,
 } from '@/shared/utils/whisper-settings'
 import type { MediaTranscriptModel, MediaTranscriptQuantization } from '@/types/storage'
+import { clampWordsPerCaption, MAX_WORDS_PER_CAPTION } from '../utils/caption-items'
+import { Input } from '@/components/ui/input'
 
 export type TranscribeDialogProvider = 'local' | 'custom'
 
@@ -45,6 +47,7 @@ export interface TranscribeDialogValues {
   customModelId: string
   quantization: MediaTranscriptQuantization
   language: string
+  wordsPerCaption: number
 }
 
 interface TranscribeDialogProps {
@@ -75,6 +78,8 @@ export function TranscribeDialog({
   const defaultModel = useSettingsStore((s) => s.defaultWhisperModel)
   const defaultQuantization = useSettingsStore((s) => s.defaultWhisperQuantization)
   const defaultLanguage = useSettingsStore((s) => s.defaultWhisperLanguage)
+  const defaultWordsPerCaption = useSettingsStore((s) => s.defaultWordsPerCaption)
+  const setSetting = useSettingsStore((s) => s.setSetting)
   const customCaptionMaker = useCustomAiStore((s) => s.captionMaker)
   const clearMediaSkimPreview = useEditorStore((s) => s.clearMediaSkimPreview)
   const clearCompoundClipSkimPreview = useEditorStore((s) => s.clearCompoundClipSkimPreview)
@@ -98,6 +103,7 @@ export function TranscribeDialog({
   const [customLanguageValue, setCustomLanguageValue] = useState<string>(() =>
     getWhisperLanguageSelectValue(customCaptionMaker.language),
   )
+  const [wordsPerCaption, setWordsPerCaption] = useState<number>(defaultWordsPerCaption)
 
   useEffect(() => {
     if (!open) return
@@ -108,6 +114,7 @@ export function TranscribeDialog({
     setQuantization(defaultQuantization)
     setLanguageValue(getWhisperLanguageSelectValue(defaultLanguage))
     setCustomLanguageValue(getWhisperLanguageSelectValue(customCaptionMaker.language))
+    setWordsPerCaption(defaultWordsPerCaption)
   }, [
     open,
     customConfigured,
@@ -115,6 +122,7 @@ export function TranscribeDialog({
     defaultModel,
     defaultQuantization,
     customCaptionMaker.language,
+    defaultWordsPerCaption,
   ])
 
   useEffect(() => {
@@ -137,6 +145,8 @@ export function TranscribeDialog({
   ])
 
   const handleStart = () => {
+    const normalizedWordsPerCaption = clampWordsPerCaption(wordsPerCaption)
+    setSetting('defaultWordsPerCaption', normalizedWordsPerCaption)
     if (provider === 'custom') {
       onStart({
         provider: 'custom',
@@ -144,6 +154,7 @@ export function TranscribeDialog({
         customModelId: customCaptionMaker.model,
         quantization,
         language: getWhisperLanguageSettingValue(customLanguageValue),
+        wordsPerCaption: normalizedWordsPerCaption,
       })
       return
     }
@@ -153,6 +164,7 @@ export function TranscribeDialog({
       customModelId: '',
       quantization,
       language: getWhisperLanguageSettingValue(languageValue),
+      wordsPerCaption: normalizedWordsPerCaption,
     })
   }
 
@@ -202,6 +214,32 @@ export function TranscribeDialog({
                 {value === 'local' ? 'Local AI' : 'Custom AI'}
               </button>
             ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm" htmlFor="transcribe-words-per-caption">
+              Words per caption
+            </Label>
+            <Input
+              id="transcribe-words-per-caption"
+              type="number"
+              min={1}
+              max={MAX_WORDS_PER_CAPTION}
+              step={1}
+              value={wordsPerCaption}
+              disabled={isRunning}
+              onChange={(event) => {
+                const next = Number(event.target.value)
+                if (Number.isFinite(next)) {
+                  setWordsPerCaption(clampWordsPerCaption(next))
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              {wordsPerCaption === 1
+                ? 'Karaoke style — one word per text clip, advances with the speaker.'
+                : `${wordsPerCaption} words per text clip. 5+ ≈ traditional caption.`}
+            </p>
           </div>
 
           {provider === 'local' ? (

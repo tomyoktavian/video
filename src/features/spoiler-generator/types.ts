@@ -115,6 +115,12 @@ export interface SpoilerInput {
   voicePreset?: string
   /** TTS speed multiplier (0.25 .. 4.0). Undefined = provider default (1.0). */
   voiceSpeed?: number
+  /**
+   * Words per spoiler subtitle text item. `1` = karaoke (one word per clip);
+   * higher = bigger phrase chunks. Only consulted when `addSubtitles === true`.
+   * Clamped to `[1, 20]`.
+   */
+  wordsPerCaption?: number
 }
 
 /**
@@ -143,6 +149,13 @@ export interface SpoilerCompositionMetadata {
   scriptSynopsis?: string
   /** Whether subtitles were generated. */
   addSubtitles: boolean
+  /**
+   * Words per subtitle text item used when this spoiler was generated.
+   * Persisted so later regen-narration runs match the original look.
+   * Optional for backward compat with legacy metadata (callers fall back
+   * to `1`).
+   */
+  wordsPerCaption?: number
   /** Whether a cover was inserted. */
   generateCover: boolean
   /** Whether the "Spoiler Original Audio" track was created. */

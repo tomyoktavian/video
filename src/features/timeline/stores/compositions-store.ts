@@ -29,6 +29,18 @@ export interface SubCompositionSpoilerMetadata {
   scriptTitle: string
   scriptSynopsis?: string
   addSubtitles: boolean
+  /**
+   * Words per subtitle text item used when this spoiler was generated.
+   * Read by regen-narration so re-built subtitles match the original look.
+   * Optional for backward-compat (callers fall back to `1`).
+   */
+  wordsPerCaption?: number
+  /**
+   * @deprecated Legacy field from the early word/phrase toggle. New metadata
+   * uses {@link wordsPerCaption}; regen-narration still reads this if present
+   * to migrate older compounds.
+   */
+  captionGranularity?: 'word' | 'phrase'
   generateCover: boolean
   includeOriginalAudio: boolean
   sourceFilmMediaId: string

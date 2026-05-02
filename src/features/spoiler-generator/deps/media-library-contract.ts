@@ -13,5 +13,8 @@ export { useMediaLibraryStore } from '@/features/media-library'
 export {
   subdivideSegmentIntoWordGroups,
   buildSubtitleTextItem,
+  DEFAULT_WORDS_PER_CAPTION,
+  MAX_WORDS_PER_CAPTION,
+  clampWordsPerCaption,
 } from '@/features/media-library/utils/caption-items'
 export type { SubtitleTextItemInput } from '@/features/media-library/utils/caption-items'

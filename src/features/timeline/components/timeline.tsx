@@ -10,6 +10,7 @@ import { useTimelineTracks } from '../hooks/use-timeline-tracks'
 import { useItemsStore } from '../stores/items-store'
 import { useSelectionStore } from '@/shared/state/selection'
 import { useEditorStore } from '@/app/state/editor'
+import { useTrackCaptionsDialogStore } from '@/app/state/track-captions-dialog'
 import { useTimelineStore } from '../stores/timeline-store'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { HOTKEY_OPTIONS } from '@/config/hotkeys'
@@ -809,6 +810,9 @@ export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
                   onDeleteEmptyTracks={() => handleDeleteEmptyTracks(track.id)}
                   onMoveTrackUp={() => moveTrackUp(track.id)}
                   onMoveTrackDown={() => moveTrackDown(track.id)}
+                  onGenerateTrackCaptions={() =>
+                    useTrackCaptionsDialogStore.getState().open(track.id)
+                  }
                   onSelect={(e) => {
                     if (trackDragJustDroppedRef.current) return
                     if (e.shiftKey && activeTrackId) {

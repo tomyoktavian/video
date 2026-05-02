@@ -15,6 +15,8 @@ export {
   isAllCustomAiConfigured,
 } from '@/features/settings/stores/custom-ai-store'
 
+export { useSettingsStore } from '@/features/settings/stores/settings-store'
+
 export type {
   CustomAiCaptionMakerConfig,
   CustomAiVisionAnalyzerConfig,

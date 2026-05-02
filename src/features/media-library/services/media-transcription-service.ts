@@ -54,6 +54,7 @@ type CaptionableClip = AudioItem | VideoItem
 interface InsertTranscriptAsCaptionsOptions {
   clipIds?: readonly string[]
   replaceExisting?: boolean
+  wordsPerCaption?: number
 }
 
 interface InsertTranscriptAsCaptionsResult {
@@ -487,6 +488,9 @@ class MediaTranscriptionService {
         styleTemplate: existingGeneratedCaptions[0]
           ? getCaptionTextItemTemplate(existingGeneratedCaptions[0])
           : undefined,
+        ...(typeof options.wordsPerCaption === 'number'
+          ? { wordsPerCaption: options.wordsPerCaption }
+          : {}),
       })
 
       if (clipCaptionItems.length === 0) {

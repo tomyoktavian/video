@@ -201,6 +201,7 @@ export function useTimelineItemActions({
         language?: string
         providerId?: MediaTranscriptProviderId
         modelLabel?: string
+        wordsPerCaption?: number
         onError?: (error: unknown) => void
       },
     ) => {
@@ -273,6 +274,9 @@ export function useTimelineItemActions({
           const result = await mediaTranscriptionService.insertTranscriptAsCaptions(mediaId, {
             clipIds: [clipId],
             replaceExisting,
+            ...(typeof options?.wordsPerCaption === 'number'
+              ? { wordsPerCaption: options.wordsPerCaption }
+              : {}),
           })
 
           const successMessage = replaceExisting
@@ -327,6 +331,7 @@ export function useTimelineItemActions({
         customModelId?: string
         quantization: MediaTranscriptQuantization
         language: string
+        wordsPerCaption?: number
       },
       hasExistingCaptions: boolean,
       onError?: (error: unknown) => void,
@@ -344,6 +349,9 @@ export function useTimelineItemActions({
         language: values.language,
         providerId: isCustom ? 'openai-compatible' : 'browser-whisper',
         ...(isCustom ? { modelLabel: values.customModelId } : {}),
+        ...(typeof values.wordsPerCaption === 'number'
+          ? { wordsPerCaption: values.wordsPerCaption }
+          : {}),
         onError,
       })
     },

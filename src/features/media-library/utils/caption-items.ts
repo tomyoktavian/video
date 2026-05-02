@@ -23,79 +23,92 @@ import { timelineToSourceFrames } from '../deps/timeline-contract'
  */
 const AI_CAPTION_FALLBACK_DURATION_SEC = 3
 
-/**
- * Word-grouping thresholds for the TikTok/CapCut-style phrase chunker. A new
- * chunk opens when any of these limits is hit. Tweaking these changes the
- * global feel of generated subtitles.
- */
-const TARGET_WORDS_PER_CHUNK = 4
-const MAX_WORDS_PER_CHUNK = 5
-const MAX_CHUNK_SECONDS = 1.5
-const NATURAL_BREAK_GAP_SECONDS = 0.25
-const CLAUSE_BREAK_PATTERN = /[.!?,;:]\s*$/
-const SENTENCE_END_PATTERN = /[.!?…]\s*$/
-
 interface CaptionChunk {
   text: string
   start: number
   end: number
 }
 
-/**
- * Break a Whisper transcript segment into 4-5 word "phrase" chunks
- * (TikTok/CapCut style). When word-level timing is unavailable (legacy
- * transcripts, providers like `gpt-4o-transcribe` that omit timestamps),
- * falls back to a single chunk per segment so the caller still gets
- * usable output.
- */
-export function subdivideSegmentIntoWordGroups(segment: MediaTranscriptSegment): CaptionChunk[] {
-  const words = segment.words
-  if (!words || words.length === 0) {
-    return [{ text: segment.text, start: segment.start, end: segment.end }]
+export const DEFAULT_WORDS_PER_CAPTION = 1
+export const MAX_WORDS_PER_CAPTION = 20
+
+export function clampWordsPerCaption(value: unknown): number {
+  const numeric =
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.floor(value)
+      : DEFAULT_WORDS_PER_CAPTION
+  return Math.min(MAX_WORDS_PER_CAPTION, Math.max(1, numeric))
+}
+
+function synthesizeChunksFromText(
+  segment: MediaTranscriptSegment,
+  wordsPerCaption: number,
+): CaptionChunk[] {
+  const tokens = segment.text
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+  if (tokens.length === 0) return []
+  const totalDuration = Math.max(0, segment.end - segment.start)
+  // Weight each token by character count so longer words get more on-screen
+  // time. Falls back to even distribution when total chars is zero (defensive).
+  const totalChars = tokens.reduce((sum, token) => sum + token.length, 0)
+  const useCharWeights = totalChars > 0 && totalDuration > 0
+  let cursor = segment.start
+  const tokenWindows: { text: string; start: number; end: number }[] = []
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i]!
+    const slice = useCharWeights
+      ? (totalDuration * token.length) / totalChars
+      : totalDuration / tokens.length
+    const start = cursor
+    const end = i === tokens.length - 1 ? segment.end : cursor + slice
+    tokenWindows.push({ text: token, start, end: Math.max(start, end) })
+    cursor = end
   }
+  return groupTokenWindows(tokenWindows, wordsPerCaption)
+}
 
+function groupTokenWindows(
+  windows: readonly { text: string; start: number; end: number }[],
+  wordsPerCaption: number,
+): CaptionChunk[] {
   const chunks: CaptionChunk[] = []
-  let bucket: typeof words = []
-
-  const flush = () => {
-    if (bucket.length === 0) return
-    const first = bucket[0]!
-    const last = bucket.at(-1)!
+  for (let i = 0; i < windows.length; i += wordsPerCaption) {
+    const bucket = windows.slice(i, i + wordsPerCaption)
+    if (bucket.length === 0) continue
     chunks.push({
       text: bucket
         .map((w) => w.text.trim())
         .filter(Boolean)
         .join(' '),
-      start: first.start,
-      end: last.end,
+      start: bucket[0]!.start,
+      end: bucket.at(-1)!.end,
     })
-    bucket = []
   }
-
-  for (const word of words) {
-    const previous = bucket.at(-1)
-    if (previous) {
-      const first = bucket[0]!
-      const gap = word.start - previous.end
-      const bucketDuration = previous.end - first.start
-      const reachedMax = bucket.length >= MAX_WORDS_PER_CHUNK
-      const wouldExceedDuration = word.end - first.start > MAX_CHUNK_SECONDS
-      const sentenceBreak = SENTENCE_END_PATTERN.test(previous.text)
-      const reachedTargetWithBreakSignal =
-        bucket.length >= TARGET_WORDS_PER_CHUNK &&
-        (gap >= NATURAL_BREAK_GAP_SECONDS ||
-          CLAUSE_BREAK_PATTERN.test(previous.text) ||
-          bucketDuration >= MAX_CHUNK_SECONDS)
-
-      if (reachedMax || wouldExceedDuration || sentenceBreak || reachedTargetWithBreakSignal) {
-        flush()
-      }
-    }
-    bucket.push(word)
-  }
-  flush()
-
   return chunks.filter((chunk) => chunk.text.length > 0 && chunk.end >= chunk.start)
+}
+
+/**
+ * Break a transcript segment into N-word chunks. `wordsPerCaption = 1` emits
+ * one chunk per word (karaoke). Higher values group more words together. When
+ * word-level timing isn't available (e.g. `gpt-4o-transcribe`), the segment
+ * text is split on whitespace and timing distributed by character weight —
+ * predictable but approximate.
+ */
+export function subdivideSegmentIntoWordGroups(
+  segment: MediaTranscriptSegment,
+  wordsPerCaption: number = DEFAULT_WORDS_PER_CAPTION,
+): CaptionChunk[] {
+  const N = clampWordsPerCaption(wordsPerCaption)
+  const words = segment.words
+  if (!words || words.length === 0) {
+    return synthesizeChunksFromText(segment, N)
+  }
+  return groupTokenWindows(
+    words.map((w) => ({ text: w.text.trim(), start: w.start, end: w.end })),
+    N,
+  )
 }
 
 interface BuildCaptionTextItemsOptions {
@@ -114,6 +127,13 @@ interface BuildCaptionTextItemsOptions {
    * the two kinds apart on the same clip.
    */
   sourceType?: GeneratedCaptionSource['type']
+  /**
+   * Number of words per caption text item. `1` = karaoke (one word per
+   * clip); `5` ≈ traditional phrase captions. Clamped to `[1, 20]`. When
+   * transcript lacks word-level timing the chunker synthesizes timing from
+   * the segment text + duration.
+   */
+  wordsPerCaption?: number
 }
 
 export type CaptionTextItemTemplate = Pick<
@@ -612,12 +632,13 @@ export function buildCaptionTextItems({
   canvasHeight,
   styleTemplate,
   sourceType = 'transcript',
+  wordsPerCaption = DEFAULT_WORDS_PER_CAPTION,
 }: BuildCaptionTextItemsOptions): TextItem[] {
   const normalizedSegments = normalizeCaptionSegments(segments)
   const { sourceStart, sourceEnd, sourceFps, speed } = getClipSourceBounds(clip, timelineFps)
 
   return normalizedSegments.flatMap((segment) =>
-    subdivideSegmentIntoWordGroups(segment).flatMap((chunk) => {
+    subdivideSegmentIntoWordGroups(segment, wordsPerCaption).flatMap((chunk) => {
       const chunkSourceStart = toSourceStartFrame(chunk.start, sourceFps)
       const chunkSourceEnd = toSourceEndFrame(chunk.end, sourceFps)
       const overlapStart = Math.max(sourceStart, chunkSourceStart)

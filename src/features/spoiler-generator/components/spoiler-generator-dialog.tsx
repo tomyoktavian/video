@@ -21,8 +21,13 @@ import {
   isTextToSpeechConfigured,
   isVisionAnalyzerConfigured,
   useCustomAiStore,
+  useSettingsStore,
 } from '../deps/settings'
-import { useMediaLibraryStore } from '../deps/media-library'
+import {
+  clampWordsPerCaption,
+  MAX_WORDS_PER_CAPTION,
+  useMediaLibraryStore,
+} from '../deps/media-library'
 import { runSpoilerPipeline } from '../spoiler-orchestrator'
 import type { SpoilerProgress, SpoilerStage } from '../types'
 import { SpoilerProgressStepper } from './spoiler-progress-stepper'
@@ -56,6 +61,8 @@ export function SpoilerGeneratorDialog() {
   const textToSpeech = useCustomAiStore((s) => s.textToSpeech)
   const mediaById = useMediaLibraryStore((s) => s.mediaById)
   const transcriptStatus = useMediaLibraryStore((s) => s.transcriptStatus)
+  const defaultWordsPerCaption = useSettingsStore((s) => s.defaultWordsPerCaption)
+  const setSetting = useSettingsStore((s) => s.setSetting)
 
   const [step, setStep] = useState<'settings' | 'progress'>('settings')
   const [targetDurationSec, setTargetDurationSec] = useState<number>(1200)
@@ -66,6 +73,7 @@ export function SpoilerGeneratorDialog() {
   const [includeOriginalAudio, setIncludeOriginalAudio] = useState(true)
   const [ttsSpeed, setTtsSpeed] = useState<number>(1)
   const [voicePreset, setVoicePreset] = useState<string>('')
+  const [wordsPerCaption, setWordsPerCaption] = useState<number>(defaultWordsPerCaption)
 
   const [progress, setProgress] = useState<SpoilerProgress | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -81,7 +89,8 @@ export function SpoilerGeneratorDialog() {
     setVoicePreset(textToSpeech.voice || '')
     setTtsSpeed(1)
     setIncludeOriginalAudio(true)
-  }, [isOpen, textToSpeech.voice])
+    setWordsPerCaption(defaultWordsPerCaption)
+  }, [isOpen, textToSpeech.voice, defaultWordsPerCaption])
 
   const media = mediaId ? mediaById[mediaId] : null
   const transcriptReady = mediaId ? transcriptStatus.get(mediaId) === 'ready' : false
@@ -105,6 +114,10 @@ export function SpoilerGeneratorDialog() {
 
   const handleStart = useCallback(async () => {
     if (!media || !mediaId) return
+    const normalizedWordsPerCaption = clampWordsPerCaption(wordsPerCaption)
+    if (addSubtitles) {
+      setSetting('defaultWordsPerCaption', normalizedWordsPerCaption)
+    }
     const controller = new AbortController()
     abortRef.current = controller
     setStep('progress')
@@ -123,6 +136,7 @@ export function SpoilerGeneratorDialog() {
           includeOriginalAudio,
           voiceSpeed: ttsSpeed,
           ...(voicePreset ? { voicePreset } : {}),
+          ...(addSubtitles ? { wordsPerCaption: normalizedWordsPerCaption } : {}),
         },
         {
           onProgress: (p) => setProgress(p),
@@ -150,6 +164,8 @@ export function SpoilerGeneratorDialog() {
     includeOriginalAudio,
     ttsSpeed,
     voicePreset,
+    wordsPerCaption,
+    setSetting,
   ])
 
   const handleCancelRun = useCallback(() => {
@@ -321,6 +337,37 @@ export function SpoilerGeneratorDialog() {
                   onCheckedChange={setAddSubtitles}
                 />
               </div>
+
+              {addSubtitles && (
+                <div className="space-y-1 pl-1">
+                  <Label
+                    htmlFor="spoiler-words-per-caption"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Words per caption
+                  </Label>
+                  <Input
+                    id="spoiler-words-per-caption"
+                    type="number"
+                    min={1}
+                    max={MAX_WORDS_PER_CAPTION}
+                    step={1}
+                    value={wordsPerCaption}
+                    disabled={isRunning}
+                    onChange={(event) => {
+                      const next = Number(event.target.value)
+                      if (Number.isFinite(next)) {
+                        setWordsPerCaption(clampWordsPerCaption(next))
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {wordsPerCaption === 1
+                      ? '1 = karaoke (one word per clip).'
+                      : `${wordsPerCaption} words per text clip. 5+ ≈ traditional caption.`}
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-between">
                 <div>

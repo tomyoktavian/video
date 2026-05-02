@@ -45,6 +45,7 @@ interface TrackHeaderProps {
   onDeleteEmptyTracks: () => void
   onMoveTrackUp: () => void
   onMoveTrackDown: () => void
+  onGenerateTrackCaptions: () => void
 }
 
 /**
@@ -88,8 +89,14 @@ export const TrackHeader = memo(function TrackHeader({
   onDeleteEmptyTracks,
   onMoveTrackUp,
   onMoveTrackDown,
+  onGenerateTrackCaptions,
 }: TrackHeaderProps) {
   const itemCount = useItemsStore((s) => s.itemsByTrackId[track.id]?.length ?? 0)
+  const audioClipWithMediaCount = useItemsStore(
+    (s) =>
+      s.itemsByTrackId[track.id]?.filter((item) => item.type === 'audio' && !!item.mediaId)
+        .length ?? 0,
+  )
   const syncLockEnabled = isTrackSyncLockActive(track)
   const trackDisabled = isTrackDisabled(track)
 
@@ -311,6 +318,15 @@ export const TrackHeader = memo(function TrackHeader({
 
       <ContextMenuContent className="w-52">
         <ContextMenuItem onClick={onCloseGaps}>Close All Gaps</ContextMenuItem>
+
+        {audioClipWithMediaCount > 0 && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={onGenerateTrackCaptions}>
+              Generate Captions for Track ({audioClipWithMediaCount})
+            </ContextMenuItem>
+          </>
+        )}
 
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onAddVideoTrack}>Add Video Track</ContextMenuItem>
