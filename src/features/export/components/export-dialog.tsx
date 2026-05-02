@@ -159,6 +159,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   const [view, setView] = useState<DialogView>('settings')
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [embedSubtitles, setEmbedSubtitles] = useState(true)
   const [renderWholeProject, setRenderWholeProject] = useState(false)
   const wasOpenRef = useRef(false)
 
@@ -172,6 +173,12 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   // Check if in/out points are set (ignored for sub-comp scope).
   const hasInOutPoints =
     !isCompositionScope && inPoint !== null && outPoint !== null && outPoint > inPoint
+  const hasTranscriptSubtitles = useMemo(
+    () => items.some((item) => item.type === 'subtitle' && item.source.type === 'transcript'),
+    [items],
+  )
+  const containerSupportsEmbeddedSubtitles =
+    videoContainer === 'mp4' || videoContainer === 'webm' || videoContainer === 'mkv'
 
   // Calculate export range. Sub-comp scope always exports the full sub-comp duration.
   const exportRange = useMemo(() => {
@@ -274,6 +281,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
       audioContainer: exportMode === 'audio' ? audioContainer : undefined,
       renderWholeProject: isCompositionScope ? true : renderWholeProject,
       compositionId: compositionScope?.compositionId,
+      embedSubtitles: exportMode === 'video' && hasTranscriptSubtitles ? embedSubtitles : false,
     }
     await startExport(extendedSettings)
   }
@@ -285,6 +293,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
       setExportMode('video')
       setVideoContainer('mp4')
       setAudioContainer('mp3')
+      setEmbedSubtitles(true)
       setRenderWholeProject(false)
       setSettings({
         codec: getDefaultCodecForFormat('mp4'),
@@ -377,6 +386,11 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
   const hasCapabilityData = supportedVideoCodecs !== null && !videoSupportError
   const hasSupportedVideoPath = videoContainerOptions.some((option) => option.supported)
+  const hasSubtitleExportConflict =
+    exportMode === 'video' &&
+    embedSubtitles &&
+    hasTranscriptSubtitles &&
+    !containerSupportsEmbeddedSubtitles
 
   useEffect(() => {
     if (exportMode !== 'video' || !hasCapabilityData) return
@@ -701,6 +715,42 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="embed-subtitles" className="text-sm font-medium">
+                        Embed subtitles
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Adds transcript captions as a selectable subtitle track when available.
+                      </p>
+                      {embedSubtitles &&
+                        hasTranscriptSubtitles &&
+                        !containerSupportsEmbeddedSubtitles && (
+                          <p className="text-xs text-destructive">
+                            {videoContainer.toUpperCase()} does not support embedded subtitles. Use
+                            MP4, WebM, or MKV.
+                          </p>
+                        )}
+                      {embedSubtitles && hasTranscriptSubtitles && videoContainer === 'mp4' && (
+                        <p className="text-xs text-muted-foreground">
+                          MP4 embeds WebVTT subtitles; some players only show MKV/WebM subtitle
+                          tracks.
+                        </p>
+                      )}
+                      {!hasTranscriptSubtitles && (
+                        <p className="text-xs text-muted-foreground">
+                          No transcript subtitle segments found on the timeline.
+                        </p>
+                      )}
+                    </div>
+                    <Switch
+                      id="embed-subtitles"
+                      checked={embedSubtitles}
+                      disabled={!hasTranscriptSubtitles}
+                      onCheckedChange={setEmbedSubtitles}
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -766,7 +816,8 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
               <Button
                 onClick={handleStartExport}
                 disabled={
-                  exportMode === 'video' && (!hasSupportedVideoPath || isCheckingVideoSupport)
+                  exportMode === 'video' &&
+                  (!hasSupportedVideoPath || isCheckingVideoSupport || hasSubtitleExportConflict)
                 }
               >
                 {exportMode === 'audio' ? 'Export Audio' : 'Export Video'}

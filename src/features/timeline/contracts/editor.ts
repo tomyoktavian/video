@@ -21,9 +21,12 @@ export {
   getSubCompositionThumbnailFrame,
 } from '../utils/sub-composition-preview'
 export { useTimelineCommandStore } from '../stores/timeline-command-store'
+export { useReverseConformDialogStore } from '../stores/reverse-conform-dialog-store'
 export { captureSnapshot } from '../stores/commands/snapshot'
 export { Timeline } from '../components/timeline'
 export { BentoLayoutDialog } from '../components/bento-layout-dialog'
+export { ReverseConformDialog } from '../components/reverse-conform-dialog'
+export { SilenceRemovalDialog } from '../components/silence-removal-dialog'
 export { KeyframeGraphPanel } from '../components/keyframe-graph-panel'
 export { TrackCaptionsDialog } from '../components/track-captions-dialog'
 export { useTimelineShortcuts } from '../hooks/use-timeline-shortcuts'

@@ -46,6 +46,9 @@ interface ItemContextMenuProps {
   onClearAllKeyframes?: () => void
   onClearPropertyKeyframes?: (property: AnimatableProperty) => void
   onBentoLayout?: () => void
+  canReverse?: boolean
+  isReversed?: boolean
+  onReverse?: () => void
   /** Whether this item is a video clip (enables freeze frame option) */
   isVideoItem?: boolean
   /** Whether the playhead is within this item's bounds */
@@ -58,6 +61,12 @@ interface ItemContextMenuProps {
   onOpenCaptionDialog?: () => void
   onApplyCaptionsFromTranscript?: () => void
   onDeleteCaptions?: () => void
+  /** Whether this clip's media has extractable embedded text subtitles (MKV/WebM). */
+  canExtractEmbeddedSubtitles?: boolean
+  onExtractEmbeddedSubtitles?: () => void
+  /** True when there are per-cue caption text items linked to this clip. */
+  canConsolidateCaptionsToSegment?: boolean
+  onConsolidateCaptionsToSegment?: () => void
   /** Whether this item is a composition item (enables enter/dissolve options) */
   isCompositionItem?: boolean
   onEnterComposition?: () => void
@@ -79,6 +88,9 @@ interface ItemContextMenuProps {
     method: 'histogram' | 'optical-flow',
     verificationModel?: VerificationModel,
   ) => void
+  canRemoveSilence?: boolean
+  isRemovingSilence?: boolean
+  onRemoveSilence?: () => void
 }
 
 /**
@@ -111,6 +123,9 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   onClearAllKeyframes,
   onClearPropertyKeyframes,
   onBentoLayout,
+  canReverse,
+  isReversed,
+  onReverse,
   isVideoItem,
   playheadInBounds,
   onFreezeFrame,
@@ -121,6 +136,10 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   onOpenCaptionDialog,
   onApplyCaptionsFromTranscript,
   onDeleteCaptions,
+  canExtractEmbeddedSubtitles,
+  onExtractEmbeddedSubtitles,
+  canConsolidateCaptionsToSegment,
+  onConsolidateCaptionsToSegment,
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
@@ -134,6 +153,9 @@ export const ItemContextMenu = memo(function ItemContextMenu({
   canDetectScenes,
   isDetectingScenes,
   onDetectScenes,
+  canRemoveSilence,
+  isRemovingSilence,
+  onRemoveSilence,
 }: ItemContextMenuProps) {
   // Lazy mount: defer the full Radix ContextMenu tree until first right-click.
   // This eliminates ~10 Radix provider components per item from the render tree
@@ -177,6 +199,9 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       onClearAllKeyframes={onClearAllKeyframes}
       onClearPropertyKeyframes={onClearPropertyKeyframes}
       onBentoLayout={onBentoLayout}
+      canReverse={canReverse}
+      isReversed={isReversed}
+      onReverse={onReverse}
       isVideoItem={isVideoItem}
       playheadInBounds={playheadInBounds}
       onFreezeFrame={onFreezeFrame}
@@ -187,6 +212,10 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       onOpenCaptionDialog={onOpenCaptionDialog}
       onApplyCaptionsFromTranscript={onApplyCaptionsFromTranscript}
       onDeleteCaptions={onDeleteCaptions}
+      canExtractEmbeddedSubtitles={canExtractEmbeddedSubtitles}
+      onExtractEmbeddedSubtitles={onExtractEmbeddedSubtitles}
+      canConsolidateCaptionsToSegment={canConsolidateCaptionsToSegment}
+      onConsolidateCaptionsToSegment={onConsolidateCaptionsToSegment}
       isCompositionItem={isCompositionItem}
       onEnterComposition={onEnterComposition}
       onDissolveComposition={onDissolveComposition}
@@ -200,6 +229,9 @@ export const ItemContextMenu = memo(function ItemContextMenu({
       canDetectScenes={canDetectScenes}
       isDetectingScenes={isDetectingScenes}
       onDetectScenes={onDetectScenes}
+      canRemoveSilence={canRemoveSilence}
+      isRemovingSilence={isRemovingSilence}
+      onRemoveSilence={onRemoveSilence}
       pendingActivation={pendingActivation}
       onPendingActivationHandled={() => setPendingActivation(null)}
     >
@@ -261,6 +293,9 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   onClearAllKeyframes,
   onClearPropertyKeyframes,
   onBentoLayout,
+  canReverse,
+  isReversed,
+  onReverse,
   isVideoItem,
   playheadInBounds,
   onFreezeFrame,
@@ -271,6 +306,10 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   onOpenCaptionDialog,
   onApplyCaptionsFromTranscript,
   onDeleteCaptions,
+  canExtractEmbeddedSubtitles,
+  onExtractEmbeddedSubtitles,
+  canConsolidateCaptionsToSegment,
+  onConsolidateCaptionsToSegment,
   isCompositionItem,
   onEnterComposition,
   onDissolveComposition,
@@ -284,6 +323,9 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   canDetectScenes,
   isDetectingScenes,
   onDetectScenes,
+  canRemoveSilence,
+  isRemovingSilence,
+  onRemoveSilence,
   pendingActivation,
   onPendingActivationHandled,
 }: Omit<ItemContextMenuProps, 'children'> & {
@@ -412,6 +454,16 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           </>
         )}
 
+        {/* Reverse - only show for source-backed media items */}
+        {canReverse && onReverse && (
+          <>
+            <ContextMenuItem onClick={onReverse}>
+              {isReversed ? 'Unreverse' : 'Reverse'}
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        )}
+
         {/* Freeze Frame - only show for video items when playhead is within bounds */}
         {isVideoItem && playheadInBounds && onFreezeFrame && (
           <>
@@ -445,6 +497,15 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
                 </ContextMenuSubContent>
               </ContextMenuSub>
             )}
+            <ContextMenuSeparator />
+          </>
+        )}
+
+        {canRemoveSilence && onRemoveSilence && (
+          <>
+            <ContextMenuItem onClick={onRemoveSilence} disabled={isRemovingSilence}>
+              {isRemovingSilence ? 'Detecting Silence...' : 'Remove Silence...'}
+            </ContextMenuItem>
             <ContextMenuSeparator />
           </>
         )}
@@ -489,6 +550,24 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
             ) : (
               <ContextMenuItem onClick={onOpenCaptionDialog}>{captionActionLabel}</ContextMenuItem>
             )}
+            <ContextMenuSeparator />
+          </>
+        )}
+
+        {canExtractEmbeddedSubtitles && onExtractEmbeddedSubtitles && (
+          <>
+            <ContextMenuItem onClick={onExtractEmbeddedSubtitles}>
+              Extract Embedded Subtitles…
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        )}
+
+        {canConsolidateCaptionsToSegment && onConsolidateCaptionsToSegment && (
+          <>
+            <ContextMenuItem onClick={onConsolidateCaptionsToSegment}>
+              Consolidate Captions to Segment
+            </ContextMenuItem>
             <ContextMenuSeparator />
           </>
         )}

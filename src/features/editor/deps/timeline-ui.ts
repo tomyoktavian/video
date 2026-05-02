@@ -8,4 +8,6 @@ export {
   BentoLayoutDialog,
   KeyframeGraphPanel,
   TrackCaptionsDialog,
+  ReverseConformDialog,
+  SilenceRemovalDialog,
 } from './timeline-contract'

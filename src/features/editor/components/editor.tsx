@@ -9,7 +9,12 @@ import { PropertiesSidebar } from './properties-sidebar'
 import { PreviewArea } from './preview-area'
 import { InteractionLockRegion } from './interaction-lock-region'
 import { AudioMeterPanel } from './audio-meter-panel'
-import { Timeline, BentoLayoutDialog } from '@/features/editor/deps/timeline-ui'
+import {
+  Timeline,
+  BentoLayoutDialog,
+  ReverseConformDialog,
+  SilenceRemovalDialog,
+} from '@/features/editor/deps/timeline-ui'
 import { toast } from 'sonner'
 import { useEditorHotkeys } from '@/features/editor/hooks/use-editor-hotkeys'
 import { useAutoSave } from '../hooks/use-auto-save'
@@ -44,6 +49,12 @@ import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
 import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
 import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
 import { useTrackCaptionsDialogStore } from '@/app/state/track-captions-dialog'
+import {
+  importEmbeddedSubtitleTrackPickerHost,
+  importSubtitleScanProgressDialog,
+  useEmbeddedSubtitlePickerStore,
+  useSubtitleScanProgressStore,
+} from '@/features/editor/deps/media-library'
 const logger = createLogger('Editor')
 const EDITOR_PROJECT_ROUTE_ID = '/editor/$projectId'
 const LazyExportDialog = lazy(() =>
@@ -104,6 +115,16 @@ const LazyExportLauncherDialog = lazy(() =>
 const LazyTrackCaptionsDialog = lazy(() =>
   import('@/features/editor/deps/timeline-ui').then((module) => ({
     default: module.TrackCaptionsDialog,
+  })),
+)
+const LazyEmbeddedSubtitleTrackPickerHost = lazy(() =>
+  importEmbeddedSubtitleTrackPickerHost().then((module) => ({
+    default: module.EmbeddedSubtitleTrackPickerHost,
+  })),
+)
+const LazySubtitleScanProgressDialog = lazy(() =>
+  importSubtitleScanProgressDialog().then((module) => ({
+    default: module.SubtitleScanProgressDialog,
   })),
 )
 type ExportLauncherSelection =
@@ -214,6 +235,8 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
     (s) => s.isOpen && s.projectId === projectId,
   )
+  const embeddedSubtitlePickerOpen = useEmbeddedSubtitlePickerStore((s) => s.media !== null)
+  const subtitleScanProgressOpen = useSubtitleScanProgressStore((s) => s.open)
 
   return (
     <>
@@ -260,6 +283,16 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
       {trackCaptionsDialogOpen && (
         <Suspense fallback={null}>
           <LazyTrackCaptionsDialog />
+        </Suspense>
+      )}
+      {embeddedSubtitlePickerOpen && (
+        <Suspense fallback={null}>
+          <LazyEmbeddedSubtitleTrackPickerHost />
+        </Suspense>
+      )}
+      {subtitleScanProgressOpen && (
+        <Suspense fallback={null}>
+          <LazySubtitleScanProgressDialog />
         </Suspense>
       )}
     </>
@@ -703,6 +736,8 @@ export const LoadedEditor = memo(function LoadedEditor({
 
       {/* Bento Layout Preset Dialog */}
       <BentoLayoutDialog />
+      <ReverseConformDialog />
+      <SilenceRemovalDialog />
     </div>
   )
 })

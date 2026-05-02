@@ -318,6 +318,7 @@ export function useClientRender(): UseClientRenderReturn {
         const exportMode = isExtendedSettings(settings) ? settings.mode : 'video'
         const videoContainer = isExtendedSettings(settings) ? settings.videoContainer : undefined
         const audioContainer = isExtendedSettings(settings) ? settings.audioContainer : undefined
+        const embedSubtitles = isExtendedSettings(settings) ? settings.embedSubtitles : false
         const renderWholeProject = isExtendedSettings(settings)
           ? settings.renderWholeProject
           : false
@@ -339,6 +340,7 @@ export function useClientRender(): UseClientRenderReturn {
           projectResolution: `${projectWidth}x${projectHeight}`,
           videoContainer,
           audioContainer,
+          embedSubtitles,
           projectId: currentProject?.id,
           compositionId: scopedCompositionId,
         })
@@ -358,6 +360,7 @@ export function useClientRender(): UseClientRenderReturn {
 
         // Set the mode
         clientSettings.mode = exportMode
+        clientSettings.embedSubtitles = exportMode === 'video' ? embedSubtitles : false
 
         // Validate settings (skip video codec validation for audio-only)
         if (exportMode === 'video') {
