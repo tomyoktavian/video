@@ -77,6 +77,8 @@ export type SpoilerStage =
   | 'applying-highlights'
   | 'generating-narration'
   | 'transcribing-narration'
+  | 'planning-episodes'
+  | 'generating-episode-narration'
   | 'inserting-subtitles'
   | 'inserting-cover'
   | 'syncing-durations'
@@ -121,6 +123,67 @@ export interface SpoilerInput {
    * Clamped to `[1, 20]`.
    */
   wordsPerCaption?: number
+  /**
+   * Episode mode — when true the spoiler is split into multiple compound
+   * clips (one per episode), each with optional TTS opening/closing lines
+   * synthesized at boundaries. The cover image is generated once and reused
+   * across all episodes. When undefined or false, the pipeline produces a
+   * single compound (legacy behavior).
+   */
+  episodeMode?: boolean
+  /** Min seconds per episode. Clamped to `[60, 119]`. Default 60. */
+  episodeMinDurationSec?: number
+  /** Max seconds per episode. Clamped to `[61, 120]`. Default 120. */
+  episodeMaxDurationSec?: number
+  /**
+   * Template for the TTS line spoken at the start of episodes 2..N.
+   * Episode 1 has no opening (only closing). Substitutions:
+   *   `{n}`    — current episode number (1-based)
+   *   `{next}` — next episode number
+   * Default: "Selamat datang di episode {n}".
+   */
+  episodeOpeningTemplate?: string
+  /**
+   * Template for the TTS line spoken at the end of episodes 1..N-1. The last
+   * episode has no closing (only opening). Same placeholders as
+   * {@link episodeOpeningTemplate}.
+   * Default: "Lanjutkan nonton di episode {next}".
+   */
+  episodeClosingTemplate?: string
+  /**
+   * Target number of episodes. When provided, the planner partitions segments
+   * into exactly this many buckets (subject to a minimum of 1 and capped at
+   * `segments.length`). When omitted, the greedy bin-packer derives the count
+   * from {@link episodeMinDurationSec} / {@link episodeMaxDurationSec}.
+   */
+  episodeCount?: number
+  /**
+   * AI-generated cover image, already persisted to the media library by the
+   * dialog before the pipeline starts. When set, the orchestrator skips
+   * `renderCoverFrame()` and reuses this asset across every produced
+   * compound (per-episode boundaries + the full-duration spoiler compound).
+   */
+  preGeneratedCover?: {
+    mediaId: string
+    src: string
+    width: number
+    height: number
+  }
+  /**
+   * Cover preroll duration in seconds. Used both for the legacy `insertCover`
+   * call on the full / non-episode compound AND, in episode mode, as a
+   * leading silent window where the cover image plays alone BEFORE the
+   * opening narration starts. Clamped to `[0.5, 5]`. Default 4.
+   */
+  coverDurationSec?: number
+  /**
+   * Client-side playback rate applied to the opening/closing TTS audio items
+   * in episode mode. This is a guaranteed mechanism that does not depend on
+   * the TTS provider honoring the server-side `speed` parameter — the
+   * AudioItem's `speed` field directly accelerates timeline playback. Range
+   * `[0.5, 4.0]`. Default 1.0 (no extra speed-up beyond TTS).
+   */
+  boundaryNarrationSpeed?: number
 }
 
 /**
@@ -129,10 +192,15 @@ export interface SpoilerInput {
  * section context menu without losing the script + segment selection +
  * cover. The presence of this field is the discriminator that distinguishes
  * spoiler-generated compounds from manually-created pre-comps.
+ *
+ * Schema is structurally permissive: v1 records validate as v2 with all v2
+ * fields undefined, so downstream consumers (regen-narration, compositions
+ * panel UI) read shared v1 fields without narrowing. New v2 fields are
+ * populated only when the compound was produced in Episode Mode.
  */
 export interface SpoilerCompositionMetadata {
-  /** Schema version. Bump when the shape changes incompatibly. */
-  version: 1
+  /** Schema version. `1` = single-compound; `2` = adds episode fields. */
+  version: 1 | 2
   /** Epoch ms — bumped on initial generation and every regen. */
   generatedAt: number
   /** Per-segment data needed to rebuild narration in place. */
@@ -162,6 +230,29 @@ export interface SpoilerCompositionMetadata {
   includeOriginalAudio: boolean
   /** Source film media id. */
   sourceFilmMediaId: string
+  // ── v2 fields (Episode Mode) — undefined when version === 1 ────────────
+  /** 1-based episode index. `null` on v2 records that aren't part of an episode group. */
+  episodeIndex?: number | null
+  /** Total episodes produced in the same Episode Mode run. */
+  episodeTotal?: number | null
+  /**
+   * Correlation id shared by all sibling episodes of the same Episode Mode
+   * run. Lets the UI group / re-stitch episodes later.
+   */
+  parentSpoilerRunId?: string | null
+  /** AudioItem id of the synthesized opening narration (null if no opening). */
+  episodeOpeningNarrationItemId?: string | null
+  /** AudioItem id of the synthesized closing narration (null if no closing). */
+  episodeClosingNarrationItemId?: string | null
+  /** Substituted opening text (e.g. "Selamat datang di episode 2"). */
+  episodeOpeningText?: string | null
+  /** Substituted closing text (e.g. "Lanjutkan nonton di episode 3"). */
+  episodeClosingText?: string | null
+  /**
+   * Media id of the cover image asset shared across all sibling episodes.
+   * Same id appears on every episode in the run.
+   */
+  coverFrameMediaId?: string | null
 }
 
 export interface SpoilerSegmentMetadata {

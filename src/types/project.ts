@@ -282,7 +282,8 @@ export interface ProjectTimeline {
     backgroundColor?: string
     busAudioEq?: AudioEqSettings
     spoilerMetadata?: {
-      version: 1
+      /** `1` = single-compound (legacy); `2` = Episode Mode. */
+      version: 1 | 2
       generatedAt: number
       segments: ReadonlyArray<{
         index: number
@@ -302,6 +303,15 @@ export interface ProjectTimeline {
       generateCover: boolean
       includeOriginalAudio: boolean
       sourceFilmMediaId: string
+      // ── v2 (Episode Mode) — undefined on v1 records ─────────────────────
+      episodeIndex?: number | null
+      episodeTotal?: number | null
+      parentSpoilerRunId?: string | null
+      episodeOpeningNarrationItemId?: string | null
+      episodeClosingNarrationItemId?: string | null
+      episodeOpeningText?: string | null
+      episodeClosingText?: string | null
+      coverFrameMediaId?: string | null
     }
   }>
   // Keyframe animations

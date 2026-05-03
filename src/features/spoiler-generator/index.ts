@@ -18,6 +18,10 @@ export { DEFAULT_SCRIPT_WRITER_SYSTEM_PROMPT } from './system-prompt'
 export { runSpoilerPipeline } from './spoiler-orchestrator'
 export { SpoilerGeneratorDialog } from './components/spoiler-generator-dialog'
 export { RegenerateNarrationDialog } from './components/regenerate-narration-dialog'
+export { planEpisodes } from './episode-planner'
+export type { EpisodeBucket } from './episode-planner'
+export { generateEpisodeNarrations, substituteTemplate } from './episode-narration-generator'
+export type { EpisodeNarrationLine } from './episode-narration-generator'
 
 export type {
   ScriptWriterRequest,

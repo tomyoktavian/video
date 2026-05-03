@@ -46,6 +46,7 @@ import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-di
 import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
 import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
 import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
+import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
 import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
 import { useProjectMediaMatchDialogStore } from '@/app/state/project-media-match-dialog'
 import { useTrackCaptionsDialogStore } from '@/app/state/track-captions-dialog'
@@ -105,6 +106,11 @@ const LazyRegenerateNarrationDialog = lazy(() =>
 const LazyAddCoverDialog = lazy(() =>
   import('@/features/editor/deps/compound-cover').then((module) => ({
     default: module.AddCoverDialog,
+  })),
+)
+const LazySetCoverToCompoundsDialog = lazy(() =>
+  import('@/features/editor/deps/compound-cover').then((module) => ({
+    default: module.SetCoverToCompoundsDialog,
   })),
 )
 const LazyExportLauncherDialog = lazy(() =>
@@ -230,6 +236,7 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   const highlightFinderDialogOpen = useHighlightFinderDialogStore((s) => s.isOpen)
   const spoilerGeneratorDialogOpen = useSpoilerGeneratorDialogStore((s) => s.isOpen)
   const addCoverDialogOpen = useAddCoverDialogStore((s) => s.isOpen)
+  const setCoverToCompoundsDialogOpen = useSetCoverToCompoundsDialogStore((s) => s.isOpen)
   const regenerateNarrationDialogOpen = useRegenerateNarrationDialogStore((s) => s.isOpen)
   const trackCaptionsDialogOpen = useTrackCaptionsDialogStore((s) => s.isOpen)
   const projectMediaMatchDialogOpen = useProjectMediaMatchDialogStore(
@@ -273,6 +280,11 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
       {addCoverDialogOpen && (
         <Suspense fallback={null}>
           <LazyAddCoverDialog />
+        </Suspense>
+      )}
+      {setCoverToCompoundsDialogOpen && (
+        <Suspense fallback={null}>
+          <LazySetCoverToCompoundsDialog />
         </Suspense>
       )}
       {regenerateNarrationDialogOpen && (

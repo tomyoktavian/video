@@ -18,10 +18,17 @@
  */
 
 import type { MediaTranscriptSegment, MediaMetadata } from '@/types/storage'
-import type { AudioItem, TextItem, TimelineItem, TimelineTrack, VideoItem } from '@/types/timeline'
-
+import type {
+  AudioItem,
+  ImageItem,
+  TextItem,
+  TimelineItem,
+  TimelineTrack,
+  VideoItem,
+} from '@/types/timeline'
 import {
   DEFAULT_TRACK_HEIGHT,
+  type SubComposition,
   addItems,
   createPreComp,
   useCompositionsStore,
@@ -38,6 +45,90 @@ import type { SpoilerCompositionMetadata, TtsBatchOutcome } from './types'
  * podcast / video-essay editors for "narration-over-bed" mixing.
  */
 const ORIGINAL_AUDIO_DUCK_DB = -18
+
+/** Default font size (px) for the boundary "Episode {n}" text overlay. */
+const BOUNDARY_TEXT_FONT_SIZE = 96
+
+/**
+ * Episode-mode assembly context. When present, {@link assembleSingleCompound}
+ * builds a compound with up to four ordered phases:
+ *
+ *   1. **Cover preroll** (frames 0..coverFrames) — only when
+ *      `coverDurationSec > 0`. Cover image alone on the boundary track. No
+ *      audio, no narration, no body. The cover image is added either by this
+ *      stage (when `cover` is provided) or post-assembly via the
+ *      orchestrator's `patchAllEpisodesWithCover` (when the cover is rendered
+ *      from episode 1 after Pass 1).
+ *   2. **Opening narration window** (after preroll, if `includesOpening`) —
+ *      a B-roll video taken from this episode's first segment, the opening
+ *      narration audio (with `narrationSpeed` applied client-side), and the
+ *      "Episode {n}" text overlay.
+ *   3. **Body** — script segments, each with its own narration + (optional)
+ *      original-audio + subtitles.
+ *   4. **Closing narration window** (if `includesClosing`) — B-roll
+ *      continuation taken from the source film just after the last segment's
+ *      `sourceEndSec`, the closing narration audio (with `narrationSpeed`
+ *      applied), and the "Lanjutkan ke episode {next}" text overlay.
+ *
+ * The compound is registered directly to the compositions store via
+ * `registerCompoundOnly` (no wrapper item is placed on the root timeline)
+ * and `SpoilerCompositionMetadata` is stamped with v2 fields.
+ */
+export interface EpisodeAssemblyContext {
+  /** 1-based episode number. */
+  episodeIndex: number
+  /** Total episodes produced in this run. */
+  episodeTotal: number
+  /** Correlation id shared by all sibling episodes. */
+  parentSpoilerRunId: string
+  /** Whether this episode begins with a TTS opening line. */
+  includesOpening: boolean
+  /** Whether this episode ends with a TTS closing line. */
+  includesClosing: boolean
+  /** Already-substituted opening text. Null when {@link includesOpening} is false. */
+  openingText: string | null
+  /** Already-substituted closing text. Null when {@link includesClosing} is false. */
+  closingText: string | null
+  /** Synthesized opening TTS audio (already imported into the media library). */
+  openingNarration: BoundaryNarrationMedia | null
+  /** Synthesized closing TTS audio (already imported into the media library). */
+  closingNarration: BoundaryNarrationMedia | null
+  /**
+   * Cover image asset shared across all sibling episodes. When null, no
+   * cover image is rendered during the cover preroll window — the
+   * orchestrator may still patch one in afterwards via
+   * `patchAllEpisodesWithCover`. The opening narration window NEVER carries
+   * a cover image (B-roll plays under the narration instead).
+   */
+  cover: BoundaryCoverMedia | null
+  /**
+   * Length of the cover preroll window in seconds. When > 0 and either
+   * `cover` is present or the orchestrator plans to patch one in,
+   * frames 0..coverFrames hold the cover image alone. Set to 0 to skip the
+   * preroll (opening narration starts at frame 0).
+   */
+  coverDurationSec: number
+  /**
+   * Client-side playback rate applied to the opening + closing narration
+   * audio items via the AudioItem `speed` field. Range typically `[0.5, 4]`.
+   * `1` = no change. Higher values shorten the boundary window proportionally
+   * because the audio is consumed faster on the timeline.
+   */
+  narrationSpeed: number
+}
+
+export interface BoundaryNarrationMedia {
+  mediaId: string
+  blobUrl: string
+  durationSec: number
+}
+
+export interface BoundaryCoverMedia {
+  frameMediaId: string
+  frameSrc: string
+  frameWidth: number
+  frameHeight: number
+}
 
 export interface AssembleSegmentInput {
   /** 0-based ordering. */
@@ -119,6 +210,13 @@ export interface AssembleSingleCompoundParams {
     generateCover: boolean
     includeOriginalAudio: boolean
   }
+  /**
+   * When provided, the compound is built in Episode Mode: opening/closing
+   * boundary tracks + items are emitted, and the compound is registered to
+   * the compositions store directly (no root-timeline wrapper). The metadata
+   * stamp uses v2 with episode-specific fields populated.
+   */
+  episode?: EpisodeAssemblyContext
 }
 
 export interface AssembleSingleCompoundResult {
@@ -150,9 +248,14 @@ interface BuiltItems {
   videoItems: VideoItem[]
   audioItems: AudioItem[]
   textItems: TextItem[]
+  imageItems: ImageItem[]
   totalDurationFrames: number
   newTracks: TimelineTrack[]
   segmentIds: BuiltSegmentIds[]
+  /** AudioItem id of the opening narration. Null when not in episode mode or no opening. */
+  openingNarrationItemId: string | null
+  /** AudioItem id of the closing narration. Null when not in episode mode or no closing. */
+  closingNarrationItemId: string | null
 }
 
 function buildBaseTrack(name: string, order: number, kind: 'video' | 'audio'): TimelineTrack {
@@ -169,6 +272,29 @@ function buildBaseTrack(name: string, order: number, kind: 'video' | 'audio'): T
     order,
     items: [],
   }
+}
+
+/**
+ * Clamp the boundary narration speed multiplier to a sensible range. `1`
+ * (no scaling) is used when the value is missing or invalid.
+ */
+function clampNarrationSpeed(value: number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 1
+  return Math.max(0.25, Math.min(4, value))
+}
+
+/**
+ * Compute the cover preroll length (in project frames) from the episode
+ * context. Returns `0` when the episode has no preroll requirement
+ * (`coverDurationSec <= 0` or no episode context). Used to reserve a leading
+ * window where the cover image plays alone before the opening narration.
+ */
+function computeCoverPrerollFrames(params: AssembleSingleCompoundParams): number {
+  const ep = params.episode
+  if (!ep) return 0
+  const sec = ep.coverDurationSec
+  if (typeof sec !== 'number' || !Number.isFinite(sec) || sec <= 0) return 0
+  return Math.max(1, Math.round(sec * params.fps))
 }
 
 function buildSubtitleItemsForSegment(params: {
@@ -270,8 +396,17 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
   const itemsState = useItemsStore.getState()
   const minOrder = itemsState.tracks.reduce((acc, t) => Math.min(acc, t.order), 0)
   const baseOrder = minOrder - 1
-  // Order: subtitles (top) → video → original audio → narration (bottom).
+  // Order: subtitles (top) → boundary → video → original audio → narration (bottom).
+  // Boundary sits above video so its image+text overlay during opening/closing
+  // windows draws on top when both are present (segments are absent in those
+  // windows but the layering is consistent).
   const videoTrack = buildBaseTrack('Spoiler Video', baseOrder, 'video')
+  const coverPrerollFrames = computeCoverPrerollFrames(params)
+  const needBoundaryTrack =
+    !!params.episode?.includesOpening || !!params.episode?.includesClosing || coverPrerollFrames > 0
+  const boundaryTrack = needBoundaryTrack
+    ? buildBaseTrack('Spoiler Boundary', baseOrder - 0.05, 'video')
+    : null
   const originalAudioTrack = includeOriginalAudio
     ? buildBaseTrack('Spoiler Original Audio', baseOrder + 0.1, 'audio')
     : null
@@ -283,9 +418,146 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
   const videoItems: VideoItem[] = []
   const audioItems: AudioItem[] = []
   const textItems: TextItem[] = []
+  const imageItems: ImageItem[] = []
   const segmentIds: BuiltSegmentIds[] = []
 
   let cursorFrame = 0
+  let openingNarrationItemId: string | null = null
+  let closingNarrationItemId: string | null = null
+
+  // Phase 1 — Cover preroll. Cover image alone, no audio or B-roll.
+  // The image is added here when `cover` is already known (preGeneratedCover
+  // path). When `cover === null`, the orchestrator will patch one in via
+  // `patchAllEpisodesWithCover` after rendering from episode 1.
+  if (coverPrerollFrames > 0 && boundaryTrack) {
+    if (params.episode?.cover) {
+      imageItems.push(
+        buildBoundaryCoverImage({
+          trackId: boundaryTrack.id,
+          from: cursorFrame,
+          durationInFrames: coverPrerollFrames,
+          cover: params.episode.cover,
+          label: `Episode ${params.episode.episodeIndex} Cover`,
+        }),
+      )
+    }
+    cursorFrame += coverPrerollFrames
+  }
+
+  // Phase 2 — Opening narration window. Random B-roll from the first body
+  // segment plays under the narration audio + "Episode {n}" text overlay.
+  // The boundary audio item carries `speed=narrationSpeed` so the user can
+  // accelerate slow TTS output without depending on the provider honoring
+  // the server-side speed parameter.
+  if (params.episode?.includesOpening && params.episode.openingNarration && boundaryTrack) {
+    const opening = params.episode.openingNarration
+    const narrationSpeed = clampNarrationSpeed(params.episode.narrationSpeed)
+    const openingDurationFrames = Math.max(
+      1,
+      Math.round((opening.durationSec / narrationSpeed) * params.fps),
+    )
+    const text = params.episode.openingText ?? `Episode ${params.episode.episodeIndex}`
+
+    const firstSegment = params.segments[0]
+    if (firstSegment) {
+      const brollSourceStartSec = Math.max(
+        0,
+        Math.min(params.sourceMedia.duration - 0.001, firstSegment.sourceStartSec),
+      )
+      const brollSourceEndSec = Math.min(
+        params.sourceMedia.duration,
+        brollSourceStartSec + openingDurationFrames / params.fps,
+      )
+      const brollSourceStartNative = Math.max(
+        0,
+        Math.min(sourceDurationFrames - 1, Math.round(brollSourceStartSec * sourceFps)),
+      )
+      const brollSourceEndNative = Math.max(
+        brollSourceStartNative + 1,
+        Math.min(sourceDurationFrames, Math.round(brollSourceEndSec * sourceFps)),
+      )
+
+      videoItems.push({
+        id: crypto.randomUUID(),
+        type: 'video',
+        trackId: videoTrack.id,
+        from: cursorFrame,
+        durationInFrames: openingDurationFrames,
+        label: `Episode ${params.episode.episodeIndex} Opening B-roll`,
+        mediaId: params.sourceMediaId,
+        originId: crypto.randomUUID(),
+        src: params.sourceBlobUrl,
+        thumbnailUrl: params.sourceThumbnailUrl || undefined,
+        sourceStart: brollSourceStartNative,
+        sourceEnd: brollSourceEndNative,
+        sourceDuration: sourceDurationFrames,
+        sourceFps,
+        trimStart: 0,
+        trimEnd: 0,
+        sourceWidth: params.sourceMedia.width || undefined,
+        sourceHeight: params.sourceMedia.height || undefined,
+        transform: { x: 0, y: 0, rotation: 0, opacity: 1 },
+        embeddedAudioMuted: true,
+      } as VideoItem)
+
+      if (originalAudioTrack) {
+        audioItems.push({
+          id: crypto.randomUUID(),
+          type: 'audio',
+          trackId: originalAudioTrack.id,
+          from: cursorFrame,
+          durationInFrames: openingDurationFrames,
+          label: `Episode ${params.episode.episodeIndex} Opening Audio Bed`,
+          mediaId: params.sourceMediaId,
+          originId: crypto.randomUUID(),
+          src: params.sourceBlobUrl,
+          sourceStart: brollSourceStartNative,
+          sourceEnd: brollSourceEndNative,
+          sourceDuration: sourceDurationFrames,
+          sourceFps,
+          trimStart: 0,
+          trimEnd: 0,
+          volume: ORIGINAL_AUDIO_DUCK_DB,
+        } as AudioItem)
+      }
+    }
+
+    textItems.push(
+      buildBoundaryText({
+        trackId: boundaryTrack.id,
+        from: cursorFrame,
+        durationInFrames: openingDurationFrames,
+        text,
+        canvasWidth: params.canvasWidth,
+        canvasHeight: params.canvasHeight,
+      }),
+    )
+
+    const openingNaturalFrames = Math.max(1, Math.round(opening.durationSec * params.fps))
+    const openingAudio: AudioItem = {
+      id: crypto.randomUUID(),
+      type: 'audio',
+      trackId: narrationTrack.id,
+      from: cursorFrame,
+      durationInFrames: openingDurationFrames,
+      speed: narrationSpeed,
+      label: `Episode ${params.episode.episodeIndex} Opening`,
+      mediaId: opening.mediaId,
+      originId: crypto.randomUUID(),
+      src: opening.blobUrl,
+      sourceStart: 0,
+      sourceEnd: openingNaturalFrames,
+      sourceDuration: openingNaturalFrames,
+      sourceFps: params.fps,
+      trimStart: 0,
+      trimEnd: 0,
+    } as AudioItem
+    audioItems.push(openingAudio)
+    openingNarrationItemId = openingAudio.id
+
+    cursorFrame += openingDurationFrames
+  }
+
   for (const segment of params.segments) {
     const segmentDurationFrames = Math.max(1, Math.round(segment.finalDurationSec * params.fps))
 
@@ -417,8 +689,127 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
     cursorFrame += segmentDurationFrames
   }
 
+  // Episode closing boundary — placed after the last segment. The closing
+  // window keeps a video clip playing under the CTA text so the viewer
+  // doesn't see a blank screen + cover image while the narrator says
+  // "lanjutkan nonton di episode {next}". The clip is a B-roll continuation
+  // taken from the source film immediately after the last body segment's
+  // `sourceEndSec`. When the source film is too short to cover the full
+  // closing duration, we clamp to whatever source frames remain.
+  if (params.episode?.includesClosing && params.episode.closingNarration && boundaryTrack) {
+    const closing = params.episode.closingNarration
+    const narrationSpeed = clampNarrationSpeed(params.episode.narrationSpeed)
+    const closingDurationFrames = Math.max(
+      1,
+      Math.round((closing.durationSec / narrationSpeed) * params.fps),
+    )
+    const text = params.episode.closingText ?? `Episode ${params.episode.episodeIndex + 1}`
+
+    const lastSegment = params.segments[params.segments.length - 1]
+    if (lastSegment) {
+      const closingSourceStartSec = Math.max(
+        0,
+        Math.min(params.sourceMedia.duration - 0.001, lastSegment.sourceEndSec),
+      )
+      const closingSourceEndSec = Math.min(
+        params.sourceMedia.duration,
+        closingSourceStartSec + closingDurationFrames / params.fps,
+      )
+      const closingSourceStartNative = Math.max(
+        0,
+        Math.min(sourceDurationFrames - 1, Math.round(closingSourceStartSec * sourceFps)),
+      )
+      const closingSourceEndNative = Math.max(
+        closingSourceStartNative + 1,
+        Math.min(sourceDurationFrames, Math.round(closingSourceEndSec * sourceFps)),
+      )
+
+      const closingVideoItem: VideoItem = {
+        id: crypto.randomUUID(),
+        type: 'video',
+        trackId: videoTrack.id,
+        from: cursorFrame,
+        durationInFrames: closingDurationFrames,
+        label: `Episode ${params.episode.episodeIndex} Closing B-roll`,
+        mediaId: params.sourceMediaId,
+        originId: crypto.randomUUID(),
+        src: params.sourceBlobUrl,
+        thumbnailUrl: params.sourceThumbnailUrl || undefined,
+        sourceStart: closingSourceStartNative,
+        sourceEnd: closingSourceEndNative,
+        sourceDuration: sourceDurationFrames,
+        sourceFps,
+        trimStart: 0,
+        trimEnd: 0,
+        sourceWidth: params.sourceMedia.width || undefined,
+        sourceHeight: params.sourceMedia.height || undefined,
+        transform: { x: 0, y: 0, rotation: 0, opacity: 1 },
+        embeddedAudioMuted: true,
+      } as VideoItem
+      videoItems.push(closingVideoItem)
+
+      if (originalAudioTrack) {
+        const closingOriginalAudio: AudioItem = {
+          id: crypto.randomUUID(),
+          type: 'audio',
+          trackId: originalAudioTrack.id,
+          from: cursorFrame,
+          durationInFrames: closingDurationFrames,
+          label: `Episode ${params.episode.episodeIndex} Closing Audio Bed`,
+          mediaId: params.sourceMediaId,
+          originId: crypto.randomUUID(),
+          src: params.sourceBlobUrl,
+          sourceStart: closingSourceStartNative,
+          sourceEnd: closingSourceEndNative,
+          sourceDuration: sourceDurationFrames,
+          sourceFps,
+          trimStart: 0,
+          trimEnd: 0,
+          volume: ORIGINAL_AUDIO_DUCK_DB,
+        } as AudioItem
+        audioItems.push(closingOriginalAudio)
+      }
+    }
+
+    textItems.push(
+      buildBoundaryText({
+        trackId: boundaryTrack.id,
+        from: cursorFrame,
+        durationInFrames: closingDurationFrames,
+        text,
+        canvasWidth: params.canvasWidth,
+        canvasHeight: params.canvasHeight,
+      }),
+    )
+
+    const closingNaturalFrames = Math.max(1, Math.round(closing.durationSec * params.fps))
+    const closingAudio: AudioItem = {
+      id: crypto.randomUUID(),
+      type: 'audio',
+      trackId: narrationTrack.id,
+      from: cursorFrame,
+      durationInFrames: closingDurationFrames,
+      speed: narrationSpeed,
+      label: `Episode ${params.episode.episodeIndex} Closing`,
+      mediaId: closing.mediaId,
+      originId: crypto.randomUUID(),
+      src: closing.blobUrl,
+      sourceStart: 0,
+      sourceEnd: closingNaturalFrames,
+      sourceDuration: closingNaturalFrames,
+      sourceFps: params.fps,
+      trimStart: 0,
+      trimEnd: 0,
+    } as AudioItem
+    audioItems.push(closingAudio)
+    closingNarrationItemId = closingAudio.id
+
+    cursorFrame += closingDurationFrames
+  }
+
   const newTracks: TimelineTrack[] = []
   if (subtitleTrack) newTracks.push(subtitleTrack)
+  if (boundaryTrack) newTracks.push(boundaryTrack)
   newTracks.push(videoTrack)
   if (originalAudioTrack) newTracks.push(originalAudioTrack)
   newTracks.push(narrationTrack)
@@ -427,10 +818,67 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
     videoItems,
     audioItems,
     textItems,
+    imageItems,
     totalDurationFrames: cursorFrame,
     newTracks,
     segmentIds,
+    openingNarrationItemId,
+    closingNarrationItemId,
   }
+}
+
+function buildBoundaryCoverImage(params: {
+  trackId: string
+  from: number
+  durationInFrames: number
+  cover: BoundaryCoverMedia
+  label: string
+}): ImageItem {
+  return {
+    id: crypto.randomUUID(),
+    type: 'image',
+    trackId: params.trackId,
+    from: params.from,
+    durationInFrames: params.durationInFrames,
+    label: params.label,
+    mediaId: params.cover.frameMediaId,
+    originId: crypto.randomUUID(),
+    src: params.cover.frameSrc,
+    sourceWidth: params.cover.frameWidth,
+    sourceHeight: params.cover.frameHeight,
+    transform: { x: 0, y: 0, rotation: 0, opacity: 1 },
+  } as ImageItem
+}
+
+function buildBoundaryText(params: {
+  trackId: string
+  from: number
+  durationInFrames: number
+  text: string
+  canvasWidth: number
+  canvasHeight: number
+}): TextItem {
+  return {
+    id: crypto.randomUUID(),
+    type: 'text',
+    trackId: params.trackId,
+    from: params.from,
+    durationInFrames: params.durationInFrames,
+    label: params.text,
+    text: params.text,
+    fontSize: BOUNDARY_TEXT_FONT_SIZE,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    backgroundColor: 'transparent',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    textShadow: {
+      offsetX: 0,
+      offsetY: 4,
+      blur: 16,
+      color: 'rgba(0, 0, 0, 0.85)',
+    },
+  } as TextItem
 }
 
 /**
@@ -438,6 +886,11 @@ function buildItemsForAssembly(params: AssembleSingleCompoundParams): BuiltItems
  *
  * The function mutates the timeline via the public action API so all changes
  * are reversible (Ctrl+Z). The newly created compound's id is returned.
+ *
+ * In Episode Mode (when `params.episode` is provided) the compound is
+ * registered directly to the compositions store WITHOUT placing a wrapper
+ * item on the root timeline — the user picks each episode out of the
+ * compositions panel manually.
  */
 export function assembleSingleCompound(
   params: AssembleSingleCompoundParams,
@@ -447,30 +900,53 @@ export function assembleSingleCompound(
   }
 
   const built = buildItemsForAssembly(params)
+  const allItems: TimelineItem[] = [
+    ...built.videoItems,
+    ...built.audioItems,
+    ...built.textItems,
+    ...built.imageItems,
+  ]
 
-  // Add the new tracks first via the items-store directly (bypasses execute()
-  // wrapper because tracks alone are not a user-facing action and addItems
-  // immediately follows). We keep all mutations within the same call stack
-  // so undo collapses cleanly into a small number of steps.
-  const itemsStore = useItemsStore.getState()
-  const nextTracks = [...itemsStore.tracks, ...built.newTracks]
-  itemsStore.setTracks(nextTracks)
-  useTimelineSettingsStore.getState().markDirty()
+  let compositionId: string | null = null
 
-  const allItems: TimelineItem[] = [...built.videoItems, ...built.audioItems, ...built.textItems]
-  addItems(allItems)
+  if (params.episode) {
+    // Episode mode: build a self-contained SubComposition with items already
+    // anchored relative to its own t=0, then register without root placement.
+    const episodeItems = allItems.map((item) => ({ ...item }))
+    const registered = registerCompoundOnly({
+      name: params.name,
+      items: episodeItems,
+      tracks: built.newTracks,
+      fps: params.fps,
+      width: params.canvasWidth,
+      height: params.canvasHeight,
+      durationInFrames: built.totalDurationFrames,
+    })
+    compositionId = registered.id
+  } else {
+    // Single-mode (legacy): mount tracks/items on root then promote into a
+    // pre-comp via the existing action so we get the wrapper item too.
+    const itemsStore = useItemsStore.getState()
+    const nextTracks = [...itemsStore.tracks, ...built.newTracks]
+    itemsStore.setTracks(nextTracks)
+    useTimelineSettingsStore.getState().markDirty()
 
-  const itemIds = allItems.map((i) => i.id)
-  const comp = createPreComp(params.name, itemIds)
+    addItems(allItems)
+
+    const itemIds = allItems.map((i) => i.id)
+    const comp = createPreComp(params.name, itemIds)
+    compositionId = comp?.id ?? null
+  }
 
   // Stamp generation metadata onto the resulting SubComposition so the
   // "Regenerate Narration…" right-click flow can locate items in place.
-  // We update outside `createPreComp` because that helper doesn't accept
-  // metadata; the extra setState is fine since regen is rare.
-  if (comp?.id && params.metadataContext) {
+  // The metadata schema bumps to v2 when episode context is present so
+  // future episode-aware regen flows can read sibling correlation.
+  if (compositionId && params.metadataContext) {
     const ctx = params.metadataContext
+    const ep = params.episode
     const metadata: SpoilerCompositionMetadata = {
-      version: 1,
+      version: ep ? 2 : 1,
       generatedAt: Date.now(),
       segments: built.segmentIds.map((s) => ({
         index: s.index,
@@ -491,15 +967,62 @@ export function assembleSingleCompound(
       generateCover: ctx.generateCover,
       includeOriginalAudio: ctx.includeOriginalAudio,
       sourceFilmMediaId: params.sourceMediaId,
+      ...(ep
+        ? {
+            episodeIndex: ep.episodeIndex,
+            episodeTotal: ep.episodeTotal,
+            parentSpoilerRunId: ep.parentSpoilerRunId,
+            episodeOpeningNarrationItemId: built.openingNarrationItemId,
+            episodeClosingNarrationItemId: built.closingNarrationItemId,
+            episodeOpeningText: ep.openingText,
+            episodeClosingText: ep.closingText,
+            coverFrameMediaId: ep.cover?.frameMediaId ?? null,
+          }
+        : {}),
     }
-    useCompositionsStore.getState().updateComposition(comp.id, { spoilerMetadata: metadata })
+    useCompositionsStore.getState().updateComposition(compositionId, { spoilerMetadata: metadata })
   }
 
   return {
-    compositionId: comp?.id ?? null,
+    compositionId,
     totalDurationFrames: built.totalDurationFrames,
     segmentsPlaced: built.videoItems.length,
   }
+}
+
+/**
+ * Register a fully-built compound directly to the compositions store, with
+ * NO wrapper item placed on the root timeline. Used by Episode Mode where
+ * the user pulls episodes out of the compositions panel manually. Mirrors
+ * the SubComposition-construction segment of `composition-actions.createPreComp`.
+ */
+function registerCompoundOnly(args: {
+  name: string
+  items: TimelineItem[]
+  tracks: TimelineTrack[]
+  fps: number
+  width: number
+  height: number
+  durationInFrames: number
+  backgroundColor?: string
+}): { id: string } {
+  const id = crypto.randomUUID()
+  const subComp: SubComposition = {
+    id,
+    name: args.name,
+    items: args.items,
+    tracks: args.tracks,
+    transitions: [],
+    keyframes: [],
+    fps: args.fps,
+    width: args.width,
+    height: args.height,
+    durationInFrames: args.durationInFrames,
+    ...(args.backgroundColor ? { backgroundColor: args.backgroundColor } : {}),
+  }
+  useCompositionsStore.getState().addComposition(subComp)
+  useTimelineSettingsStore.getState().markDirty()
+  return { id }
 }
 
 export { buildSubtitleItemsForSegment as buildSpoilerSubtitleItemsForSegment }

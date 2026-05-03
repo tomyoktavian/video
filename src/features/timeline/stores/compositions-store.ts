@@ -10,9 +10,14 @@ import { normalizeSubComposition } from '../utils/sub-composition-normalizer'
  * Defined as a structural type here (rather than imported from the feature)
  * to keep this store dependency-free; the spoiler-generator feature owns the
  * authoritative `SpoilerCompositionMetadata` type and casts on read.
+ *
+ * Structurally permissive between schema versions: v1 records satisfy the
+ * v2 shape with all v2 fields undefined, so the consumers in this store do
+ * not have to narrow on `version`.
  */
 export interface SubCompositionSpoilerMetadata {
-  version: 1
+  /** `1` = single-compound (legacy); `2` = Episode Mode (adds episode fields). */
+  version: 1 | 2
   generatedAt: number
   segments: ReadonlyArray<{
     index: number
@@ -44,6 +49,15 @@ export interface SubCompositionSpoilerMetadata {
   generateCover: boolean
   includeOriginalAudio: boolean
   sourceFilmMediaId: string
+  // ── v2 (Episode Mode) — populated only when this compound is one of N episodes.
+  episodeIndex?: number | null
+  episodeTotal?: number | null
+  parentSpoilerRunId?: string | null
+  episodeOpeningNarrationItemId?: string | null
+  episodeClosingNarrationItemId?: string | null
+  episodeOpeningText?: string | null
+  episodeClosingText?: string | null
+  coverFrameMediaId?: string | null
 }
 
 /**

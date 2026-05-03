@@ -12,6 +12,7 @@ export {
   isCaptionMakerConfigured,
   isVisionAnalyzerConfigured,
   isTextToSpeechConfigured,
+  isImageGeneratorConfigured,
   isAllCustomAiConfigured,
 } from '@/features/settings/stores/custom-ai-store'
 

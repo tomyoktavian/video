@@ -12,8 +12,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Download,
-  Image as ImageIcon,
   Info,
+  Layers,
   ListPlus,
   Loader2,
   Pause,
@@ -24,6 +24,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import { ImageLightbox } from '@/components/ui/image-lightbox'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -34,7 +40,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
 import { getMusicgenModelDefinition } from '@/shared/utils/musicgen-models'
@@ -55,19 +60,13 @@ import {
   useCustomAiStore,
 } from '@/features/editor/deps/settings-contract'
 import {
-  buildFreeformImagePrompt,
-  generateCoverImage,
-  POSTER_CAST_OPTIONS,
-  POSTER_MOOD_OPTIONS,
-  POSTER_QUALITY_OPTIONS,
-  POSTER_STYLE_OPTIONS,
-  resolvePosterQualityApiValue,
-  type PosterCastValue,
-  type PosterMoodValue,
-  type PosterQualityValue,
-  type PosterStyleValue,
+  AiImagePanel,
+  pickAspectRatioFromCanvas,
+  resolveImageDimensions,
+  type AiImageGeneratedPayload,
 } from '@/features/editor/deps/compound-cover'
 import { useProjectStore } from '@/features/editor/deps/projects'
+import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import {
   findCompatibleTrackForItemType,
@@ -122,114 +121,6 @@ const DEFAULT_MUSIC_PROMPT = MUSIC_PROMPT_PRESETS[0]!.prompt
 
 const DEFAULT_IMAGE_PROMPT =
   'A cinematic photograph of a lone figure walking down a rain-soaked alleyway at night, neon signs reflecting in the puddles.'
-
-interface AspectRatioOption {
-  value: string
-  label: string
-  /** width:height pair used to draw the icon. `null` = "None / Default". */
-  dim: { w: number; h: number } | null
-}
-
-const ASPECT_RATIO_OPTIONS: ReadonlyArray<AspectRatioOption> = [
-  { value: 'auto', label: 'None (Default)', dim: null },
-  { value: '1:1', label: '1:1 (Square)', dim: { w: 1, h: 1 } },
-  { value: '3:2', label: '3:2 (Landscape)', dim: { w: 3, h: 2 } },
-  { value: '2:3', label: '2:3 (Portrait)', dim: { w: 2, h: 3 } },
-  { value: '3:4', label: '3:4 (Portrait)', dim: { w: 3, h: 4 } },
-  { value: '4:1', label: '4:1 (Panoramic)', dim: { w: 4, h: 1 } },
-  { value: '4:3', label: '4:3 (Landscape)', dim: { w: 4, h: 3 } },
-  { value: '4:5', label: '4:5 (Portrait)', dim: { w: 4, h: 5 } },
-  { value: '5:4', label: '5:4 (Landscape)', dim: { w: 5, h: 4 } },
-  { value: '8:1', label: '8:1 (Super-wide)', dim: { w: 8, h: 1 } },
-  { value: '9:16', label: '9:16 (Portrait)', dim: { w: 9, h: 16 } },
-  { value: '16:9', label: '16:9 (Landscape)', dim: { w: 16, h: 9 } },
-  { value: '21:9', label: '21:9 (Ultra-wide)', dim: { w: 21, h: 9 } },
-]
-
-function pickAspectRatioFromCanvas(width: number, height: number): string {
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return 'auto'
-  }
-  const target = width / height
-  let bestValue = 'auto'
-  let bestDelta = Infinity
-  for (const opt of ASPECT_RATIO_OPTIONS) {
-    if (!opt.dim) continue
-    const ratio = opt.dim.w / opt.dim.h
-    const delta = Math.abs(ratio - target) / target
-    if (delta < bestDelta) {
-      bestDelta = delta
-      bestValue = opt.value
-    }
-  }
-  return bestDelta <= 0.03 ? bestValue : 'auto'
-}
-
-function AspectRatioIcon({ dim }: { dim: AspectRatioOption['dim'] }) {
-  const BOX_W = 22
-  const BOX_H = 14
-  const PADDING = 1.5
-  const innerW = BOX_W - 2 * PADDING
-  const innerH = BOX_H - 2 * PADDING
-  let rectW = innerW
-  let rectH = innerH
-  if (dim) {
-    const ratio = dim.w / dim.h
-    if (ratio >= innerW / innerH) {
-      rectW = innerW
-      rectH = innerW / ratio
-    } else {
-      rectH = innerH
-      rectW = innerH * ratio
-    }
-  }
-  return (
-    <svg
-      width={BOX_W}
-      height={BOX_H}
-      viewBox={`0 0 ${BOX_W} ${BOX_H}`}
-      className="shrink-0 text-muted-foreground"
-      aria-hidden
-    >
-      <rect
-        x={(BOX_W - rectW) / 2}
-        y={(BOX_H - rectH) / 2}
-        width={rectW}
-        height={rectH}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1}
-        rx={1}
-        {...(dim ? {} : { strokeDasharray: '2 2' })}
-      />
-    </svg>
-  )
-}
-
-/**
- * Resolve API call dimensions from the user's chosen aspect ratio. Falls back
- * to the project canvas when the user picks "None (Default)". The image
- * adapter's `resolveSize` snaps these to one of OpenAI's three supported
- * sizes, so we only need to convey the ratio correctly.
- */
-function resolveImageDimensions(
-  aspect: string,
-  projectWidth: number,
-  projectHeight: number,
-): { width: number; height: number } {
-  const opt = ASPECT_RATIO_OPTIONS.find((o) => o.value === aspect)
-  if (!opt || !opt.dim) {
-    return {
-      width: projectWidth > 0 ? projectWidth : 1024,
-      height: projectHeight > 0 ? projectHeight : 1024,
-    }
-  }
-  const ratio = opt.dim.w / opt.dim.h
-  const baseSize = Math.max(projectWidth, projectHeight, 1024)
-  return ratio >= 1
-    ? { width: baseSize, height: Math.round(baseSize / ratio) }
-    : { width: Math.round(baseSize * ratio), height: baseSize }
-}
 
 interface ImageGeneration {
   id: string
@@ -464,6 +355,8 @@ export const AiPanel = memo(function AiPanel() {
   const [musicSectionOpen, setMusicSectionOpen] = useState(true)
 
   // --- Image Generation state (Custom AI Image Generator). ---
+  // Form state (prompt, aspect, taste fields) lives inside <AiImagePanel>;
+  // this section only owns the multi-shot history list of saved generations.
   const projectMetadata = useProjectStore((s) => s.currentProject?.metadata)
   const projectCanvasWidth = projectMetadata?.width ?? 1024
   const projectCanvasHeight = projectMetadata?.height ?? 1024
@@ -471,24 +364,9 @@ export const AiPanel = memo(function AiPanel() {
     () => pickAspectRatioFromCanvas(projectCanvasWidth, projectCanvasHeight),
     [projectCanvasWidth, projectCanvasHeight],
   )
-  const [imagePrompt, setImagePrompt] = useState(DEFAULT_IMAGE_PROMPT)
-  const [imageAspect, setImageAspect] = useState<string>(defaultImageAspect)
-  const [imageCast, setImageCast] = useState<PosterCastValue>('auto')
-  const [imageStyle, setImageStyle] = useState<PosterStyleValue>('photoreal')
-  const [imageMood, setImageMood] = useState<PosterMoodValue>('auto')
-  const [imageQuality, setImageQuality] = useState<PosterQualityValue>('auto')
-  const [imageCustomNotes, setImageCustomNotes] = useState('')
-  const [isImageGenerating, setIsImageGenerating] = useState(false)
-  const [imageError, setImageError] = useState<string | null>(null)
   const [imageGenerations, setImageGenerations] = useState<ImageGeneration[]>([])
+  const [imageSaveError, setImageSaveError] = useState<string | null>(null)
   const [imageSectionOpen, setImageSectionOpen] = useState(true)
-  const imageAbortRef = useRef<AbortController | null>(null)
-  // Keep the aspect dropdown in sync if the project canvas changes while the
-  // panel is mounted (rare — only when the user resizes the canvas — but
-  // keeps the default sensible when they do).
-  useEffect(() => {
-    setImageAspect((prev) => (prev === '' ? defaultImageAspect : prev))
-  }, [defaultImageAspect])
 
   const musicAbortRef = useRef<AbortController | null>(null)
   const generationUrlsRef = useRef<Set<string>>(new Set())
@@ -509,8 +387,6 @@ export const AiPanel = memo(function AiPanel() {
     return () => {
       musicAbortRef.current?.abort()
       musicAbortRef.current = null
-      imageAbortRef.current?.abort()
-      imageAbortRef.current = null
       for (const url of urls) {
         URL.revokeObjectURL(url)
       }
@@ -767,115 +643,54 @@ export const AiPanel = memo(function AiPanel() {
     musicAbortRef.current?.abort()
   }, [])
 
-  const handleImageGenerate = useCallback(async () => {
-    if (!currentProjectId) {
-      setImageError('Open a project before generating images.')
-      return
-    }
-    if (!isCustomImageGeneratorConfigured) {
-      setImageError(
-        'Configure base URL, API key, and model in Settings → AI → Custom AI → Image Generator.',
+  // Push a freshly-generated image (from AiImagePanel) onto the multi-shot
+  // history. The panel owns generation + abort lifecycle; we only persist
+  // the metadata + own a copy of the object URL so the row's lightbox keeps
+  // working after the panel re-renders.
+  const handleImageGenerated = useCallback(
+    (payload: AiImageGeneratedPayload) => {
+      const dims = resolveImageDimensions(
+        payload.form.aspect,
+        projectCanvasWidth,
+        projectCanvasHeight,
       )
-      return
-    }
-    const trimmedPrompt = imagePrompt.trim()
-    if (trimmedPrompt.length === 0) {
-      setImageError('Enter a prompt describing the image to generate.')
-      return
-    }
-
-    setImageError(null)
-    setIsImageGenerating(true)
-    const controller = new AbortController()
-    imageAbortRef.current = controller
-    try {
-      const aspectLabel = imageAspect === 'auto' ? '' : imageAspect
-      const finalPrompt = buildFreeformImagePrompt({
-        prompt: trimmedPrompt,
-        aspectLabel,
-        cast: imageCast,
-        style: imageStyle,
-        mood: imageMood,
-        customNotes: imageCustomNotes,
-      })
-      const dims = resolveImageDimensions(imageAspect, projectCanvasWidth, projectCanvasHeight)
-      const apiQuality = resolvePosterQualityApiValue(imageQuality)
-      const result = await generateCoverImage({
-        prompt: finalPrompt,
-        width: dims.width,
-        height: dims.height,
-        ...(apiQuality ? { quality: apiQuality } : {}),
-        signal: controller.signal,
-      })
-      if (controller.signal.aborted) return
-
-      const objectUrl = URL.createObjectURL(result.blob)
+      const objectUrl = URL.createObjectURL(payload.blob)
       generationUrlsRef.current.add(objectUrl)
-      // Preserve the original mime / extension so the saved media file matches
-      // what the API actually returned (PNG by default, sometimes WebP/JPEG).
-      const mime = result.mimeType || result.blob.type || 'image/png'
+      const mime = payload.blob.type || 'image/png'
       const subtype = mime.split('/')[1]?.split(';')[0] ?? 'png'
       const extension = subtype === 'jpeg' ? 'jpg' : subtype
       const fileName = `ai-image-${Date.now()}.${extension}`
-      const file = new File([result.blob], fileName, { type: mime })
-      const aspectOpt = ASPECT_RATIO_OPTIONS.find((o) => o.value === imageAspect)
+      const file = new File([payload.blob], fileName, { type: mime })
       const aspectLabelForRow =
-        imageAspect === 'auto'
+        payload.form.aspect === 'auto'
           ? `canvas (${projectCanvasWidth}×${projectCanvasHeight})`
-          : (aspectOpt?.label ?? imageAspect)
+          : payload.aspectLabel
 
       const generation: ImageGeneration = {
         id: crypto.randomUUID(),
         file,
-        blob: result.blob,
+        blob: payload.blob,
         objectUrl,
-        byteSize: result.blob.size,
-        width: result.width || dims.width,
-        height: result.height || dims.height,
-        promptSnippet: trimmedPrompt,
-        details: `${aspectLabelForRow} / ${result.width || dims.width}×${result.height || dims.height} / ${formatBytes(result.blob.size)}`,
+        byteSize: payload.blob.size,
+        width: payload.width || dims.width,
+        height: payload.height || dims.height,
+        promptSnippet: payload.form.prompt || payload.resolvedPrompt,
+        details: `${aspectLabelForRow} / ${payload.width || dims.width}×${payload.height || dims.height} / ${formatBytes(payload.blob.size)}`,
         tags: [
           'ai-generated',
           'image-generator',
           'image-generator:freeform',
           `image-generator-model:${imageGeneratorConfig.model}`,
-          ...(imageCast !== 'auto' ? [`image-generator-cast:${imageCast}`] : []),
-          ...(imageStyle !== 'auto' ? [`image-generator-style:${imageStyle}`] : []),
+          ...(payload.form.cast !== 'auto' ? [`image-generator-cast:${payload.form.cast}`] : []),
+          ...(payload.form.style !== 'auto' ? [`image-generator-style:${payload.form.style}`] : []),
         ],
         savedMediaId: null,
         saving: false,
       }
       setImageGenerations((prev) => [generation, ...prev])
-    } catch (generationError) {
-      if (generationError instanceof DOMException && generationError.name === 'AbortError') {
-        // Intentional cancellation — no error shown.
-      } else {
-        setImageError(
-          generationError instanceof Error ? generationError.message : 'Failed to generate image.',
-        )
-      }
-    } finally {
-      imageAbortRef.current = null
-      setIsImageGenerating(false)
-    }
-  }, [
-    currentProjectId,
-    imageAspect,
-    imageCast,
-    imageCustomNotes,
-    imageGeneratorConfig.model,
-    imageMood,
-    imagePrompt,
-    imageQuality,
-    imageStyle,
-    isCustomImageGeneratorConfigured,
-    projectCanvasHeight,
-    projectCanvasWidth,
-  ])
-
-  const handleImageCancel = useCallback(() => {
-    imageAbortRef.current?.abort()
-  }, [])
+    },
+    [imageGeneratorConfig.model, projectCanvasHeight, projectCanvasWidth],
+  )
 
   const saveImageGeneration = useCallback(
     async (generation: ImageGeneration): Promise<MediaMetadata | null> => {
@@ -910,7 +725,7 @@ export const AiPanel = memo(function AiPanel() {
         )
         return media
       } catch (saveError) {
-        setImageError(
+        setImageSaveError(
           saveError instanceof Error
             ? saveError.message
             : 'Failed to save image to the media library.',
@@ -965,7 +780,6 @@ export const AiPanel = memo(function AiPanel() {
     [imageGenerations],
   )
   const anyImageSaving = imageGenerations.some((g) => g.saving)
-  const trimmedImagePrompt = imagePrompt.trim()
 
   const updateGenerationInList = useCallback(
     (
@@ -1530,188 +1344,24 @@ export const AiPanel = memo(function AiPanel() {
           </div>
 
           <CollapsibleContent className="space-y-4 pt-3">
-            {isCustomImageGeneratorConfigured ? (
-              <p className="text-[11px] text-muted-foreground">
-                Using model{' '}
-                <span className="font-medium text-foreground">{imageGeneratorConfig.model}</span>{' '}
-                via {imageGeneratorConfig.baseUrl}.
-              </p>
-            ) : (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
-                Configure base URL, API key, and model in Settings → AI → Custom AI → Image
-                Generator before generating.
-              </div>
-            )}
+            <AiImagePanel
+              width={projectCanvasWidth}
+              height={projectCanvasHeight}
+              promptMode="single"
+              variant="sidebar"
+              imageGeneratorConfigured={isCustomImageGeneratorConfigured}
+              imageGeneratorModel={imageGeneratorConfig.model}
+              imageGeneratorBaseUrl={imageGeneratorConfig.baseUrl}
+              initialValues={{ prompt: DEFAULT_IMAGE_PROMPT, aspect: defaultImageAspect }}
+              hideCurrentPreview
+              generateLabel="Generate Image"
+              disabled={!currentProjectId}
+              onImageGenerated={handleImageGenerated}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="ai-image-prompt">Prompt</Label>
-              <Textarea
-                id="ai-image-prompt"
-                value={imagePrompt}
-                onChange={(event) => setImagePrompt(event.target.value)}
-                placeholder="Describe the image you want to generate..."
-                className="min-h-24 resize-y bg-secondary/30 text-sm"
-                disabled={isImageGenerating}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Aspect ratio</Label>
-                <Select
-                  value={imageAspect}
-                  onValueChange={setImageAspect}
-                  disabled={isImageGenerating}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ASPECT_RATIO_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        <div className="flex items-center gap-2">
-                          <AspectRatioIcon dim={opt.dim} />
-                          <span>{opt.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Cast</Label>
-                <Select
-                  value={imageCast}
-                  onValueChange={(value) => setImageCast(value as PosterCastValue)}
-                  disabled={isImageGenerating}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POSTER_CAST_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Visual style</Label>
-                <Select
-                  value={imageStyle}
-                  onValueChange={(value) => setImageStyle(value as PosterStyleValue)}
-                  disabled={isImageGenerating}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POSTER_STYLE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Mood / genre</Label>
-                <Select
-                  value={imageMood}
-                  onValueChange={(value) => setImageMood(value as PosterMoodValue)}
-                  disabled={isImageGenerating}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POSTER_MOOD_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Image quality</Label>
-              <Select
-                value={imageQuality}
-                onValueChange={(value) => setImageQuality(value as PosterQualityValue)}
-                disabled={isImageGenerating}
-              >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSTER_QUALITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Honoured by OpenAI <code className="text-foreground">gpt-image-1</code>. Most other
-                providers (Gemini, Grok) silently ignore this.
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Custom notes (optional)</Label>
-              <Input
-                value={imageCustomNotes}
-                onChange={(event) => setImageCustomNotes(event.target.value)}
-                placeholder='e.g. "1990s Jakarta", "rain-soaked alley"'
-                className="h-8 text-xs"
-                disabled={isImageGenerating}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              {isImageGenerating && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleImageCancel}
-                  className="h-7 shrink-0 gap-1.5 text-muted-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Cancel
-                </Button>
-              )}
-              <Button
-                size="sm"
-                onClick={() => {
-                  void handleImageGenerate()
-                }}
-                disabled={
-                  isImageGenerating ||
-                  !trimmedImagePrompt ||
-                  !currentProjectId ||
-                  !isCustomImageGeneratorConfigured
-                }
-                className="h-7 shrink-0 gap-1.5"
-              >
-                {isImageGenerating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <ImageIcon className="h-3.5 w-3.5" />
-                )}
-                {isImageGenerating ? 'Generating...' : 'Generate Image'}
-              </Button>
-            </div>
-
-            {imageError && (
+            {imageSaveError && (
               <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                {imageError}
+                {imageSaveError}
               </div>
             )}
 
@@ -1863,6 +1513,29 @@ const ImageGenerationRow = memo(function ImageGenerationRow({
   onRemove: (id: string) => void
 }) {
   const saved = generation.savedMediaId !== null
+
+  const handleSetCoverToCompounds = useCallback(() => {
+    if (generation.savedMediaId) {
+      useSetCoverToCompoundsDialogStore.getState().open({
+        kind: 'media-library',
+        mediaId: generation.savedMediaId,
+        src: generation.objectUrl,
+        width: generation.width,
+        height: generation.height,
+      })
+      return
+    }
+    useSetCoverToCompoundsDialogStore.getState().open({
+      kind: 'unsaved-blob',
+      file: generation.file,
+      objectUrl: generation.objectUrl,
+      width: generation.width,
+      height: generation.height,
+      tags: ['ai-generated', 'compound-cover:bulk', ...generation.tags],
+      promptSnippet: generation.promptSnippet,
+    })
+  }, [generation])
+
   return (
     <div
       className={cn(
@@ -1889,29 +1562,41 @@ const ImageGenerationRow = memo(function ImageGenerationRow({
         )}
       </div>
 
-      <ImageLightbox
-        src={generation.objectUrl}
-        alt={generation.promptSnippet}
-        downloadFilename={generation.file.name}
-      >
-        <button
-          type="button"
-          className="flex w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border border-border bg-black"
-          aria-label="Open image preview"
-        >
-          <img
-            src={generation.objectUrl}
-            alt="Generated image"
-            className="block max-h-[240px] max-w-full"
-            style={{
-              aspectRatio:
-                generation.width > 0 && generation.height > 0
-                  ? `${generation.width} / ${generation.height}`
-                  : undefined,
-            }}
-          />
-        </button>
-      </ImageLightbox>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div>
+            <ImageLightbox
+              src={generation.objectUrl}
+              alt={generation.promptSnippet}
+              downloadFilename={generation.file.name}
+            >
+              <button
+                type="button"
+                className="flex w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border border-border bg-black"
+                aria-label="Open image preview"
+              >
+                <img
+                  src={generation.objectUrl}
+                  alt="Generated image"
+                  className="block max-h-[240px] max-w-full"
+                  style={{
+                    aspectRatio:
+                      generation.width > 0 && generation.height > 0
+                        ? `${generation.width} / ${generation.height}`
+                        : undefined,
+                  }}
+                />
+              </button>
+            </ImageLightbox>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={handleSetCoverToCompounds}>
+            <Layers className="w-3 h-3 mr-2" />
+            Set cover to compound…
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       <div className="flex flex-wrap items-center gap-1.5">
         {saved ? (

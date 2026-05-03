@@ -4,6 +4,8 @@
  */
 
 export { AddCoverDialog } from '@/features/compound-cover/components/add-cover-dialog'
+export { SetCoverToCompoundsDialog } from '@/features/compound-cover/components/set-cover-to-compounds-dialog'
+export { COVER_DURATION_BOUNDS } from '@/features/compound-cover/constants'
 export {
   DEFAULT_COVER_FINDER_SYSTEM_PROMPT,
   DEFAULT_POSTER_PROMPT_SYSTEM_PROMPT,
@@ -20,3 +22,19 @@ export {
 } from '@/features/compound-cover/system-prompt'
 export { generateCoverImage } from '@/features/compound-cover/openai-compatible-image-adapter'
 export type { CoverImageRequest, CoverImageResponse } from '@/features/compound-cover/types'
+
+export { AiImagePanel } from '@/features/compound-cover/components/ai-image-panel'
+export type {
+  AiImagePanelProps,
+  AiImagePanelDurationField,
+  AiImagePromptMode,
+  AiImageFormSnapshot,
+  AiImageGeneratedPayload,
+} from '@/features/compound-cover/components/ai-image-panel'
+export {
+  ASPECT_RATIO_OPTIONS,
+  pickAspectRatioFromCanvas,
+  resolveImageDimensions,
+  type AspectRatioOption,
+} from '@/features/compound-cover/components/aspect-ratio-options'
+export { AspectRatioIcon } from '@/features/compound-cover/components/aspect-ratio-icon'

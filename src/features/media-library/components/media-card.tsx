@@ -53,6 +53,7 @@ import { TranscribeDialog, type TranscribeDialogValues } from './transcribe-dial
 import { AnalyzeDialog, type AnalyzeDialogValues } from './analyze-dialog'
 import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
 import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
+import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
 import {
   useItemsStore,
   useTimelineStore,
@@ -111,6 +112,7 @@ interface MediaCardActionMenuProps {
   isTaggable: boolean
   isTagging: boolean
   isVideoMedia: boolean
+  isImageMedia: boolean
   /**
    * True only when ALL three Custom AI modules (Caption Maker + Vision
    * Analyzer + Text to Speech) are configured. Spoiler Generator is
@@ -127,6 +129,7 @@ interface MediaCardActionMenuProps {
   onAnalyzeWithAI: (event: React.MouseEvent) => void
   onGenerateSpoiler?: (event: React.MouseEvent) => void
   onAddToTimeline?: (event: React.MouseEvent) => void
+  onSetCoverToCompounds?: (event: React.MouseEvent) => void
   onDelete: (event: React.MouseEvent) => void
 }
 
@@ -237,6 +240,7 @@ function MediaCardActionMenuItems({
   isTaggable,
   isTagging,
   isVideoMedia,
+  isImageMedia,
   spoilerCustomAiReady,
   onGenerateProxy,
   onDeleteProxy,
@@ -247,6 +251,7 @@ function MediaCardActionMenuItems({
   onAnalyzeWithAI,
   onGenerateSpoiler,
   onAddToTimeline,
+  onSetCoverToCompounds,
   onDelete,
 }: MediaCardActionMenuProps) {
   const hasBrokenGroup = isBroken && !!onRelink
@@ -387,6 +392,18 @@ function MediaCardActionMenuItems({
             {spoilerLabel}
           </ContextMenuItem>
         )}
+      </Fragment>,
+    )
+  }
+
+  if (isImageMedia && !isBroken && onSetCoverToCompounds) {
+    groups.push(
+      <Fragment key="compound-cover">
+        <ContextMenuLabel>Compound</ContextMenuLabel>
+        <ContextMenuItem onClick={onSetCoverToCompounds}>
+          <Sparkles className="w-3 h-3 mr-2" />
+          Set cover to compound…
+        </ContextMenuItem>
       </Fragment>,
     )
   }
@@ -883,6 +900,28 @@ export const MediaCard = memo(function MediaCard({
       e.stopPropagation()
       if (!media) return
       useSpoilerGeneratorDialogStore.getState().open(media.id)
+    },
+    [media],
+  )
+
+  const handleSetCoverToCompounds = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!media) return
+      void (async () => {
+        try {
+          const src = await resolveMediaUrl(media.id)
+          useSetCoverToCompoundsDialogStore.getState().open({
+            kind: 'media-library',
+            mediaId: media.id,
+            src,
+            width: media.width,
+            height: media.height,
+          })
+        } catch {
+          // Intentionally swallow — the dialog cannot open without a resolvable URL.
+        }
+      })()
     },
     [media],
   )
@@ -1483,6 +1522,7 @@ export const MediaCard = memo(function MediaCard({
       isTaggable={isTaggable}
       isTagging={isTagging}
       isVideoMedia={mediaType === 'video'}
+      isImageMedia={mediaType === 'image'}
       spoilerCustomAiReady={spoilerCustomAiReady}
       onGenerateProxy={handleGenerateProxy}
       onDeleteProxy={handleDeleteProxy}
@@ -1493,6 +1533,9 @@ export const MediaCard = memo(function MediaCard({
       onAnalyzeWithAI={handleAnalyzeWithAI}
       onGenerateSpoiler={!isOnline && media ? handleGenerateSpoiler : undefined}
       onAddToTimeline={!isOnline && media ? handleAddToTimeline : undefined}
+      onSetCoverToCompounds={
+        !isOnline && media && mediaType === 'image' ? handleSetCoverToCompounds : undefined
+      }
       onDelete={handleDelete}
     />
   )

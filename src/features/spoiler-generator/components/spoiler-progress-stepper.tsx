@@ -13,6 +13,8 @@ const STAGE_ORDER: StageDef[] = [
   { stage: 'resolving-highlights', label: 'Pick Clips' },
   { stage: 'generating-narration', label: 'Generate Narration' },
   { stage: 'transcribing-narration', label: 'Subtitle Timing' },
+  { stage: 'planning-episodes', label: 'Plan Episodes' },
+  { stage: 'generating-episode-narration', label: 'Episode Openings/Closings' },
   { stage: 'syncing-durations', label: 'Sync Durations' },
   { stage: 'applying-highlights', label: 'Build Compound' },
   { stage: 'inserting-subtitles', label: 'Subtitles' },
@@ -23,6 +25,7 @@ export interface SpoilerProgressStepperProps {
   currentStage: SpoilerStage
   showSubtitles: boolean
   showCover: boolean
+  episodeMode: boolean
 }
 
 function stageIndex(stage: SpoilerStage): number {
@@ -35,6 +38,8 @@ export function SpoilerProgressStepper(props: SpoilerProgressStepperProps) {
     if (stage.stage === 'transcribing-narration' && !props.showSubtitles) return false
     if (stage.stage === 'inserting-subtitles' && !props.showSubtitles) return false
     if (stage.stage === 'inserting-cover' && !props.showCover) return false
+    if (stage.stage === 'planning-episodes' && !props.episodeMode) return false
+    if (stage.stage === 'generating-episode-narration' && !props.episodeMode) return false
     return true
   })
 
