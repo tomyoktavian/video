@@ -23,6 +23,7 @@ All notable changes to FreeCut. Weekly CalVer: `YYYY.MM.DD` = the Monday of the 
 - Reverse playback for video, audio, and GPU effects
 - Reverse-aware exports preserve the reversed audio and video
 - Detect and remove silence across selected clips with preview overlay and ripple delete
+- Fit Tracks button and Shift+H shortcut to collapse all timeline tracks to minimum height
 
 ### Fixed
 - Effect drag overlays no longer stick or hijack adjacent lanes

@@ -27,6 +27,7 @@ import {
   Activity,
   Link2,
   Trash2,
+  ChevronsDownUp,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -53,6 +54,7 @@ import {
   ZOOM_MAX,
   SLIP_SLIDE_TOOLS_ENABLED,
 } from '../constants'
+import { fitAllTracksToMinHeight } from '../stores/actions/track-actions'
 import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
 import { useResolvedHotkeys } from '@/features/timeline/deps/settings'
 import { createDefaultClassicTracks } from '../utils/classic-tracks'
@@ -326,6 +328,10 @@ export const TimelineHeader = memo(function TimelineHeader({
   const handleRedo = () => {
     useTimelineStore.temporal.getState().redo()
   }
+
+  const handleFitTracks = useCallback(() => {
+    fitAllTracksToMinHeight()
+  }, [])
 
   return (
     <div
@@ -688,6 +694,17 @@ export const TimelineHeader = memo(function TimelineHeader({
           data-tooltip="Zoom to Fit (Z)"
         >
           <Maximize2 className="w-3.5 h-3.5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          style={btnSize}
+          onClick={handleFitTracks}
+          aria-label="Fit tracks to minimum height"
+          data-tooltip={`Fit Tracks (${formatHotkeyBinding(hotkeys.FIT_TRACKS)})`}
+        >
+          <ChevronsDownUp className="w-3.5 h-3.5" />
         </Button>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
   splitAllItemsAtFrame,
   unlinkItems,
 } from '../../stores/actions/item-actions'
+import { fitAllTracksToMinHeight } from '../../stores/actions/track-actions'
 import type { TransformProperties } from '@/types/transform'
 import type { TimelineShortcutCallbacks } from '../use-timeline-shortcuts'
 import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
@@ -350,6 +351,16 @@ export function useEditingShortcuts(callbacks: TimelineShortcutCallbacks) {
     },
     HOTKEY_OPTIONS,
     [toggleLinkedSelectionEnabled],
+  )
+
+  useHotkeys(
+    hotkeys.FIT_TRACKS,
+    (event) => {
+      event.preventDefault()
+      fitAllTracksToMinHeight()
+    },
+    HOTKEY_OPTIONS,
+    [],
   )
 
   const splitAtPlayhead = useCallback((event: KeyboardEvent) => {

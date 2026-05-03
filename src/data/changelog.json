@@ -51,6 +51,9 @@
         },
         {
           "title": "Detect and remove silence across selected clips with preview overlay and ripple delete"
+        },
+        {
+          "title": "Fit Tracks button and Shift+H shortcut to collapse all timeline tracks to minimum height"
         }
       ],
       "fixed": [

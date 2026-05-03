@@ -70,6 +70,7 @@ export const HOTKEYS = {
   TOGGLE_SNAP: 's',
   TOGGLE_CANVAS_SNAP: 'shift+s',
   OPEN_SCENE_BROWSER: 'mod+shift+f',
+  FIT_TRACKS: 'shift+h',
 
   // Markers
   ADD_MARKER: 'm',
@@ -339,6 +340,7 @@ export const HOTKEY_DESCRIPTIONS: Record<HotkeyKey, string> = {
   TOGGLE_SNAP: 'Toggle snap',
   TOGGLE_CANVAS_SNAP: 'Toggle canvas (gizmo) snap',
   OPEN_SCENE_BROWSER: 'Open Scene Browser (search AI captions)',
+  FIT_TRACKS: 'Fit timeline tracks to minimum height',
 
   // Markers
   ADD_MARKER: 'Add marker at playhead',
