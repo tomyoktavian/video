@@ -51,6 +51,7 @@ describe('workspace-fs custom-ai', () => {
       },
       textToSpeech: DEFAULT_CUSTOM_AI_CONFIG.textToSpeech,
       visionAnalyzer: DEFAULT_CUSTOM_AI_CONFIG.visionAnalyzer,
+      imageGenerator: DEFAULT_CUSTOM_AI_CONFIG.imageGenerator,
     })
 
     const text = await readFileText(root, 'custom-ai.json')
@@ -85,6 +86,7 @@ describe('workspace-fs custom-ai', () => {
       },
       textToSpeech: DEFAULT_CUSTOM_AI_CONFIG.textToSpeech,
       visionAnalyzer: DEFAULT_CUSTOM_AI_CONFIG.visionAnalyzer,
+      imageGenerator: DEFAULT_CUSTOM_AI_CONFIG.imageGenerator,
     })
 
     const reloaded = await loadCustomAiConfig()
@@ -111,6 +113,7 @@ describe('workspace-fs custom-ai', () => {
         lastLoadedAt: 1700000001000,
       },
       visionAnalyzer: DEFAULT_CUSTOM_AI_CONFIG.visionAnalyzer,
+      imageGenerator: DEFAULT_CUSTOM_AI_CONFIG.imageGenerator,
     })
 
     const text = await readFileText(root, 'custom-ai.json')
@@ -173,9 +176,11 @@ describe('workspace-fs custom-ai', () => {
         highlightFinderPrompt: 'Pick only highlights that include laughter.',
         coverFinderPrompt: '',
         scriptWriterPrompt: '',
+        posterPromptSystemPrompt: '',
         cachedModels: [{ id: 'gpt-4o-mini' }, { id: 'gpt-4o', label: 'GPT-4o' }],
         lastLoadedAt: 1700000002000,
       },
+      imageGenerator: DEFAULT_CUSTOM_AI_CONFIG.imageGenerator,
     })
 
     const reloaded = await loadCustomAiConfig()

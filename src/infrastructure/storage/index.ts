@@ -125,7 +125,7 @@ export {
   type SavedScenes,
 } from '@/infrastructure/storage/workspace-fs/scenes'
 
-// Custom AI workspace-scoped config (Caption Maker, Text to Speech, Vision Analyzer)
+// Custom AI workspace-scoped config (Caption Maker, Text to Speech, Vision Analyzer, Image Generator)
 export {
   loadCustomAiConfig,
   saveCustomAiConfig,
@@ -134,6 +134,7 @@ export {
   type CustomAiCaptionMakerConfig,
   type CustomAiTextToSpeechConfig,
   type CustomAiVisionAnalyzerConfig,
+  type CustomAiImageGeneratorConfig,
   type CustomAiCachedModel,
 } from '@/infrastructure/storage/workspace-fs/custom-ai'
 

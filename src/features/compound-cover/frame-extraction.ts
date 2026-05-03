@@ -435,28 +435,84 @@ export function revokeFilmstripFrames(frames: readonly FilmstripFrame[]): void {
   }
 }
 
+export interface PersistCoverFrameOptions {
+  /**
+   * Short label baked into the filename and added as a media-library tag so
+   * the user can find these images later (e.g. `'frame'`, `'ai'`). Defaults
+   * to `'frame'` for backwards compatibility.
+   */
+  source?: 'frame' | 'ai'
+  /**
+   * Extra tags merged on top of the default tags (`'compound-cover'` plus
+   * the source-specific tag). Useful for callers that want to surface the
+   * image in custom views.
+   */
+  extraTags?: readonly string[]
+}
+
+const MIME_TO_EXTENSION: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+  'image/gif': 'gif',
+}
+
+function resolveImageExtension(mimeType: string, fallback: string): string {
+  const normalized = mimeType.toLowerCase().split(';')[0]?.trim() ?? ''
+  return MIME_TO_EXTENSION[normalized] ?? fallback
+}
+
+function resolveImageCodec(mimeType: string, fallback: string): string {
+  const subtype = mimeType.toLowerCase().split('/')[1]?.split(';')[0]?.trim()
+  return subtype && subtype.length > 0 ? subtype : fallback
+}
+
 /**
  * Persist a chosen cover frame Blob as a Media Library item so it survives
  * reload and can be referenced by an ImageItem on the timeline.
+ *
+ * The codec / file extension is derived from `blob.type` so AI-generated
+ * PNG / WebP images are stored with their original format instead of being
+ * mislabelled as JPEG.
  */
 export async function persistCoverFrame(
   compositionId: string,
   blob: Blob,
   width: number,
   height: number,
+  options: PersistCoverFrameOptions = {},
 ): Promise<MediaMetadata> {
   const projectId = useMediaLibraryStore.getState().currentProjectId
   if (!projectId) {
     throw new Error('No active project — cannot save cover frame.')
   }
 
-  const fileName = `cover-${compositionId.slice(0, 8)}-${Date.now()}.jpg`
-  const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' })
+  const source = options.source ?? 'frame'
+  // AI images come back as PNG by default; captured frames are JPEG. Falling
+  // back to the source's typical format keeps things sensible if `blob.type`
+  // is empty (some browsers / providers omit it).
+  const fallbackMime = source === 'ai' ? 'image/png' : 'image/jpeg'
+  const mimeType = blob.type || fallbackMime
+  const extension = resolveImageExtension(mimeType, source === 'ai' ? 'png' : 'jpg')
+  const codec = resolveImageCodec(mimeType, source === 'ai' ? 'png' : 'jpeg')
+
+  const fileName = `cover-${source}-${compositionId.slice(0, 8)}-${Date.now()}.${extension}`
+  const file = new File([blob], fileName, { type: mimeType })
+
+  const tags = ['compound-cover', `compound-cover:${source}`]
+  if (source === 'ai') tags.push('ai-generated')
+  if (options.extraTags) {
+    for (const tag of options.extraTags) {
+      if (tag && !tags.includes(tag)) tags.push(tag)
+    }
+  }
 
   return mediaLibraryService.importGeneratedImage(file, projectId, {
     width,
     height,
-    tags: ['compound-cover'],
-    codec: 'jpeg',
+    tags,
+    codec,
   })
 }

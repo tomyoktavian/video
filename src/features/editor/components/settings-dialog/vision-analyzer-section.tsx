@@ -9,7 +9,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { fetchCustomAiModels } from '@/features/editor/deps/media-library-contract'
 import { DEFAULT_HIGHLIGHT_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/highlight-finder'
-import { DEFAULT_COVER_FINDER_SYSTEM_PROMPT } from '@/features/editor/deps/compound-cover'
+import {
+  DEFAULT_COVER_FINDER_SYSTEM_PROMPT,
+  DEFAULT_POSTER_PROMPT_SYSTEM_PROMPT,
+} from '@/features/editor/deps/compound-cover'
 import { DEFAULT_SCRIPT_WRITER_SYSTEM_PROMPT } from '@/features/editor/deps/spoiler-generator'
 
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
@@ -66,11 +69,13 @@ export function VisionAnalyzerSection() {
     !visionAnalyzer.highlightFinderPrompt &&
     !visionAnalyzer.coverFinderPrompt &&
     !visionAnalyzer.scriptWriterPrompt &&
+    !visionAnalyzer.posterPromptSystemPrompt &&
     visionAnalyzer.cachedModels.length === 0
 
   const promptIsCustom = visionAnalyzer.highlightFinderPrompt.trim().length > 0
   const coverPromptIsCustom = visionAnalyzer.coverFinderPrompt.trim().length > 0
   const scriptPromptIsCustom = visionAnalyzer.scriptWriterPrompt.trim().length > 0
+  const posterPromptIsCustom = visionAnalyzer.posterPromptSystemPrompt.trim().length > 0
 
   return (
     <div className="space-y-3">
@@ -232,11 +237,44 @@ export function VisionAnalyzerSection() {
         </p>
       </div>
 
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm">Poster Prompt</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
+            onClick={() => setVisionAnalyzer({ posterPromptSystemPrompt: '' })}
+            disabled={!posterPromptIsCustom}
+            aria-label="Reset Poster prompt to default"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset prompt
+          </Button>
+        </div>
+        <Textarea
+          value={visionAnalyzer.posterPromptSystemPrompt}
+          onChange={(event) => setVisionAnalyzer({ posterPromptSystemPrompt: event.target.value })}
+          placeholder={DEFAULT_POSTER_PROMPT_SYSTEM_PROMPT}
+          rows={8}
+          spellCheck={false}
+          className="min-h-32 resize-y font-mono text-[11px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Customize the system prompt sent to the chat model when{' '}
+          <strong>Add Cover → Generate with AI</strong> drafts the poster prompt from the compound
+          title + transcript. The Image Generator (configured separately) renders the result. Leave
+          empty to use the default.
+        </p>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         Used by <strong>Analyze with AI → Custom AI</strong> (per-frame vision captioning),{' '}
         <strong>Highlight Finder</strong> (text reasoning over captions + transcripts),{' '}
-        <strong>Add Cover</strong> (Vlog-style title generation for compound clips), and{' '}
-        <strong>Auto Spoiler Generator</strong> (full-transcript script writing).
+        <strong>Add Cover</strong> (Vlog-style title generation + AI poster prompt drafting for
+        compound clips), and <strong>Auto Spoiler Generator</strong> (full-transcript script
+        writing).
       </p>
 
       <div className="flex justify-end">

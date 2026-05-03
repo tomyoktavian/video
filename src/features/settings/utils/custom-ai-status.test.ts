@@ -4,6 +4,7 @@ import {
   isAllCustomAiConfigured,
   isAnyCustomAiConfigured,
   isCaptionMakerConfigured,
+  isImageGeneratorConfigured,
   isTextToSpeechConfigured,
   isVisionAnalyzerConfigured,
 } from './custom-ai-status'
@@ -25,6 +26,7 @@ const visionFull = {
   highlightFinderPrompt: '',
   coverFinderPrompt: '',
   scriptWriterPrompt: '',
+  posterPromptSystemPrompt: '',
   cachedModels: [],
   lastLoadedAt: null,
 }
@@ -41,6 +43,15 @@ const ttsFull = {
   lastLoadedAt: null,
 }
 const ttsEmpty = { ...ttsFull, baseUrl: '', apiKey: '', model: '' }
+
+const imageGenFull = {
+  baseUrl: 'https://api.example.com/v1',
+  apiKey: 'sk-test',
+  model: 'gpt-image-1',
+  cachedModels: [],
+  lastLoadedAt: null,
+}
+const imageGenEmpty = { ...imageGenFull, baseUrl: '', apiKey: '', model: '' }
 
 describe('isCaptionMakerConfigured', () => {
   it('returns true when all three required fields are set', () => {
@@ -83,6 +94,18 @@ describe('isTextToSpeechConfigured', () => {
   })
 })
 
+describe('isImageGeneratorConfigured', () => {
+  it('returns true when all required fields are set', () => {
+    expect(isImageGeneratorConfigured(imageGenFull)).toBe(true)
+  })
+
+  it('returns false when any required field is empty', () => {
+    expect(isImageGeneratorConfigured({ ...imageGenFull, baseUrl: '' })).toBe(false)
+    expect(isImageGeneratorConfigured({ ...imageGenFull, apiKey: '' })).toBe(false)
+    expect(isImageGeneratorConfigured({ ...imageGenFull, model: '' })).toBe(false)
+  })
+})
+
 describe('isAnyCustomAiConfigured', () => {
   it('returns true when at least one module is configured', () => {
     expect(
@@ -90,6 +113,7 @@ describe('isAnyCustomAiConfigured', () => {
         captionMaker: captionFull,
         textToSpeech: ttsEmpty,
         visionAnalyzer: visionEmpty,
+        imageGenerator: imageGenEmpty,
       }),
     ).toBe(true)
     expect(
@@ -97,6 +121,7 @@ describe('isAnyCustomAiConfigured', () => {
         captionMaker: captionEmpty,
         textToSpeech: ttsFull,
         visionAnalyzer: visionEmpty,
+        imageGenerator: imageGenEmpty,
       }),
     ).toBe(true)
     expect(
@@ -104,6 +129,15 @@ describe('isAnyCustomAiConfigured', () => {
         captionMaker: captionEmpty,
         textToSpeech: ttsEmpty,
         visionAnalyzer: visionFull,
+        imageGenerator: imageGenEmpty,
+      }),
+    ).toBe(true)
+    expect(
+      isAnyCustomAiConfigured({
+        captionMaker: captionEmpty,
+        textToSpeech: ttsEmpty,
+        visionAnalyzer: visionEmpty,
+        imageGenerator: imageGenFull,
       }),
     ).toBe(true)
   })
@@ -114,6 +148,7 @@ describe('isAnyCustomAiConfigured', () => {
         captionMaker: captionEmpty,
         textToSpeech: ttsEmpty,
         visionAnalyzer: visionEmpty,
+        imageGenerator: imageGenEmpty,
       }),
     ).toBe(false)
   })

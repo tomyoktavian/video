@@ -11,6 +11,7 @@
 
 import type {
   CustomAiCaptionMakerConfig,
+  CustomAiImageGeneratorConfig,
   CustomAiTextToSpeechConfig,
   CustomAiVisionAnalyzerConfig,
 } from '@/infrastructure/storage'
@@ -31,20 +32,30 @@ export function isTextToSpeechConfigured(config: CustomAiTextToSpeechConfig): bo
   return nonEmpty(config.baseUrl) && nonEmpty(config.apiKey) && nonEmpty(config.model)
 }
 
-/** True kalau MINIMAL satu modul Custom AI sudah dikonfigurasi (Caption / Vision / TTS). */
+export function isImageGeneratorConfigured(config: CustomAiImageGeneratorConfig): boolean {
+  return nonEmpty(config.baseUrl) && nonEmpty(config.apiKey) && nonEmpty(config.model)
+}
+
+/** True kalau MINIMAL satu modul Custom AI sudah dikonfigurasi (Caption / Vision / TTS / Image). */
 export function isAnyCustomAiConfigured(config: {
   captionMaker: CustomAiCaptionMakerConfig
   textToSpeech: CustomAiTextToSpeechConfig
   visionAnalyzer: CustomAiVisionAnalyzerConfig
+  imageGenerator: CustomAiImageGeneratorConfig
 }): boolean {
   return (
     isCaptionMakerConfigured(config.captionMaker) ||
     isVisionAnalyzerConfigured(config.visionAnalyzer) ||
-    isTextToSpeechConfigured(config.textToSpeech)
+    isTextToSpeechConfigured(config.textToSpeech) ||
+    isImageGeneratorConfigured(config.imageGenerator)
   )
 }
 
-/** True kalau KETIGA modul Custom AI lengkap — required by Spoiler Generator. */
+/**
+ * True kalau KETIGA modul Custom AI inti lengkap (Caption / Vision / TTS) —
+ * required by Spoiler Generator. Image Generator is intentionally excluded
+ * here because the spoiler flow does not use image generation.
+ */
 export function isAllCustomAiConfigured(config: {
   captionMaker: CustomAiCaptionMakerConfig
   textToSpeech: CustomAiTextToSpeechConfig

@@ -21,6 +21,7 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/shared/ui/cn'
 import { useEditorStore } from '@/app/state/editor'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
@@ -552,375 +553,375 @@ export const MediaSidebar = memo(function MediaSidebar() {
             </div>
 
             {/* Text Tab */}
-            <div
-              className={`min-h-0 flex-1 overflow-y-auto p-3 ${activeTab === 'text' ? 'block' : 'hidden'}`}
-            >
-              <div className="space-y-3">
-                <div className="space-y-3">
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Templates
+            <div className={`min-h-0 flex-1 ${activeTab === 'text' ? 'block' : 'hidden'}`}>
+              <ScrollArea className="h-full w-full">
+                <div className="space-y-3 p-3">
+                  <div className="space-y-3">
+                    <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      Templates
+                    </div>
+                    {TEXT_TEMPLATE_GROUPS.map((group) => {
+                      const presets = textTemplatesByLayout[group.key]
+                      const showAddText = group.key === 'single'
+
+                      if (!showAddText && presets.length === 0) {
+                        return null
+                      }
+
+                      return (
+                        <div key={group.key} className="space-y-1.5">
+                          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                            {group.label}
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {showAddText ? (
+                              <button
+                                draggable={true}
+                                onDragStart={handleTemplateDragStart({
+                                  itemType: 'text',
+                                  label: 'Text',
+                                })}
+                                onDragEnd={handleTemplateDragEnd}
+                                onClick={() => {
+                                  if (shouldSuppressGeneratedItemClick()) return
+                                  handleAddText()
+                                }}
+                                className="flex flex-col items-center gap-1 p-1.5 rounded-md border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                              >
+                                <TextTemplatePreview />
+                                <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight w-full">
+                                  Add Text
+                                </span>
+                              </button>
+                            ) : null}
+                            {presets.map((preset) => (
+                              <button
+                                key={preset.id}
+                                draggable={true}
+                                onDragStart={handleTemplateDragStart({
+                                  itemType: 'text',
+                                  label: preset.label,
+                                  textStylePresetId: preset.id,
+                                })}
+                                onDragEnd={handleTemplateDragEnd}
+                                onClick={() => {
+                                  if (shouldSuppressGeneratedItemClick()) return
+                                  handleAddText(preset.id)
+                                }}
+                                className={cn(
+                                  'flex flex-col items-center gap-1 p-1.5 rounded-md border border-border',
+                                  'bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50',
+                                  'transition-colors group',
+                                )}
+                              >
+                                <TextTemplatePreview preset={preset} />
+                                <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight w-full">
+                                  {preset.label}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                  {TEXT_TEMPLATE_GROUPS.map((group) => {
-                    const presets = textTemplatesByLayout[group.key]
-                    const showAddText = group.key === 'single'
-
-                    if (!showAddText && presets.length === 0) {
-                      return null
-                    }
-
-                    return (
-                      <div key={group.key} className="space-y-1.5">
-                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                          {group.label}
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {showAddText ? (
-                            <button
-                              draggable={true}
-                              onDragStart={handleTemplateDragStart({
-                                itemType: 'text',
-                                label: 'Text',
-                              })}
-                              onDragEnd={handleTemplateDragEnd}
-                              onClick={() => {
-                                if (shouldSuppressGeneratedItemClick()) return
-                                handleAddText()
-                              }}
-                              className="flex flex-col items-center gap-1 p-1.5 rounded-md border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                            >
-                              <TextTemplatePreview />
-                              <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight w-full">
-                                Add Text
-                              </span>
-                            </button>
-                          ) : null}
-                          {presets.map((preset) => (
-                            <button
-                              key={preset.id}
-                              draggable={true}
-                              onDragStart={handleTemplateDragStart({
-                                itemType: 'text',
-                                label: preset.label,
-                                textStylePresetId: preset.id,
-                              })}
-                              onDragEnd={handleTemplateDragEnd}
-                              onClick={() => {
-                                if (shouldSuppressGeneratedItemClick()) return
-                                handleAddText(preset.id)
-                              }}
-                              className={cn(
-                                'flex flex-col items-center gap-1 p-1.5 rounded-md border border-border',
-                                'bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50',
-                                'transition-colors group',
-                              )}
-                            >
-                              <TextTemplatePreview preset={preset} />
-                              <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight w-full">
-                                {preset.label}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
                 </div>
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Shapes Tab */}
-            <div
-              className={`min-h-0 flex-1 overflow-y-auto p-3 ${activeTab === 'shapes' ? 'block' : 'hidden'}`}
-            >
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Rectangle',
-                    shapeType: 'rectangle',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('rectangle')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Square className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Rectangle
-                  </span>
-                </button>
+            <div className={`min-h-0 flex-1 ${activeTab === 'shapes' ? 'block' : 'hidden'}`}>
+              <ScrollArea className="h-full w-full">
+                <div className="grid grid-cols-3 gap-1.5 p-3">
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Rectangle',
+                      shapeType: 'rectangle',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('rectangle')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Square className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Rectangle
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Circle',
-                    shapeType: 'circle',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('circle')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Circle className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Circle
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Circle',
+                      shapeType: 'circle',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('circle')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Circle className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Circle
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Triangle',
-                    shapeType: 'triangle',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('triangle')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Triangle className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Triangle
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Triangle',
+                      shapeType: 'triangle',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('triangle')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Triangle className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Triangle
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Ellipse',
-                    shapeType: 'ellipse',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('ellipse')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Circle className="w-3.5 h-2.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Ellipse
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Ellipse',
+                      shapeType: 'ellipse',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('ellipse')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Circle className="w-3.5 h-2.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Ellipse
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Star',
-                    shapeType: 'star',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('star')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Star className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Star
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Star',
+                      shapeType: 'star',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('star')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Star className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Star
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Polygon',
-                    shapeType: 'polygon',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('polygon')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Hexagon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Polygon
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Polygon',
+                      shapeType: 'polygon',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('polygon')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Hexagon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Polygon
+                    </span>
+                  </button>
 
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'shape',
-                    label: 'Heart',
-                    shapeType: 'heart',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddShape('heart')
-                  }}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Heart className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Heart
-                  </span>
-                </button>
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'shape',
+                      label: 'Heart',
+                      shapeType: 'heart',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddShape('heart')
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Heart className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Heart
+                    </span>
+                  </button>
 
-                <button
-                  onClick={() => useMaskEditorStore.getState().startShapePenMode()}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                  title="Draw a custom path shape with the pen tool"
-                >
-                  <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
-                    <Pen className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
-                    Pen
-                  </span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => useMaskEditorStore.getState().startShapePenMode()}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                    title="Draw a custom path shape with the pen tool"
+                  >
+                    <div className="w-7 h-7 rounded border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70">
+                      <Pen className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                    </div>
+                    <span className="text-[9px] text-muted-foreground group-hover:text-foreground">
+                      Pen
+                    </span>
+                  </button>
+                </div>
+              </ScrollArea>
             </div>
 
             {/* Effects Tab */}
-            <div
-              className={`min-h-0 flex-1 overflow-y-auto p-3 ${activeTab === 'effects' ? 'block' : 'hidden'}`}
-            >
-              <div className="space-y-3">
-                {/* Blank Adjustment Layer */}
-                <button
-                  draggable={true}
-                  onDragStart={handleTemplateDragStart({
-                    itemType: 'adjustment',
-                    label: 'Adjustment Layer',
-                  })}
-                  onDragEnd={handleTemplateDragEnd}
-                  onClick={() => {
-                    if (shouldSuppressGeneratedItemClick()) return
-                    handleAddAdjustmentLayer()
-                  }}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-md border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70 flex-shrink-0">
-                    <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-xs text-muted-foreground group-hover:text-foreground">
-                      Blank Adjustment Layer
+            <div className={`min-h-0 flex-1 ${activeTab === 'effects' ? 'block' : 'hidden'}`}>
+              <ScrollArea className="h-full w-full">
+                <div className="space-y-3 p-3">
+                  {/* Blank Adjustment Layer */}
+                  <button
+                    draggable={true}
+                    onDragStart={handleTemplateDragStart({
+                      itemType: 'adjustment',
+                      label: 'Adjustment Layer',
+                    })}
+                    onDragEnd={handleTemplateDragEnd}
+                    onClick={() => {
+                      if (shouldSuppressGeneratedItemClick()) return
+                      handleAddAdjustmentLayer()
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-md border border-border bg-secondary/50 flex items-center justify-center group-hover:bg-secondary/70 flex-shrink-0">
+                      <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
                     </div>
-                  </div>
-                </button>
+                    <div className="text-left">
+                      <div className="text-xs text-muted-foreground group-hover:text-foreground">
+                        Blank Adjustment Layer
+                      </div>
+                    </div>
+                  </button>
 
-                {/* Presets */}
-                <div>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Presets
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {EFFECT_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        draggable={true}
-                        onDragStart={handleTemplateDragStart({
-                          itemType: 'adjustment',
-                          label: preset.name,
-                          effects: preset.effects,
-                        })}
-                        onDragEnd={handleTemplateDragEnd}
-                        onClick={() => {
-                          if (shouldSuppressGeneratedItemClick()) return
-                          handleAddPreset(preset.id)
-                        }}
-                        className="flex flex-col items-center gap-1 p-1.5 rounded-md border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
-                      >
-                        {effectPreviews.has(`preset:${preset.id}`) ? (
-                          <img
-                            src={effectPreviews.get(`preset:${preset.id}`)}
-                            alt=""
-                            draggable={false}
-                            className="w-full aspect-video rounded-sm object-cover"
-                          />
-                        ) : (
-                          <div className="w-full aspect-video rounded-sm bg-muted flex items-center justify-center">
-                            <Sparkles className="w-3 h-3 text-muted-foreground/50" />
-                          </div>
-                        )}
-                        <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight">
-                          {preset.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* GPU Effects by Category */}
-                {gpuCategories.map(({ category, effects: catEffects }) => (
-                  <div key={category}>
+                  {/* Presets */}
+                  <div>
                     <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                      {category}
+                      Presets
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
-                      {catEffects.map((def) => (
+                      {EFFECT_PRESETS.map((preset) => (
                         <button
-                          key={def.id}
+                          key={preset.id}
                           draggable={true}
                           onDragStart={handleTemplateDragStart({
                             itemType: 'adjustment',
-                            label: def.name,
-                            effects: [
-                              {
-                                type: 'gpu-effect',
-                                gpuEffectType: def.id,
-                                params: getGpuEffectDefaultParams(def.id),
-                              },
-                            ],
+                            label: preset.name,
+                            effects: preset.effects,
                           })}
                           onDragEnd={handleTemplateDragEnd}
                           onClick={() => {
                             if (shouldSuppressGeneratedItemClick()) return
-                            handleAddGpuEffect(def.id)
+                            handleAddPreset(preset.id)
                           }}
                           className="flex flex-col items-center gap-1 p-1.5 rounded-md border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
                         >
-                          {effectPreviews.has(def.id) ? (
+                          {effectPreviews.has(`preset:${preset.id}`) ? (
                             <img
-                              src={effectPreviews.get(def.id)}
+                              src={effectPreviews.get(`preset:${preset.id}`)}
                               alt=""
                               draggable={false}
                               className="w-full aspect-video rounded-sm object-cover"
                             />
                           ) : (
-                            <div className="w-full aspect-video rounded-sm bg-muted" />
+                            <div className="w-full aspect-video rounded-sm bg-muted flex items-center justify-center">
+                              <Sparkles className="w-3 h-3 text-muted-foreground/50" />
+                            </div>
                           )}
-                          <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight truncate w-full">
-                            {def.name}
+                          <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight">
+                            {preset.name}
                           </span>
                         </button>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* GPU Effects by Category */}
+                  {gpuCategories.map(({ category, effects: catEffects }) => (
+                    <div key={category}>
+                      <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+                        {category}
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {catEffects.map((def) => (
+                          <button
+                            key={def.id}
+                            draggable={true}
+                            onDragStart={handleTemplateDragStart({
+                              itemType: 'adjustment',
+                              label: def.name,
+                              effects: [
+                                {
+                                  type: 'gpu-effect',
+                                  gpuEffectType: def.id,
+                                  params: getGpuEffectDefaultParams(def.id),
+                                },
+                              ],
+                            })}
+                            onDragEnd={handleTemplateDragEnd}
+                            onClick={() => {
+                              if (shouldSuppressGeneratedItemClick()) return
+                              handleAddGpuEffect(def.id)
+                            }}
+                            className="flex flex-col items-center gap-1 p-1.5 rounded-md border border-border bg-secondary/30 hover:bg-secondary/50 hover:border-primary/50 transition-colors group"
+                          >
+                            {effectPreviews.has(def.id) ? (
+                              <img
+                                src={effectPreviews.get(def.id)}
+                                alt=""
+                                draggable={false}
+                                className="w-full aspect-video rounded-sm object-cover"
+                              />
+                            ) : (
+                              <div className="w-full aspect-video rounded-sm bg-muted" />
+                            )}
+                            <span className="text-[9px] text-muted-foreground group-hover:text-foreground text-center leading-tight truncate w-full">
+                              {def.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
 
             {/* Transitions Tab */}
@@ -931,10 +932,10 @@ export const MediaSidebar = memo(function MediaSidebar() {
             </div>
 
             {/* AI Tab */}
-            <div
-              className={`min-h-0 flex-1 overflow-hidden ${activeTab === 'ai' ? 'block' : 'hidden'}`}
-            >
-              <AiPanel />
+            <div className={`min-h-0 flex-1 ${activeTab === 'ai' ? 'block' : 'hidden'}`}>
+              <ScrollArea className="h-full w-full">
+                <AiPanel />
+              </ScrollArea>
             </div>
           </div>
         </Activity>

@@ -15,9 +15,11 @@ export {
   getCustomAiCaptionMakerConfig,
   getCustomAiTextToSpeechConfig,
   getCustomAiVisionAnalyzerConfig,
+  getCustomAiImageGeneratorConfig,
   isCaptionMakerConfigured,
   isVisionAnalyzerConfigured,
   isTextToSpeechConfigured,
+  isImageGeneratorConfigured,
   isAnyCustomAiConfigured,
   isAllCustomAiConfigured,
 } from '@/features/settings/stores/custom-ai-store'
@@ -26,6 +28,7 @@ export type {
   CustomAiCaptionMakerConfig,
   CustomAiTextToSpeechConfig,
   CustomAiVisionAnalyzerConfig,
+  CustomAiImageGeneratorConfig,
 } from '@/features/settings/stores/custom-ai-store'
 export { LocalInferenceUnloadControl } from '@/features/settings/components/local-inference-unload-control'
 export { LocalModelCacheControl } from '@/features/settings/components/local-model-cache-control'

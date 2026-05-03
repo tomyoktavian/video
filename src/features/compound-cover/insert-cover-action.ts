@@ -57,9 +57,6 @@ export function insertCover(params: InsertCoverParams): InsertCoverResult {
   if (!composition) {
     throw new Error(`Compound clip ${params.compositionId} not found.`)
   }
-  if (params.primary.trim().length === 0) {
-    throw new Error('Cover requires at least a primary title.')
-  }
   if (params.durationSec <= 0) {
     throw new Error('Cover duration must be greater than 0.')
   }

@@ -18,6 +18,7 @@ import {
 import { isAnyCustomAiConfigured, useCustomAiStore } from '@/features/editor/deps/settings-contract'
 import { cn } from '@/shared/ui/cn'
 import { CaptionMakerSection } from './caption-maker-section'
+import { ImageGeneratorSection } from './image-generator-section'
 import { TextToSpeechSection } from './text-to-speech-section'
 import { VisionAnalyzerSection } from './vision-analyzer-section'
 
@@ -133,6 +134,12 @@ function CustomAiTab() {
           <VisionAnalyzerSection />
         </AccordionContent>
       </AccordionItem>
+      <AccordionItem value="image-generator">
+        <AccordionTrigger>Image Generator</AccordionTrigger>
+        <AccordionContent>
+          <ImageGeneratorSection />
+        </AccordionContent>
+      </AccordionItem>
     </Accordion>
   )
 }
@@ -143,6 +150,7 @@ export function AiSection() {
       captionMaker: s.captionMaker,
       textToSpeech: s.textToSpeech,
       visionAnalyzer: s.visionAnalyzer,
+      imageGenerator: s.imageGenerator,
     }),
   )
   // `key` forces re-mount when the configured signal flips so Radix Tabs

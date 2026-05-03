@@ -17,6 +17,7 @@ import {
   type CustomAiCachedModel,
   type CustomAiCaptionMakerConfig,
   type CustomAiConfig,
+  type CustomAiImageGeneratorConfig,
   type CustomAiTextToSpeechConfig,
   type CustomAiVisionAnalyzerConfig,
 } from '@/infrastructure/storage'
@@ -31,13 +32,17 @@ interface CustomAiActions {
   resetTextToSpeech: () => void
   setVisionAnalyzer: (partial: Partial<CustomAiVisionAnalyzerConfig>) => void
   resetVisionAnalyzer: () => void
+  setImageGenerator: (partial: Partial<CustomAiImageGeneratorConfig>) => void
+  resetImageGenerator: () => void
   replaceConfig: (next: CustomAiConfig) => void
 }
 
 type CustomAiStore = CustomAiConfig & CustomAiActions & { hydrated: boolean }
 
 function persistAll(
-  patch: Partial<Pick<CustomAiConfig, 'captionMaker' | 'textToSpeech' | 'visionAnalyzer'>>,
+  patch: Partial<
+    Pick<CustomAiConfig, 'captionMaker' | 'textToSpeech' | 'visionAnalyzer' | 'imageGenerator'>
+  >,
   current: CustomAiConfig,
   context: string,
 ) {
@@ -45,6 +50,7 @@ function persistAll(
     captionMaker: patch.captionMaker ?? current.captionMaker,
     textToSpeech: patch.textToSpeech ?? current.textToSpeech,
     visionAnalyzer: patch.visionAnalyzer ?? current.visionAnalyzer,
+    imageGenerator: patch.imageGenerator ?? current.imageGenerator,
   }
   void saveCustomAiConfig(next).catch((error) => {
     logger.warn(`Failed to persist ${context}`, error)
@@ -89,6 +95,18 @@ export const useCustomAiStore = create<CustomAiStore>()((set, get) => ({
     const next = DEFAULT_CUSTOM_AI_CONFIG.visionAnalyzer
     set({ visionAnalyzer: next })
     persistAll({ visionAnalyzer: next }, get(), 'visionAnalyzer reset')
+  },
+
+  setImageGenerator: (partial) => {
+    const next: CustomAiImageGeneratorConfig = { ...get().imageGenerator, ...partial }
+    set({ imageGenerator: next })
+    persistAll({ imageGenerator: next }, get(), 'imageGenerator change')
+  },
+
+  resetImageGenerator: () => {
+    const next = DEFAULT_CUSTOM_AI_CONFIG.imageGenerator
+    set({ imageGenerator: next })
+    persistAll({ imageGenerator: next }, get(), 'imageGenerator reset')
   },
 
   replaceConfig: (next) => {
@@ -136,10 +154,16 @@ export function getCustomAiVisionAnalyzerConfig(): CustomAiVisionAnalyzerConfig 
   return useCustomAiStore.getState().visionAnalyzer
 }
 
+/** Synchronous getter for non-React code (cover-image generator adapter). */
+export function getCustomAiImageGeneratorConfig(): CustomAiImageGeneratorConfig {
+  return useCustomAiStore.getState().imageGenerator
+}
+
 export type {
   CustomAiCachedModel,
   CustomAiCaptionMakerConfig,
   CustomAiConfig,
+  CustomAiImageGeneratorConfig,
   CustomAiTextToSpeechConfig,
   CustomAiVisionAnalyzerConfig,
 }
@@ -148,6 +172,7 @@ export {
   isAllCustomAiConfigured,
   isAnyCustomAiConfigured,
   isCaptionMakerConfigured,
+  isImageGeneratorConfigured,
   isTextToSpeechConfigured,
   isVisionAnalyzerConfigured,
 } from '../utils/custom-ai-status'

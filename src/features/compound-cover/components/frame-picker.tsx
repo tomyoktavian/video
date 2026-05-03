@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
+import { ImageLightbox } from '@/components/ui/image-lightbox'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/shared/ui/cn'
 
@@ -86,7 +87,13 @@ function PreviewCanvas({ bitmap }: { bitmap: ImageBitmap | null }) {
   }, [bitmap])
 
   if (!bitmap) return null
-  return <canvas ref={canvasRef} className="h-full w-full object-contain" />
+  // `w-full h-full` pins the canvas's CSS box to the parent's calculated size
+  // (the parent uses `aspectRatio: composition.w / composition.h`). Without
+  // an explicit CSS width, the canvas falls back to its drawing buffer width
+  // (e.g. 720px for a 720×1280 bitmap), which forces the parent to grow and
+  // breaks the aspect ratio constraint. The drawing buffer is then scaled
+  // into the CSS box, preserving the bitmap's content correctly.
+  return <canvas ref={canvasRef} className="block h-full w-full" />
 }
 
 export function FramePicker({ compositionId, selectedFrame, onChange }: FramePickerProps) {
@@ -97,8 +104,10 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
   const [filmstripError, setFilmstripError] = useState<string | null>(null)
 
   const [previewBitmap, setPreviewBitmap] = useState<ImageBitmap | null>(null)
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const previewBitmapRef = useRef<ImageBitmap | null>(null)
+  const previewObjectUrlRef = useRef<string | null>(null)
   const previewSeqRef = useRef(0)
 
   // Filmstrip generation — once per compositionId. Frames stream in
@@ -163,13 +172,27 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
           if (previewBitmapRef.current) previewBitmapRef.current.close()
           previewBitmapRef.current = bitmap
           setPreviewBitmap(bitmap)
+          // Track an object URL alongside the bitmap so the lightbox preview
+          // and a future "Download frame" action can reference the original
+          // JPEG without re-rendering. Revoke the previous URL to avoid leaks.
+          if (previewObjectUrlRef.current) {
+            URL.revokeObjectURL(previewObjectUrlRef.current)
+          }
+          const url = URL.createObjectURL(blob)
+          previewObjectUrlRef.current = url
+          setPreviewObjectUrl(url)
         } catch {
           if (seq === previewSeqRef.current) {
             if (previewBitmapRef.current) {
               previewBitmapRef.current.close()
               previewBitmapRef.current = null
             }
+            if (previewObjectUrlRef.current) {
+              URL.revokeObjectURL(previewObjectUrlRef.current)
+              previewObjectUrlRef.current = null
+            }
             setPreviewBitmap(null)
+            setPreviewObjectUrl(null)
           }
         } finally {
           if (seq === previewSeqRef.current) setPreviewLoading(false)
@@ -189,34 +212,71 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
         previewBitmapRef.current.close()
         previewBitmapRef.current = null
       }
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current)
+        previewObjectUrlRef.current = null
+      }
     }
   }, [])
 
   const duration = composition?.durationInFrames ?? 0
   const maxFrame = Math.max(0, duration - 1)
+  // Match the project canvas aspect ratio so portrait / square comps don't get
+  // letterboxed by a hardcoded 16:9 preview area. Fall back to 16:9 only while
+  // composition data is hydrating.
+  const previewAspectRatio =
+    composition && composition.width > 0 && composition.height > 0
+      ? `${composition.width} / ${composition.height}`
+      : '16 / 9'
+
+  const previewBox = (
+    <div
+      className="relative h-[360px] max-h-full max-w-full"
+      style={{ aspectRatio: previewAspectRatio }}
+    >
+      {previewBitmap ? (
+        <PreviewCanvas bitmap={previewBitmap} />
+      ) : (
+        <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+          {previewLoading ? (
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Rendering frame…
+            </span>
+          ) : (
+            'Frame preview unavailable'
+          )}
+        </div>
+      )}
+      {previewLoading && previewBitmap ? (
+        <div className="absolute right-2 top-2 rounded-md bg-black/60 p-1">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+        </div>
+      ) : null}
+    </div>
+  )
 
   return (
     <div className="space-y-2">
-      <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border bg-black">
-        {previewBitmap ? (
-          <PreviewCanvas bitmap={previewBitmap} />
+      <div className="flex w-full items-center justify-center overflow-hidden rounded-md border border-border bg-black">
+        {previewObjectUrl && previewBitmap ? (
+          <ImageLightbox
+            src={previewObjectUrl}
+            alt={`Frame ${selectedFrame}`}
+            downloadFilename={`frame-${compositionId.slice(0, 8)}-${selectedFrame}.jpg`}
+          >
+            <button
+              type="button"
+              className="cursor-zoom-in"
+              style={{ aspectRatio: previewAspectRatio }}
+              aria-label="Open frame preview"
+            >
+              {previewBox}
+            </button>
+          </ImageLightbox>
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-            {previewLoading ? (
-              <span className="flex items-center gap-1.5">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Rendering frame…
-              </span>
-            ) : (
-              'Frame preview unavailable'
-            )}
-          </div>
+          previewBox
         )}
-        {previewLoading && previewBitmap ? (
-          <div className="absolute right-2 top-2 rounded-md bg-black/60 p-1">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-          </div>
-        ) : null}
       </div>
 
       <Slider

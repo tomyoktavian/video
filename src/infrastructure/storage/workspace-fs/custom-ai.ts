@@ -79,6 +79,22 @@ export interface CustomAiVisionAnalyzerConfig {
    * appended automatically by the adapter.
    */
   scriptWriterPrompt: string
+  /**
+   * Override the built-in system prompt sent to /chat/completions for the
+   * Add Cover → Generate with AI flow (turns the compound title + transcript
+   * into a poster prompt that the Image Generator then renders). Empty string
+   * = use the default. The user message (title + transcript + aspect-ratio
+   * label) is appended automatically by the adapter.
+   */
+  posterPromptSystemPrompt: string
+  cachedModels: ReadonlyArray<CustomAiCachedModel>
+  lastLoadedAt: number | null
+}
+
+export interface CustomAiImageGeneratorConfig {
+  baseUrl: string
+  apiKey: string
+  model: string
   cachedModels: ReadonlyArray<CustomAiCachedModel>
   lastLoadedAt: number | null
 }
@@ -87,6 +103,7 @@ export interface CustomAiConfig {
   captionMaker: CustomAiCaptionMakerConfig
   textToSpeech: CustomAiTextToSpeechConfig
   visionAnalyzer: CustomAiVisionAnalyzerConfig
+  imageGenerator: CustomAiImageGeneratorConfig
 }
 
 export const DEFAULT_CUSTOM_AI_CONFIG: CustomAiConfig = {
@@ -115,6 +132,14 @@ export const DEFAULT_CUSTOM_AI_CONFIG: CustomAiConfig = {
     highlightFinderPrompt: '',
     coverFinderPrompt: '',
     scriptWriterPrompt: '',
+    posterPromptSystemPrompt: '',
+    cachedModels: [],
+    lastLoadedAt: null,
+  },
+  imageGenerator: {
+    baseUrl: '',
+    apiKey: '',
+    model: '',
     cachedModels: [],
     lastLoadedAt: null,
   },
@@ -178,6 +203,23 @@ function normalizeVisionAnalyzer(value: unknown): CustomAiVisionAnalyzerConfig {
       typeof raw.highlightFinderPrompt === 'string' ? raw.highlightFinderPrompt : '',
     coverFinderPrompt: typeof raw.coverFinderPrompt === 'string' ? raw.coverFinderPrompt : '',
     scriptWriterPrompt: typeof raw.scriptWriterPrompt === 'string' ? raw.scriptWriterPrompt : '',
+    posterPromptSystemPrompt:
+      typeof raw.posterPromptSystemPrompt === 'string' ? raw.posterPromptSystemPrompt : '',
+    cachedModels: normalizeCachedModels(raw.cachedModels),
+    lastLoadedAt:
+      typeof lastLoadedAtRaw === 'number' && Number.isFinite(lastLoadedAtRaw)
+        ? lastLoadedAtRaw
+        : null,
+  }
+}
+
+function normalizeImageGenerator(value: unknown): CustomAiImageGeneratorConfig {
+  const raw = (value ?? {}) as Partial<CustomAiImageGeneratorConfig>
+  const lastLoadedAtRaw = (raw as { lastLoadedAt?: unknown }).lastLoadedAt
+  return {
+    baseUrl: typeof raw.baseUrl === 'string' ? raw.baseUrl : '',
+    apiKey: typeof raw.apiKey === 'string' ? raw.apiKey : '',
+    model: typeof raw.model === 'string' ? raw.model : '',
     cachedModels: normalizeCachedModels(raw.cachedModels),
     lastLoadedAt:
       typeof lastLoadedAtRaw === 'number' && Number.isFinite(lastLoadedAtRaw)
@@ -192,6 +234,7 @@ function normalizeConfig(value: unknown): CustomAiConfig {
     captionMaker: normalizeCaptionMaker(raw.captionMaker),
     textToSpeech: normalizeTextToSpeech(raw.textToSpeech),
     visionAnalyzer: normalizeVisionAnalyzer(raw.visionAnalyzer),
+    imageGenerator: normalizeImageGenerator(raw.imageGenerator),
   }
 }
 

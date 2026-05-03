@@ -8,8 +8,16 @@
 import { createLogger } from '@/shared/logging/logger'
 
 import { getCustomAiVisionAnalyzerConfig } from './deps/settings'
-import { DEFAULT_COVER_FINDER_SYSTEM_PROMPT } from './system-prompt'
-import type { CoverTextRequest, CoverTextResponse, CoverTextSuggestion } from './types'
+import {
+  DEFAULT_COVER_FINDER_SYSTEM_PROMPT,
+  DEFAULT_POSTER_PROMPT_SYSTEM_PROMPT,
+} from './system-prompt'
+import type {
+  CoverTextRequest,
+  CoverTextResponse,
+  CoverTextSuggestion,
+  PosterPromptRequest,
+} from './types'
 
 const logger = createLogger('CoverFinderAdapter')
 
@@ -168,4 +176,194 @@ export async function findCoverText(request: CoverTextRequest): Promise<CoverTex
   return { suggestions }
 }
 
-export const __test = { parseSuggestions, buildUserMessage }
+const POSTER_PROMPT_USER_BUDGET_CHARS = 60_000
+
+function buildPosterPromptUserMessage(request: PosterPromptRequest): string {
+  const titleLine = `Title: ${request.title.trim() || '(untitled)'}`
+  const aspectLine = `Aspect ratio: ${request.aspectLabel.trim() || '1:1'}`
+  const transcriptBody = request.transcript.trim()
+  const transcriptHeader = 'Transcript:'
+
+  const fixedHeader = `${titleLine}\n${aspectLine}\n\n${transcriptHeader}\n`
+  const tailFooter =
+    '\n\nWrite ONE poster prompt as plain text only — no JSON, no markdown, no preamble.'
+  const transcriptBudget = POSTER_PROMPT_USER_BUDGET_CHARS - fixedHeader.length - tailFooter.length
+  const safeTranscript =
+    transcriptBody.length <= transcriptBudget
+      ? transcriptBody
+      : `…${transcriptBody.slice(transcriptBody.length - (transcriptBudget - 1))}`
+
+  return `${fixedHeader}${safeTranscript}${tailFooter}`
+}
+
+/**
+ * Drafts a single image-generation prompt (plain text) for the Add Cover →
+ * Generate with AI flow. Reuses the Vision Analyzer chat-completions config —
+ * the resulting string is then handed to the Image Generator adapter.
+ */
+export async function generatePosterPrompt(request: PosterPromptRequest): Promise<string> {
+  const config = getCustomAiVisionAnalyzerConfig()
+  const baseUrl = config.baseUrl.trim()
+  const apiKey = config.apiKey.trim()
+  const model = config.model.trim()
+  if (!baseUrl) throw new Error('Vision Analyzer base URL is not configured.')
+  if (!apiKey) throw new Error('Vision Analyzer API key is not configured.')
+  if (!model) throw new Error('Vision Analyzer model is not selected.')
+  if (request.transcript.trim().length === 0 && request.title.trim().length === 0) {
+    throw new Error('Cannot draft a poster prompt without a title or transcript.')
+  }
+
+  const systemPrompt =
+    request.systemPromptOverride?.trim() ||
+    config.posterPromptSystemPrompt.trim() ||
+    DEFAULT_POSTER_PROMPT_SYSTEM_PROMPT
+
+  const userMessage = buildPosterPromptUserMessage(request)
+  const url = `${trimTrailingSlash(baseUrl)}/chat/completions`
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+      ...(request.signal ? { signal: request.signal } : {}),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new Error(
+      `Poster prompt request failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(
+      `Poster prompt failed (${response.status})${detail ? `: ${detail.slice(0, 500)}` : ''}`,
+    )
+  }
+
+  const payload = (await response.json()) as OpenAiChatResponse
+  const raw = payload.choices?.[0]?.message?.content
+  const content = typeof raw === 'string' ? raw.trim() : ''
+  // Strip ```json/```text fences if a gateway adds them.
+  const unfenced = content.replace(/^```(?:[a-z]+)?\s*/i, '').replace(/\s*```$/i, '')
+  logger.info('Poster prompt response', {
+    length: unfenced.length,
+    preview: unfenced.slice(0, 300),
+  })
+  if (unfenced.length === 0) {
+    throw new Error('The model returned an empty poster prompt. Try again.')
+  }
+  return unfenced
+}
+
+const TRANSCRIPT_SUMMARY_USER_BUDGET_CHARS = 60_000
+
+const TRANSCRIPT_SUMMARY_SYSTEM_PROMPT = [
+  'You distil a verbatim video transcript into a tight summary used as',
+  'context for an AI image-generator that paints a cover poster.',
+  '',
+  'Output requirements:',
+  '- 3 to 5 sentences, plain text only. No headings, no markdown, no JSON,',
+  '  no preamble. Match the LANGUAGE of the source transcript exactly.',
+  '- Preserve the SPECIFIC story arc — main characters (named when stated),',
+  '  the central conflict / antagonist, the setting, and the emotional',
+  '  hook. Concrete nouns over vague adjectives.',
+  '- Keep it lean: 80–160 words. Drop filler words, repetition, ums, and',
+  '  off-topic side conversation.',
+  '- Do NOT invent characters, locations, or plot beats that are not in',
+  '  the transcript.',
+].join('\n')
+
+export interface SummariseTranscriptRequest {
+  transcript: string
+  signal?: AbortSignal
+}
+
+/**
+ * Compress a long transcript into a tight 3–5 sentence summary suitable for
+ * the image-prompt builder. Uses the Vision Analyzer chat-completions
+ * config (same provider as the Add Cover → Find frame text generator).
+ */
+export async function summariseTranscriptForCover(
+  request: SummariseTranscriptRequest,
+): Promise<string> {
+  const config = getCustomAiVisionAnalyzerConfig()
+  const baseUrl = config.baseUrl.trim()
+  const apiKey = config.apiKey.trim()
+  const model = config.model.trim()
+  if (!baseUrl) throw new Error('Vision Analyzer base URL is not configured.')
+  if (!apiKey) throw new Error('Vision Analyzer API key is not configured.')
+  if (!model) throw new Error('Vision Analyzer model is not selected.')
+  const transcriptBody = request.transcript.trim()
+  if (transcriptBody.length === 0) {
+    throw new Error('Cannot summarise an empty transcript.')
+  }
+
+  // Trim from the START (keep the recent / climactic tail) when the
+  // transcript exceeds the user-message budget, mirroring how cover-text
+  // truncation works.
+  const safeTranscript =
+    transcriptBody.length <= TRANSCRIPT_SUMMARY_USER_BUDGET_CHARS
+      ? transcriptBody
+      : `…${transcriptBody.slice(transcriptBody.length - (TRANSCRIPT_SUMMARY_USER_BUDGET_CHARS - 1))}`
+  const userMessage = `Transcript:\n${safeTranscript}\n\nReturn only the summary, plain text.`
+
+  const url = `${trimTrailingSlash(baseUrl)}/chat/completions`
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: TRANSCRIPT_SUMMARY_SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+      ...(request.signal ? { signal: request.signal } : {}),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new Error(
+      `Transcript summary request failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(
+      `Transcript summary failed (${response.status})${detail ? `: ${detail.slice(0, 500)}` : ''}`,
+    )
+  }
+
+  const payload = (await response.json()) as OpenAiChatResponse
+  const raw = payload.choices?.[0]?.message?.content
+  const content = typeof raw === 'string' ? raw.trim() : ''
+  const unfenced = content.replace(/^```(?:[a-z]+)?\s*/i, '').replace(/\s*```$/i, '')
+  logger.info('Transcript summary response', {
+    length: unfenced.length,
+    preview: unfenced.slice(0, 300),
+  })
+  if (unfenced.length === 0) {
+    throw new Error('The model returned an empty summary. Try again.')
+  }
+  return unfenced
+}
+
+export const __test = { parseSuggestions, buildUserMessage, buildPosterPromptUserMessage }
