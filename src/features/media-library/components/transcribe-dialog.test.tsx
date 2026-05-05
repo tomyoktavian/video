@@ -37,6 +37,7 @@ vi.mock('@/features/media-library/deps/settings-contract', () => ({
     selector(settingsStoreState),
   useCustomAiStore: (selector: (state: typeof customAiStoreState) => unknown) =>
     selector(customAiStoreState),
+  isCaptionMakerConfigured: () => false,
 }))
 
 vi.mock('@/app/state/editor', () => ({
@@ -60,6 +61,9 @@ vi.mock('@/shared/utils/whisper-settings', () => ({
   normalizeSelectableWhisperModel: (value: string) => value,
   WHISPER_LANGUAGE_OPTIONS: [{ value: '', label: 'Auto-detect' }],
   WHISPER_QUANTIZATION_OPTIONS: [{ value: 'hybrid', label: 'Hybrid' }],
+  DEFAULT_WHISPER_MODEL: 'whisper-base',
+  DEFAULT_WHISPER_QUANTIZATION: 'hybrid',
+  DEFAULT_WHISPER_LANGUAGE: '',
 }))
 
 vi.mock('@/components/ui/button', () => ({

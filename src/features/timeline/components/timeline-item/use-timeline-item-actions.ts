@@ -43,6 +43,7 @@ import {
   useTimelineItemOverlayStore,
 } from '../../stores/timeline-item-overlay-store'
 import { useSilenceRemovalDialogStore } from '../../stores/silence-removal-dialog-store'
+import { useFillerRemovalDialogStore } from '../../stores/filler-removal-dialog-store'
 import { canJoinMultipleItems } from '../../utils/clip-utils'
 import { canLinkSelection, hasLinkedItems } from '../../utils/linked-items'
 import {
@@ -59,6 +60,11 @@ import {
   applySilencePreviewOverlays,
   DEFAULT_SILENCE_REMOVAL_SETTINGS,
 } from '../../utils/silence-removal-preview'
+import {
+  analyzeFillerWordsForItems,
+  applyFillerPreviewOverlays,
+  DEFAULT_FILLER_REMOVAL_SETTINGS,
+} from '../../utils/filler-word-removal-preview'
 
 const logger = createLogger('UseTimelineItemActions')
 
@@ -542,6 +548,7 @@ export function useTimelineItemActions({
 
   const sceneDetectionAbortRef = useRef<AbortController | null>(null)
   const [isRemovingSilence, setIsRemovingSilence] = useState(false)
+  const [isRemovingFillers, setIsRemovingFillers] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -743,6 +750,55 @@ export function useTimelineItemActions({
     void run()
   }, [item.id])
 
+  const handleRemoveFillers = useCallback(() => {
+    const selectedItemIds = useSelectionStore.getState().selectedItemIds
+    const targetIds = selectedItemIds.length > 0 ? selectedItemIds : [item.id]
+    const targetItems = targetIds
+      .map((id) => useItemsStore.getState().itemById[id])
+      .filter(
+        (candidate): candidate is TimelineItemType =>
+          candidate !== undefined &&
+          (candidate.type === 'video' || candidate.type === 'audio') &&
+          !!candidate.mediaId,
+      )
+
+    if (targetItems.length === 0) {
+      toast.info('Select an audio or video clip first')
+      return
+    }
+
+    const run = async () => {
+      setIsRemovingFillers(true)
+      try {
+        const targetItemIds = targetItems.map((target) => target.id)
+        const rangesByMediaId = await analyzeFillerWordsForItems(
+          targetItemIds,
+          DEFAULT_FILLER_REMOVAL_SETTINGS,
+        )
+        const summary = applyFillerPreviewOverlays(targetItemIds, rangesByMediaId)
+
+        if (summary.rangeCount === 0) {
+          toast.info('No removable filler words detected')
+          return
+        }
+
+        useFillerRemovalDialogStore.getState().open({
+          itemIds: targetItemIds,
+          settings: DEFAULT_FILLER_REMOVAL_SETTINGS,
+          rangesByMediaId,
+          summary,
+        })
+      } catch (error) {
+        logger.warn('Remove filler words failed', error)
+        toast.error(error instanceof Error ? error.message : 'Failed to preview filler words')
+      } finally {
+        setIsRemovingFillers(false)
+      }
+    }
+
+    void run()
+  }, [item.id])
+
   return {
     getCanJoinSelected,
     getCanLinkSelected,
@@ -750,6 +806,7 @@ export function useTimelineItemActions({
     hasSpeakableText,
     isSceneDetectionActive,
     isRemovingSilence,
+    isRemovingFillers,
     isCompositionItem,
     handleJoinSelected,
     handleJoinLeft,
@@ -775,5 +832,6 @@ export function useTimelineItemActions({
     handleFindHighlights,
     canFindHighlights,
     handleRemoveSilence,
+    handleRemoveFillers,
   }
 }

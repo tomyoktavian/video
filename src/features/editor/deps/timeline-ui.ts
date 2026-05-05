@@ -10,4 +10,5 @@ export {
   TrackCaptionsDialog,
   ReverseConformDialog,
   SilenceRemovalDialog,
+  FillerRemovalDialog,
 } from './timeline-contract'

@@ -150,6 +150,8 @@ export const PreviewStage = memo(function PreviewStage({
                 transition: 'none',
                 outline: '2px solid hsl(var(--border))',
                 outlineOffset: 0,
+                overflow: 'hidden',
+                contain: 'paint',
               }}
               onDoubleClick={(event) => event.preventDefault()}
             >
@@ -168,6 +170,7 @@ export const PreviewStage = memo(function PreviewStage({
                 autoPlay={false}
                 loop={false}
                 controls={false}
+                layoutSize={playerSize}
                 style={{
                   width: '100%',
                   height: '100%',

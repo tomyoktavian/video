@@ -1,16 +1,28 @@
-import type { MainThreadMessage, PCMChunk, QuantizationType, WhisperWorkerMessage } from '../types'
+import type {
+  MainThreadMessage,
+  PCMChunk,
+  QuantizationType,
+  TranscriptWord,
+  WhisperWorkerMessage,
+} from '../types'
 import { createLogger } from '@/shared/logging/logger'
 
 const logger = createLogger('TranscriptionWorker')
 
 const TRANSFORMERS_CDN_URL = 'https://esm.sh/@huggingface/transformers@3.8.1?bundle'
 const WASM_CDN_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/'
+const WHISPER_CHUNK_SECONDS = 29
+const WHISPER_STRIDE_SECONDS = 5
+const WHISPER_TASK = 'transcribe'
+const RECENT_WORD_RETENTION_SECONDS = 8
+const DUPLICATE_WORD_START_TOLERANCE_SECONDS = 0.5
 
 type ASRPipeline = (input: Float32Array, options: Record<string, unknown>) => Promise<unknown>
 
 interface ProgressInfo {
   status?: string
   file?: string
+  progress?: number
   loaded?: number
   total?: number
 }
@@ -45,6 +57,7 @@ let language: string | undefined
 let pipelineReady = false
 let paused = false
 const queue: PCMChunk[] = []
+const recentWords: TranscriptWord[] = []
 let processing = false
 let reportedEstimatedBytes = 0
 
@@ -80,6 +93,7 @@ self.onmessage = async (event: MessageEvent) => {
 
   if (message.type === 'init') {
     language = message.language
+    recentWords.length = 0
     await initPipeline(message.modelId, message.quantization ?? 'hybrid')
     return
   }
@@ -134,7 +148,7 @@ async function initPipeline(modelId: string, quantization: QuantizationType): Pr
           : quantization
 
       const progressCallback = (progress: ProgressInfo) => {
-        if (progress.status !== 'download' || !progress.file || !progress.total) {
+        if (progress.status !== 'progress' || !progress.file || !progress.total) {
           return
         }
 
@@ -190,7 +204,8 @@ async function initPipeline(modelId: string, quantization: QuantizationType): Pr
       try {
         await asrPipeline(new Float32Array(1_600), {
           sampling_rate: 16_000,
-          language: 'en',
+          task: WHISPER_TASK,
+          ...(language ? { language } : {}),
         })
       } catch {
         // Ignore pre-warm failures. Real inference may still succeed.
@@ -249,73 +264,9 @@ async function processNext(): Promise<void> {
   }
 }
 
-/**
- * Word-grouping thresholds for converting Transformers.js word-level
- * timestamps into segments. Tuned to mirror the Custom AI grouping in
- * `openai-compatible-adapter.ts` so downstream caption-builder behavior
- * is consistent across providers.
- */
-const WORD_GROUP_GAP_SECONDS = 0.6
-const MAX_WORDS_PER_SEGMENT = 12
-const SENTENCE_END = /[.!?]\s*$/
-
 interface PipelineChunk {
   text: string
   timestamp: [number | null, number | null]
-}
-
-interface RawSegment {
-  text: string
-  start: number
-  end: number
-  words?: Array<{ text: string; start: number; end: number }>
-}
-
-function groupWordChunksIntoSegments(
-  chunks: readonly PipelineChunk[],
-  chunkOffset: number,
-): RawSegment[] {
-  const segments: RawSegment[] = []
-  let bucket: Array<{ text: string; start: number; end: number }> = []
-
-  const flush = () => {
-    if (bucket.length === 0) return
-    const first = bucket[0]!
-    const last = bucket.at(-1)!
-    segments.push({
-      text: bucket
-        .map((w) => w.text)
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim(),
-      start: first.start,
-      end: last.end,
-      words: bucket,
-    })
-    bucket = []
-  }
-
-  for (const chunk of chunks) {
-    const start = (chunk.timestamp[0] ?? 0) + chunkOffset
-    const end = (chunk.timestamp[1] ?? chunk.timestamp[0] ?? 0) + chunkOffset
-    const text = chunk.text
-    if (text.trim().length === 0 || end < start) continue
-
-    const previous = bucket.at(-1)
-    if (previous) {
-      const gap = start - previous.end
-      if (
-        gap > WORD_GROUP_GAP_SECONDS ||
-        SENTENCE_END.test(previous.text) ||
-        bucket.length >= MAX_WORDS_PER_SEGMENT
-      ) {
-        flush()
-      }
-    }
-    bucket.push({ text, start, end })
-  }
-  flush()
-  return segments
 }
 
 async function transcribeChunk(chunk: PCMChunk): Promise<void> {
@@ -334,8 +285,12 @@ async function transcribeChunk(chunk: PCMChunk): Promise<void> {
 
   const baseOptions = {
     sampling_rate: 16_000,
-    chunk_length_s: 30,
-    stride_length_s: 5,
+    chunk_length_s: WHISPER_CHUNK_SECONDS,
+    stride_length_s: WHISPER_STRIDE_SECONDS,
+    force_full_sequences: false,
+    top_k: 0,
+    do_sample: false,
+    task: WHISPER_TASK,
     ...(language ? { language } : {}),
   } as const
 
@@ -363,23 +318,60 @@ async function transcribeChunk(chunk: PCMChunk): Promise<void> {
     })
   }
 
-  const output = result as { chunks?: PipelineChunk[] }
-  const rawChunks = output.chunks ?? []
-
   if (wordLevel) {
-    const grouped = groupWordChunksIntoSegments(rawChunks, chunk.timestamp)
-    for (const segment of grouped) {
+    const output = result as {
+      text?: string
+      chunks?: Array<{
+        text: string
+        timestamp: [number | null, number | null]
+        confidence?: number
+      }>
+    }
+
+    const words = dedupeOverlappingWords(
+      (output.chunks ?? []).flatMap((word): TranscriptWord[] => {
+        const start = word.timestamp[0]
+        const end = word.timestamp[1]
+        if (start === null || end === null || end <= start) {
+          return []
+        }
+        return [
+          {
+            text: word.text,
+            start: start + chunk.timestamp,
+            end: end + chunk.timestamp,
+            ...(typeof word.confidence === 'number' ? { confidence: word.confidence } : {}),
+          },
+        ]
+      }),
+    )
+
+    if (words.length > 0) {
+      const newestEnd = words.at(-1)?.end ?? chunk.timestamp
+      recentWords.push(...words)
+      while (
+        recentWords.length > 0 &&
+        (recentWords[0]?.end ?? 0) < newestEnd - RECENT_WORD_RETENTION_SECONDS
+      ) {
+        recentWords.shift()
+      }
+
       postMain({
         type: 'segment',
         segment: {
-          text: segment.text,
-          start: segment.start,
-          end: segment.end,
-          ...(segment.words ? { words: segment.words } : {}),
+          text: words
+            .map((word) => word.text)
+            .join(' ')
+            .trim(),
+          start: words[0]?.start ?? chunk.timestamp,
+          end: words.at(-1)?.end ?? chunk.timestamp,
+          words,
         },
       })
     }
   } else {
+    const output = result as { chunks?: PipelineChunk[] }
+    const rawChunks = output.chunks ?? []
     for (const segment of rawChunks) {
       postMain({
         type: 'segment',
@@ -397,6 +389,30 @@ async function transcribeChunk(chunk: PCMChunk): Promise<void> {
   if (chunk.final) {
     postMain({ type: 'done' })
   }
+}
+
+function dedupeOverlappingWords(words: TranscriptWord[]): TranscriptWord[] {
+  return words.filter((word) => {
+    const normalizedText = normalizeWordText(word.text)
+    if (!normalizedText) {
+      return true
+    }
+
+    return !recentWords.some((recentWord) => {
+      if (normalizeWordText(recentWord.text) !== normalizedText) {
+        return false
+      }
+
+      const startsClose =
+        Math.abs(recentWord.start - word.start) <= DUPLICATE_WORD_START_TOLERANCE_SECONDS
+      const overlaps = recentWord.start < word.end && word.start < recentWord.end
+      return startsClose || overlaps
+    })
+  })
+}
+
+function normalizeWordText(text: string): string {
+  return text.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 }
 
 function postMain(message: MainThreadMessage): void {

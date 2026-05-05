@@ -7,6 +7,7 @@ export interface TranscriptWord {
   text: string
   start: number
   end: number
+  confidence?: number
 }
 
 export interface TranscriptSegment {
@@ -63,8 +64,8 @@ export type WhisperWorkerMessage =
   | { type: 'resume' }
 
 export const MODEL_IDS: Record<WhisperModel, string> = {
-  'whisper-tiny': 'onnx-community/whisper-tiny',
-  'whisper-base': 'onnx-community/whisper-base',
-  'whisper-small': 'onnx-community/whisper-small',
-  'whisper-large': 'onnx-community/whisper-large-v3-turbo',
+  'whisper-tiny': 'onnx-community/whisper-tiny_timestamped',
+  'whisper-base': 'onnx-community/whisper-base_timestamped',
+  'whisper-small': 'onnx-community/whisper-small_timestamped',
+  'whisper-large': 'onnx-community/whisper-large-v3-turbo_timestamped',
 }

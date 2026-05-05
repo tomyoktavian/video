@@ -94,6 +94,9 @@ vi.mock('./audio-meter-panel', () => ({
 vi.mock('@/features/editor/deps/timeline-ui', () => ({
   Timeline: () => <div data-testid="timeline" />,
   BentoLayoutDialog: () => null,
+  ReverseConformDialog: () => null,
+  SilenceRemovalDialog: () => null,
+  FillerRemovalDialog: () => null,
 }))
 
 vi.mock('./clear-keyframes-dialog', () => ({

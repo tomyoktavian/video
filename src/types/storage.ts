@@ -143,6 +143,7 @@ export interface MediaTranscriptWord {
   text: string
   start: number
   end: number
+  confidence?: number
 }
 
 export interface MediaTranscriptSegment {
