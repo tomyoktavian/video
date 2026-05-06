@@ -6,7 +6,10 @@ import type { CaptioningOptions, MediaCaption, MediaCaptioningProvider } from '.
 const log = createLogger('LfmCaptioningProvider')
 
 const DEFAULT_SAMPLE_INTERVAL_SEC = 3
-const INIT_TIMEOUT_MS = 30_000
+const INIT_FIRST_PROGRESS_TIMEOUT_MS = 90_000
+const INIT_IDLE_TIMEOUT_MS = 60_000
+
+type InitStage = 'webgpu-init' | 'downloading-processor' | 'loading-model' | 'warming-webgpu'
 
 function waitForReady(
   worker: Worker,
@@ -14,10 +17,26 @@ function waitForReady(
   signal?: AbortSignal,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    let lastStage: InitStage = 'webgpu-init'
+    let lastPercent = 0
+
+    const stallReject = () => {
+      worker.removeEventListener('message', onMessage)
+      reject(
+        new Error(
+          `LFM model load stalled at ${lastStage} (${lastPercent}%) — no progress for ${Math.round(INIT_IDLE_TIMEOUT_MS / 1000)}s`,
+        ),
+      )
+    }
+
     let timeout = setTimeout(() => {
       worker.removeEventListener('message', onMessage)
-      reject(new Error('LFM worker init timed out'))
-    }, INIT_TIMEOUT_MS)
+      reject(
+        new Error(
+          `LFM worker did not start within ${Math.round(INIT_FIRST_PROGRESS_TIMEOUT_MS / 1000)}s — check WebGPU support and network`,
+        ),
+      )
+    }, INIT_FIRST_PROGRESS_TIMEOUT_MS)
 
     const cleanup = () => {
       clearTimeout(timeout)
@@ -40,13 +59,19 @@ function waitForReady(
 
       if (message.type === 'progress') {
         clearTimeout(timeout)
-        timeout = setTimeout(() => {
-          worker.removeEventListener('message', onMessage)
-          reject(new Error('LFM worker init timed out'))
-        }, INIT_TIMEOUT_MS)
+        timeout = setTimeout(stallReject, INIT_IDLE_TIMEOUT_MS)
+        const stage: InitStage =
+          message.stage === 'webgpu-init' ||
+          message.stage === 'downloading-processor' ||
+          message.stage === 'loading-model' ||
+          message.stage === 'warming-webgpu'
+            ? message.stage
+            : 'loading-model'
+        lastStage = stage
+        lastPercent = Math.round(message.percent ?? 0)
         onProgress?.({
-          stage: 'loading-model',
-          percent: message.percent ?? 0,
+          stage,
+          percent: lastPercent,
           framesAnalyzed: 0,
           totalFrames: 0,
         })

@@ -55,48 +55,111 @@ async function loadModel(): Promise<void> {
   loading = true
   disposed = false
   const thisGen = ++loadGeneration
+  let currentStage: 'webgpu-init' | 'downloading-processor' | 'loading-model' = 'webgpu-init'
 
   try {
-    post({ type: 'progress', stage: 'loading-transformers', percent: 0 })
-    post({ type: 'progress', stage: 'loading-model', percent: 5 })
+    if (!('gpu' in self.navigator)) {
+      post({
+        type: 'error',
+        message:
+          'WebGPU is not available in this browser. Use Chrome 113+ or Edge 113+ for Local AI.',
+      })
+      return
+    }
 
-    let lastPct = 5
-    const loadedProcessor = await AutoProcessor.from_pretrained(MODEL_ID)
-
+    post({ type: 'progress', stage: 'webgpu-init', percent: 0 })
+    const adapter = await (self.navigator as Navigator).gpu!.requestAdapter()
     if (disposed || thisGen !== loadGeneration) return
+    if (!adapter) {
+      post({
+        type: 'error',
+        message:
+          'WebGPU adapter unavailable. Update GPU drivers or enable hardware acceleration in your browser.',
+      })
+      return
+    }
 
-    const loadedModel = await AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
-      dtype: {
-        vision_encoder: 'fp16',
-        embed_tokens: 'fp16',
-        decoder_model_merged: 'q4',
-      },
-      device: 'webgpu',
+    currentStage = 'downloading-processor'
+    post({ type: 'progress', stage: 'downloading-processor', percent: 0 })
+
+    let lastProcessorPct = 0
+    const loadedProcessor = await AutoProcessor.from_pretrained(MODEL_ID, {
       progress_callback: disposed
         ? undefined
         : (info: { status?: string; total?: number; loaded?: number }) => {
             if (info.status === 'progress' && info.total && info.loaded) {
-              const pct = 5 + (info.loaded / info.total) * 90
-              if (pct - lastPct > 2) {
-                lastPct = pct
-                post({ type: 'progress', stage: 'loading-model', percent: Math.round(pct) })
+              const pct = (info.loaded / info.total) * 10
+              if (pct - lastProcessorPct > 1) {
+                lastProcessorPct = pct
+                post({
+                  type: 'progress',
+                  stage: 'downloading-processor',
+                  percent: Math.round(pct),
+                })
               }
             }
           },
     })
 
-    if (disposed || thisGen !== loadGeneration) {
-      if (typeof loadedModel.dispose === 'function') loadedModel.dispose()
-      return
-    }
+    if (disposed || thisGen !== loadGeneration) return
 
-    processor = loadedProcessor
-    model = loadedModel
-    post({ type: 'progress', stage: 'ready', percent: 100 })
-    post({ type: 'ready' })
+    currentStage = 'loading-model'
+    post({ type: 'progress', stage: 'loading-model', percent: 10 })
+
+    let lastModelPct = 10
+    let downloadDone = false
+    // Heartbeat so the main thread's idle watchdog stays armed during the
+    // post-download WebGPU shader compilation, which can run 30s+ without
+    // emitting any transformers.js progress callback.
+    const heartbeat = setInterval(() => {
+      if (disposed || thisGen !== loadGeneration) return
+      post({
+        type: 'progress',
+        stage: downloadDone ? 'warming-webgpu' : 'loading-model',
+        percent: downloadDone ? 95 : Math.round(lastModelPct),
+      })
+    }, 5_000)
+
+    try {
+      const loadedModel = await AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
+        dtype: {
+          vision_encoder: 'fp16',
+          embed_tokens: 'fp16',
+          decoder_model_merged: 'q4',
+        },
+        device: 'webgpu',
+        progress_callback: disposed
+          ? undefined
+          : (info: { status?: string; total?: number; loaded?: number }) => {
+              if (info.status === 'progress' && info.total && info.loaded) {
+                const pct = 10 + (info.loaded / info.total) * 85
+                if (pct >= 94) downloadDone = true
+                if (pct - lastModelPct > 2) {
+                  lastModelPct = pct
+                  post({ type: 'progress', stage: 'loading-model', percent: Math.round(pct) })
+                }
+              }
+            },
+      })
+
+      if (disposed || thisGen !== loadGeneration) {
+        if (typeof loadedModel.dispose === 'function') loadedModel.dispose()
+        return
+      }
+
+      processor = loadedProcessor
+      model = loadedModel
+      post({ type: 'progress', stage: 'loading-model', percent: 100 })
+      post({ type: 'ready' })
+    } finally {
+      clearInterval(heartbeat)
+    }
   } catch (err) {
     if (!disposed) {
-      post({ type: 'error', message: `Model load failed: ${(err as Error).message}` })
+      post({
+        type: 'error',
+        message: `Model load failed (${currentStage}): ${(err as Error).message}`,
+      })
     }
   } finally {
     loading = false

@@ -41,7 +41,7 @@ export interface MediaCaption {
 }
 
 export interface CaptioningProgress {
-  stage: 'loading-model' | 'captioning'
+  stage: 'webgpu-init' | 'downloading-processor' | 'loading-model' | 'warming-webgpu' | 'captioning'
   percent: number
   framesAnalyzed: number
   totalFrames: number

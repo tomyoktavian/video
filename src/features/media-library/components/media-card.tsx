@@ -1458,11 +1458,17 @@ export const MediaCard = memo(function MediaCard({
     const sub = analysisProgress.subProgress
     if (sub && sub.totalFrames > 0) {
       const stageLabel =
-        sub.stage === 'loading-model'
-          ? 'Loading model'
-          : sub.stage === 'captioning'
-            ? 'Captioning'
-            : sub.stage
+        sub.stage === 'webgpu-init'
+          ? 'Initializing WebGPU'
+          : sub.stage === 'downloading-processor'
+            ? 'Loading preprocessor'
+            : sub.stage === 'loading-model'
+              ? 'Loading model'
+              : sub.stage === 'warming-webgpu'
+                ? 'Warming up WebGPU'
+                : sub.stage === 'captioning'
+                  ? 'Captioning'
+                  : sub.stage
       const itemPart =
         analysisProgress.total > 1
           ? ` (item ${Math.min(analysisProgress.completed + 1, analysisProgress.total)}/${analysisProgress.total})`
