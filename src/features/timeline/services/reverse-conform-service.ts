@@ -163,6 +163,10 @@ async function loadCachedBlob(pathSegments: string[], opfsPath: string): Promise
   }
 }
 
+function toEven(value: number): number {
+  return Math.max(2, Math.round(value / 2) * 2)
+}
+
 function getConformDimensions(
   item: VideoItem,
   quality: ReverseConformQuality,
@@ -170,15 +174,15 @@ function getConformDimensions(
   const sourceWidth = Math.max(2, item.sourceWidth ?? 1920)
   const sourceHeight = Math.max(2, item.sourceHeight ?? 1080)
   if (quality === 'full') {
-    return { width: sourceWidth, height: sourceHeight }
+    return { width: toEven(sourceWidth), height: toEven(sourceHeight) }
   }
 
   const maxWidth = 1280
   const maxHeight = 720
   const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight)
   return {
-    width: Math.max(2, Math.round(sourceWidth * scale)),
-    height: Math.max(2, Math.round(sourceHeight * scale)),
+    width: toEven(sourceWidth * scale),
+    height: toEven(sourceHeight * scale),
   }
 }
 
