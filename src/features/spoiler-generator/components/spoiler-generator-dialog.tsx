@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { SliderInput } from '@/shared/ui/property-controls'
 import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
 
 import {
@@ -35,11 +36,28 @@ import {
   MAX_WORDS_PER_CAPTION,
   useMediaLibraryStore,
 } from '../deps/media-library'
+import {
+  KOKORO_TTS_VOICE_OPTIONS,
+  kokoroTtsService,
+  MOSS_TTS_VOICE_OPTIONS,
+  mossTtsService,
+  SUPERTONIC_TTS_DEFAULT_LANGUAGE,
+  SUPERTONIC_TTS_DEFAULT_QUALITY,
+  SUPERTONIC_TTS_DEFAULT_VOICE,
+  SUPERTONIC_TTS_LANGUAGES,
+  SUPERTONIC_TTS_VOICE_OPTIONS,
+  supertonicTtsService,
+  type KokoroTtsVoice,
+  type MossTtsVoice,
+  type SupertonicTtsLanguage,
+  type SupertonicTtsVoice,
+} from '../deps/tts'
 import { useProjectStore } from '../deps/project'
 import { getTranscript } from '../deps/transcription'
 import { substituteTemplate } from '../episode-narration-generator'
 import { runSpoilerPipeline } from '../spoiler-orchestrator'
 import type { SpoilerProgress, SpoilerStage } from '../types'
+import type { SpoilerTtsEngine, SpoilerTtsEngineConfig } from '../tts-engine-adapter'
 import { SpoilerProgressStepper } from './spoiler-progress-stepper'
 
 const TARGET_DURATION_OPTIONS: ComboboxOption[] = [
@@ -56,6 +74,13 @@ const NARRATION_LANGUAGE_OPTIONS: ComboboxOption[] = [
   { value: 'ja', label: 'Japanese' },
   { value: 'ko', label: 'Korean' },
   { value: 'zh', label: 'Chinese (Mandarin)' },
+]
+
+const TTS_ENGINE_OPTIONS: ComboboxOption[] = [
+  { value: 'custom', label: 'Custom AI (OpenAI-compatible)' },
+  { value: 'kokoro', label: 'Kokoro (English, WebGPU)' },
+  { value: 'supertonic', label: 'Supertonic 3 (31 languages, WebGPU/WASM)' },
+  { value: 'moss', label: 'MOSS Nano (20 languages, CPU)' },
 ]
 
 const CLIP_DURATION_BOUNDS = { min: 5, max: 90 }
@@ -102,7 +127,17 @@ export function SpoilerGeneratorDialog() {
   const [clipDurationSec, setClipDurationSec] = useState<number>(30)
   const [addSubtitles, setAddSubtitles] = useState(false)
   const [ttsSpeed, setTtsSpeed] = useState<number>(1)
+  const [ttsEngine, setTtsEngine] = useState<SpoilerTtsEngine>('custom')
   const [voicePreset, setVoicePreset] = useState<string>('')
+  const [kokoroVoice, setKokoroVoice] = useState<KokoroTtsVoice>('af_heart')
+  const [supertonicVoice, setSupertonicVoice] = useState<SupertonicTtsVoice>(
+    SUPERTONIC_TTS_DEFAULT_VOICE,
+  )
+  const [supertonicLanguage, setSupertonicLanguage] = useState<SupertonicTtsLanguage>(
+    SUPERTONIC_TTS_DEFAULT_LANGUAGE,
+  )
+  const [supertonicQuality, setSupertonicQuality] = useState<number>(SUPERTONIC_TTS_DEFAULT_QUALITY)
+  const [mossVoice, setMossVoice] = useState<MossTtsVoice>('Xiaoyu')
   const [wordsPerCaption, setWordsPerCaption] = useState<number>(defaultWordsPerCaption)
   const [episodeMode, setEpisodeMode] = useState(false)
   const [episodeMinDurationSec, setEpisodeMinDurationSec] = useState<number>(60)
@@ -144,7 +179,13 @@ export function SpoilerGeneratorDialog() {
     setProgress(null)
     setErrorMessage(null)
     setIsRunning(false)
+    setTtsEngine('custom')
     setVoicePreset(textToSpeech.voice || '')
+    setKokoroVoice('af_heart')
+    setSupertonicVoice(SUPERTONIC_TTS_DEFAULT_VOICE)
+    setSupertonicLanguage(SUPERTONIC_TTS_DEFAULT_LANGUAGE)
+    setSupertonicQuality(SUPERTONIC_TTS_DEFAULT_QUALITY)
+    setMossVoice('Xiaoyu')
     setTtsSpeed(1)
     setWordsPerCaption(defaultWordsPerCaption)
     setEpisodeMode(false)
@@ -223,6 +264,45 @@ export function SpoilerGeneratorDialog() {
     label: entry.label && entry.label !== entry.id ? `${entry.label} (${entry.id})` : entry.id,
   }))
 
+  const isKokoroSupported = kokoroTtsService.isSupported()
+  const isSupertonicSupported = supertonicTtsService.isSupported()
+  const isMossSupported = mossTtsService.isSupported()
+
+  // Pick the engine-specific runtime label that surfaces in the summary +
+  // unsupported banner. Custom AI flows through `voicePreset` (cached voice
+  // list); local engines have their own typed voice unions. Memoised so the
+  // startPipeline callback's dep array stays stable across re-renders.
+  const engineConfig = useMemo<SpoilerTtsEngineConfig>(() => {
+    if (ttsEngine === 'kokoro') return { engine: 'kokoro', voice: kokoroVoice }
+    if (ttsEngine === 'supertonic') {
+      return {
+        engine: 'supertonic',
+        voice: supertonicVoice,
+        language: supertonicLanguage,
+        quality: supertonicQuality,
+      }
+    }
+    if (ttsEngine === 'moss') return { engine: 'moss', voice: mossVoice }
+    return { engine: 'custom', ...(voicePreset ? { voice: voicePreset } : {}) }
+  }, [
+    kokoroVoice,
+    mossVoice,
+    supertonicLanguage,
+    supertonicQuality,
+    supertonicVoice,
+    ttsEngine,
+    voicePreset,
+  ])
+
+  const ttsEngineReady =
+    ttsEngine === 'kokoro'
+      ? isKokoroSupported
+      : ttsEngine === 'supertonic'
+        ? isSupertonicSupported
+        : ttsEngine === 'moss'
+          ? isMossSupported
+          : ttsConfigured
+
   const autoEpisodeCount = Math.max(
     1,
     Math.ceil(targetDurationSec / Math.max(1, episodeMaxDurationSec)),
@@ -243,7 +323,7 @@ export function SpoilerGeneratorDialog() {
     !!media &&
     captionConfigured &&
     visionConfigured &&
-    ttsConfigured &&
+    ttsEngineReady &&
     transcriptReady &&
     episodeFormValid &&
     !isRunning
@@ -303,8 +383,11 @@ export function SpoilerGeneratorDialog() {
             generateCover: !!preGeneratedCover,
             addSubtitles,
             includeOriginalAudio: true,
-            voiceSpeed: ttsSpeed,
-            ...(voicePreset ? { voicePreset } : {}),
+            // Speed only configurable for Custom AI; local engines fall back
+            // to provider default (1.0×).
+            voiceSpeed: ttsEngine === 'custom' ? ttsSpeed : 1,
+            ttsEngineConfig: engineConfig,
+            ...(ttsEngine === 'custom' && voicePreset ? { voicePreset } : {}),
             ...(addSubtitles ? { wordsPerCaption: normalizedWordsPerCaption } : {}),
             ...(episodeMode
               ? {
@@ -341,6 +424,7 @@ export function SpoilerGeneratorDialog() {
       clipDurationSec,
       coverDurationSec,
       effectiveEpisodeCount,
+      engineConfig,
       episodeClosingTemplate,
       episodeMaxDurationSec,
       episodeMinDurationSec,
@@ -351,6 +435,7 @@ export function SpoilerGeneratorDialog() {
       narrationLanguage,
       setSetting,
       targetDurationSec,
+      ttsEngine,
       ttsSpeed,
       voicePreset,
       wordsPerCaption,
@@ -415,7 +500,7 @@ export function SpoilerGeneratorDialog() {
       }}
     >
       <AlertDialogContent
-        className="max-w-md"
+        className="max-w-2xl"
         onEscapeKeyDown={(event) => {
           if (isRunning) event.preventDefault()
         }}
@@ -453,10 +538,30 @@ export function SpoilerGeneratorDialog() {
               </Alert>
             )}
 
-            {media && !ttsConfigured && (
+            {media && ttsEngine === 'custom' && !ttsConfigured && (
               <Alert variant="error">
                 Text to Speech (for narration) is not configured. Open{' '}
                 <strong>Settings → AI → Custom AI → Text to Speech</strong>.
+              </Alert>
+            )}
+
+            {media && ttsEngine === 'kokoro' && !isKokoroSupported && (
+              <Alert variant="error">
+                Kokoro TTS needs WebGPU. Try Chrome 113+, Edge 113+, or Safari 26+, or pick another
+                engine.
+              </Alert>
+            )}
+
+            {media && ttsEngine === 'supertonic' && !isSupertonicSupported && (
+              <Alert variant="error">
+                Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium
+                browser, Firefox, or Safari.
+              </Alert>
+            )}
+
+            {media && ttsEngine === 'moss' && !isMossSupported && (
+              <Alert variant="error">
+                MOSS multilingual TTS needs browser-managed storage. Try a recent Chromium browser.
               </Alert>
             )}
 
@@ -487,6 +592,20 @@ export function SpoilerGeneratorDialog() {
             </div>
 
             <div className="space-y-1.5">
+              <Label className="text-sm">TTS Engine</Label>
+              <Combobox
+                value={ttsEngine}
+                options={TTS_ENGINE_OPTIONS}
+                onValueChange={(value) => setTtsEngine(value as SpoilerTtsEngine)}
+                placeholder="Select engine"
+              />
+              <p className="text-xs text-muted-foreground">
+                Custom AI runs in the cloud. Kokoro, Supertonic 3, and MOSS run locally in the
+                browser.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
               <Label className="text-sm">Average clip duration per segment (seconds)</Label>
               <Input
                 type="number"
@@ -507,7 +626,7 @@ export function SpoilerGeneratorDialog() {
               </p>
             </div>
 
-            {voiceOptions.length > 0 && (
+            {ttsEngine === 'custom' && voiceOptions.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-sm">Narration Voice</Label>
                 <Combobox
@@ -521,27 +640,96 @@ export function SpoilerGeneratorDialog() {
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label className="text-sm">Narration Speed</Label>
-              <Input
-                type="number"
-                min={TTS_SPEED_BOUNDS.min}
-                max={TTS_SPEED_BOUNDS.max}
-                step={0.1}
-                value={ttsSpeed}
-                onChange={(event) => {
-                  const next = Number(event.target.value)
-                  if (Number.isFinite(next)) {
-                    setTtsSpeed(
-                      Math.min(TTS_SPEED_BOUNDS.max, Math.max(TTS_SPEED_BOUNDS.min, next)),
-                    )
-                  }
-                }}
-              />
-              <p className="text-xs text-muted-foreground">
-                1.0 = normal. Higher = faster. Provider-dependent.
-              </p>
-            </div>
+            {ttsEngine === 'kokoro' && (
+              <div className="space-y-1.5">
+                <Label className="text-sm">Narration Voice</Label>
+                <Combobox
+                  value={kokoroVoice}
+                  options={KOKORO_TTS_VOICE_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                  onValueChange={(value) => setKokoroVoice(value as KokoroTtsVoice)}
+                  placeholder="Select Kokoro voice"
+                  searchPlaceholder="Search voices..."
+                />
+              </div>
+            )}
+
+            {ttsEngine === 'supertonic' && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Narration Voice</Label>
+                  <Combobox
+                    value={supertonicVoice}
+                    options={SUPERTONIC_TTS_VOICE_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    }))}
+                    onValueChange={(value) => setSupertonicVoice(value as SupertonicTtsVoice)}
+                    placeholder="Select Supertonic voice"
+                    searchPlaceholder="Search voices..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Supertonic Language</Label>
+                  <Combobox
+                    value={supertonicLanguage}
+                    options={SUPERTONIC_TTS_LANGUAGES.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    }))}
+                    onValueChange={(value) => setSupertonicLanguage(value as SupertonicTtsLanguage)}
+                    placeholder="Select language"
+                    searchPlaceholder="Search languages..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Auto-detect inspects each narration line and picks the closest of 31 supported
+                    languages.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {ttsEngine === 'moss' && (
+              <div className="space-y-1.5">
+                <Label className="text-sm">Narration Voice</Label>
+                <Combobox
+                  value={mossVoice}
+                  options={MOSS_TTS_VOICE_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                  onValueChange={(value) => setMossVoice(value as MossTtsVoice)}
+                  placeholder="Select MOSS voice"
+                  searchPlaceholder="Search voices..."
+                />
+              </div>
+            )}
+
+            {ttsEngine === 'custom' && (
+              <div className="space-y-1.5">
+                <SliderInput
+                  label="Narration Speed"
+                  value={ttsSpeed}
+                  onChange={(value) => {
+                    if (Number.isFinite(value)) {
+                      setTtsSpeed(
+                        Math.min(TTS_SPEED_BOUNDS.max, Math.max(TTS_SPEED_BOUNDS.min, value)),
+                      )
+                    }
+                  }}
+                  min={TTS_SPEED_BOUNDS.min}
+                  max={TTS_SPEED_BOUNDS.max}
+                  step={0.05}
+                  unit="x"
+                  disabled={isRunning}
+                />
+                <p className="text-xs text-muted-foreground">
+                  1.0 = normal. Higher = faster. Provider-dependent.
+                </p>
+              </div>
+            )}
 
             <div className="rounded-md border px-3 py-2.5 space-y-2.5">
               <div className="flex items-center justify-between">
@@ -879,7 +1067,19 @@ export function SpoilerGeneratorDialog() {
                 value={`${
                   NARRATION_LANGUAGE_OPTIONS.find((o) => o.value === narrationLanguage)?.label ??
                   narrationLanguage
-                } @ ${ttsSpeed.toFixed(1)}×${voicePreset ? ` · voice: ${voicePreset}` : ''}`}
+                }${ttsEngine === 'custom' ? ` @ ${ttsSpeed.toFixed(1)}×` : ''}`}
+              />
+              <SummaryRow
+                label="TTS engine"
+                value={
+                  ttsEngine === 'kokoro'
+                    ? `Kokoro · ${kokoroVoice}`
+                    : ttsEngine === 'supertonic'
+                      ? `Supertonic 3 · ${supertonicVoice} · ${supertonicLanguage}`
+                      : ttsEngine === 'moss'
+                        ? `MOSS Nano · ${mossVoice}`
+                        : `Custom AI${voicePreset ? ` · ${voicePreset}` : ''}`
+                }
               />
               <SummaryRow label="Avg clip per segment" value={`${clipDurationSec}s (LLM hint)`} />
               <SummaryRow

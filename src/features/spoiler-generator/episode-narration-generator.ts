@@ -8,11 +8,16 @@
  * `'spoiler-episode-boundary'` so the user can audit/cleanup if needed.
  */
 
-import { customTtsService } from './deps/tts'
 import { mediaLibraryService } from './deps/media-library'
+import {
+  getSpoilerTtsEngineTags,
+  runSpoilerTts,
+  type SpoilerTtsEngineConfig,
+} from './tts-engine-adapter'
 import type { EpisodeBucket } from './episode-planner'
 
-const TTS_TAGS = ['ai-generated', 'spoiler-episode-boundary', 'tts-engine:custom']
+const DEFAULT_CUSTOM_ENGINE_CONFIG: SpoilerTtsEngineConfig = { engine: 'custom' }
+const EPISODE_BOUNDARY_TAG = 'spoiler-episode-boundary'
 
 const PLACEHOLDER_PATTERN = /\{(n|next)\}/g
 
@@ -45,7 +50,7 @@ export interface GenerateEpisodeNarrationsInput {
   episodes: readonly EpisodeBucket[]
   openingTemplate: string
   closingTemplate: string
-  voice?: string
+  engineConfig?: SpoilerTtsEngineConfig
   speed?: number
   projectId: string
   signal?: AbortSignal
@@ -106,15 +111,15 @@ async function synthesize(
   kind: 'opening' | 'closing',
   episodeIndex: number,
 ): Promise<EpisodeNarrationLine> {
-  const result = await customTtsService.generateSpeechFile({
+  const engineConfig = input.engineConfig ?? DEFAULT_CUSTOM_ENGINE_CONFIG
+  const result = await runSpoilerTts(engineConfig, {
     text,
     speed: input.speed ?? 1,
-    ...(input.voice ? { voice: input.voice } : {}),
     ...(input.signal ? { signal: input.signal } : {}),
   })
 
   const media = await mediaLibraryService.importGeneratedAudio(result.file, input.projectId, {
-    tags: TTS_TAGS,
+    tags: [...getSpoilerTtsEngineTags(engineConfig), EPISODE_BOUNDARY_TAG],
   })
 
   const blobUrl =

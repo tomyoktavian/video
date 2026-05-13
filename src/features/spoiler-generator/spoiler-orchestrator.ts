@@ -208,13 +208,24 @@ function resolveSegments(
   ttsResults: readonly TtsBatchOutcome[],
 ): AssembleSegmentInput[] {
   emit(ctx, { stage: 'resolving-highlights', message: 'Aligning clips with narration...' })
-  const segments = script.segments.map((segment, i) => {
-    const tts = ttsResults[i]
+
+  // Sync strategy: every clip ends exactly with its narration. No silent
+  // tails. If the LLM produced narrations that are too short for the
+  // requested target duration, the total will be shorter than the target —
+  // we log a warning so the user can adjust the prompt / clip duration /
+  // segment count, but we never insert silent video padding because that's
+  // what produced the gaps the user reported.
+  const SEGMENT_TAIL_PAD_SEC = 0.3
+  const segments = script.segments.map((segment) => {
+    const tts = ttsResults[segment.index]
     const ttsSec = tts && 'durationSec' in tts ? tts.durationSec : 0
     const sourceSec = segment.selectedClipRange.endSec - segment.selectedClipRange.startSec
-    // Sync strategy: clip duration tracks narration duration + 0.3s buffer.
-    // If TTS failed, fall back to source-range duration so the segment still appears.
-    const finalDurationSec = ttsSec > 0 ? Math.max(0.5, ttsSec + 0.3) : Math.max(0.5, sourceSec)
+    // Clip duration tracks narration duration + a tiny breathing-room tail.
+    // If TTS failed for this segment, fall back to the LLM-picked source
+    // range so the segment still appears (silent video for one clip is
+    // preferable to dropping the beat entirely).
+    const finalDurationSec =
+      ttsSec > 0 ? Math.max(0.5, ttsSec + SEGMENT_TAIL_PAD_SEC) : Math.max(0.5, sourceSec)
     return {
       index: segment.index,
       sourceStartSec: segment.selectedClipRange.startSec,
@@ -224,19 +235,22 @@ function resolveSegments(
     }
   })
 
-  // Body must total at least the user's chosen `targetDurationSec`. TTS is
-  // typically faster than the LLM-estimated reading pace, so the natural
-  // sum is shorter than the target. Distribute the deficit evenly across
-  // segments so each video clip plays past its narration tail (silent
-  // video continuation). The full-spoiler compound's body matches the
-  // target exactly; per-episode totals add boundary overhead on top
-  // (cover + opening + closing) which is acceptable per product spec
-  // ("tidak boleh kurang, boleh lebih sedikit").
   const total = segments.reduce((acc, s) => acc + s.finalDurationSec, 0)
   const target = ctx.input.targetDurationSec
-  if (segments.length > 0 && total < target) {
-    const padPerSegment = (target - total) / segments.length
-    for (const seg of segments) seg.finalDurationSec += padPerSegment
+  const deficit = target - total
+  if (segments.length > 0 && deficit > 0) {
+    const deficitFraction = deficit / target
+    // Soft warning when the script came back short. The previous behaviour
+    // padded the deficit evenly across clips, which created silent video
+    // tails (the "gaps" reported in the timeline). We surface the gap and
+    // let the user retry with a stronger prompt / different model instead
+    // of silently masking the issue.
+    logger.warn(
+      `Narration total is ${total.toFixed(1)}s vs target ${target.toFixed(0)}s ` +
+        `(${(deficitFraction * 100).toFixed(1)}% short). Consider increasing the ` +
+        `target duration, reducing the per-segment clip duration to add more beats, ` +
+        `or asking the script writer model for longer narrations.`,
+    )
   }
   return segments
 }
@@ -257,7 +271,7 @@ async function stageGenerateNarration(
   const results = await runTtsBatch({
     segments: script.segments,
     projectId,
-    ...(ctx.input.voicePreset ? { voice: ctx.input.voicePreset } : {}),
+    ...(ctx.input.ttsEngineConfig ? { engineConfig: ctx.input.ttsEngineConfig } : {}),
     ...(ctx.input.voiceSpeed !== undefined ? { speed: ctx.input.voiceSpeed } : {}),
     maxConcurrency: 3,
     maxRetries: 2,
@@ -545,7 +559,7 @@ async function stageGenerateEpisodeNarration(
     openingTemplate,
     closingTemplate,
     projectId,
-    ...(ctx.input.voicePreset ? { voice: ctx.input.voicePreset } : {}),
+    ...(ctx.input.ttsEngineConfig ? { engineConfig: ctx.input.ttsEngineConfig } : {}),
     ...(ctx.input.voiceSpeed !== undefined ? { speed: ctx.input.voiceSpeed } : {}),
     ...(ctx.options.signal ? { signal: ctx.options.signal } : {}),
     onProgress: (current) => {

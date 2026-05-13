@@ -54,11 +54,39 @@ const LANGUAGE_LABELS: Record<string, string> = {
   it: 'Italian',
 }
 
+// Average spoken words-per-second by narration language. Defaults to 2.5
+// (Indonesian) which is close enough for most languages we ship.
+const WORDS_PER_SECOND: Record<string, number> = {
+  id: 2.5,
+  en: 2.8,
+  es: 2.6,
+  fr: 2.6,
+  de: 2.4,
+  ja: 4.5, // syllabic, characters-per-second equivalent
+  ko: 3.5,
+  zh: 3.5,
+  pt: 2.6,
+  ru: 2.3,
+  ar: 2.4,
+  hi: 2.5,
+  vi: 3.0,
+  th: 3.0,
+  ms: 2.5,
+  it: 2.6,
+}
+
 function resolveLanguageLabel(code: string | undefined): string {
   if (!code) return 'Bahasa Indonesia'
   const normalized = code.trim().toLowerCase()
   if (!normalized || normalized === 'auto') return 'Bahasa Indonesia'
   return LANGUAGE_LABELS[normalized] ?? code.trim()
+}
+
+function resolveWordsPerSecond(code: string | undefined): number {
+  if (!code) return 2.5
+  const normalized = code.trim().toLowerCase()
+  if (!normalized || normalized === 'auto') return 2.5
+  return WORDS_PER_SECOND[normalized] ?? 2.5
 }
 
 function parseSegmentRange(value: unknown): SpoilerSegmentRange | null {
@@ -151,17 +179,47 @@ export function parseScriptResponse(raw: string): SpoilerScript | null {
 
 function buildUserMessage(request: ScriptWriterRequest): string {
   const lang = resolveLanguageLabel(request.narrationLanguage)
+  const wps = resolveWordsPerSecond(request.narrationLanguage)
   const targetMin = (request.targetDurationSec / 60).toFixed(1)
+
+  // Hard word-count budgets so the LLM cannot return short narrations and
+  // force the orchestrator to pad clips with silent video tails. The
+  // upper bound includes a 5% safety margin so the spoiler is "slightly long"
+  // rather than "slightly short".
+  const targetTotalWords = Math.round(request.targetDurationSec * wps)
+  const totalWordsLow = Math.round(targetTotalWords * 0.95)
+  const totalWordsHigh = Math.round(targetTotalWords * 1.05)
+  const targetSegmentCount = Math.max(
+    8,
+    Math.round(request.targetDurationSec / Math.max(5, request.clipDurationSec)),
+  )
+  const targetWordsPerBeat = Math.round(request.clipDurationSec * wps)
+  const wordsPerBeatLow = Math.round(targetWordsPerBeat * 0.8)
+  const wordsPerBeatHigh = Math.round(targetWordsPerBeat * 1.2)
+
   const lines: string[] = []
   lines.push(
     `Write a spoiler-recap script for this film. Target spoiler video duration: ~${targetMin} minutes (${request.targetDurationSec.toFixed(0)} seconds).`,
   )
   lines.push(
-    `Average per-beat clip duration: ~${request.clipDurationSec.toFixed(1)} seconds. Use this as a soft target for each \`selectedClipRange\` length.`,
+    `Average per-beat clip duration: ~${request.clipDurationSec.toFixed(1)} seconds. Each \`selectedClipRange\` length should be close to this.`,
   )
   lines.push(
-    `Narration language: ${lang}. Write all \`narration\` and \`title\` and \`synopsis\` fields in ${lang}.`,
+    `Narration language: ${lang}. Spoken rate ≈ ${wps.toFixed(1)} words/sec. Write all \`narration\`, \`title\`, and \`synopsis\` fields in ${lang}.`,
   )
+  lines.push('')
+  lines.push('## Length budget — HARD targets, not suggestions')
+  lines.push(
+    `- **Total narration words**: ${totalWordsLow}–${totalWordsHigh} (target ${targetTotalWords}). Anything shorter produces silent gaps in the final video.`,
+  )
+  lines.push(`- **Number of beats**: about ${targetSegmentCount} (derive from clip duration).`)
+  lines.push(
+    `- **Words per beat**: ${wordsPerBeatLow}–${wordsPerBeatHigh} (target ${targetWordsPerBeat}). A ${request.clipDurationSec.toFixed(0)}s clip MUST have a narration that takes the full clip to read aloud.`,
+  )
+  lines.push(
+    '- Achieve this by adding context, motivation, consequences, and emotional reflection — not filler. Be vivid and specific.',
+  )
+  lines.push('')
   lines.push('Return JSON only, matching the schema in the system prompt.')
   lines.push('')
 

@@ -8,6 +8,8 @@
 
 import type { MediaTranscriptSegment } from '@/types/storage'
 
+import type { SpoilerTtsEngineConfig } from './tts-engine-adapter'
+
 /** Time range in source-media seconds. */
 export interface SpoilerSegmentRange {
   startSec: number
@@ -117,6 +119,12 @@ export interface SpoilerInput {
   voicePreset?: string
   /** TTS speed multiplier (0.25 .. 4.0). Undefined = provider default (1.0). */
   voiceSpeed?: number
+  /**
+   * Engine + engine-specific voice/lang/quality choice. When omitted the
+   * orchestrator falls back to the Custom AI endpoint, preserving legacy
+   * behaviour for callers that still rely on `voicePreset` alone.
+   */
+  ttsEngineConfig?: SpoilerTtsEngineConfig
   /**
    * Words per spoiler subtitle text item. `1` = karaoke (one word per clip);
    * higher = bigger phrase chunks. Only consulted when `addSubtitles === true`.

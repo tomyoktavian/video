@@ -10,15 +10,20 @@
  * caller (orchestrator) decides whether to abort or proceed with silent gaps.
  */
 
-import { customTtsService } from './deps/tts'
 import { mediaLibraryService } from './deps/media-library'
+import {
+  getSpoilerTtsEngineTags,
+  runSpoilerTts,
+  type SpoilerTtsEngineConfig,
+} from './tts-engine-adapter'
 import type { SpoilerSegment, TtsBatchOutcome } from './types'
 
 export interface TtsBatchInput {
   segments: readonly SpoilerSegment[]
   /** Active project id — required to save generated audio to media library. */
   projectId: string
-  voice?: string
+  /** Engine + engine-specific voice/lang/quality. Defaults to Custom when omitted. */
+  engineConfig?: SpoilerTtsEngineConfig
   /** Speed multiplier (0.25..4.0). Defaults to 1. */
   speed?: number
   /** M3: max concurrent TTS calls. Default 1 in M2 (sequential). */
@@ -29,7 +34,8 @@ export interface TtsBatchInput {
   onProgress?: (segmentIndex: number, total: number) => void
 }
 
-const TTS_TAGS_PER_SEGMENT = ['ai-generated', 'spoiler-narration', 'tts-engine:custom']
+const DEFAULT_CUSTOM_ENGINE_CONFIG: SpoilerTtsEngineConfig = { engine: 'custom' }
+const SPOILER_NARRATION_TAG = 'spoiler-narration'
 
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -68,13 +74,13 @@ async function runOneSegment(
   segment: SpoilerSegment,
   input: TtsBatchInput,
 ): Promise<TtsBatchOutcome> {
+  const engineConfig = input.engineConfig ?? DEFAULT_CUSTOM_ENGINE_CONFIG
   try {
     const ttsResult = await withRetry(
       () =>
-        customTtsService.generateSpeechFile({
+        runSpoilerTts(engineConfig, {
           text: segment.narration,
           speed: input.speed ?? 1,
-          ...(input.voice ? { voice: input.voice } : {}),
           ...(input.signal ? { signal: input.signal } : {}),
         }),
       input.maxRetries ?? 0,
@@ -82,7 +88,7 @@ async function runOneSegment(
     )
 
     const media = await mediaLibraryService.importGeneratedAudio(ttsResult.file, input.projectId, {
-      tags: TTS_TAGS_PER_SEGMENT,
+      tags: [...getSpoilerTtsEngineTags(engineConfig), SPOILER_NARRATION_TAG],
     })
 
     return {

@@ -123,7 +123,9 @@ export async function regenerateNarration(
     segments,
     projectId,
     speed: input.speed,
-    ...(input.voiceId ? { voice: input.voiceId } : {}),
+    // Regen always rebuilds via the cloud Custom AI endpoint — engine
+    // selection lives on the dialog flow, not on stored compound metadata.
+    engineConfig: { engine: 'custom', ...(input.voiceId ? { voice: input.voiceId } : {}) },
     maxConcurrency: 3,
     maxRetries: 2,
     ...(options.signal ? { signal: options.signal } : {}),
