@@ -92,6 +92,20 @@ import {
   type MossTtsVoice,
 } from '../services/moss-tts-service'
 import {
+  SUPERTONIC_TTS_DEFAULT_LANGUAGE,
+  SUPERTONIC_TTS_DEFAULT_QUALITY,
+  SUPERTONIC_TTS_DEFAULT_VOICE,
+  SUPERTONIC_TTS_LANGUAGES,
+  SUPERTONIC_TTS_QUALITY_MAX,
+  SUPERTONIC_TTS_QUALITY_MIN,
+  SUPERTONIC_TTS_VOICE_OPTIONS,
+  getSupertonicTtsLanguageOption,
+  getSupertonicTtsVoiceOption,
+  supertonicTtsService,
+  type SupertonicTtsLanguage,
+  type SupertonicTtsVoice,
+} from '../services/supertonic-tts-service'
+import {
   DEFAULT_MUSICGEN_MODEL,
   MUSICGEN_MODEL_OPTIONS,
   musicgenService,
@@ -328,12 +342,22 @@ export const AiPanel = memo(function AiPanel() {
 
   const [ttsText, setTtsText] = useState(DEFAULT_PROMPT)
   const [ttsEngine, setTtsEngine] = useState<StoredTtsEngine>(() =>
-    // First-run users with Custom TTS configured default to 'custom'; users
-    // who explicitly chose kokoro/moss before keep their stored preference.
-    getStoredTtsEngine(isCustomTtsConfigured ? 'custom' : 'kokoro'),
+    // First-run users with Custom TTS configured default to 'custom'; otherwise
+    // Supertonic is the default local engine. Users who previously chose
+    // another engine keep their stored preference.
+    getStoredTtsEngine(isCustomTtsConfigured ? 'custom' : 'supertonic'),
   )
   const [ttsKokoroVoice, setTtsKokoroVoice] = useState<KokoroTtsVoice>('af_heart')
   const [ttsMossVoice, setTtsMossVoice] = useState<MossTtsVoice>('Xiaoyu')
+  const [ttsSupertonicVoice, setTtsSupertonicVoice] = useState<SupertonicTtsVoice>(
+    SUPERTONIC_TTS_DEFAULT_VOICE,
+  )
+  const [ttsSupertonicLanguage, setTtsSupertonicLanguage] = useState<SupertonicTtsLanguage>(
+    SUPERTONIC_TTS_DEFAULT_LANGUAGE,
+  )
+  const [ttsSupertonicQuality, setTtsSupertonicQuality] = useState<number>(
+    SUPERTONIC_TTS_DEFAULT_QUALITY,
+  )
   const ttsModel: KokoroTtsModel = KOKORO_TTS_BEST_MODEL
   const [ttsSpeed, setTtsSpeed] = useState(1)
   const [isTtsGenerating, setIsTtsGenerating] = useState(false)
@@ -399,15 +423,19 @@ export const AiPanel = memo(function AiPanel() {
 
   const isKokoroSupported = kokoroTtsService.isSupported()
   const isMossSupported = mossTtsService.isSupported()
+  const isSupertonicSupported = supertonicTtsService.isSupported()
   const isCustomTtsEngine = ttsEngine === 'custom'
-  const supportsNativeTtsSpeed = ttsEngine === 'kokoro' || isCustomTtsEngine
+  const supportsNativeTtsSpeed =
+    ttsEngine === 'kokoro' || ttsEngine === 'supertonic' || isCustomTtsEngine
   const effectiveTtsSpeed = supportsNativeTtsSpeed ? ttsSpeed : 1
   const isTtsSupported =
     ttsEngine === 'kokoro'
       ? isKokoroSupported
-      : ttsEngine === 'moss'
-        ? isMossSupported
-        : isCustomTtsConfigured && customTtsService.isSupported()
+      : ttsEngine === 'supertonic'
+        ? isSupertonicSupported
+        : ttsEngine === 'moss'
+          ? isMossSupported
+          : isCustomTtsConfigured && customTtsService.isSupported()
   const isMusicSupported = musicgenService.isSupported()
   const trimmedTtsText = ttsText.trim()
   const trimmedMusicPrompt = musicPrompt.trim()
@@ -426,7 +454,14 @@ export const AiPanel = memo(function AiPanel() {
   const anyMusicSaving = musicGenerations.some((generation) => generation.saving)
   const text = ttsText
   const setText = setTtsText
-  const voice = ttsEngine === 'kokoro' ? ttsKokoroVoice : ttsEngine === 'moss' ? ttsMossVoice : ''
+  const voice =
+    ttsEngine === 'kokoro'
+      ? ttsKokoroVoice
+      : ttsEngine === 'supertonic'
+        ? ttsSupertonicVoice
+        : ttsEngine === 'moss'
+          ? ttsMossVoice
+          : ''
   const speed = ttsSpeed
   const setSpeed = setTtsSpeed
   const isGenerating = isTtsGenerating
@@ -437,9 +472,21 @@ export const AiPanel = memo(function AiPanel() {
   const anySaving = anyTtsSaving
   const trimmedText = trimmedTtsText
   const currentTtsBackendLabel =
-    ttsEngine === 'kokoro' ? 'WebGPU' : ttsEngine === 'moss' ? 'CPU' : 'Network'
+    ttsEngine === 'kokoro'
+      ? 'WebGPU'
+      : ttsEngine === 'supertonic'
+        ? 'WebGPU/WASM'
+        : ttsEngine === 'moss'
+          ? 'CPU'
+          : 'Network'
   const currentTtsRuntimeLabel =
-    ttsEngine === 'kokoro' ? 'Kokoro TTS Best' : ttsEngine === 'moss' ? 'MOSS Nano' : 'Custom AI'
+    ttsEngine === 'kokoro'
+      ? 'Kokoro TTS Best'
+      : ttsEngine === 'supertonic'
+        ? 'Supertonic 3'
+        : ttsEngine === 'moss'
+          ? 'MOSS Nano'
+          : 'Custom AI'
 
   // --- actions ---
 
@@ -456,9 +503,11 @@ export const AiPanel = memo(function AiPanel() {
       setTtsError(
         ttsEngine === 'kokoro'
           ? 'WebGPU is required for Kokoro TTS. Try Chrome 113+, Edge 113+, or Safari 26+.'
-          : ttsEngine === 'moss'
-            ? 'Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.'
-            : 'Custom AI TTS is not configured. Open Settings → AI → Custom AI → Text to Speech.',
+          : ttsEngine === 'supertonic'
+            ? 'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.'
+            : ttsEngine === 'moss'
+              ? 'Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.'
+              : 'Custom AI TTS is not configured. Open Settings → AI → Custom AI → Text to Speech.',
       )
       return
     }
@@ -477,18 +526,27 @@ export const AiPanel = memo(function AiPanel() {
               model: ttsModel,
               onProgress: setTtsProgress,
             })
-          : ttsEngine === 'moss'
-            ? await mossTtsService.generateSpeechFile({
+          : ttsEngine === 'supertonic'
+            ? await supertonicTtsService.generateSpeechFile({
                 text: trimmedTtsText,
-                voice: ttsMossVoice,
+                voice: ttsSupertonicVoice,
+                language: ttsSupertonicLanguage,
                 speed: effectiveTtsSpeed,
+                quality: ttsSupertonicQuality,
                 onProgress: setTtsProgress,
               })
-            : await customTtsService.generateSpeechFile({
-                text: trimmedTtsText,
-                speed: effectiveTtsSpeed,
-                onProgress: setTtsProgress,
-              })
+            : ttsEngine === 'moss'
+              ? await mossTtsService.generateSpeechFile({
+                  text: trimmedTtsText,
+                  voice: ttsMossVoice,
+                  speed: effectiveTtsSpeed,
+                  onProgress: setTtsProgress,
+                })
+              : await customTtsService.generateSpeechFile({
+                  text: trimmedTtsText,
+                  speed: effectiveTtsSpeed,
+                  onProgress: setTtsProgress,
+                })
 
       const { blob, file, duration } = result
 
@@ -498,15 +556,19 @@ export const AiPanel = memo(function AiPanel() {
       const voiceLabel =
         ttsEngine === 'kokoro'
           ? getKokoroTtsVoiceOption(ttsKokoroVoice).label
-          : ttsEngine === 'moss'
-            ? getMossTtsVoiceOption(ttsMossVoice).label
-            : customVoiceLabel
+          : ttsEngine === 'supertonic'
+            ? getSupertonicTtsVoiceOption(ttsSupertonicVoice).label
+            : ttsEngine === 'moss'
+              ? getMossTtsVoiceOption(ttsMossVoice).label
+              : customVoiceLabel
       const modelLabel =
         ttsEngine === 'kokoro'
           ? getKokoroTtsModelOption(ttsModel).label
-          : ttsEngine === 'moss'
-            ? 'Multilingual Nano'
-            : customTtsConfig.model || 'Custom AI'
+          : ttsEngine === 'supertonic'
+            ? `Supertonic 3 (${getSupertonicTtsLanguageOption(ttsSupertonicLanguage).label})`
+            : ttsEngine === 'moss'
+              ? 'Multilingual Nano'
+              : customTtsConfig.model || 'Custom AI'
       const engineTags =
         ttsEngine === 'kokoro'
           ? [
@@ -516,15 +578,24 @@ export const AiPanel = memo(function AiPanel() {
               `kokoro-quality:${ttsModel}`,
               `kokoro-voice:${ttsKokoroVoice}`,
             ]
-          : ttsEngine === 'moss'
-            ? ['ai-generated', 'moss-tts', 'tts-engine:moss', `moss-voice:${ttsMossVoice}`]
-            : [
+          : ttsEngine === 'supertonic'
+            ? [
                 'ai-generated',
-                'custom-ai-tts',
-                'tts-engine:custom',
-                `custom-tts-model:${customTtsConfig.model}`,
-                `custom-tts-voice:${customVoiceLabel}`,
+                'supertonic-tts',
+                'tts-engine:supertonic',
+                `supertonic-voice:${ttsSupertonicVoice}`,
+                `supertonic-lang:${ttsSupertonicLanguage}`,
+                `supertonic-quality:${ttsSupertonicQuality}`,
               ]
+            : ttsEngine === 'moss'
+              ? ['ai-generated', 'moss-tts', 'tts-engine:moss', `moss-voice:${ttsMossVoice}`]
+              : [
+                  'ai-generated',
+                  'custom-ai-tts',
+                  'tts-engine:custom',
+                  `custom-tts-model:${customTtsConfig.model}`,
+                  `custom-tts-voice:${customVoiceLabel}`,
+                ]
 
       const generation: AudioGeneration = {
         id: crypto.randomUUID(),
@@ -563,6 +634,9 @@ export const AiPanel = memo(function AiPanel() {
     ttsKokoroVoice,
     ttsModel,
     ttsMossVoice,
+    ttsSupertonicVoice,
+    ttsSupertonicLanguage,
+    ttsSupertonicQuality,
   ])
 
   const handleMusicGenerate = useCallback(async () => {
@@ -948,9 +1022,11 @@ export const AiPanel = memo(function AiPanel() {
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
                 {ttsEngine === 'kokoro'
                   ? 'WebGPU is not available in this browser. Kokoro TTS needs Chrome 113+, Edge 113+, or Safari 26+.'
-                  : ttsEngine === 'moss'
-                    ? 'Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.'
-                    : 'Configure Base URL, API key, and model in Settings → AI → Custom AI → Text to Speech.'}
+                  : ttsEngine === 'supertonic'
+                    ? 'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.'
+                    : ttsEngine === 'moss'
+                      ? 'Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.'
+                      : 'Configure Base URL, API key, and model in Settings → AI → Custom AI → Text to Speech.'}
               </div>
             )}
 
@@ -981,6 +1057,9 @@ export const AiPanel = memo(function AiPanel() {
                     <SelectItem value="kokoro" className="text-xs">
                       Kokoro (English, WebGPU)
                     </SelectItem>
+                    <SelectItem value="supertonic" className="text-xs">
+                      Supertonic 3 (31 languages, WebGPU/WASM)
+                    </SelectItem>
                     <SelectItem value="moss" className="text-xs">
                       MOSS Nano (20 languages, CPU)
                     </SelectItem>
@@ -1000,6 +1079,8 @@ export const AiPanel = memo(function AiPanel() {
                       onValueChange={(value) => {
                         if (ttsEngine === 'kokoro') {
                           setTtsKokoroVoice(value as KokoroTtsVoice)
+                        } else if (ttsEngine === 'supertonic') {
+                          setTtsSupertonicVoice(value as SupertonicTtsVoice)
                         } else {
                           setTtsMossVoice(value as MossTtsVoice)
                         }
@@ -1012,7 +1093,9 @@ export const AiPanel = memo(function AiPanel() {
                       <SelectContent className="max-h-72">
                         {(ttsEngine === 'kokoro'
                           ? KOKORO_TTS_VOICE_OPTIONS
-                          : MOSS_TTS_VOICE_OPTIONS
+                          : ttsEngine === 'supertonic'
+                            ? SUPERTONIC_TTS_VOICE_OPTIONS
+                            : MOSS_TTS_VOICE_OPTIONS
                         ).map((option) => (
                           <SelectItem key={option.value} value={option.value} className="text-xs">
                             {option.label}
@@ -1021,6 +1104,30 @@ export const AiPanel = memo(function AiPanel() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {ttsEngine === 'supertonic' && (
+                    <div className="space-y-1.5">
+                      <Label>Language</Label>
+                      <Select
+                        value={ttsSupertonicLanguage}
+                        onValueChange={(value) =>
+                          setTtsSupertonicLanguage(value as SupertonicTtsLanguage)
+                        }
+                        disabled={isGenerating}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {SUPERTONIC_TTS_LANGUAGES.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="text-xs">
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1061,6 +1168,19 @@ export const AiPanel = memo(function AiPanel() {
                 {isGenerating ? 'Generating...' : 'Generate'}
               </Button>
             </div>
+
+            {ttsEngine === 'supertonic' && (
+              <SliderInput
+                label="Quality"
+                value={ttsSupertonicQuality}
+                onChange={(value) => setTtsSupertonicQuality(Math.round(value))}
+                min={SUPERTONIC_TTS_QUALITY_MIN}
+                max={SUPERTONIC_TTS_QUALITY_MAX}
+                step={1}
+                unit=" steps"
+                disabled={isGenerating}
+              />
+            )}
             <p className="text-[11px] text-muted-foreground">
               {isCustomTtsEngine
                 ? `${currentTtsRuntimeLabel} sends each request to your configured ${currentTtsBackendLabel} endpoint.`

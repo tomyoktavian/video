@@ -15,12 +15,14 @@ export const TRANSFORMERS_CACHE_NAME = 'transformers-cache'
 export const LOCAL_MODEL_CACHE_STORAGE_LABEL = 'Browser cache storage'
 const WHISPER_CACHE_MATCH_FRAGMENTS = ['/onnx-community/whisper-']
 const KOKORO_TTS_CACHE_MATCH_FRAGMENTS = ['/onnx-community/kokoro-82m-v1.0-onnx/']
+const SUPERTONIC_TTS_CACHE_MATCH_FRAGMENTS = ['/supertone/supertonic-3/']
 
 export type LocalModelCacheId =
   | 'whisper'
   | SceneVerificationModelId
   | MusicgenModelId
   | 'kokoro-tts'
+  | 'supertonic-tts'
 
 export interface LocalModelCacheDefinition {
   id: LocalModelCacheId
@@ -79,6 +81,13 @@ export const LOCAL_MODEL_CACHE_DEFINITIONS: LocalModelCacheDefinition[] = [
     description: 'Kokoro ONNX model weights and tokenizer files.',
     cacheName: TRANSFORMERS_CACHE_NAME,
     matchPathFragments: KOKORO_TTS_CACHE_MATCH_FRAGMENTS,
+  },
+  {
+    id: 'supertonic-tts',
+    label: 'Supertonic 3',
+    description: 'Supertonic 3 ONNX models, voice styles, and Unicode indexer.',
+    cacheName: TRANSFORMERS_CACHE_NAME,
+    matchPathFragments: SUPERTONIC_TTS_CACHE_MATCH_FRAGMENTS,
   },
 ]
 
