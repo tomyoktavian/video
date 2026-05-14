@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { FloatingPanel } from '@/components/ui/floating-panel'
 import { Input } from '@/components/ui/input'
@@ -100,6 +101,7 @@ function SettingControl({
 }
 
 export function SilenceRemovalDialog() {
+  const { t } = useTranslation()
   const isOpen = useSilenceRemovalDialogStore((state) => state.isOpen)
   const itemIds = useSilenceRemovalDialogStore((state) => state.itemIds)
   const settings = useSilenceRemovalDialogStore((state) => state.settings)
@@ -155,22 +157,24 @@ export function SilenceRemovalDialog() {
           summary: nextSummary,
         })
         if (nextSummary.rangeCount === 0) {
-          toast.info('No removable silence detected with these settings')
+          toast.info(t('timeline.silenceRemoval.toastNoRemovable'))
         }
       } catch (error) {
         logger.warn('Silence preview failed', error)
-        toast.error(error instanceof Error ? error.message : 'Failed to preview silence')
+        toast.error(
+          error instanceof Error ? error.message : t('timeline.silenceRemoval.toastPreviewFailed'),
+        )
       } finally {
         setIsAnalyzing(false)
       }
     }
 
     void run()
-  }, [draft, itemIds, updatePreview])
+  }, [draft, itemIds, t, updatePreview])
 
   const handleApply = useCallback(() => {
     if (!areSettingsEqual(draft, settings)) {
-      toast.info('Settings changed — click Update Preview before removing')
+      toast.info(t('timeline.silenceRemoval.toastSettingsChanged'))
       return
     }
 
@@ -183,14 +187,12 @@ export function SilenceRemovalDialog() {
     }
 
     if (!result || result.removedItemCount === 0) {
-      toast.info('No silence segments found inside the selected clips')
+      toast.info(t('timeline.silenceRemoval.toastNoneInClips'))
       return
     }
 
-    toast.success(
-      `Removed ${result.removedItemCount} silence segment${result.removedItemCount === 1 ? '' : 's'}`,
-    )
-  }, [close, draft, itemIds, rangesByMediaId, settings])
+    toast.success(t('timeline.silenceRemoval.toastRemoved', { count: result.removedItemCount }))
+  }, [close, draft, itemIds, rangesByMediaId, settings, t])
 
   if (!isOpen) {
     return null
@@ -198,7 +200,7 @@ export function SilenceRemovalDialog() {
 
   return (
     <FloatingPanel
-      title="Remove Silence"
+      title={t('timeline.silenceRemoval.title')}
       defaultBounds={SILENCE_REMOVAL_PANEL_DEFAULT_BOUNDS}
       minWidth={340}
       minHeight={320}
@@ -210,24 +212,26 @@ export function SilenceRemovalDialog() {
     >
       <section
         role="dialog"
-        aria-label="Remove Silence"
+        aria-label={t('timeline.silenceRemoval.title')}
         aria-modal="false"
         className="flex flex-col"
       >
         <div className="space-y-4 p-3">
           <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm leading-tight">
             <div className="font-medium">
-              {summary.rangeCount} range{summary.rangeCount === 1 ? '' : 's'} selected
+              {t('timeline.silenceRemoval.rangesSelected', { count: summary.rangeCount })}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              About {formatSeconds(summary.totalSeconds)} will be removed.
+              {t('timeline.silenceRemoval.aboutWillBeRemoved', {
+                duration: formatSeconds(summary.totalSeconds),
+              })}
             </div>
           </div>
 
           <div className="space-y-3.5">
             <SettingControl
               id="silence-threshold"
-              label="Threshold"
+              label={t('timeline.silenceRemoval.threshold')}
               value={draft.thresholdDb}
               min={-80}
               max={-20}
@@ -237,7 +241,7 @@ export function SilenceRemovalDialog() {
             />
             <SettingControl
               id="silence-duration"
-              label="Minimum silence"
+              label={t('timeline.silenceRemoval.minimumSilence')}
               value={draft.minSilenceMs}
               min={100}
               max={3000}
@@ -247,7 +251,7 @@ export function SilenceRemovalDialog() {
             />
             <SettingControl
               id="silence-padding"
-              label="Keep padding"
+              label={t('timeline.silenceRemoval.keepPadding')}
               value={draft.paddingMs}
               min={0}
               max={1000}
@@ -260,7 +264,7 @@ export function SilenceRemovalDialog() {
 
         <div className="flex flex-col-reverse gap-2 border-t border-border bg-secondary/10 p-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" size="sm" onClick={handleClose} disabled={isAnalyzing}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="secondary"
@@ -268,14 +272,16 @@ export function SilenceRemovalDialog() {
             onClick={handleUpdatePreview}
             disabled={isAnalyzing}
           >
-            {isAnalyzing ? 'Updating...' : 'Update Preview'}
+            {isAnalyzing
+              ? t('timeline.silenceRemoval.updating')
+              : t('timeline.silenceRemoval.updatePreview')}
           </Button>
           <Button
             size="sm"
             onClick={handleApply}
             disabled={isAnalyzing || summary.rangeCount === 0}
           >
-            Remove
+            {t('timeline.silenceRemoval.remove')}
           </Button>
         </div>
       </section>

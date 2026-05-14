@@ -1,0 +1,2521 @@
+{
+  "en": {
+    "categories": {
+      "color": "Color",
+      "blur": "Blur",
+      "distort": "Distort",
+      "stylize": "Stylize",
+      "keying": "Keying"
+    },
+    "panel": {
+      "disableEffect": "Disable Effect",
+      "enableEffect": "Enable Effect",
+      "off": "Off",
+      "on": "On",
+      "removeEffect": "Remove Effect",
+      "resetToDefaults": "Reset To Defaults"
+    },
+    "section": {
+      "addEffect": "Add Effect",
+      "disableAll": "Disable All",
+      "emptyState": "No effects yet",
+      "enableAll": "Enable All",
+      "noEffectsFound": "No effects found",
+      "presets": "Presets",
+      "searchEffects": "Search effects",
+      "title": "Effects"
+    },
+    "curves": {
+      "channel": "Channel",
+      "dragHint": "Drag points to adjust {{channel}} curve",
+      "resetChannel": "Reset Channel",
+      "channelMaster": "Master",
+      "channelRed": "Red",
+      "channelGreen": "Green",
+      "channelBlue": "Blue"
+    },
+    "wheels": {
+      "resetWheel": "Reset {{name}}",
+      "shadows": "Shadows",
+      "midtones": "Midtones",
+      "highlights": "Highlights"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "Brightness"
+      },
+      "gpu-color-wheels": {
+        "name": "Color Wheels"
+      },
+      "gpu-contrast": {
+        "name": "Contrast"
+      },
+      "gpu-curves": {
+        "name": "Curves"
+      },
+      "gpu-exposure": {
+        "name": "Exposure"
+      },
+      "gpu-grayscale": {
+        "name": "Grayscale"
+      },
+      "gpu-hue-shift": {
+        "name": "Hue Shift"
+      },
+      "gpu-invert": {
+        "name": "Invert"
+      },
+      "gpu-levels": {
+        "name": "Levels"
+      },
+      "gpu-saturation": {
+        "name": "Saturation"
+      },
+      "gpu-sepia": {
+        "name": "Sepia"
+      },
+      "gpu-temperature": {
+        "name": "Temperature"
+      },
+      "gpu-vibrance": {
+        "name": "Vibrance"
+      },
+      "gpu-box-blur": {
+        "name": "Box Blur"
+      },
+      "gpu-gaussian-blur": {
+        "name": "Gaussian Blur"
+      },
+      "gpu-motion-blur": {
+        "name": "Motion Blur"
+      },
+      "gpu-radial-blur": {
+        "name": "Radial Blur"
+      },
+      "gpu-zoom-blur": {
+        "name": "Zoom Blur"
+      },
+      "gpu-bulge": {
+        "name": "Bulge/Pinch"
+      },
+      "gpu-fluted-glass": {
+        "name": "Fluted Glass"
+      },
+      "gpu-kaleidoscope": {
+        "name": "Kaleidoscope"
+      },
+      "gpu-mirror": {
+        "name": "Mirror"
+      },
+      "gpu-pixelate": {
+        "name": "Pixelate"
+      },
+      "gpu-rgb-split": {
+        "name": "RGB Split"
+      },
+      "gpu-twirl": {
+        "name": "Twirl"
+      },
+      "gpu-wave": {
+        "name": "Wave"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "Color Glitch"
+      },
+      "gpu-dither": {
+        "name": "Dither"
+      },
+      "gpu-edge-detect": {
+        "name": "Edge Detect"
+      },
+      "gpu-glow": {
+        "name": "Glow"
+      },
+      "gpu-grain": {
+        "name": "Film Grain"
+      },
+      "gpu-halftone": {
+        "name": "Halftone"
+      },
+      "gpu-posterize": {
+        "name": "Posterize"
+      },
+      "gpu-scanlines": {
+        "name": "Scanlines"
+      },
+      "gpu-sharpen": {
+        "name": "Sharpen"
+      },
+      "gpu-threshold": {
+        "name": "Threshold"
+      },
+      "gpu-vignette": {
+        "name": "Vignette"
+      },
+      "gpu-chroma-key": {
+        "name": "Chroma Key"
+      }
+    },
+    "params": {
+      "amount": "Amount",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "Size",
+      "pattern": "Pattern",
+      "mode": "Mode",
+      "style": "Style",
+      "shape": "Shape",
+      "palette": "Palette",
+      "cellSize": "Cell Size",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "Softness",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "Speed",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "Image",
+      "linear": "Linear",
+      "radial": "Radial",
+      "threshold": "Threshold",
+      "scaled": "Scaled",
+      "circle": "Circle",
+      "square": "Square",
+      "diamond": "Diamond",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepia",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "es": {
+    "categories": {
+      "color": "Color",
+      "blur": "Desenfoque",
+      "distort": "Distorsion",
+      "stylize": "Estilizar",
+      "keying": "Clave"
+    },
+    "panel": {
+      "disableEffect": "Desactivar efecto",
+      "enableEffect": "Activar efecto",
+      "off": "Apagado",
+      "on": "Encendido",
+      "removeEffect": "Eliminar efecto",
+      "resetToDefaults": "Restablecer valores"
+    },
+    "section": {
+      "addEffect": "Agregar efecto",
+      "disableAll": "Desactivar todos",
+      "emptyState": "Sin efectos",
+      "enableAll": "Activar todos",
+      "noEffectsFound": "No se encontraron efectos",
+      "presets": "Preajustes",
+      "searchEffects": "Buscar efectos",
+      "title": "Efectos"
+    },
+    "curves": {
+      "channel": "Canal",
+      "dragHint": "Arrastra puntos para ajustar la curva {{channel}}",
+      "resetChannel": "Restablecer canal",
+      "channelMaster": "Maestro",
+      "channelRed": "Rojo",
+      "channelGreen": "Verde",
+      "channelBlue": "Azul"
+    },
+    "wheels": {
+      "resetWheel": "Restablecer {{name}}",
+      "shadows": "Sombras",
+      "midtones": "Medios tonos",
+      "highlights": "Altas luces"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "Brillo"
+      },
+      "gpu-color-wheels": {
+        "name": "Ruedas de color"
+      },
+      "gpu-contrast": {
+        "name": "Contraste"
+      },
+      "gpu-curves": {
+        "name": "Curvas"
+      },
+      "gpu-exposure": {
+        "name": "Exposicion"
+      },
+      "gpu-grayscale": {
+        "name": "Escala de grises"
+      },
+      "gpu-hue-shift": {
+        "name": "Cambio de tono"
+      },
+      "gpu-invert": {
+        "name": "Invertir"
+      },
+      "gpu-levels": {
+        "name": "Niveles"
+      },
+      "gpu-saturation": {
+        "name": "Saturacion"
+      },
+      "gpu-sepia": {
+        "name": "Sepia"
+      },
+      "gpu-temperature": {
+        "name": "Temperatura"
+      },
+      "gpu-vibrance": {
+        "name": "Intensidad"
+      },
+      "gpu-box-blur": {
+        "name": "Desenfoque de caja"
+      },
+      "gpu-gaussian-blur": {
+        "name": "Desenfoque gaussiano"
+      },
+      "gpu-motion-blur": {
+        "name": "Desenfoque de movimiento"
+      },
+      "gpu-radial-blur": {
+        "name": "Desenfoque radial"
+      },
+      "gpu-zoom-blur": {
+        "name": "Desenfoque de zoom"
+      },
+      "gpu-bulge": {
+        "name": "Abultar/Pellizcar"
+      },
+      "gpu-fluted-glass": {
+        "name": "Vidrio estriado"
+      },
+      "gpu-kaleidoscope": {
+        "name": "Caleidoscopio"
+      },
+      "gpu-mirror": {
+        "name": "Espejo"
+      },
+      "gpu-pixelate": {
+        "name": "Pixelar"
+      },
+      "gpu-rgb-split": {
+        "name": "Separacion RGB"
+      },
+      "gpu-twirl": {
+        "name": "Remolino"
+      },
+      "gpu-wave": {
+        "name": "Onda"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "Glitch de color"
+      },
+      "gpu-dither": {
+        "name": "Tramado"
+      },
+      "gpu-edge-detect": {
+        "name": "Detectar bordes"
+      },
+      "gpu-glow": {
+        "name": "Resplandor"
+      },
+      "gpu-grain": {
+        "name": "Grano de pelicula"
+      },
+      "gpu-halftone": {
+        "name": "Semitono"
+      },
+      "gpu-posterize": {
+        "name": "Posterizar"
+      },
+      "gpu-scanlines": {
+        "name": "Lineas de barrido"
+      },
+      "gpu-sharpen": {
+        "name": "Enfocar"
+      },
+      "gpu-threshold": {
+        "name": "Umbral"
+      },
+      "gpu-vignette": {
+        "name": "Vineta"
+      },
+      "gpu-chroma-key": {
+        "name": "Croma"
+      }
+    },
+    "params": {
+      "amount": "Cantidad",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "Tamano",
+      "pattern": "Patron",
+      "mode": "Modo",
+      "style": "Estilo",
+      "shape": "Forma",
+      "palette": "Paleta",
+      "cellSize": "Tamano de celda",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "Suavidad",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "Velocidad",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "brightness": "Brillo",
+      "threshold": "Umbral"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "Imagen",
+      "linear": "Lineal",
+      "radial": "Radial",
+      "threshold": "Umbral",
+      "scaled": "Escalado",
+      "circle": "Circulo",
+      "square": "Cuadrado",
+      "diamond": "Diamante",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepia",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "fr": {
+    "categories": {
+      "color": "Couleur",
+      "blur": "Flou",
+      "distort": "Deformer",
+      "stylize": "Styliser",
+      "keying": "Incrustation"
+    },
+    "panel": {
+      "disableEffect": "Desactiver l effet",
+      "enableEffect": "Activer l effet",
+      "off": "Desactive",
+      "on": "Active",
+      "removeEffect": "Supprimer l effet",
+      "resetToDefaults": "Retablir les valeurs"
+    },
+    "section": {
+      "addEffect": "Ajouter un effet",
+      "disableAll": "Tout desactiver",
+      "emptyState": "Aucun effet",
+      "enableAll": "Tout activer",
+      "noEffectsFound": "Aucun effet trouve",
+      "presets": "Prereglages",
+      "searchEffects": "Rechercher des effets",
+      "title": "Effets"
+    },
+    "curves": {
+      "channel": "Canal",
+      "dragHint": "Faites glisser les points pour ajuster la courbe {{channel}}",
+      "resetChannel": "Reinitialiser le canal",
+      "channelMaster": "Principal",
+      "channelRed": "Rouge",
+      "channelGreen": "Vert",
+      "channelBlue": "Bleu"
+    },
+    "wheels": {
+      "resetWheel": "Reinitialiser {{name}}",
+      "shadows": "Ombres",
+      "midtones": "Tons moyens",
+      "highlights": "Hautes lumieres"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "Luminosite"
+      },
+      "gpu-color-wheels": {
+        "name": "Roues chromatiques"
+      },
+      "gpu-contrast": {
+        "name": "Contraste"
+      },
+      "gpu-curves": {
+        "name": "Courbes"
+      },
+      "gpu-exposure": {
+        "name": "Exposition"
+      },
+      "gpu-grayscale": {
+        "name": "Niveaux de gris"
+      },
+      "gpu-hue-shift": {
+        "name": "Decalage de teinte"
+      },
+      "gpu-invert": {
+        "name": "Inverser"
+      },
+      "gpu-levels": {
+        "name": "Niveaux"
+      },
+      "gpu-saturation": {
+        "name": "Saturation"
+      },
+      "gpu-sepia": {
+        "name": "Sepia"
+      },
+      "gpu-temperature": {
+        "name": "Temperature"
+      },
+      "gpu-vibrance": {
+        "name": "Vibrance"
+      },
+      "gpu-box-blur": {
+        "name": "Flou boite"
+      },
+      "gpu-gaussian-blur": {
+        "name": "Flou gaussien"
+      },
+      "gpu-motion-blur": {
+        "name": "Flou de mouvement"
+      },
+      "gpu-radial-blur": {
+        "name": "Flou radial"
+      },
+      "gpu-zoom-blur": {
+        "name": "Flou de zoom"
+      },
+      "gpu-bulge": {
+        "name": "Renfler/Pincer"
+      },
+      "gpu-fluted-glass": {
+        "name": "Verre cannele"
+      },
+      "gpu-kaleidoscope": {
+        "name": "Kaleidoscope"
+      },
+      "gpu-mirror": {
+        "name": "Miroir"
+      },
+      "gpu-pixelate": {
+        "name": "Pixeliser"
+      },
+      "gpu-rgb-split": {
+        "name": "Separation RGB"
+      },
+      "gpu-twirl": {
+        "name": "Tourbillon"
+      },
+      "gpu-wave": {
+        "name": "Onde"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "Glitch couleur"
+      },
+      "gpu-dither": {
+        "name": "Tramage"
+      },
+      "gpu-edge-detect": {
+        "name": "Detection des bords"
+      },
+      "gpu-glow": {
+        "name": "Lueur"
+      },
+      "gpu-grain": {
+        "name": "Grain film"
+      },
+      "gpu-halftone": {
+        "name": "Demi-teinte"
+      },
+      "gpu-posterize": {
+        "name": "Posteriser"
+      },
+      "gpu-scanlines": {
+        "name": "Lignes de balayage"
+      },
+      "gpu-sharpen": {
+        "name": "Nettete"
+      },
+      "gpu-threshold": {
+        "name": "Seuil"
+      },
+      "gpu-vignette": {
+        "name": "Vignette"
+      },
+      "gpu-chroma-key": {
+        "name": "Chroma key"
+      }
+    },
+    "params": {
+      "amount": "Quantite",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "Taille",
+      "pattern": "Motif",
+      "mode": "Mode",
+      "style": "Style",
+      "shape": "Forme",
+      "palette": "Palette",
+      "cellSize": "Taille cellule",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "Douceur",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "Vitesse",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "threshold": "Seuil"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "Image",
+      "linear": "Lineaire",
+      "radial": "Radial",
+      "threshold": "Seuil",
+      "scaled": "Echelle",
+      "circle": "Cercle",
+      "square": "Carre",
+      "diamond": "Losange",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepia",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "de": {
+    "categories": {
+      "color": "Farbe",
+      "blur": "Weichzeichnen",
+      "distort": "Verzerren",
+      "stylize": "Stilisieren",
+      "keying": "Keying"
+    },
+    "panel": {
+      "disableEffect": "Effekt deaktivieren",
+      "enableEffect": "Effekt aktivieren",
+      "off": "Aus",
+      "on": "An",
+      "removeEffect": "Effekt entfernen",
+      "resetToDefaults": "Auf Standard zuruecksetzen"
+    },
+    "section": {
+      "addEffect": "Effekt hinzufuegen",
+      "disableAll": "Alle deaktivieren",
+      "emptyState": "Keine Effekte",
+      "enableAll": "Alle aktivieren",
+      "noEffectsFound": "Keine Effekte gefunden",
+      "presets": "Vorgaben",
+      "searchEffects": "Effekte suchen",
+      "title": "Effekte"
+    },
+    "curves": {
+      "channel": "Kanal",
+      "dragHint": "Punkte ziehen, um die {{channel}}-Kurve anzupassen",
+      "resetChannel": "Kanal zuruecksetzen",
+      "channelMaster": "Master",
+      "channelRed": "Rot",
+      "channelGreen": "Gruen",
+      "channelBlue": "Blau"
+    },
+    "wheels": {
+      "resetWheel": "{{name}} zuruecksetzen",
+      "shadows": "Schatten",
+      "midtones": "Mittentoene",
+      "highlights": "Lichter"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "Helligkeit"
+      },
+      "gpu-color-wheels": {
+        "name": "Farbkreise"
+      },
+      "gpu-contrast": {
+        "name": "Kontrast"
+      },
+      "gpu-curves": {
+        "name": "Kurven"
+      },
+      "gpu-exposure": {
+        "name": "Belichtung"
+      },
+      "gpu-grayscale": {
+        "name": "Graustufen"
+      },
+      "gpu-hue-shift": {
+        "name": "Farbtonverschiebung"
+      },
+      "gpu-invert": {
+        "name": "Invertieren"
+      },
+      "gpu-levels": {
+        "name": "Tonwerte"
+      },
+      "gpu-saturation": {
+        "name": "Saettigung"
+      },
+      "gpu-sepia": {
+        "name": "Sepia"
+      },
+      "gpu-temperature": {
+        "name": "Temperatur"
+      },
+      "gpu-vibrance": {
+        "name": "Dynamik"
+      },
+      "gpu-box-blur": {
+        "name": "Box-Weichzeichnung"
+      },
+      "gpu-gaussian-blur": {
+        "name": "Gaussian-Weichzeichnung"
+      },
+      "gpu-motion-blur": {
+        "name": "Bewegungsunschaerfe"
+      },
+      "gpu-radial-blur": {
+        "name": "Radiale Unschaerfe"
+      },
+      "gpu-zoom-blur": {
+        "name": "Zoom-Unschaerfe"
+      },
+      "gpu-bulge": {
+        "name": "Woelben/Kneifen"
+      },
+      "gpu-fluted-glass": {
+        "name": "Riffelglas"
+      },
+      "gpu-kaleidoscope": {
+        "name": "Kaleidoskop"
+      },
+      "gpu-mirror": {
+        "name": "Spiegeln"
+      },
+      "gpu-pixelate": {
+        "name": "Pixeln"
+      },
+      "gpu-rgb-split": {
+        "name": "RGB-Trennung"
+      },
+      "gpu-twirl": {
+        "name": "Wirbel"
+      },
+      "gpu-wave": {
+        "name": "Welle"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "Farbglitch"
+      },
+      "gpu-dither": {
+        "name": "Dithering"
+      },
+      "gpu-edge-detect": {
+        "name": "Kanten erkennen"
+      },
+      "gpu-glow": {
+        "name": "Leuchten"
+      },
+      "gpu-grain": {
+        "name": "Filmkoernung"
+      },
+      "gpu-halftone": {
+        "name": "Halbton"
+      },
+      "gpu-posterize": {
+        "name": "Posterisieren"
+      },
+      "gpu-scanlines": {
+        "name": "Scanlines"
+      },
+      "gpu-sharpen": {
+        "name": "Schaerfen"
+      },
+      "gpu-threshold": {
+        "name": "Schwellenwert"
+      },
+      "gpu-vignette": {
+        "name": "Vignette"
+      },
+      "gpu-chroma-key": {
+        "name": "Chroma-Key"
+      }
+    },
+    "params": {
+      "amount": "Staerke",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "Groesse",
+      "pattern": "Muster",
+      "mode": "Modus",
+      "style": "Stil",
+      "shape": "Form",
+      "palette": "Palette",
+      "cellSize": "Zellgroesse",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "Weichheit",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "Geschwindigkeit",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "threshold": "Schwelle"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "Bild",
+      "linear": "Linear",
+      "radial": "Radial",
+      "threshold": "Schwellenwert",
+      "scaled": "Skaliert",
+      "circle": "Kreis",
+      "square": "Quadrat",
+      "diamond": "Diamant",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepia",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "pt-BR": {
+    "categories": {
+      "color": "Cor",
+      "blur": "Desfoque",
+      "distort": "Distorcer",
+      "stylize": "Estilizar",
+      "keying": "Chroma"
+    },
+    "panel": {
+      "disableEffect": "Desativar efeito",
+      "enableEffect": "Ativar efeito",
+      "off": "Desligado",
+      "on": "Ligado",
+      "removeEffect": "Remover efeito",
+      "resetToDefaults": "Redefinir padroes"
+    },
+    "section": {
+      "addEffect": "Adicionar efeito",
+      "disableAll": "Desativar tudo",
+      "emptyState": "Sem efeitos",
+      "enableAll": "Ativar tudo",
+      "noEffectsFound": "Nenhum efeito encontrado",
+      "presets": "Predefinicoes",
+      "searchEffects": "Pesquisar efeitos",
+      "title": "Efeitos"
+    },
+    "curves": {
+      "channel": "Canal",
+      "dragHint": "Arraste pontos para ajustar a curva {{channel}}",
+      "resetChannel": "Redefinir canal",
+      "channelMaster": "Mestre",
+      "channelRed": "Vermelho",
+      "channelGreen": "Verde",
+      "channelBlue": "Azul"
+    },
+    "wheels": {
+      "resetWheel": "Redefinir {{name}}",
+      "shadows": "Sombras",
+      "midtones": "Meios-tons",
+      "highlights": "Realces"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "Brilho"
+      },
+      "gpu-color-wheels": {
+        "name": "Rodas de cor"
+      },
+      "gpu-contrast": {
+        "name": "Contraste"
+      },
+      "gpu-curves": {
+        "name": "Curvas"
+      },
+      "gpu-exposure": {
+        "name": "Exposicao"
+      },
+      "gpu-grayscale": {
+        "name": "Escala de cinza"
+      },
+      "gpu-hue-shift": {
+        "name": "Mudanca de matiz"
+      },
+      "gpu-invert": {
+        "name": "Inverter"
+      },
+      "gpu-levels": {
+        "name": "Niveis"
+      },
+      "gpu-saturation": {
+        "name": "Saturacao"
+      },
+      "gpu-sepia": {
+        "name": "Sepia"
+      },
+      "gpu-temperature": {
+        "name": "Temperatura"
+      },
+      "gpu-vibrance": {
+        "name": "Vibracao"
+      },
+      "gpu-box-blur": {
+        "name": "Desfoque de caixa"
+      },
+      "gpu-gaussian-blur": {
+        "name": "Desfoque gaussiano"
+      },
+      "gpu-motion-blur": {
+        "name": "Desfoque de movimento"
+      },
+      "gpu-radial-blur": {
+        "name": "Desfoque radial"
+      },
+      "gpu-zoom-blur": {
+        "name": "Desfoque de zoom"
+      },
+      "gpu-bulge": {
+        "name": "Inchar/Pinchar"
+      },
+      "gpu-fluted-glass": {
+        "name": "Vidro canelado"
+      },
+      "gpu-kaleidoscope": {
+        "name": "Caleidoscopio"
+      },
+      "gpu-mirror": {
+        "name": "Espelho"
+      },
+      "gpu-pixelate": {
+        "name": "Pixelizar"
+      },
+      "gpu-rgb-split": {
+        "name": "Separacao RGB"
+      },
+      "gpu-twirl": {
+        "name": "Torcer"
+      },
+      "gpu-wave": {
+        "name": "Onda"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "Glitch de cor"
+      },
+      "gpu-dither": {
+        "name": "Pontilhamento"
+      },
+      "gpu-edge-detect": {
+        "name": "Detectar bordas"
+      },
+      "gpu-glow": {
+        "name": "Brilho externo"
+      },
+      "gpu-grain": {
+        "name": "Grao de filme"
+      },
+      "gpu-halftone": {
+        "name": "Meio-tom"
+      },
+      "gpu-posterize": {
+        "name": "Posterizar"
+      },
+      "gpu-scanlines": {
+        "name": "Linhas de varredura"
+      },
+      "gpu-sharpen": {
+        "name": "Nitidez"
+      },
+      "gpu-threshold": {
+        "name": "Limiar"
+      },
+      "gpu-vignette": {
+        "name": "Vinheta"
+      },
+      "gpu-chroma-key": {
+        "name": "Chroma key"
+      }
+    },
+    "params": {
+      "amount": "Quantidade",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "Tamanho",
+      "pattern": "Padrao",
+      "mode": "Modo",
+      "style": "Estilo",
+      "shape": "Forma",
+      "palette": "Paleta",
+      "cellSize": "Tamanho da celula",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "Suavidade",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "Velocidade",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "threshold": "Limiar"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "Imagem",
+      "linear": "Linear",
+      "radial": "Radial",
+      "threshold": "Limiar",
+      "scaled": "Escalado",
+      "circle": "Circulo",
+      "square": "Quadrado",
+      "diamond": "Diamante",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepia",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "ja": {
+    "categories": {
+      "color": "色",
+      "blur": "ぼかし",
+      "distort": "歪み",
+      "stylize": "スタイル化",
+      "keying": "キーイング"
+    },
+    "panel": {
+      "disableEffect": "エフェクトを無効化",
+      "enableEffect": "エフェクトを有効化",
+      "off": "オフ",
+      "on": "オン",
+      "removeEffect": "エフェクトを削除",
+      "resetToDefaults": "デフォルトにリセット"
+    },
+    "section": {
+      "addEffect": "エフェクトを追加",
+      "disableAll": "すべて無効化",
+      "emptyState": "エフェクトなし",
+      "enableAll": "すべて有効化",
+      "noEffectsFound": "エフェクトが見つかりません",
+      "presets": "プリセット",
+      "searchEffects": "エフェクトを検索",
+      "title": "エフェクト"
+    },
+    "curves": {
+      "channel": "チャンネル",
+      "dragHint": "点をドラッグして{{channel}}カーブを調整",
+      "resetChannel": "チャンネルをリセット",
+      "channelMaster": "マスター",
+      "channelRed": "赤",
+      "channelGreen": "緑",
+      "channelBlue": "青"
+    },
+    "wheels": {
+      "resetWheel": "{{name}}をリセット",
+      "shadows": "シャドウ",
+      "midtones": "中間調",
+      "highlights": "ハイライト"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "明るさ"
+      },
+      "gpu-color-wheels": {
+        "name": "カラーホイール"
+      },
+      "gpu-contrast": {
+        "name": "コントラスト"
+      },
+      "gpu-curves": {
+        "name": "カーブ"
+      },
+      "gpu-dither": {
+        "name": "ディザ"
+      },
+      "gpu-threshold": {
+        "name": "しきい値"
+      },
+      "gpu-glow": {
+        "name": "グロー"
+      },
+      "gpu-grain": {
+        "name": "フィルムグレイン"
+      },
+      "gpu-blur": {
+        "name": "ぼかし"
+      },
+      "gpu-exposure": {
+        "name": "??"
+      },
+      "gpu-grayscale": {
+        "name": "???????"
+      },
+      "gpu-hue-shift": {
+        "name": "?????"
+      },
+      "gpu-invert": {
+        "name": "??"
+      },
+      "gpu-levels": {
+        "name": "???"
+      },
+      "gpu-saturation": {
+        "name": "??"
+      },
+      "gpu-sepia": {
+        "name": "???"
+      },
+      "gpu-temperature": {
+        "name": "???"
+      },
+      "gpu-vibrance": {
+        "name": "?????"
+      },
+      "gpu-box-blur": {
+        "name": "???????"
+      },
+      "gpu-gaussian-blur": {
+        "name": "??????"
+      },
+      "gpu-motion-blur": {
+        "name": "????????"
+      },
+      "gpu-radial-blur": {
+        "name": "?????"
+      },
+      "gpu-zoom-blur": {
+        "name": "??????"
+      },
+      "gpu-bulge": {
+        "name": "??/???"
+      },
+      "gpu-fluted-glass": {
+        "name": "?????"
+      },
+      "gpu-kaleidoscope": {
+        "name": "???"
+      },
+      "gpu-mirror": {
+        "name": "???"
+      },
+      "gpu-pixelate": {
+        "name": "?????"
+      },
+      "gpu-rgb-split": {
+        "name": "RGB??"
+      },
+      "gpu-twirl": {
+        "name": "???"
+      },
+      "gpu-wave": {
+        "name": "?"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "???????"
+      },
+      "gpu-edge-detect": {
+        "name": "?????"
+      },
+      "gpu-halftone": {
+        "name": "??????"
+      },
+      "gpu-posterize": {
+        "name": "??????"
+      },
+      "gpu-scanlines": {
+        "name": "???"
+      },
+      "gpu-sharpen": {
+        "name": "????"
+      },
+      "gpu-vignette": {
+        "name": "????"
+      },
+      "gpu-chroma-key": {
+        "name": "?????"
+      }
+    },
+    "params": {
+      "amount": "量",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "サイズ",
+      "pattern": "パターン",
+      "mode": "モード",
+      "style": "スタイル",
+      "shape": "形状",
+      "palette": "パレット",
+      "cellSize": "セルサイズ",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "ソフトさ",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "速度",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "brightness": "明るさ",
+      "threshold": "しきい値"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "画像",
+      "linear": "線形",
+      "radial": "放射",
+      "threshold": "しきい値",
+      "scaled": "スケール",
+      "circle": "円",
+      "square": "正方形",
+      "diamond": "ひし形",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "セピア",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "ko": {
+    "categories": {
+      "color": "색상",
+      "blur": "블러",
+      "distort": "왜곡",
+      "stylize": "스타일",
+      "keying": "키잉"
+    },
+    "panel": {
+      "disableEffect": "효과 비활성화",
+      "enableEffect": "효과 활성화",
+      "off": "끄기",
+      "on": "켜기",
+      "removeEffect": "효과 제거",
+      "resetToDefaults": "기본값으로 재설정"
+    },
+    "section": {
+      "addEffect": "효과 추가",
+      "disableAll": "모두 비활성화",
+      "emptyState": "효과 없음",
+      "enableAll": "모두 활성화",
+      "noEffectsFound": "효과를 찾을 수 없음",
+      "presets": "프리셋",
+      "searchEffects": "효과 검색",
+      "title": "효과"
+    },
+    "curves": {
+      "channel": "채널",
+      "dragHint": "점을 드래그해 {{channel}} 곡선 조정",
+      "resetChannel": "채널 재설정",
+      "channelMaster": "마스터",
+      "channelRed": "빨강",
+      "channelGreen": "초록",
+      "channelBlue": "파랑"
+    },
+    "wheels": {
+      "resetWheel": "{{name}} 재설정",
+      "shadows": "어두운 영역",
+      "midtones": "중간톤",
+      "highlights": "밝은 영역"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "밝기"
+      },
+      "gpu-color-wheels": {
+        "name": "컬러 휠"
+      },
+      "gpu-contrast": {
+        "name": "대비"
+      },
+      "gpu-curves": {
+        "name": "곡선"
+      },
+      "gpu-dither": {
+        "name": "디더"
+      },
+      "gpu-threshold": {
+        "name": "임계값"
+      },
+      "gpu-glow": {
+        "name": "글로우"
+      },
+      "gpu-grain": {
+        "name": "필름 그레인"
+      },
+      "gpu-exposure": {
+        "name": "??"
+      },
+      "gpu-grayscale": {
+        "name": "??????"
+      },
+      "gpu-hue-shift": {
+        "name": "?? ??"
+      },
+      "gpu-invert": {
+        "name": "??"
+      },
+      "gpu-levels": {
+        "name": "??"
+      },
+      "gpu-saturation": {
+        "name": "??"
+      },
+      "gpu-sepia": {
+        "name": "???"
+      },
+      "gpu-temperature": {
+        "name": "???"
+      },
+      "gpu-vibrance": {
+        "name": "???"
+      },
+      "gpu-box-blur": {
+        "name": "?? ??"
+      },
+      "gpu-gaussian-blur": {
+        "name": "???? ??"
+      },
+      "gpu-motion-blur": {
+        "name": "?? ??"
+      },
+      "gpu-radial-blur": {
+        "name": "??? ??"
+      },
+      "gpu-zoom-blur": {
+        "name": "? ??"
+      },
+      "gpu-bulge": {
+        "name": "??/??"
+      },
+      "gpu-fluted-glass": {
+        "name": "? ??"
+      },
+      "gpu-kaleidoscope": {
+        "name": "???"
+      },
+      "gpu-mirror": {
+        "name": "??"
+      },
+      "gpu-pixelate": {
+        "name": "???"
+      },
+      "gpu-rgb-split": {
+        "name": "RGB ??"
+      },
+      "gpu-twirl": {
+        "name": "????"
+      },
+      "gpu-wave": {
+        "name": "???"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "?? ???"
+      },
+      "gpu-edge-detect": {
+        "name": "???? ??"
+      },
+      "gpu-halftone": {
+        "name": "???"
+      },
+      "gpu-posterize": {
+        "name": "????"
+      },
+      "gpu-scanlines": {
+        "name": "????"
+      },
+      "gpu-sharpen": {
+        "name": "????"
+      },
+      "gpu-vignette": {
+        "name": "???"
+      },
+      "gpu-chroma-key": {
+        "name": "??? ?"
+      }
+    },
+    "params": {
+      "amount": "양",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "크기",
+      "pattern": "패턴",
+      "mode": "모드",
+      "style": "스타일",
+      "shape": "모양",
+      "palette": "팔레트",
+      "cellSize": "셀 크기",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "부드러움",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "속도",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "brightness": "밝기",
+      "threshold": "임계값"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "이미지",
+      "linear": "선형",
+      "radial": "방사형",
+      "threshold": "임계값",
+      "scaled": "스케일",
+      "circle": "원",
+      "square": "사각형",
+      "diamond": "다이아몬드",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "세피아",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "zh": {
+    "categories": {
+      "color": "色彩",
+      "blur": "模糊",
+      "distort": "扭曲",
+      "stylize": "风格化",
+      "keying": "键控"
+    },
+    "panel": {
+      "disableEffect": "禁用效果",
+      "enableEffect": "启用效果",
+      "off": "关",
+      "on": "开",
+      "removeEffect": "移除效果",
+      "resetToDefaults": "重置为默认值"
+    },
+    "section": {
+      "addEffect": "添加效果",
+      "disableAll": "全部禁用",
+      "emptyState": "暂无效果",
+      "enableAll": "全部启用",
+      "noEffectsFound": "未找到效果",
+      "presets": "预设",
+      "searchEffects": "搜索效果",
+      "title": "效果"
+    },
+    "curves": {
+      "channel": "通道",
+      "dragHint": "拖动点以调整 {{channel}} 曲线",
+      "resetChannel": "重置通道",
+      "channelMaster": "主通道",
+      "channelRed": "红",
+      "channelGreen": "绿",
+      "channelBlue": "蓝"
+    },
+    "wheels": {
+      "resetWheel": "重置 {{name}}",
+      "shadows": "阴影",
+      "midtones": "中间调",
+      "highlights": "高光"
+    },
+    "definitions": {
+      "gpu-brightness": {
+        "name": "亮度"
+      },
+      "gpu-color-wheels": {
+        "name": "色轮"
+      },
+      "gpu-contrast": {
+        "name": "对比度"
+      },
+      "gpu-curves": {
+        "name": "曲线"
+      },
+      "gpu-dither": {
+        "name": "抖动"
+      },
+      "gpu-threshold": {
+        "name": "阈值"
+      },
+      "gpu-glow": {
+        "name": "发光"
+      },
+      "gpu-grain": {
+        "name": "胶片颗粒"
+      },
+      "gpu-exposure": {
+        "name": "??"
+      },
+      "gpu-grayscale": {
+        "name": "??"
+      },
+      "gpu-hue-shift": {
+        "name": "????"
+      },
+      "gpu-invert": {
+        "name": "??"
+      },
+      "gpu-levels": {
+        "name": "??"
+      },
+      "gpu-saturation": {
+        "name": "???"
+      },
+      "gpu-sepia": {
+        "name": "???"
+      },
+      "gpu-temperature": {
+        "name": "??"
+      },
+      "gpu-vibrance": {
+        "name": "?????"
+      },
+      "gpu-box-blur": {
+        "name": "????"
+      },
+      "gpu-gaussian-blur": {
+        "name": "????"
+      },
+      "gpu-motion-blur": {
+        "name": "????"
+      },
+      "gpu-radial-blur": {
+        "name": "????"
+      },
+      "gpu-zoom-blur": {
+        "name": "????"
+      },
+      "gpu-bulge": {
+        "name": "??/??"
+      },
+      "gpu-fluted-glass": {
+        "name": "????"
+      },
+      "gpu-kaleidoscope": {
+        "name": "???"
+      },
+      "gpu-mirror": {
+        "name": "??"
+      },
+      "gpu-pixelate": {
+        "name": "???"
+      },
+      "gpu-rgb-split": {
+        "name": "RGB ??"
+      },
+      "gpu-twirl": {
+        "name": "??"
+      },
+      "gpu-wave": {
+        "name": "??"
+      },
+      "gpu-ascii": {
+        "name": "ASCII"
+      },
+      "gpu-color-glitch": {
+        "name": "????"
+      },
+      "gpu-edge-detect": {
+        "name": "????"
+      },
+      "gpu-halftone": {
+        "name": "???"
+      },
+      "gpu-posterize": {
+        "name": "????"
+      },
+      "gpu-scanlines": {
+        "name": "???"
+      },
+      "gpu-sharpen": {
+        "name": "??"
+      },
+      "gpu-vignette": {
+        "name": "??"
+      },
+      "gpu-chroma-key": {
+        "name": "???"
+      }
+    },
+    "params": {
+      "amount": "数量",
+      "angle": "Angle",
+      "radius": "Radius",
+      "samples": "Samples",
+      "centerX": "Center X",
+      "centerY": "Center Y",
+      "exposure": "Exposure (EV)",
+      "offset": "Offset",
+      "gamma": "Gamma",
+      "inputBlack": "Input Black",
+      "inputWhite": "Input White",
+      "outputBlack": "Output Black",
+      "outputWhite": "Output White",
+      "temperature": "Temperature",
+      "tint": "Tint",
+      "saturation": "Saturation",
+      "shift": "Shift",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "size": "大小",
+      "pattern": "图案",
+      "mode": "模式",
+      "style": "样式",
+      "shape": "形状",
+      "palette": "调色板",
+      "cellSize": "单元大小",
+      "scale": "Scale",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "strength": "Strength",
+      "invert": "Invert",
+      "softness": "柔和度",
+      "rings": "Rings",
+      "samplesPerRing": "Samples/Ring",
+      "density": "Density",
+      "opacity": "Opacity",
+      "speed": "速度",
+      "level": "Level",
+      "roundness": "Roundness",
+      "keyColor": "Key Color",
+      "tolerance": "Tolerance",
+      "spillSuppression": "Spill Suppression",
+      "charSet": "Character Set",
+      "fontSize": "Font Size",
+      "letterSpacing": "Letter Spacing",
+      "lineHeight": "Line Height",
+      "matchSourceColor": "Match Source Color",
+      "textColor": "Text Color",
+      "bgColor": "Background",
+      "colorSaturation": "Saturation",
+      "asciiOpacity": "ASCII Opacity",
+      "originalOpacity": "Original Opacity",
+      "contrast": "Contrast",
+      "colorBack": "Back Color",
+      "colorShadow": "Shadow Color",
+      "colorHighlight": "Highlight Color",
+      "shadows": "Shadows",
+      "highlights": "Highlights",
+      "distortionShape": "Distortion Shape",
+      "distortion": "Distortion",
+      "stretch": "Stretch",
+      "blur": "Blur",
+      "edges": "Edges",
+      "margin": "Margin",
+      "marginLeft": "Left Margin",
+      "marginRight": "Right Margin",
+      "marginTop": "Top Margin",
+      "marginBottom": "Bottom Margin",
+      "grainMixer": "Grain Mixer",
+      "grainOverlay": "Grain Overlay",
+      "segments": "Segments",
+      "rotation": "Rotation",
+      "amplitudeX": "Horizontal Amp",
+      "amplitudeY": "Vertical Amp",
+      "frequencyX": "Horizontal Freq",
+      "frequencyY": "Vertical Freq",
+      "colorFront": "Front Color",
+      "originalColors": "Original Colors",
+      "inverted": "Inverted",
+      "grid": "Grid",
+      "type": "Type",
+      "grainSize": "Grain Size",
+      "brightness": "亮度",
+      "threshold": "阈值"
+    },
+    "options": {
+      "standard": "Standard",
+      "simple": "Simple",
+      "blocks": "Blocks",
+      "dots": "Dots",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Halftone",
+      "lines": "Lines",
+      "crosses": "Crosses",
+      "grid": "Grid",
+      "scales": "Scales",
+      "image": "图像",
+      "linear": "线性",
+      "radial": "径向",
+      "threshold": "阈值",
+      "scaled": "缩放",
+      "circle": "圆形",
+      "square": "正方形",
+      "diamond": "菱形",
+      "bw": "B&W",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "棕褐",
+      "hex": "Hex",
+      "classic": "Classic",
+      "gooey": "Gooey",
+      "holes": "Holes",
+      "soft": "Soft",
+      "green": "Green Screen",
+      "blue": "Blue Screen",
+      "linesIrregular": "Irregular Lines",
+      "wave": "Wave",
+      "zigzag": "Zigzag",
+      "prism": "Prism",
+      "lens": "Lens",
+      "contour": "Contour",
+      "cascade": "Cascade",
+      "flat": "Flat"
+    }
+  },
+  "tr": {
+    "categories": {
+      "color": "Renk",
+      "blur": "Bulanıklık",
+      "distort": "Bozma",
+      "stylize": "Stilize",
+      "keying": "Anahtarlama"
+    },
+    "panel": {
+      "disableEffect": "Efekti Devre Dışı Bırak",
+      "enableEffect": "Efekti Etkinleştir",
+      "off": "Kapalı",
+      "on": "Açık",
+      "removeEffect": "Efekti Kaldır",
+      "resetToDefaults": "Varsayılanlara Sıfırla"
+    },
+    "section": {
+      "addEffect": "Efekt Ekle",
+      "disableAll": "Tümünü Devre Dışı Bırak",
+      "emptyState": "Henüz efekt yok",
+      "enableAll": "Tümünü Etkinleştir",
+      "noEffectsFound": "Efekt bulunamadı",
+      "presets": "Ön Ayarlar",
+      "searchEffects": "Efektlerde ara",
+      "title": "Efektler"
+    },
+    "curves": {
+      "channel": "Kanal",
+      "dragHint": "{{channel}} eğrisini ayarlamak için noktaları sürükleyin",
+      "resetChannel": "Kanalı Sıfırla",
+      "channelMaster": "Ana",
+      "channelRed": "Kırmızı",
+      "channelGreen": "Yeşil",
+      "channelBlue": "Mavi"
+    },
+    "wheels": {
+      "resetWheel": "{{name}} sıfırla",
+      "shadows": "Gölgeler",
+      "midtones": "Orta tonlar",
+      "highlights": "Parlak alanlar"
+    },
+    "definitions": {
+      "gpu-brightness": { "name": "Parlaklık" },
+      "gpu-color-wheels": { "name": "Renk Tekerlekleri" },
+      "gpu-contrast": { "name": "Kontrast" },
+      "gpu-curves": { "name": "Eğriler" },
+      "gpu-exposure": { "name": "Pozlama" },
+      "gpu-grayscale": { "name": "Gri Tonlama" },
+      "gpu-hue-shift": { "name": "Ton Kaydırma" },
+      "gpu-invert": { "name": "Ters Çevir" },
+      "gpu-levels": { "name": "Seviyeler" },
+      "gpu-saturation": { "name": "Doygunluk" },
+      "gpu-sepia": { "name": "Sepya" },
+      "gpu-temperature": { "name": "Sıcaklık" },
+      "gpu-vibrance": { "name": "Canlılık" },
+      "gpu-box-blur": { "name": "Kutu Bulanıklığı" },
+      "gpu-gaussian-blur": { "name": "Gauss Bulanıklığı" },
+      "gpu-motion-blur": { "name": "Hareket Bulanıklığı" },
+      "gpu-radial-blur": { "name": "Radyal Bulanıklık" },
+      "gpu-zoom-blur": { "name": "Yakınlaştırma Bulanıklığı" },
+      "gpu-bulge": { "name": "Şişir/Sıkıştır" },
+      "gpu-fluted-glass": { "name": "Oluklu Cam" },
+      "gpu-kaleidoscope": { "name": "Kaleydoskop" },
+      "gpu-mirror": { "name": "Ayna" },
+      "gpu-pixelate": { "name": "Pikselleştir" },
+      "gpu-rgb-split": { "name": "RGB Ayırma" },
+      "gpu-twirl": { "name": "Girdap" },
+      "gpu-wave": { "name": "Dalga" },
+      "gpu-ascii": { "name": "ASCII" },
+      "gpu-color-glitch": { "name": "Renk Bozulması" },
+      "gpu-dither": { "name": "Titreşimli Tarama" },
+      "gpu-edge-detect": { "name": "Kenar Algılama" },
+      "gpu-glow": { "name": "Parlama" },
+      "gpu-grain": { "name": "Film Greni" },
+      "gpu-halftone": { "name": "Yarı Ton" },
+      "gpu-posterize": { "name": "Posterize" },
+      "gpu-scanlines": { "name": "Tarama Çizgileri" },
+      "gpu-sharpen": { "name": "Keskinleştir" },
+      "gpu-threshold": { "name": "Eşik" },
+      "gpu-vignette": { "name": "Vinyet" },
+      "gpu-chroma-key": { "name": "Chroma Key" }
+    },
+    "params": {
+      "amount": "Miktar",
+      "angle": "Açı",
+      "radius": "Yarıçap",
+      "samples": "Örnekler",
+      "centerX": "Merkez X",
+      "centerY": "Merkez Y",
+      "exposure": "Pozlama (EV)",
+      "offset": "Ofset",
+      "gamma": "Gama",
+      "inputBlack": "Giriş Siyahı",
+      "inputWhite": "Giriş Beyazı",
+      "outputBlack": "Çıkış Siyahı",
+      "outputWhite": "Çıkış Beyazı",
+      "temperature": "Sıcaklık",
+      "tint": "Ton",
+      "saturation": "Doygunluk",
+      "shift": "Kaydırma",
+      "horizontal": "Yatay",
+      "vertical": "Dikey",
+      "size": "Boyut",
+      "pattern": "Desen",
+      "mode": "Mod",
+      "style": "Stil",
+      "shape": "Şekil",
+      "palette": "Palet",
+      "cellSize": "Hücre Boyutu",
+      "scale": "Ölçek",
+      "offsetX": "Ofset X",
+      "offsetY": "Ofset Y",
+      "strength": "Güç",
+      "invert": "Ters Çevir",
+      "softness": "Yumuşaklık",
+      "rings": "Halkalar",
+      "samplesPerRing": "Örnek/Halka",
+      "density": "Yoğunluk",
+      "opacity": "Opaklık",
+      "speed": "Hız",
+      "level": "Seviye",
+      "roundness": "Yuvarlaklık",
+      "keyColor": "Anahtar Renk",
+      "tolerance": "Tolerans",
+      "spillSuppression": "Taşma Bastırma",
+      "charSet": "Karakter Kümesi",
+      "fontSize": "Yazı Tipi Boyutu",
+      "letterSpacing": "Harf Aralığı",
+      "lineHeight": "Satır Yüksekliği",
+      "matchSourceColor": "Kaynak Rengiyle Eşle",
+      "textColor": "Metin Rengi",
+      "bgColor": "Arka Plan",
+      "colorSaturation": "Doygunluk",
+      "asciiOpacity": "ASCII Opaklığı",
+      "originalOpacity": "Özgün Opaklık",
+      "contrast": "Kontrast",
+      "colorBack": "Arka Renk",
+      "colorShadow": "Gölge Rengi",
+      "colorHighlight": "Vurgu Rengi",
+      "shadows": "Gölgeler",
+      "highlights": "Parlak alanlar",
+      "distortionShape": "Bozulma Şekli",
+      "distortion": "Bozulma",
+      "stretch": "Esnetme",
+      "blur": "Bulanıklık",
+      "edges": "Kenarlar",
+      "margin": "Kenar Boşluğu",
+      "marginLeft": "Sol Boşluk",
+      "marginRight": "Sağ Boşluk",
+      "marginTop": "Üst Boşluk",
+      "marginBottom": "Alt Boşluk",
+      "grainMixer": "Gren Mikseri",
+      "grainOverlay": "Gren Kaplaması",
+      "segments": "Segmentler",
+      "rotation": "Döndürme",
+      "amplitudeX": "Yatay Genlik",
+      "amplitudeY": "Dikey Genlik",
+      "frequencyX": "Yatay Frekans",
+      "frequencyY": "Dikey Frekans",
+      "colorFront": "Ön Renk",
+      "originalColors": "Özgün Renkler",
+      "inverted": "Ters Çevrilmiş",
+      "grid": "Izgara",
+      "type": "Tür",
+      "grainSize": "Gren Boyutu"
+    },
+    "options": {
+      "standard": "Standart",
+      "simple": "Basit",
+      "blocks": "Bloklar",
+      "dots": "Noktalar",
+      "minimal": "Minimal",
+      "bayer2": "Bayer 2x2",
+      "bayer4": "Bayer 4x4",
+      "bayer8": "Bayer 8x8",
+      "halftone": "Yarı Ton",
+      "lines": "Çizgiler",
+      "crosses": "Çaprazlar",
+      "grid": "Izgara",
+      "scales": "Ölçekler",
+      "image": "Görüntü",
+      "linear": "Doğrusal",
+      "radial": "Radyal",
+      "threshold": "Eşik",
+      "scaled": "Ölçekli",
+      "circle": "Daire",
+      "square": "Kare",
+      "diamond": "Elmas",
+      "bw": "Siyah-Beyaz",
+      "gameboy": "Game Boy",
+      "cga": "CGA",
+      "sepia": "Sepya",
+      "hex": "Altıgen",
+      "classic": "Klasik",
+      "gooey": "Yapışkan",
+      "holes": "Delikler",
+      "soft": "Yumuşak",
+      "green": "Yeşil Perde",
+      "blue": "Mavi Perde",
+      "linesIrregular": "Düzensiz Çizgiler",
+      "wave": "Dalga",
+      "zigzag": "Zikzak",
+      "prism": "Prizma",
+      "lens": "Lens",
+      "contour": "Kontur",
+      "cascade": "Kademeli",
+      "flat": "Düz"
+    }
+  }
+}

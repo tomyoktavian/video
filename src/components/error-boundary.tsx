@@ -2,6 +2,7 @@ import { Component, type ReactNode, type ErrorInfo } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { createLogger } from '@/shared/logging/logger'
+import { i18n } from '@/i18n'
 
 const logger = createLogger('ErrorBoundary')
 
@@ -53,21 +54,23 @@ export class ErrorBoundary extends Component<Props, State> {
           <AlertTriangle className="h-12 w-12 text-destructive" />
           <div>
             <h2 className="text-lg font-semibold">
-              {level === 'app' && 'Application Error'}
-              {level === 'feature' && 'Something went wrong'}
-              {level === 'component' && 'Component Error'}
+              {level === 'app' && i18n.t('app.errorBoundary.appError')}
+              {level === 'feature' && i18n.t('app.errorBoundary.featureError')}
+              {level === 'component' && i18n.t('app.errorBoundary.componentError')}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || i18n.t('app.errorBoundary.unexpectedError')}
             </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={this.handleReset} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
+              {i18n.t('app.errorBoundary.tryAgain')}
             </Button>
             {level === 'app' && (
-              <Button onClick={() => window.location.reload()}>Reload Page</Button>
+              <Button onClick={() => window.location.reload()}>
+                {i18n.t('app.errorBoundary.reloadPage')}
+              </Button>
             )}
           </div>
           {import.meta.env.DEV && this.state.error?.stack && (

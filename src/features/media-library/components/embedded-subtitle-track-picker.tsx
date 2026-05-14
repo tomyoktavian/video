@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -58,6 +59,7 @@ export function EmbeddedSubtitleTrackPicker({
   onTrackPicked,
   errorMessage,
 }: EmbeddedSubtitleTrackPickerProps) {
+  const { t } = useTranslation()
   const [state, setState] = useState<ScanState>({ status: 'idle' })
   const [selectedTrackNumber, setSelectedTrackNumber] = useState<number | null>(null)
 
@@ -129,11 +131,11 @@ export function EmbeddedSubtitleTrackPicker({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Embedded subtitles</DialogTitle>
+          <DialogTitle>{t('media.embeddedSubtitles.title')}</DialogTitle>
           <DialogDescription>
             {media
-              ? `Pick a subtitle track to insert as captions for ${media.fileName}.`
-              : 'Pick a subtitle track to insert as captions.'}
+              ? t('media.embeddedSubtitles.descForFile', { name: media.fileName })
+              : t('media.embeddedSubtitles.desc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -141,7 +143,9 @@ export function EmbeddedSubtitleTrackPicker({
           {state.status === 'scanning' && (
             <div className="flex flex-col gap-2 py-6">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Scanning for subtitle tracks…</span>
+                <span className="text-muted-foreground">
+                  {t('media.embeddedSubtitles.scanning')}
+                </span>
                 <span className="tabular-nums text-xs text-muted-foreground">
                   {state.totalBytes > 0
                     ? `${Math.round((state.bytesRead / state.totalBytes) * 100)}%`
@@ -166,8 +170,7 @@ export function EmbeddedSubtitleTrackPicker({
 
           {state.status === 'empty' && (
             <p className="py-6 text-sm text-muted-foreground">
-              No supported text-subtitle tracks were found in this file. Bitmap (image-based)
-              subtitle tracks aren&apos;t currently supported.
+              {t('media.embeddedSubtitles.empty')}
             </p>
           )}
 
@@ -189,7 +192,9 @@ export function EmbeddedSubtitleTrackPicker({
                 ))}
               </ul>
               {state.fromCache && (
-                <p className="pt-3 text-xs text-muted-foreground">Loaded from cache.</p>
+                <p className="pt-3 text-xs text-muted-foreground">
+                  {t('media.embeddedSubtitles.loadedFromCache')}
+                </p>
               )}
             </ScrollArea>
           )}
@@ -199,7 +204,7 @@ export function EmbeddedSubtitleTrackPicker({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             disabled={!selectedTrack}
@@ -207,7 +212,9 @@ export function EmbeddedSubtitleTrackPicker({
               if (selectedTrack) onTrackPicked(selectedTrack)
             }}
           >
-            Insert {selectedTrack ? `(${selectedTrack.cues.length} cues)` : ''}
+            {selectedTrack
+              ? t('media.embeddedSubtitles.insertWithCues', { count: selectedTrack.cues.length })
+              : t('media.embeddedSubtitles.insert')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -223,6 +230,7 @@ interface TrackRowProps {
 }
 
 function TrackRow({ track, selected, isDefault, onSelect }: TrackRowProps) {
+  const { t } = useTranslation()
   const label = getEmbeddedSubtitleTrackLabel(track)
   return (
     <li>
@@ -238,16 +246,21 @@ function TrackRow({ track, selected, isDefault, onSelect }: TrackRowProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{label}</span>
-            {track.forced && <Badge>forced</Badge>}
-            {track.default && <Badge>default</Badge>}
-            {isDefault && !track.forced && !track.default && <Badge>auto-pick</Badge>}
+            {track.forced && <Badge>{t('media.embeddedSubtitles.badgeForced')}</Badge>}
+            {track.default && <Badge>{t('media.embeddedSubtitles.badgeDefault')}</Badge>}
+            {isDefault && !track.forced && !track.default && (
+              <Badge>{t('media.embeddedSubtitles.badgeAutoPick')}</Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground truncate">
-            Track {track.trackNumber} · {track.codecId.replace('S_TEXT/', '')}
+            {t('media.embeddedSubtitles.trackInfo', {
+              n: track.trackNumber,
+              codec: track.codecId.replace('S_TEXT/', ''),
+            })}
           </div>
         </div>
         <div className="text-xs text-muted-foreground tabular-nums shrink-0">
-          {track.cues.length} cues
+          {t('media.embeddedSubtitles.cuesCount', { count: track.cues.length })}
         </div>
       </button>
     </li>

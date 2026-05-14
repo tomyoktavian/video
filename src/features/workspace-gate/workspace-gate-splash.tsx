@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { FolderOpen, FolderX, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FreeCutLogo } from '@/components/brand/freecut-logo'
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function WorkspaceGateSplash({ status, onPickFolder, onReconnect }: Props) {
+  const { t } = useTranslation()
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="max-w-lg w-full text-center">
@@ -22,7 +24,7 @@ export function WorkspaceGateSplash({ status, onPickFolder, onReconnect }: Props
 
         {status.kind === 'initializing' && (
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t('common.loading')}
           </div>
         )}
 
@@ -30,11 +32,10 @@ export function WorkspaceGateSplash({ status, onPickFolder, onReconnect }: Props
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-2 text-destructive">
               <FolderX className="h-5 w-5" />
-              <span className="font-medium">Unsupported browser</span>
+              <span className="font-medium">{t('projects.workspaceGate.unsupportedBrowser')}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              FreeCut requires a Chromium-based browser (Chrome, Edge, Brave, Arc) for its workspace
-              folder storage. Firefox and Safari don't yet support the File System Access API.
+              {t('projects.workspaceGate.unsupportedBrowserDescription')}
             </p>
           </div>
         )}
@@ -42,40 +43,43 @@ export function WorkspaceGateSplash({ status, onPickFolder, onReconnect }: Props
         {status.kind === 'pick' && (
           <div className="space-y-5">
             <div>
-              <h1 className="text-2xl font-semibold mb-2">Pick your workspace folder</h1>
+              <h1 className="text-2xl font-semibold mb-2">
+                {t('projects.workspaceGate.pickTitle')}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                FreeCut stores all your projects, media, and caches as plain files in a folder you
-                control. Pick any folder on disk — your projects will live there.
+                {t('projects.workspaceGate.pickDescription')}
               </p>
             </div>
             <Button size="lg" className="gap-2" onClick={onPickFolder}>
               <FolderOpen className="h-4 w-4" />
-              Choose folder
+              {t('projects.workspaceGate.chooseFolder')}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Tip: pick a folder in Dropbox, iCloud, or Google Drive to sync projects across
-              devices. You can move it later.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('projects.workspaceGate.pickTip')}</p>
           </div>
         )}
 
         {status.kind === 'reconnect' && (
           <div className="space-y-5">
             <div>
-              <h1 className="text-2xl font-semibold mb-2">Reconnect your workspace</h1>
+              <h1 className="text-2xl font-semibold mb-2">
+                {t('projects.workspaceGate.reconnectTitle')}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                We need permission to access <span className="font-mono">{status.handleName}</span>{' '}
-                again. This happens automatically between browser sessions.
+                <Trans
+                  i18nKey="projects.workspaceGate.reconnectDescription"
+                  values={{ name: status.handleName }}
+                  components={{ code: <span className="font-mono" /> }}
+                />
               </p>
             </div>
             <div className="flex items-center justify-center gap-2">
               <Button variant="outline" size="lg" className="gap-2" onClick={onPickFolder}>
                 <FolderOpen className="h-4 w-4" />
-                Choose a different folder
+                {t('projects.workspaceGate.chooseDifferentFolder')}
               </Button>
               <Button size="lg" className="gap-2" onClick={onReconnect}>
                 <RefreshCw className="h-4 w-4" />
-                Reconnect
+                {t('projects.workspaceGate.reconnect')}
               </Button>
             </div>
           </div>

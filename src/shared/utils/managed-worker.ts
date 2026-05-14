@@ -9,6 +9,20 @@ export interface ManagedWorkerOptions<TWorker extends Worker = Worker> {
   setupWorker?: (worker: TWorker) => void | (() => void)
 }
 
+export interface RejectablePendingRequest {
+  reject(error: Error): void
+}
+
+export function rejectAndDeletePendingRequests<TPending extends RejectablePendingRequest>(
+  pendingRequests: Map<string, TPending>,
+  error: Error,
+): void {
+  pendingRequests.forEach((pending) => {
+    pending.reject(error)
+  })
+  pendingRequests.clear()
+}
+
 export function createManagedWorker<TWorker extends Worker = Worker>(
   options: ManagedWorkerOptions<TWorker>,
 ): ManagedWorker<TWorker> {

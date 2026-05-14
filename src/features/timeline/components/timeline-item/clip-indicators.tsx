@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link2Off, Diamond } from 'lucide-react'
 import { cn } from '@/shared/ui/cn'
 import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
@@ -44,6 +45,7 @@ export const ClipIndicators = memo(function ClipIndicators({
   isMask,
   isShape,
 }: ClipIndicatorsProps) {
+  const { t } = useTranslation()
   const showSpeedBadge = Math.abs(currentSpeed - 1) > 0.005 && !isStretching
 
   return (
@@ -60,14 +62,14 @@ export const ClipIndicators = memo(function ClipIndicators({
           style={{ top: 0, height: EDITOR_LAYOUT_CSS_VALUES.timelineClipLabelRowHeight }}
         >
           {hasKeyframes && (
-            <span title="Has keyframe animations">
+            <span title={t('timeline.clipIndicators.hasKeyframes')}>
               <Diamond className="w-3 h-3 text-amber-500 fill-amber-500/50" />
             </span>
           )}
           {isShape && isMask && (
             <span
               className="px-1 py-0.5 text-[10px] font-bold bg-cyan-500/80 text-white rounded"
-              title="Mask"
+              title={t('timeline.clipIndicators.mask')}
             >
               M
             </span>
@@ -75,7 +77,7 @@ export const ClipIndicators = memo(function ClipIndicators({
           {showSpeedBadge && (
             <span
               className="px-1 py-0.5 text-[10px] font-bold bg-black/60 text-white rounded font-mono"
-              title={`Speed: ${currentSpeed.toFixed(2)}x`}
+              title={t('timeline.clipIndicators.speed', { speed: currentSpeed.toFixed(2) })}
             >
               {currentSpeed.toFixed(2)}x
             </span>
@@ -85,12 +87,12 @@ export const ClipIndicators = memo(function ClipIndicators({
               className="px-1 py-0.5 text-[10px] font-bold bg-black/60 text-white rounded font-mono"
               title={
                 reverseConformStatus === 'ready'
-                  ? 'Reversed playback prepared'
+                  ? t('timeline.clipIndicators.reversedPrepared')
                   : reverseConformStatus === 'pending'
-                    ? 'Preparing reversed clip'
+                    ? t('timeline.clipIndicators.preparingReversed')
                     : reverseConformStatus === 'error'
-                      ? 'Reversed playback; preparation failed'
-                      : 'Reversed playback'
+                      ? t('timeline.clipIndicators.reversedPrepFailed')
+                      : t('timeline.clipIndicators.reversedPlayback')
               }
             >
               REV
@@ -99,7 +101,7 @@ export const ClipIndicators = memo(function ClipIndicators({
           {reverseConformStatus === 'pending' && (
             <span
               className="px-1 py-0.5 text-[10px] font-bold bg-sky-600/80 text-white rounded font-mono"
-              title="Preparing reversed clip"
+              title={t('timeline.clipIndicators.preparingReversed')}
             >
               PREP
             </span>
@@ -107,7 +109,7 @@ export const ClipIndicators = memo(function ClipIndicators({
           {reverseConformStatus === 'error' && (
             <span
               className="px-1 py-0.5 text-[10px] font-bold bg-red-600/80 text-white rounded font-mono"
-              title="Reverse preparation failed"
+              title={t('timeline.clipIndicators.reversePrepFailedShort')}
             >
               ERR
             </span>
@@ -119,7 +121,7 @@ export const ClipIndicators = memo(function ClipIndicators({
       {isBroken && hasMediaId && (
         <div
           className="absolute bottom-1 right-1 p-0.5 rounded bg-destructive/90 text-destructive-foreground"
-          title="Media file missing - relink in Media Library"
+          title={t('timeline.clipIndicators.mediaMissing')}
         >
           <Link2Off className="w-3 h-3" />
         </div>

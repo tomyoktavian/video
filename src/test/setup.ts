@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
 import { afterEach } from 'vite-plus/test'
+import '@/i18n'
 import { resetAutoKeyframeStore } from '@/features/keyframes/stores/auto-keyframe-store'
 
 // Mock ImageData for Canvas operations

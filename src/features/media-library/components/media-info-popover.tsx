@@ -12,6 +12,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { MediaMetadata, MediaTranscript } from '@/types/storage'
 import { getMediaType, formatDuration } from '../utils/validation'
@@ -38,25 +39,31 @@ export function MediaInfoPopover({
   triggerClassName,
   onSeekToCaption,
 }: MediaInfoPopoverProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [transcript, setTranscript] = useState<MediaTranscript | null>(null)
   const [transcriptLoading, setTranscriptLoading] = useState(false)
   const mediaType = getMediaType(media.mimeType)
-  const typeLabel = mediaType === 'video' ? 'Video' : mediaType === 'audio' ? 'Audio' : 'Image'
+  const typeLabel =
+    mediaType === 'video'
+      ? t('media.type.video')
+      : mediaType === 'audio'
+        ? t('media.type.audio')
+        : t('media.type.image')
   const isTranscribable = mediaType === 'video' || mediaType === 'audio'
 
   const rows: Array<{ icon: React.ReactNode; label: string; value: string }> = []
 
   rows.push({
     icon: <FileType className="w-3 h-3" />,
-    label: 'Type',
+    label: t('media.info.type'),
     value: `${typeLabel} (${media.mimeType.split('/')[1]})`,
   })
 
   if ((mediaType === 'video' || mediaType === 'audio') && media.duration > 0) {
     rows.push({
       icon: <Clock className="w-3 h-3" />,
-      label: 'Duration',
+      label: t('media.info.duration'),
       value: formatDuration(media.duration),
     })
   }
@@ -64,7 +71,7 @@ export function MediaInfoPopover({
   if ((mediaType === 'video' || mediaType === 'image') && media.width > 0 && media.height > 0) {
     rows.push({
       icon: <Maximize2 className="w-3 h-3" />,
-      label: 'Dimensions',
+      label: t('media.info.dimensions'),
       value: `${media.width} × ${media.height}`,
     })
   }
@@ -72,20 +79,20 @@ export function MediaInfoPopover({
   if (media.codec && media.codec !== 'importing...') {
     let codecStr = media.codec
     if (media.audioCodec) codecStr += ` / ${media.audioCodec}`
-    rows.push({ icon: <Film className="w-3 h-3" />, label: 'Codec', value: codecStr })
+    rows.push({ icon: <Film className="w-3 h-3" />, label: t('media.info.codec'), value: codecStr })
   }
 
   rows.push({
     icon: <HardDrive className="w-3 h-3" />,
-    label: 'Size',
+    label: t('media.info.size'),
     value: formatBytes(media.fileSize),
   })
 
   if (mediaType === 'video' && media.fps > 0) {
     rows.push({
       icon: <Film className="w-3 h-3" />,
-      label: 'Frame Rate',
-      value: `${media.fps.toFixed(2)} fps`,
+      label: t('media.info.frameRate'),
+      value: t('media.info.fpsValue', { fps: media.fps.toFixed(2) }),
     })
   }
 
@@ -125,7 +132,7 @@ export function MediaInfoPopover({
             triggerClassName ??
             'p-0.5 rounded bg-black/60 text-white/80 hover:text-white hover:bg-black/80 transition-colors'
           }
-          title="Media info"
+          title={t('media.info.mediaInfo')}
         >
           <Info className="w-3 h-3" />
         </button>
@@ -161,7 +168,9 @@ export function MediaInfoPopover({
             <div className="flex items-center gap-1.5 px-3 py-1.5">
               <FileText className="w-3 h-3 text-primary" />
               <span className="text-[10px] font-medium text-muted-foreground">
-                {transcript ? `Transcript (${transcript.segments.length})` : 'Transcript'}
+                {transcript
+                  ? t('media.info.transcriptWithCount', { count: transcript.segments.length })
+                  : t('media.info.transcript')}
               </span>
               {transcript && (
                 <span className="ml-auto text-[10px] text-muted-foreground">
@@ -172,7 +181,7 @@ export function MediaInfoPopover({
             {transcriptLoading ? (
               <div className="px-3 pb-3 flex items-center gap-2 text-[10px] text-muted-foreground">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                Loading transcript...
+                {t('media.info.loadingTranscript')}
               </div>
             ) : transcript ? (
               <div className="px-3 pb-2 space-y-2">
@@ -192,7 +201,7 @@ export function MediaInfoPopover({
                           e.stopPropagation()
                           onSeekToCaption?.(segment.start)
                         }}
-                        title="Open in source monitor"
+                        title={t('media.info.openInSourceMonitor')}
                       >
                         {formatTimestamp(segment.start)}
                       </button>

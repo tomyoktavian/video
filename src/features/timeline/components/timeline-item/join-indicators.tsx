@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/ui/cn'
 
 interface JoinIndicatorsProps {
@@ -26,6 +27,7 @@ export const JoinIndicators = memo(function JoinIndicators({
   isStretching,
   isBeingDragged,
 }: JoinIndicatorsProps) {
+  const { t } = useTranslation()
   // Hide join indicators when this item is being dragged (anchor or follower)
   // This ensures indicators don't show when moving to a different track
   const showLeft =
@@ -59,7 +61,7 @@ export const JoinIndicators = memo(function JoinIndicators({
           showLeft ? 'opacity-100' : 'opacity-0',
         )}
         style={joinIndicatorStyle}
-        title="Can join with previous clip (J)"
+        title={t('timeline.joinIndicators.canJoinPrevious')}
       />
       <div
         className={cn(
@@ -67,7 +69,7 @@ export const JoinIndicators = memo(function JoinIndicators({
           showRight ? 'opacity-100' : 'opacity-0',
         )}
         style={joinIndicatorStyle}
-        title="Can join with next clip (J)"
+        title={t('timeline.joinIndicators.canJoinNext')}
       />
     </>
   )

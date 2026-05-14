@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -83,11 +84,11 @@ const VIDEO_CODEC_LABELS: Record<string, string> = {
   av1: 'AV1',
 }
 
-const VIDEO_CONTAINER_DESCRIPTIONS: Record<ClientVideoContainer, string> = {
-  mp4: 'Most compatible, H.264/H.265',
-  mov: 'Best for macOS/iOS',
-  webm: 'Web-optimized, VP8/VP9/AV1',
-  mkv: 'Flexible, H.264/H.265/VP8/VP9/AV1',
+const VIDEO_CONTAINER_DESCRIPTION_KEYS: Record<ClientVideoContainer, string> = {
+  mp4: 'export.videoContainer.mp4',
+  mov: 'export.videoContainer.mov',
+  webm: 'export.videoContainer.webm',
+  mkv: 'export.videoContainer.mkv',
 }
 
 function formatTime(seconds: number): string {
@@ -106,7 +107,11 @@ function formatFileSize(bytes: number): string {
 /**
  * Generate resolution options based on project dimensions.
  */
-function getResolutionOptions(projectWidth: number, projectHeight: number) {
+function getResolutionOptions(
+  projectWidth: number,
+  projectHeight: number,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
   const scales = [1, 0.666, 0.5]
 
   return scales.map((scale) => {
@@ -117,8 +122,8 @@ function getResolutionOptions(projectWidth: number, projectHeight: number) {
 
     const label =
       scale === 1
-        ? `Same as project (${width}×${height})`
-        : `${Math.min(width, height)}p (${width}×${height})`
+        ? t('export.settings.resolutionSameAsProject', { width, height })
+        : t('export.settings.resolutionScaled', { p: Math.min(width, height), width, height })
 
     return { value: `${width}x${height}`, label }
   })
@@ -129,6 +134,7 @@ function getDefaultCodecForFormat(format: 'mp4' | 'webm'): ExportSettings['codec
 }
 
 export function ExportDialog({ open, onClose, compositionScope }: ExportDialogProps) {
+  const { t } = useTranslation()
   // Compound-scope export pulls dimensions/duration/fps from the sub-comp store.
   const scopedComposition = useCompositionsStore((s) =>
     compositionScope ? s.compositionById[compositionScope.compositionId] : undefined,
@@ -198,8 +204,8 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   ])
 
   const resolutionOptions = useMemo(
-    () => getResolutionOptions(projectWidth, projectHeight),
-    [projectWidth, projectHeight],
+    () => getResolutionOptions(projectWidth, projectHeight, t),
+    [projectWidth, projectHeight, t],
   )
 
   // Sync resolution when project dimensions change
@@ -316,9 +322,9 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   }, [open, projectHeight, projectWidth, resetState])
 
   const getAudioContainerOptions = () => [
-    { value: 'mp3', label: 'MP3', description: 'Universal, small files' },
-    { value: 'aac', label: 'AAC', description: 'High quality, compact' },
-    { value: 'wav', label: 'WAV', description: 'Lossless PCM, large files' },
+    { value: 'mp3', label: 'MP3', description: t('export.audioContainer.mp3') },
+    { value: 'aac', label: 'AAC', description: t('export.audioContainer.aac') },
+    { value: 'wav', label: 'WAV', description: t('export.audioContainer.wav') },
   ]
 
   useEffect(() => {
@@ -339,7 +345,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
       })
       .catch((err) => {
         if (cancelled) return
-        const message = err instanceof Error ? err.message : 'Unable to verify codec support'
+        const message = err instanceof Error ? err.message : t('export.errors.verifyCodec')
         setVideoSupportError(message)
       })
       .finally(() => {
@@ -351,7 +357,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
     return () => {
       cancelled = true
     }
-  }, [exportMode, getSupportedCodecs, open, settings.resolution, settings.quality, view])
+  }, [exportMode, getSupportedCodecs, open, settings.resolution, settings.quality, view, t])
 
   const videoContainerOptions = useMemo<VideoContainerOption[]>(() => {
     const allContainers: ClientVideoContainer[] = ['mp4', 'mov', 'webm', 'mkv']
@@ -366,12 +372,12 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
       return {
         value: container,
-        label: container === 'mov' ? 'QuickTime (MOV)' : container.toUpperCase(),
-        description: VIDEO_CONTAINER_DESCRIPTIONS[container],
+        label: container === 'mov' ? t('export.settings.quicktimeMov') : container.toUpperCase(),
+        description: t(VIDEO_CONTAINER_DESCRIPTION_KEYS[container]),
         supported,
       }
     })
-  }, [supportedVideoCodecs])
+  }, [supportedVideoCodecs, t])
 
   const codecOptions = useMemo<VideoCodecOption[]>(() => {
     return getCompatibleVideoCodecs(videoContainer).map((codec) => ({
@@ -439,33 +445,35 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   const getTitle = () => {
     switch (view) {
       case 'settings':
-        return compositionScope ? 'Export Compound Clip' : 'Export Video'
+        return compositionScope
+          ? t('export.dialog.titleCompoundClip')
+          : t('export.dialog.titleSettings')
       case 'progress':
         return (
           <span className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            Exporting video...
+            {t('export.dialog.titleProgress')}
           </span>
         )
       case 'complete':
         return (
           <span className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
-            Export complete!
+            {t('export.dialog.titleComplete')}
           </span>
         )
       case 'error':
         return (
           <span className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            Export failed
+            {t('export.dialog.titleError')}
           </span>
         )
       case 'cancelled':
         return (
           <span className="flex items-center gap-2">
             <X className="h-5 w-5 text-muted-foreground" />
-            Export cancelled
+            {t('export.dialog.titleCancelled')}
           </span>
         )
     }
@@ -474,15 +482,15 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   const getDescription = () => {
     switch (view) {
       case 'settings':
-        return 'Configure export settings and render your video'
+        return t('export.dialog.descSettings')
       case 'progress':
-        return 'Rendering your video'
+        return t('export.dialog.descProgress')
       case 'complete':
-        return 'Your video is ready to download'
+        return t('export.dialog.descComplete')
       case 'error':
-        return 'Something went wrong during export'
+        return t('export.dialog.descError')
       case 'cancelled':
-        return 'The export was cancelled'
+        return t('export.dialog.descCancelled')
     }
   }
 
@@ -515,7 +523,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
             )}
             {/* Export Mode: Video or Audio Toggle Group */}
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Export Type</Label>
+              <Label className="text-sm font-medium">{t('export.settings.exportType')}</Label>
               <div className="flex rounded-md border border-border p-0.5 bg-muted/30">
                 <button
                   type="button"
@@ -527,7 +535,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   }`}
                 >
                   <Video className="h-3.5 w-3.5" />
-                  Video
+                  {t('export.settings.video')}
                 </button>
                 <button
                   type="button"
@@ -539,7 +547,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   }`}
                 >
                   <Music className="h-3.5 w-3.5" />
-                  Audio
+                  {t('export.settings.audio')}
                 </button>
               </div>
             </div>
@@ -550,13 +558,15 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">
-                    {isCompositionScope ? 'Compound Range' : 'Export Range'}
+                    {isCompositionScope
+                      ? t('export.settings.compoundRange')
+                      : t('export.settings.exportRange')}
                   </span>
                 </div>
                 {hasInOutPoints && (
                   <div className="flex items-center gap-2">
                     <Label htmlFor="render-whole" className="text-xs text-muted-foreground">
-                      Render whole project
+                      {t('export.settings.renderWholeProject')}
                     </Label>
                     <Switch
                       id="render-whole"
@@ -568,19 +578,25 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <div className="text-xs text-muted-foreground mb-0.5">In</div>
+                  <div className="text-xs text-muted-foreground mb-0.5">
+                    {t('export.settings.in')}
+                  </div>
                   <div className="font-mono text-foreground">
                     {formatTimecode(exportRange.start, fps)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-0.5">Out</div>
+                  <div className="text-xs text-muted-foreground mb-0.5">
+                    {t('export.settings.out')}
+                  </div>
                   <div className="font-mono text-foreground">
                     {formatTimecode(exportRange.end, fps)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-0.5">Duration</div>
+                  <div className="text-xs text-muted-foreground mb-0.5">
+                    {t('export.settings.duration')}
+                  </div>
                   <div className="font-mono text-foreground">
                     {formatTime(framesToSeconds(exportRange.duration, fps))}
                   </div>
@@ -592,7 +608,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 </p>
               ) : hasInOutPoints && !renderWholeProject ? (
                 <p className="text-xs text-muted-foreground">
-                  Exporting in/out range. Toggle above to export the full timeline.
+                  {t('export.settings.inOutRangeHint')}
                 </p>
               ) : null}
             </div>
@@ -605,8 +621,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        Could not verify browser codec support. Export will validate again when
-                        rendering starts.
+                        {t('export.settings.codecSupportUnverified')}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -615,20 +630,22 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        This browser cannot encode video at {settings.resolution.width}x
-                        {settings.resolution.height}. Try a lower resolution or another browser.
+                        {t('export.settings.cannotEncode', {
+                          width: settings.resolution.width,
+                          height: settings.resolution.height,
+                        })}
                       </AlertDescription>
                     </Alert>
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="container">Format</Label>
+                    <Label htmlFor="container">{t('export.settings.format')}</Label>
                     <Select
                       value={videoContainer}
                       onValueChange={(v) => setVideoContainer(v as ClientVideoContainer)}
                     >
                       <SelectTrigger id="container">
-                        <SelectValue placeholder="Select format" />
+                        <SelectValue placeholder={t('export.settings.selectFormat')} />
                       </SelectTrigger>
                       <SelectContent>
                         {videoContainerOptions.map((option) => (
@@ -648,7 +665,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="codec">Codec</Label>
+                    <Label htmlFor="codec">{t('export.settings.codec')}</Label>
                     <Select
                       value={settings.codec}
                       onValueChange={(value) =>
@@ -656,7 +673,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                       }
                     >
                       <SelectTrigger id="codec">
-                        <SelectValue placeholder="Select codec" />
+                        <SelectValue placeholder={t('export.settings.selectCodec')} />
                       </SelectTrigger>
                       <SelectContent>
                         {codecOptions.map((option) => (
@@ -673,7 +690,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="quality">Quality</Label>
+                    <Label htmlFor="quality">{t('export.settings.quality')}</Label>
                     <Select
                       value={settings.quality}
                       onValueChange={(value) =>
@@ -681,19 +698,19 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                       }
                     >
                       <SelectTrigger id="quality">
-                        <SelectValue placeholder="Select quality" />
+                        <SelectValue placeholder={t('export.settings.selectQuality')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low (Faster, smaller file)</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High (Recommended)</SelectItem>
-                        <SelectItem value="ultra">Ultra (Slower, larger file)</SelectItem>
+                        <SelectItem value="low">{t('export.settings.qualityLow')}</SelectItem>
+                        <SelectItem value="medium">{t('export.settings.qualityMedium')}</SelectItem>
+                        <SelectItem value="high">{t('export.settings.qualityHigh')}</SelectItem>
+                        <SelectItem value="ultra">{t('export.settings.qualityUltra')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="resolution">Resolution</Label>
+                    <Label htmlFor="resolution">{t('export.settings.resolution')}</Label>
                     <Select
                       value={`${settings.resolution.width}x${settings.resolution.height}`}
                       onValueChange={(value) => {
@@ -704,7 +721,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                       }}
                     >
                       <SelectTrigger id="resolution">
-                        <SelectValue placeholder="Select resolution" />
+                        <SelectValue placeholder={t('export.settings.selectResolution')} />
                       </SelectTrigger>
                       <SelectContent>
                         {resolutionOptions.map((option) => (
@@ -719,28 +736,28 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3">
                     <div className="space-y-1">
                       <Label htmlFor="embed-subtitles" className="text-sm font-medium">
-                        Embed subtitles
+                        {t('export.settings.embedSubtitles')}
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        Adds transcript captions as a selectable subtitle track when available.
+                        {t('export.settings.embedSubtitlesDescription')}
                       </p>
                       {embedSubtitles &&
                         hasTranscriptSubtitles &&
                         !containerSupportsEmbeddedSubtitles && (
                           <p className="text-xs text-destructive">
-                            {videoContainer.toUpperCase()} does not support embedded subtitles. Use
-                            MP4, WebM, or MKV.
+                            {t('export.settings.embedSubtitlesUnsupported', {
+                              container: videoContainer.toUpperCase(),
+                            })}
                           </p>
                         )}
                       {embedSubtitles && hasTranscriptSubtitles && videoContainer === 'mp4' && (
                         <p className="text-xs text-muted-foreground">
-                          MP4 embeds WebVTT subtitles; some players only show MKV/WebM subtitle
-                          tracks.
+                          {t('export.settings.embedSubtitlesMp4Note')}
                         </p>
                       )}
                       {!hasTranscriptSubtitles && (
                         <p className="text-xs text-muted-foreground">
-                          No transcript subtitle segments found on the timeline.
+                          {t('export.settings.noTranscriptSegments')}
                         </p>
                       )}
                     </div>
@@ -760,19 +777,17 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
               <div className="space-y-4">
                 <Alert>
                   <Music className="h-4 w-4" />
-                  <AlertDescription>
-                    Exports audio only. Video tracks will be ignored.
-                  </AlertDescription>
+                  <AlertDescription>{t('export.settings.audioOnlyNote')}</AlertDescription>
                 </Alert>
 
                 <div className="space-y-2">
-                  <Label htmlFor="audio-format">Format</Label>
+                  <Label htmlFor="audio-format">{t('export.settings.format')}</Label>
                   <Select
                     value={audioContainer}
                     onValueChange={(v) => setAudioContainer(v as ClientAudioContainer)}
                   >
                     <SelectTrigger id="audio-format">
-                      <SelectValue placeholder="Select format" />
+                      <SelectValue placeholder={t('export.settings.selectFormat')} />
                     </SelectTrigger>
                     <SelectContent>
                       {getAudioContainerOptions().map((option) => (
@@ -788,7 +803,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="audio-quality">Quality</Label>
+                  <Label htmlFor="audio-quality">{t('export.settings.quality')}</Label>
                   <Select
                     value={settings.quality}
                     onValueChange={(value) =>
@@ -796,13 +811,17 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                     }
                   >
                     <SelectTrigger id="audio-quality">
-                      <SelectValue placeholder="Select quality" />
+                      <SelectValue placeholder={t('export.settings.selectQuality')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low (96 kbps)</SelectItem>
-                      <SelectItem value="medium">Medium (192 kbps)</SelectItem>
-                      <SelectItem value="high">High (256 kbps)</SelectItem>
-                      <SelectItem value="ultra">Ultra (320 kbps)</SelectItem>
+                      <SelectItem value="low">{t('export.settings.audioQualityLow')}</SelectItem>
+                      <SelectItem value="medium">
+                        {t('export.settings.audioQualityMedium')}
+                      </SelectItem>
+                      <SelectItem value="high">{t('export.settings.audioQualityHigh')}</SelectItem>
+                      <SelectItem value="ultra">
+                        {t('export.settings.audioQualityUltra')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -811,7 +830,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={handleClose}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleStartExport}
@@ -820,7 +839,9 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                   (!hasSupportedVideoPath || isCheckingVideoSupport || hasSubtitleExportConflict)
                 }
               >
-                {exportMode === 'audio' ? 'Export Audio' : 'Export Video'}
+                {exportMode === 'audio'
+                  ? t('export.settings.exportAudio')
+                  : t('export.settings.exportVideo')}
               </Button>
             </div>
           </div>
@@ -836,10 +857,10 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 </div>
                 <div className="flex items-center justify-between text-sm gap-2">
                   <span className="text-muted-foreground truncate">
-                    {status === 'preparing' && 'Preparing...'}
-                    {status === 'rendering' && 'Rendering frames...'}
-                    {status === 'encoding' && 'Encoding...'}
-                    {status === 'finalizing' && 'Finalizing...'}
+                    {status === 'preparing' && t('export.progress.preparing')}
+                    {status === 'rendering' && t('export.progress.rendering')}
+                    {status === 'encoding' && t('export.progress.encoding')}
+                    {status === 'finalizing' && t('export.progress.finalizing')}
                   </span>
                   <span className="font-medium tabular-nums flex-shrink-0">
                     {Math.round(progress)}%
@@ -851,7 +872,9 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 {renderedFrames !== undefined && totalFrames !== undefined && (
                   <div className="flex items-center gap-2 text-sm">
                     <Film className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">Frames:</span>
+                    <span className="text-muted-foreground">
+                      {t('export.progress.framesLabel')}
+                    </span>
                     <span className="font-medium tabular-nums">
                       {renderedFrames}/{totalFrames}
                     </span>
@@ -860,20 +883,20 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                 {elapsedSeconds > 0 && (
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">Elapsed:</span>
+                    <span className="text-muted-foreground">
+                      {t('export.progress.elapsedLabel')}
+                    </span>
                     <span className="font-medium tabular-nums">{formatTime(elapsedSeconds)}</span>
                   </div>
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                Keep this tab open while rendering. Longer videos may take several minutes.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('export.progress.keepTabOpen')}</p>
             </div>
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={cancelExport}>
-                Cancel Export
+                {t('export.progress.cancelExport')}
               </Button>
             </div>
           </div>
@@ -887,7 +910,9 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
             <Alert className="border-green-900 bg-green-950">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               <AlertDescription className="text-green-400">
-                {exportMode === 'audio' ? 'Audio' : 'Video'} exported successfully!
+                {exportMode === 'audio'
+                  ? t('export.complete.audioSuccess')
+                  : t('export.complete.videoSuccess')}
               </AlertDescription>
             </Alert>
 
@@ -895,14 +920,18 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
               {fileSize && (
                 <div className="flex items-center gap-2 text-sm">
                   <HardDrive className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">File size:</span>
+                  <span className="text-muted-foreground">
+                    {t('export.complete.fileSizeLabel')}
+                  </span>
                   <span className="font-medium">{formatFileSize(fileSize)}</span>
                 </div>
               )}
               {elapsedSeconds > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Time taken:</span>
+                  <span className="text-muted-foreground">
+                    {t('export.complete.timeTakenLabel')}
+                  </span>
                   <span className="font-medium">{formatTime(elapsedSeconds)}</span>
                 </div>
               )}
@@ -910,11 +939,11 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={handleClose}>
-                Close
+                {t('common.close')}
               </Button>
               <Button onClick={downloadVideo}>
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                {t('export.complete.download')}
               </Button>
             </div>
           </div>
@@ -930,7 +959,7 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleClose}>
-                Close
+                {t('common.close')}
               </Button>
             </div>
           </div>
@@ -941,12 +970,12 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
           <div className="space-y-4 py-4">
             <Alert>
               <X className="h-4 w-4" />
-              <AlertDescription>The export process was cancelled.</AlertDescription>
+              <AlertDescription>{t('export.cancelled.message')}</AlertDescription>
             </Alert>
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleClose}>
-                Close
+                {t('common.close')}
               </Button>
             </div>
           </div>

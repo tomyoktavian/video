@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FloatingReadout } from './floating-readout'
 
 const AUDIO_VOLUME_HOVER_ARM_DELAY_MS = 180
@@ -24,6 +25,7 @@ export const AudioVolumeControl = memo(function AudioVolumeControl({
   onVolumeMouseDown,
   onVolumeDoubleClick,
 }: AudioVolumeControlProps) {
+  const { t } = useTranslation()
   const [isHovered, setIsHovered] = useState(false)
   const [isHoverArmed, setIsHoverArmed] = useState(false)
   const volumeHandleRef = useRef<HTMLButtonElement | null>(null)
@@ -88,7 +90,7 @@ export const AudioVolumeControl = memo(function AudioVolumeControl({
           }
         }}
         tabIndex={-1}
-        aria-label="Adjust clip volume"
+        aria-label={t('timeline.volumeControl.adjustClipVolume')}
       />
 
       {isEditing && editLabel && (

@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   Bug,
@@ -7,6 +8,7 @@ import {
   Download,
   FolderArchive,
   Github,
+  Check,
   Keyboard,
   Save,
   Settings,
@@ -32,8 +34,13 @@ import { hasUnseenChangelog } from './whats-new-seen'
 import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
 import { cn } from '@/shared/ui/cn'
 import { useDebugStore } from '@/features/editor/stores/debug-store'
+import { SUPPORTED_LANGUAGES, resolveSupportedLanguage } from '@/i18n/languages'
 
 const SAVE_ANIMATION_MIN_MS = 1800
+
+function getLanguageButtonLabel(languageCode: string): string {
+  return languageCode.split('-')[0]?.slice(0, 2).toUpperCase() || 'EN'
+}
 
 interface ToolbarProps {
   projectId: string
@@ -63,6 +70,7 @@ export const Toolbar = memo(function Toolbar({
   onExportLauncher,
 }: ToolbarProps) {
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
@@ -88,6 +96,9 @@ export const Toolbar = memo(function Toolbar({
     setHasUnseenWhatsNew(false)
     setShowWhatsNewDialog(true)
   }
+
+  const currentLanguage = resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language)
+  const currentLanguageLabel = getLanguageButtonLabel(currentLanguage)
 
   const handleBackClick = () => {
     if (isDirty) {
@@ -131,7 +142,7 @@ export const Toolbar = memo(function Toolbar({
       className="panel-header flex flex-shrink-0 items-center gap-2.5 border-b border-border px-3"
       style={{ height: EDITOR_LAYOUT_CSS_VALUES.toolbarHeight }}
       role="toolbar"
-      aria-label="Editor toolbar"
+      aria-label={t('toolbar.ariaLabel')}
     >
       <div className="flex items-center gap-2.5">
         <Button
@@ -139,9 +150,9 @@ export const Toolbar = memo(function Toolbar({
           size="icon"
           className="h-8 w-8"
           onClick={handleBackClick}
-          data-tooltip="Back to Projects"
+          data-tooltip={t('toolbar.backToProjects')}
           data-tooltip-side="right"
-          aria-label="Back to projects"
+          aria-label={t('toolbar.backToProjectsAria')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -157,10 +168,14 @@ export const Toolbar = memo(function Toolbar({
 
         <div className="flex flex-col -space-y-0.5">
           <h1 className="text-sm font-medium leading-none">
-            {project?.name || 'Untitled Project'}
+            {project?.name || t('common.untitledProject')}
           </h1>
           <span className="font-mono text-[11px] text-muted-foreground">
-            {project?.width}x{project?.height} | {project?.fps}fps
+            {t('toolbar.specs', {
+              width: project?.width,
+              height: project?.height,
+              fps: project?.fps,
+            })}
           </span>
         </div>
       </div>
@@ -184,9 +199,9 @@ export const Toolbar = memo(function Toolbar({
           size="icon"
           className="h-7 w-7 relative"
           onClick={openWhatsNew}
-          data-tooltip="What's New"
+          data-tooltip={t('toolbar.whatsNew')}
           data-tooltip-side="bottom"
-          aria-label="What's new"
+          aria-label={t('toolbar.whatsNewAria')}
         >
           <Sparkles className="h-4 w-4" />
           {hasUnseenWhatsNew && (
@@ -201,9 +216,9 @@ export const Toolbar = memo(function Toolbar({
           size="icon"
           className="h-7 w-7"
           onClick={() => setShowSettingsDialog(true)}
-          data-tooltip="Settings"
+          data-tooltip={t('toolbar.settings')}
           data-tooltip-side="bottom"
-          aria-label="Settings"
+          aria-label={t('toolbar.settings')}
         >
           <Settings className="h-4 w-4" />
         </Button>
@@ -212,20 +227,56 @@ export const Toolbar = memo(function Toolbar({
           size="icon"
           className="h-7 w-7"
           onClick={() => setShowShortcutsDialog(true)}
-          data-tooltip="Keyboard Shortcuts"
+          data-tooltip={t('toolbar.keyboardShortcuts')}
           data-tooltip-side="bottom"
-          aria-label="Keyboard shortcuts"
+          aria-label={t('toolbar.keyboardShortcutsAria')}
         >
           <Keyboard className="h-4 w-4" />
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 font-mono text-[10px] font-semibold leading-none tracking-normal"
+              data-tooltip={t('language.label')}
+              data-tooltip-side="bottom"
+              aria-label={t('language.ariaLabel')}
+            >
+              {currentLanguageLabel}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {SUPPORTED_LANGUAGES.map((lng) => {
+              const active = lng.code === currentLanguage
+              return (
+                <DropdownMenuItem
+                  key={lng.code}
+                  onClick={() => {
+                    void i18n.changeLanguage(resolveSupportedLanguage(lng.code))
+                  }}
+                  className="justify-between"
+                >
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate">{lng.nativeName}</span>
+                    <span className="truncate text-[11px] text-muted-foreground">
+                      {lng.englishName}
+                    </span>
+                  </span>
+                  <Check className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-0')} />
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <a
             href="https://github.com/walterlow/freecut"
             target="_blank"
             rel="noopener noreferrer"
-            data-tooltip="View on GitHub"
+            data-tooltip={t('toolbar.viewOnGitHub')}
             data-tooltip-side="bottom"
-            aria-label="View on GitHub"
+            aria-label={t('toolbar.viewOnGitHub')}
           >
             <Github className="h-4 w-4" />
           </a>
@@ -235,7 +286,7 @@ export const Toolbar = memo(function Toolbar({
           size="sm"
           className="gap-1.5"
           onClick={handleSave}
-          aria-label="Save project"
+          aria-label={t('toolbar.saveAria')}
         >
           <div className="relative">
             {isSaveAnimating ? (
@@ -247,7 +298,7 @@ export const Toolbar = memo(function Toolbar({
               <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse rounded-full bg-orange-500" />
             )}
           </div>
-          Save
+          {t('toolbar.save')}
         </Button>
 
         {hasCompositions ? (
@@ -255,28 +306,28 @@ export const Toolbar = memo(function Toolbar({
             size="sm"
             className="gap-1.5 glow-primary-sm"
             onClick={onExportLauncher}
-            aria-label="Export"
+            aria-label={t('toolbar.export')}
           >
             <Download className="h-4 w-4" />
-            Export
+            {t('toolbar.export')}
           </Button>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="gap-1.5 glow-primary-sm">
                 <Download className="h-4 w-4" />
-                Export
+                {t('toolbar.export')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onExport} className="gap-2">
                 <Video className="h-4 w-4" />
-                Export Video
+                {t('toolbar.exportVideo')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onExportBundle} className="gap-2">
                 <FolderArchive className="h-4 w-4" />
-                Download Project (.zip)
+                {t('toolbar.downloadProjectZip')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -329,6 +380,7 @@ function SaveAnimationIcon({ className }: { className?: string }) {
 }
 
 function DebugPopover({ projectId }: { projectId: string }) {
+  const { t } = useTranslation()
   const debugPanelOpen = useDebugStore((s) => s.debugPanelOpen)
   const setDebugPanelOpen = useDebugStore((s) => s.setDebugPanelOpen)
 
@@ -342,9 +394,9 @@ function DebugPopover({ projectId }: { projectId: string }) {
             'h-7 w-7',
             debugPanelOpen && 'bg-amber-500/20 border-amber-500/50 text-amber-400',
           )}
-          data-tooltip={debugPanelOpen ? undefined : 'Debug Panel'}
+          data-tooltip={debugPanelOpen ? undefined : t('toolbar.debugPanel')}
           data-tooltip-side="bottom"
-          aria-label="Debug panel"
+          aria-label={t('toolbar.debugPanelAria')}
         >
           <Bug className="h-4 w-4" />
         </Button>

@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, FolderOpen, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -36,6 +37,7 @@ interface WorkspaceEntry {
 }
 
 export function WorkspaceIndicator() {
+  const { t } = useTranslation()
   const [entries, setEntries] = useState<WorkspaceEntry[] | null>(null)
   const [activeName, setActiveName] = useState<string | null>(null)
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -136,7 +138,7 @@ export function WorkspaceIndicator() {
           variant="outline"
           size="lg"
           className="gap-2 max-w-[220px]"
-          data-tooltip="Workspace folder"
+          data-tooltip={t('projects.workspaceIndicator.workspaceFolder')}
           data-tooltip-side="bottom"
         >
           <FolderOpen className="w-4 h-4 shrink-0" />
@@ -144,7 +146,9 @@ export function WorkspaceIndicator() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-2" align="end">
-        <div className="text-xs font-medium text-muted-foreground px-2 py-1">Workspaces</div>
+        <div className="text-xs font-medium text-muted-foreground px-2 py-1">
+          {t('projects.workspaceIndicator.workspaces')}
+        </div>
 
         <div className="flex flex-col">
           {entries.map(({ record, isActive }) => {
@@ -160,7 +164,7 @@ export function WorkspaceIndicator() {
                 </span>
                 {isActive && (
                   <span className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                    <Check className="w-3 h-3" /> Active
+                    <Check className="w-3 h-3" /> {t('projects.workspaceIndicator.active')}
                   </span>
                 )}
                 {isConfirming ? (
@@ -171,7 +175,7 @@ export function WorkspaceIndicator() {
                       className="h-7 px-2 text-xs"
                       onClick={() => setConfirmRemoveId(null)}
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                     <Button
                       variant="destructive"
@@ -179,7 +183,7 @@ export function WorkspaceIndicator() {
                       className="h-7 px-2 text-xs"
                       onClick={() => void handleRemove(record.id, isActive)}
                     >
-                      Remove
+                      {t('projects.workspaceIndicator.remove')}
                     </Button>
                   </>
                 ) : (
@@ -191,14 +195,14 @@ export function WorkspaceIndicator() {
                         className="h-7 px-2 text-xs"
                         onClick={() => void handleSwitch(record.id)}
                       >
-                        Switch
+                        {t('projects.workspaceIndicator.switch')}
                       </Button>
                     )}
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      aria-label="Remove workspace"
+                      aria-label={t('projects.workspaceIndicator.removeWorkspace')}
                       onClick={() => setConfirmRemoveId(record.id)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -219,7 +223,7 @@ export function WorkspaceIndicator() {
           onClick={() => void handleAdd()}
         >
           <Plus className="w-4 h-4" />
-          Add workspace…
+          {t('projects.workspaceIndicator.addWorkspace')}
         </Button>
       </PopoverContent>
     </Popover>

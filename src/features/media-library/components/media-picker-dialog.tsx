@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -87,8 +88,9 @@ export function MediaPickerDialog({
   onClose,
   onSelect,
   filterType,
-  title = 'Select Media',
+  title,
 }: MediaPickerDialogProps) {
+  const { t } = useTranslation()
   const handleSelect = (mediaId: string) => {
     onSelect(mediaId)
     onClose()
@@ -98,9 +100,11 @@ export function MediaPickerDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-h-[70vh] w-[min(92vw,960px)] max-w-[960px]">
         <DialogHeader>
-          <DialogTitle className="pr-8 leading-snug break-words">{title}</DialogTitle>
+          <DialogTitle className="pr-8 leading-snug break-words">
+            {title ?? t('media.picker.title')}
+          </DialogTitle>
           <DialogDescription>
-            Choose a {filterType || 'media'} file from your library.
+            {filterType ? t(`media.picker.descFiltered.${filterType}`) : t('media.picker.descAll')}
           </DialogDescription>
         </DialogHeader>
         <MediaPickerDialogBody
@@ -120,6 +124,7 @@ function MediaPickerDialogBody({
   filterType?: 'video' | 'audio' | 'image'
   onSelect: (mediaId: string) => void
 }) {
+  const { t } = useTranslation()
   const mediaItems = useMediaLibraryStore((s) => s.mediaItems)
   const isLoading = useMediaLibraryStore((s) => s.isLoading)
   const [searchQuery, setSearchQuery] = useState('')
@@ -145,7 +150,7 @@ function MediaPickerDialogBody({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search media..."
+          placeholder={t('media.searchMedia')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
@@ -160,10 +165,10 @@ function MediaPickerDialogBody({
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             {searchQuery
-              ? 'No media found matching your search.'
+              ? t('media.picker.noSearchResults')
               : filterType
-                ? `No ${filterType} files in library.`
-                : 'No media in library.'}
+                ? t(`media.picker.noFilesFiltered.${filterType}`)
+                : t('media.picker.noFiles')}
           </div>
         ) : (
           filteredItems.map((media) => (

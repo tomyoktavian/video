@@ -1,4 +1,5 @@
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -21,6 +22,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function SubtitleScanProgressDialog() {
+  const { t } = useTranslation()
   const open = useSubtitleScanProgressStore((s) => s.open)
   const entries = useSubtitleScanProgressStore((s) => s.entries)
   const currentIndex = useSubtitleScanProgressStore((s) => s.currentIndex)
@@ -40,12 +42,14 @@ export function SubtitleScanProgressDialog() {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isFinished ? 'Subtitle scan complete' : 'Scanning embedded subtitles'}
+            {isFinished
+              ? t('media.subtitleScan.titleComplete')
+              : t('media.subtitleScan.titleScanning')}
           </DialogTitle>
           <DialogDescription>
             {isFinished
-              ? 'Subtitle tracks are cached. Insert them onto the timeline from the clip context menu.'
-              : 'Reading the source file to discover and cache its subtitle tracks. No timeline changes will be made.'}
+              ? t('media.subtitleScan.descComplete')
+              : t('media.subtitleScan.descScanning')}
           </DialogDescription>
         </DialogHeader>
 
@@ -70,9 +74,9 @@ export function SubtitleScanProgressDialog() {
                   <span className="truncate flex-1">{entry.fileName}</span>
                   <span className="text-xs tabular-nums text-muted-foreground shrink-0">
                     {entry.status === 'done'
-                      ? 'Cached'
+                      ? t('media.subtitleScan.cached')
                       : entry.status === 'error'
-                        ? 'Failed'
+                        ? t('media.subtitleScan.failed')
                         : `${percent}%`}
                   </span>
                 </div>
@@ -90,7 +94,11 @@ export function SubtitleScanProgressDialog() {
 
         <DialogFooter>
           <Button variant={isFinished ? 'default' : 'ghost'} onClick={close}>
-            {isFinished ? 'Close' : isMulti ? 'Cancel batch' : 'Cancel'}
+            {isFinished
+              ? t('common.close')
+              : isMulti
+                ? t('media.subtitleScan.cancelBatch')
+                : t('common.cancel')}
           </Button>
         </DialogFooter>
       </DialogContent>

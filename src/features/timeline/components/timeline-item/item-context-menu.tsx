@@ -1,5 +1,6 @@
 import { memo, ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -345,6 +346,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
   pendingActivation?: LazyContextMenuEventInit | null
   onPendingActivationHandled?: () => void
 }) {
+  const { t } = useTranslation()
   const triggerRef = useRef<HTMLSpanElement | null>(null)
   const hotkeys = useResolvedHotkeys()
   const selectedCount = useSelectionStore((s) => s.selectedItemIds.length)
@@ -354,7 +356,9 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
     return keyframedProperties.filter((p) => p.keyframes.length > 0)
   }, [keyframedProperties])
   const sceneVerificationModelOptions = useMemo(() => getSceneVerificationModelOptions(), [])
-  const captionActionLabel = hasCaptions ? 'Regenerate Captions' : 'Generate Captions'
+  const captionActionLabel = hasCaptions
+    ? t('timeline.contextMenu.regenerateCaptions')
+    : t('timeline.contextMenu.generateCaptions')
 
   const hasKeyframes = propertiesWithKeyframes.length > 0
 
@@ -388,19 +392,19 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
             <>
               {showJoinLeft && (
                 <ContextMenuItem onClick={onJoinLeft}>
-                  Join with Previous
+                  {t('timeline.contextMenu.joinWithPrevious')}
                   <ContextMenuShortcut>J</ContextMenuShortcut>
                 </ContextMenuItem>
               )}
               {showJoinRight && (
                 <ContextMenuItem onClick={onJoinRight}>
-                  Join with Next
+                  {t('timeline.contextMenu.joinWithNext')}
                   <ContextMenuShortcut>J</ContextMenuShortcut>
                 </ContextMenuItem>
               )}
               {canJoinSelected && (
                 <ContextMenuItem onClick={onJoinSelected}>
-                  Join Selected
+                  {t('timeline.contextMenu.joinSelected')}
                   <ContextMenuShortcut>J</ContextMenuShortcut>
                 </ContextMenuItem>
               )}
@@ -413,7 +417,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           <>
             {canLinkSelected && onLinkSelected && (
               <ContextMenuItem onClick={onLinkSelected}>
-                Link Clips
+                {t('timeline.contextMenu.linkClips')}
                 <ContextMenuShortcut>
                   {formatHotkeyBinding(hotkeys.LINK_AUDIO_VIDEO)}
                 </ContextMenuShortcut>
@@ -421,7 +425,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
             )}
             {canUnlinkSelected && onUnlinkSelected && (
               <ContextMenuItem onClick={onUnlinkSelected}>
-                Unlink Clips
+                {t('timeline.contextMenu.unlinkClips')}
                 <ContextMenuShortcut>
                   {formatHotkeyBinding(hotkeys.UNLINK_AUDIO_VIDEO)}
                 </ContextMenuShortcut>
@@ -435,10 +439,12 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {hasKeyframes && (
           <>
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Clear Keyframes</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>
+                {t('timeline.contextMenu.clearKeyframes')}
+              </ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
                 <ContextMenuItem onClick={onClearAllKeyframes}>
-                  Clear All
+                  {t('timeline.contextMenu.clearAll')}
                   <ContextMenuShortcut>
                     {formatHotkeyBinding(hotkeys.CLEAR_KEYFRAMES)}
                   </ContextMenuShortcut>
@@ -461,7 +467,9 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {/* Bento Layout - only show when 2+ items selected */}
         {selectedCount >= 2 && onBentoLayout && (
           <>
-            <ContextMenuItem onClick={onBentoLayout}>Bento Layout...</ContextMenuItem>
+            <ContextMenuItem onClick={onBentoLayout}>
+              {t('timeline.contextMenu.bentoLayout')}
+            </ContextMenuItem>
             <ContextMenuSeparator />
           </>
         )}
@@ -470,7 +478,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canReverse && onReverse && (
           <>
             <ContextMenuItem onClick={onReverse}>
-              {isReversed ? 'Unreverse' : 'Reverse'}
+              {isReversed ? t('timeline.contextMenu.unreverse') : t('timeline.contextMenu.reverse')}
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
@@ -480,7 +488,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {isVideoItem && playheadInBounds && onFreezeFrame && (
           <>
             <ContextMenuItem onClick={onFreezeFrame}>
-              Insert Freeze Frame
+              {t('timeline.contextMenu.insertFreezeFrame')}
               <ContextMenuShortcut>Shift+F</ContextMenuShortcut>
             </ContextMenuItem>
             <ContextMenuSeparator />
@@ -490,20 +498,24 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canDetectScenes && onDetectScenes && (
           <>
             {isDetectingScenes ? (
-              <ContextMenuItem disabled>Detecting Scenes...</ContextMenuItem>
+              <ContextMenuItem disabled>
+                {t('timeline.contextMenu.detectingScenes')}
+              </ContextMenuItem>
             ) : (
               <ContextMenuSub>
-                <ContextMenuSubTrigger>Detect Scenes &amp; Split</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                  {t('timeline.contextMenu.detectScenesAndSplit')}
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent className="w-48">
                   <ContextMenuItem onClick={() => onDetectScenes('histogram')}>
-                    Fast (Histogram)
+                    {t('timeline.contextMenu.detectScenesFast')}
                   </ContextMenuItem>
                   {sceneVerificationModelOptions.map((option) => (
                     <ContextMenuItem
                       key={option.value}
                       onClick={() => onDetectScenes('optical-flow', option.value)}
                     >
-                      {`AI (${option.label})`}
+                      {t('timeline.contextMenu.detectScenesAi', { model: option.label })}
                     </ContextMenuItem>
                   ))}
                 </ContextMenuSubContent>
@@ -516,7 +528,20 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canRemoveSilence && onRemoveSilence && (
           <>
             <ContextMenuItem onClick={onRemoveSilence} disabled={isRemovingSilence}>
-              {isRemovingSilence ? 'Detecting Silence...' : 'Remove Silence...'}
+              {isRemovingSilence
+                ? t('timeline.contextMenu.detectingSilence')
+                : t('timeline.contextMenu.removeSilence')}
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        )}
+
+        {canRemoveFillers && onRemoveFillers && (
+          <>
+            <ContextMenuItem onClick={onRemoveFillers} disabled={isRemovingFillers}>
+              {isRemovingFillers
+                ? t('timeline.contextMenu.detectingFillers')
+                : t('timeline.contextMenu.removeFillerWords')}
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
@@ -535,7 +560,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {isTextItem && onGenerateAudioFromText && (
           <>
             <ContextMenuItem onClick={onGenerateAudioFromText}>
-              Generate Audio from Text
+              {t('timeline.contextMenu.generateAudioFromText')}
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
@@ -544,13 +569,15 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canManageCaptions && onOpenCaptionDialog && (
           <>
             {isGeneratingCaptions ? (
-              <ContextMenuItem disabled>Updating captions...</ContextMenuItem>
+              <ContextMenuItem disabled>
+                {t('timeline.contextMenu.updatingCaptions')}
+              </ContextMenuItem>
             ) : hasCaptions && hasTranscript && onApplyCaptionsFromTranscript ? (
               <ContextMenuSub>
-                <ContextMenuSubTrigger>Captions</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>{t('timeline.contextMenu.captions')}</ContextMenuSubTrigger>
                 <ContextMenuSubContent className="w-56">
                   <ContextMenuItem onClick={onApplyCaptionsFromTranscript}>
-                    Insert Existing Captions
+                    {t('timeline.contextMenu.insertExistingCaptions')}
                   </ContextMenuItem>
                   <ContextMenuItem onClick={onOpenCaptionDialog}>
                     {captionActionLabel}
@@ -578,7 +605,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canExtractEmbeddedSubtitles && onExtractEmbeddedSubtitles && (
           <>
             <ContextMenuItem onClick={onExtractEmbeddedSubtitles}>
-              Extract Embedded Subtitles…
+              {t('timeline.contextMenu.extractEmbeddedSubtitles')}
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
@@ -587,7 +614,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
         {canConsolidateCaptionsToSegment && onConsolidateCaptionsToSegment && (
           <>
             <ContextMenuItem onClick={onConsolidateCaptionsToSegment}>
-              Consolidate Captions to Segment
+              {t('timeline.contextMenu.consolidateCaptionsToSegment')}
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
@@ -595,10 +622,14 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
 
         {/* Composition operations */}
         {isCompositionItem && onEnterComposition && (
-          <ContextMenuItem onClick={onEnterComposition}>Open Compound Clip</ContextMenuItem>
+          <ContextMenuItem onClick={onEnterComposition}>
+            {t('timeline.contextMenu.openCompoundClip')}
+          </ContextMenuItem>
         )}
         {isCompositionItem && onDissolveComposition && (
-          <ContextMenuItem onClick={onDissolveComposition}>Dissolve Compound Clip</ContextMenuItem>
+          <ContextMenuItem onClick={onDissolveComposition}>
+            {t('timeline.contextMenu.dissolveCompoundClip')}
+          </ContextMenuItem>
         )}
         {isCompositionItem && onAddCover && (
           <ContextMenuItem onClick={onAddCover}>
@@ -607,7 +638,9 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           </ContextMenuItem>
         )}
         {canCreatePreComp && onCreatePreComp && (
-          <ContextMenuItem onClick={onCreatePreComp}>Create Compound Clip</ContextMenuItem>
+          <ContextMenuItem onClick={onCreatePreComp}>
+            {t('timeline.contextMenu.createCompoundClip')}
+          </ContextMenuItem>
         )}
         {onFindHighlights && (
           <ContextMenuItem
@@ -630,7 +663,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           disabled={!isSelected}
           className="text-destructive focus:text-destructive"
         >
-          Ripple Delete
+          {t('timeline.contextMenu.rippleDelete')}
           <ContextMenuShortcut>Ctrl+Del</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem
@@ -638,7 +671,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
           disabled={!isSelected}
           className="text-destructive focus:text-destructive"
         >
-          Delete
+          {t('common.delete')}
           <ContextMenuShortcut>Del</ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuContent>

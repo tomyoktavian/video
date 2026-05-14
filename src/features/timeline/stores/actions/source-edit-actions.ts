@@ -2,7 +2,7 @@
  * Source Edit Actions - Insert and Overwrite editing from the source monitor.
  */
 
-import type { TimelineItem, TimelineTrack, VideoItem, AudioItem, ImageItem } from '@/types/timeline'
+import type { TimelineTrack } from '@/types/timeline'
 import { useItemsStore } from '../items-store'
 import { useTimelineSettingsStore } from '../timeline-settings-store'
 import { useSelectionStore } from '@/shared/state/selection'
@@ -14,9 +14,9 @@ import { useProjectStore } from '@/features/timeline/deps/projects'
 import { mediaLibraryService } from '@/features/timeline/deps/media-library-service'
 import { getMediaType } from '@/features/timeline/deps/media-library-resolver'
 import { toast } from 'sonner'
-import { computeInitialTransform } from '../../utils/transform-init'
 import { execute, applyTransitionRepairs, getLogger } from './shared'
 import { resolveSourceEditTrackTargets } from '../../utils/source-edit-targeting'
+import { buildMediaTimelineItems } from '../../utils/media-timeline-item-builder'
 import { DEFAULT_TRACK_HEIGHT } from '../../constants'
 
 interface SourceEditContext {
@@ -180,91 +180,50 @@ async function resolveSourceEditContext(): Promise<SourceEditContext | null> {
   }
 }
 
-function createTimelineItems(ctx: SourceEditContext): TimelineItem[] {
-  const sourceFps = ctx.media.fps || 30
-  const actualSourceDurationFrames =
-    ctx.mediaType === 'image' ? ctx.projectFps * 3 : Math.round(ctx.media.duration * sourceFps)
-  const originId = crypto.randomUUID()
-  const linkedGroupId = ctx.mediaType === 'video' && ctx.hasAudio ? crypto.randomUUID() : undefined
+function createTimelineItems(ctx: SourceEditContext) {
+  if (ctx.mediaType === 'audio' && !ctx.audioTrackId) {
+    return []
+  }
+  if ((ctx.mediaType === 'video' || ctx.mediaType === 'image') && !ctx.videoTrackId) {
+    return []
+  }
 
-  const baseItem = {
-    from: ctx.insertFrame,
-    durationInFrames: ctx.clipDurationFrames,
-    label: ctx.media.fileName,
+  return buildMediaTimelineItems({
+    media: {
+      duration: ctx.media.duration,
+      width: ctx.media.width,
+      height: ctx.media.height,
+      fps: ctx.media.fps,
+    },
     mediaId: ctx.sourceMediaId,
-    originId,
-    linkedGroupId,
+    mediaType: ctx.mediaType,
+    label: ctx.media.fileName,
+    projectFps: ctx.projectFps,
+    blobUrl: ctx.blobUrl,
+    thumbnailUrl: ctx.thumbnailUrl,
+    canvasWidth: ctx.canvasWidth,
+    canvasHeight: ctx.canvasHeight,
     sourceStart: ctx.effectiveIn,
     sourceEnd: ctx.effectiveOut,
-    sourceDuration: actualSourceDurationFrames,
-    sourceFps,
-    trimStart: 0,
-    trimEnd: 0,
-  }
-
-  if (ctx.mediaType === 'video' && ctx.videoTrackId) {
-    const sourceW = ctx.media.width || ctx.canvasWidth
-    const sourceH = ctx.media.height || ctx.canvasHeight
-    const videoItem: VideoItem = {
-      ...baseItem,
-      id: crypto.randomUUID(),
-      trackId: ctx.videoTrackId,
-      type: 'video',
-      src: ctx.blobUrl,
-      thumbnailUrl: ctx.thumbnailUrl,
-      sourceWidth: ctx.media.width || undefined,
-      sourceHeight: ctx.media.height || undefined,
-      transform: computeInitialTransform(sourceW, sourceH, ctx.canvasWidth, ctx.canvasHeight),
-    }
-
-    if (!ctx.audioTrackId) {
-      return [videoItem]
-    }
-
-    const audioItem: AudioItem = {
-      ...baseItem,
-      id: crypto.randomUUID(),
-      trackId: ctx.audioTrackId,
-      type: 'audio',
-      src: ctx.blobUrl,
-    }
-
-    return [videoItem, audioItem]
-  }
-
-  if (ctx.mediaType === 'audio' && ctx.audioTrackId) {
-    return [
-      {
-        ...baseItem,
-        id: crypto.randomUUID(),
-        trackId: ctx.audioTrackId,
-        type: 'audio',
-        src: ctx.blobUrl,
-        linkedGroupId: undefined,
-      } as AudioItem,
-    ]
-  }
-
-  if (ctx.videoTrackId) {
-    const sourceW = ctx.media.width || ctx.canvasWidth
-    const sourceH = ctx.media.height || ctx.canvasHeight
-    return [
-      {
-        ...baseItem,
-        id: crypto.randomUUID(),
-        trackId: ctx.videoTrackId,
-        type: 'image',
-        src: ctx.blobUrl,
-        thumbnailUrl: ctx.thumbnailUrl,
-        sourceWidth: ctx.media.width || undefined,
-        sourceHeight: ctx.media.height || undefined,
-        transform: computeInitialTransform(sourceW, sourceH, ctx.canvasWidth, ctx.canvasHeight),
-        linkedGroupId: undefined,
-      } as ImageItem,
-    ]
-  }
-
-  return []
+    fallbackSourceFps: 30,
+    placements: {
+      primary: {
+        trackId: ctx.mediaType === 'audio' ? ctx.audioTrackId! : ctx.videoTrackId!,
+        from: ctx.insertFrame,
+        durationInFrames: ctx.clipDurationFrames,
+      },
+      linkedAudio:
+        ctx.mediaType === 'video' && ctx.audioTrackId
+          ? {
+              trackId: ctx.audioTrackId,
+              from: ctx.insertFrame,
+              durationInFrames: ctx.clipDurationFrames,
+            }
+          : undefined,
+    },
+    linkVideoAudio: ctx.mediaType === 'video' && !!ctx.audioTrackId,
+    createLinkedGroupId: ctx.mediaType === 'video' && ctx.hasAudio,
+  })
 }
 
 export async function performInsertEdit(): Promise<void> {

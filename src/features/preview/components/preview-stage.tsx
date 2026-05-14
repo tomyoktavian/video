@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Player, type PlayerRef } from '@/features/preview/deps/player-core'
 import { MainComposition } from '@/features/preview/deps/composition-runtime'
 import type { CompositionInputProps } from '@/types/export'
@@ -59,6 +60,7 @@ export const PreviewStage = memo(function PreviewStage({
   comparisonOverlay,
   overlayControls,
 }: PreviewStageProps) {
+  const { t } = useTranslation()
   const useProxy = usePlaybackStore((s) => s.useProxy)
   const pixelSnapAnchorRef = useRef<HTMLDivElement | null>(null)
   const [pixelSnapOffset, setPixelSnapOffset] = useState(ZERO_PIXEL_SNAP_OFFSET)
@@ -117,7 +119,7 @@ export const PreviewStage = memo(function PreviewStage({
       className="w-full h-full bg-video-preview-background relative"
       style={{ overflow: needsOverflow ? 'auto' : 'visible' }}
       onClick={onBackgroundClick}
-      aria-label="Video preview"
+      aria-label={t('preview.stage.videoPreview')}
     >
       <div
         className="min-w-full min-h-full grid place-items-center"
@@ -157,7 +159,7 @@ export const PreviewStage = memo(function PreviewStage({
             >
               {isResolving && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
-                  <p className="text-white text-sm">Loading media...</p>
+                  <p className="text-white text-sm">{t('preview.stage.loadingMedia')}</p>
                 </div>
               )}
 

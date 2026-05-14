@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react'
+import { createLogger } from '@/shared/logging/logger'
+
+const log = createLogger('ExportPreviewPlayer')
 
 interface ExportPreviewPlayerProps {
   src: string
@@ -26,6 +30,7 @@ function useIsFullscreen(ref: React.RefObject<HTMLElement | null>) {
 }
 
 export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) {
+  const { t } = useTranslation()
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const isFullscreen = useIsFullscreen(containerRef)
@@ -85,11 +90,15 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
   const handleFullscreen = useCallback(() => {
     if (!isVideo) return
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error)
+      document.exitFullscreen().catch((error: unknown) => {
+        log.warn('Failed to exit fullscreen', { error })
+      })
     } else {
       const el = containerRef.current
       if (el?.requestFullscreen) {
-        el.requestFullscreen().catch(console.error)
+        el.requestFullscreen().catch((error: unknown) => {
+          log.warn('Failed to enter fullscreen', { error })
+        })
       }
     }
   }, [isVideo])
@@ -169,7 +178,7 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
           size="icon"
           className="h-8 w-8 glow-primary-sm flex-shrink-0"
           onClick={togglePlay}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? t('preview.player.pause') : t('preview.player.play')}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
         </Button>
@@ -192,7 +201,7 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
           max={100}
           step={0.1}
           className="flex-1 min-w-0 py-2"
-          aria-label="Seek"
+          aria-label={t('preview.player.seek')}
         />
 
         {/* Volume */}
@@ -202,7 +211,7 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
             size="icon"
             className="h-7 w-7"
             onClick={toggleMute}
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
+            aria-label={isMuted ? t('preview.player.unmute') : t('preview.player.mute')}
           >
             {isMuted || volume === 0 ? (
               <VolumeX className="w-3.5 h-3.5" />
@@ -216,7 +225,7 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
             max={100}
             step={1}
             className="w-16"
-            aria-label="Volume"
+            aria-label={t('preview.player.volume')}
           />
         </div>
 
@@ -227,7 +236,9 @@ export function ExportPreviewPlayer({ src, isVideo }: ExportPreviewPlayerProps) 
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleFullscreen}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            aria-label={
+              isFullscreen ? t('preview.player.exitFullscreen') : t('preview.player.fullscreen')
+            }
           >
             {isFullscreen ? (
               <Minimize className="w-3.5 h-3.5" />

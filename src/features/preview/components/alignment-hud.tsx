@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlignCenterHorizontal,
   AlignCenterVertical,
@@ -34,25 +35,25 @@ type AlignmentType =
 const ALIGNMENT_ACTIONS: Array<{
   type: AlignmentType
   icon: typeof AlignStartHorizontal
-  label: string
+  labelKey: string
   minItems: number
 }> = [
-  { type: 'left', icon: AlignStartVertical, label: 'Align Left', minItems: 1 },
-  { type: 'center-h', icon: AlignCenterVertical, label: 'Center Horizontally', minItems: 1 },
-  { type: 'right', icon: AlignEndVertical, label: 'Align Right', minItems: 1 },
-  { type: 'top', icon: AlignStartHorizontal, label: 'Align Top', minItems: 1 },
-  { type: 'center-v', icon: AlignCenterHorizontal, label: 'Center Vertically', minItems: 1 },
-  { type: 'bottom', icon: AlignEndHorizontal, label: 'Align Bottom', minItems: 1 },
+  { type: 'left', icon: AlignStartVertical, labelKey: 'preview.align.left', minItems: 1 },
+  { type: 'center-h', icon: AlignCenterVertical, labelKey: 'preview.align.centerH', minItems: 1 },
+  { type: 'right', icon: AlignEndVertical, labelKey: 'preview.align.right', minItems: 1 },
+  { type: 'top', icon: AlignStartHorizontal, labelKey: 'preview.align.top', minItems: 1 },
+  { type: 'center-v', icon: AlignCenterHorizontal, labelKey: 'preview.align.centerV', minItems: 1 },
+  { type: 'bottom', icon: AlignEndHorizontal, labelKey: 'preview.align.bottom', minItems: 1 },
   {
     type: 'distribute-h',
     icon: AlignHorizontalDistributeCenter,
-    label: 'Distribute Horizontally',
+    labelKey: 'preview.align.distributeH',
     minItems: 3,
   },
   {
     type: 'distribute-v',
     icon: AlignVerticalDistributeCenter,
-    label: 'Distribute Vertically',
+    labelKey: 'preview.align.distributeV',
     minItems: 3,
   },
 ]
@@ -64,6 +65,7 @@ interface AlignmentToolbarProps {
 }
 
 export function AlignmentToolbar({ projectSize }: AlignmentToolbarProps) {
+  const { t } = useTranslation()
   const selectedItemIds = useSelectionStore((s) => s.selectedItemIds)
   const updateItemsTransformMap = useTimelineStore((s) => s.updateItemsTransformMap)
   const applyAutoKeyframeOperations = useTimelineStore((s) => s.applyAutoKeyframeOperations)
@@ -212,7 +214,7 @@ export function AlignmentToolbar({ projectSize }: AlignmentToolbarProps) {
   const renderButton = ({
     type,
     icon: Icon,
-    label,
+    labelKey,
     minItems,
   }: (typeof ALIGNMENT_ACTIONS)[number]) => (
     <Button
@@ -223,8 +225,8 @@ export function AlignmentToolbar({ projectSize }: AlignmentToolbarProps) {
       style={BUTTON_STYLE}
       onClick={() => handleAlign(type)}
       disabled={itemCount < minItems}
-      data-tooltip={label}
-      aria-label={label}
+      data-tooltip={t(labelKey)}
+      aria-label={t(labelKey)}
     >
       <Icon className="w-3.5 h-3.5" />
     </Button>
@@ -249,10 +251,10 @@ export function AlignmentToolbar({ projectSize }: AlignmentToolbarProps) {
         onClick={() => setSetting('canvasSnapEnabled', !canvasSnapEnabled)}
         data-tooltip={
           canvasSnapEnabled
-            ? 'Disable Canvas Snapping (hold Alt while dragging to bypass)'
-            : 'Enable Canvas Snapping'
+            ? t('preview.align.disableCanvasSnap')
+            : t('preview.align.enableCanvasSnap')
         }
-        aria-label="Toggle Canvas Snapping"
+        aria-label={t('preview.align.toggleCanvasSnap')}
         aria-pressed={canvasSnapEnabled}
       >
         <Magnet className="w-3.5 h-3.5" />

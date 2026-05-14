@@ -1,15 +1,171 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { toast } from 'sonner'
+import { i18n } from './i18n'
 import { App } from './app'
 import { initializeDebugUtils } from '@/app/debug'
 import { createLogger } from '@/shared/logging/logger'
 import './index.css'
 
 const log = createLogger('App')
+const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000
+const ACCEPTED_APP_UPDATE_SIGNATURE_KEY = 'freecut-accepted-app-update-signature'
+
+let updateToastVisible = false
+let currentBuildAssetSignature: string | null = null
 
 // Initialize debug utilities in development mode
 initializeDebugUtils()
+
+function getCurrentProjectId(): string | undefined {
+  return window.location.pathname.match(/\/editor\/([^/]+)/)?.[1]
+}
+
+async function saveCurrentProjectBeforeReload() {
+  const projectId = getCurrentProjectId()
+
+  if (!projectId) {
+    return
+  }
+
+  try {
+    const { useTimelineStore } = await import('@/features/timeline/stores/timeline-store-facade')
+    await useTimelineStore.getState().saveTimeline(projectId)
+  } catch (e) {
+    log.error('Failed to save before reload:', e)
+  }
+}
+
+function rememberAcceptedAppUpdate(signature?: string) {
+  if (signature) {
+    window.localStorage.setItem(ACCEPTED_APP_UPDATE_SIGNATURE_KEY, signature)
+  }
+}
+
+function showUpdateAvailableToast(
+  applyUpdate: () => void = () => window.location.reload(),
+  updateSignature?: string,
+) {
+  if (updateToastVisible) {
+    return
+  }
+
+  updateToastVisible = true
+  toast.error(i18n.t('appShell.newVersionAvailable'), {
+    duration: Infinity,
+    action: {
+      label: i18n.t('appShell.saveAndReload'),
+      onClick: async () => {
+        rememberAcceptedAppUpdate(updateSignature)
+        await saveCurrentProjectBeforeReload()
+        applyUpdate()
+      },
+    },
+    cancel: {
+      label: i18n.t('appShell.reloadWithoutSaving'),
+      onClick: () => {
+        rememberAcceptedAppUpdate(updateSignature)
+        applyUpdate()
+      },
+    },
+    onDismiss: () => {
+      rememberAcceptedAppUpdate(updateSignature)
+      updateToastVisible = false
+    },
+    onAutoClose: () => {
+      updateToastVisible = false
+    },
+  })
+}
+
+function getBuildAssetSignature(documentToInspect: Document): string {
+  const assetUrls = [
+    ...Array.from(
+      documentToInspect.querySelectorAll<HTMLScriptElement>('script[type="module"][src]'),
+    ).map((element) => element.src),
+    ...Array.from(
+      documentToInspect.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'),
+    ).map((element) => element.href),
+  ]
+
+  return JSON.stringify(
+    assetUrls.map((assetUrl) => new URL(assetUrl, window.location.href).pathname).sort(),
+  )
+}
+
+async function checkForAppShellUpdate() {
+  currentBuildAssetSignature ??= getBuildAssetSignature(document)
+
+  try {
+    const response = await fetch(`/?__freecut_update_check=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    })
+
+    if (!response.ok) {
+      return
+    }
+
+    const html = await response.text()
+    const nextDocument = new DOMParser().parseFromString(html, 'text/html')
+    const nextBuildAssetSignature = getBuildAssetSignature(nextDocument)
+    const acceptedUpdateSignature = window.localStorage.getItem(ACCEPTED_APP_UPDATE_SIGNATURE_KEY)
+
+    if (
+      nextBuildAssetSignature &&
+      nextBuildAssetSignature !== currentBuildAssetSignature &&
+      nextBuildAssetSignature !== acceptedUpdateSignature
+    ) {
+      showUpdateAvailableToast(() => {
+        window.location.assign(`/?__freecut_updated=${Date.now()}`)
+      }, nextBuildAssetSignature)
+    }
+  } catch (error) {
+    log.warn('App update check failed:', error)
+  }
+}
+
+function activateWaitingServiceWorker(registration: ServiceWorkerRegistration) {
+  if (!registration.waiting) {
+    window.location.reload()
+    return
+  }
+
+  let reloadTriggered = false
+  const reloadOnce = () => {
+    if (reloadTriggered) {
+      return
+    }
+    reloadTriggered = true
+    window.location.reload()
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce, { once: true })
+  registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+  window.setTimeout(reloadOnce, 4000)
+}
+
+function watchForServiceWorkerUpdate(registration: ServiceWorkerRegistration) {
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    showUpdateAvailableToast(() => activateWaitingServiceWorker(registration))
+  }
+
+  registration.addEventListener('updatefound', () => {
+    const installingWorker = registration.installing
+
+    if (!installingWorker) {
+      return
+    }
+
+    installingWorker.addEventListener('statechange', () => {
+      if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        showUpdateAvailableToast(() => activateWaitingServiceWorker(registration))
+      }
+    })
+  })
+}
 
 // Global error handlers
 window.addEventListener('unhandledrejection', (event) => {
@@ -24,40 +180,36 @@ window.addEventListener('error', (event) => {
 // When Vercel deploys a new version, old chunk hashes become 404s.
 // Prompt the user to save before reloading so they don't lose work.
 window.addEventListener('vite:preloadError', () => {
-  const projectIdMatch = window.location.pathname.match(/\/editor\/([^/]+)/)
-  const projectId = projectIdMatch?.[1]
-
-  if (projectId) {
-    toast.error('A new version is available. Save your work and reload.', {
-      duration: Infinity,
-      action: {
-        label: 'Save & Reload',
-        onClick: async () => {
-          try {
-            const { useTimelineStore } =
-              await import('@/features/timeline/stores/timeline-store-facade')
-            await useTimelineStore.getState().saveTimeline(projectId)
-          } catch (e) {
-            log.error('Failed to save before reload:', e)
-          }
-          window.location.reload()
-        },
-      },
-      cancel: {
-        label: 'Reload without saving',
-        onClick: () => window.location.reload(),
-      },
-    })
-  } else {
-    // Not in the editor — safe to reload immediately
-    window.location.reload()
-  }
+  showUpdateAvailableToast()
 })
 
 // IMPORTANT: Intentionally do not dispose filmstrip cache on beforeunload.
 // Filmstrip cache data is persistent in the workspace and
 // should survive refresh/reload.
 // The browser tears down workers/resources on navigation anyway.
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        watchForServiceWorkerUpdate(registration)
+        registration.update().catch((error: unknown) => {
+          log.warn('Service worker update check failed:', error)
+        })
+      })
+      .catch((error: unknown) => {
+        log.warn('Service worker registration failed:', error)
+      })
+
+    window.setInterval(checkForAppShellUpdate, UPDATE_CHECK_INTERVAL_MS)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        void checkForAppShellUpdate()
+      }
+    })
+  })
+}
 
 const rootElement = document.getElementById('root')
 

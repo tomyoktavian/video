@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, Square } from 'lucide-react'
 import {
   Dialog,
@@ -75,6 +76,7 @@ export function TranscribeDialog({
   onStart,
   onCancel,
 }: TranscribeDialogProps) {
+  const { t } = useTranslation()
   const defaultModel = useSettingsStore((s) => s.defaultWhisperModel)
   const defaultQuantization = useSettingsStore((s) => s.defaultWhisperQuantization)
   const defaultLanguage = useSettingsStore((s) => s.defaultWhisperLanguage)
@@ -178,7 +180,9 @@ export function TranscribeDialog({
     [isRunning, onOpenChange],
   )
 
-  const title = hasTranscript ? 'Refresh Transcript' : 'Generate Transcript'
+  const title = hasTranscript
+    ? t('media.transcribe.refreshTitle')
+    : t('media.transcribe.generateTitle')
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} modal>
@@ -211,14 +215,16 @@ export function TranscribeDialog({
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {value === 'local' ? 'Local AI' : 'Custom AI'}
+                {value === 'local'
+                  ? t('media.transcribe.providerLocal')
+                  : t('media.transcribe.providerCustom')}
               </button>
             ))}
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-sm" htmlFor="transcribe-words-per-caption">
-              Words per caption
+              {t('media.transcribe.wordsPerCaption')}
             </Label>
             <Input
               id="transcribe-words-per-caption"
@@ -237,15 +243,15 @@ export function TranscribeDialog({
             />
             <p className="text-xs text-muted-foreground">
               {wordsPerCaption === 1
-                ? 'Karaoke style — one word per text clip, advances with the speaker.'
-                : `${wordsPerCaption} words per text clip. 5+ ≈ traditional caption.`}
+                ? t('media.transcribe.wordsPerCaptionHintKaraoke')
+                : t('media.transcribe.wordsPerCaptionHint', { count: wordsPerCaption })}
             </p>
           </div>
 
           {provider === 'local' ? (
             <>
               <div className="space-y-1.5">
-                <Label className="text-sm">Model</Label>
+                <Label className="text-sm">{t('media.transcribe.model')}</Label>
                 <Select
                   value={model}
                   onValueChange={(value) => setModel(value as MediaTranscriptModel)}
@@ -265,7 +271,7 @@ export function TranscribeDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">Quantization</Label>
+                <Label className="text-sm">{t('media.transcribe.quantization')}</Label>
                 <Select
                   value={quantization}
                   onValueChange={(value) => setQuantization(value as MediaTranscriptQuantization)}
@@ -285,14 +291,14 @@ export function TranscribeDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm">Language</Label>
+                <Label className="text-sm">{t('media.transcribe.language')}</Label>
                 <Combobox
                   value={languageValue}
                   onValueChange={setLanguageValue}
                   options={WHISPER_LANGUAGE_OPTIONS}
-                  placeholder="Auto-detect"
-                  searchPlaceholder="Search languages..."
-                  emptyMessage="No languages match that search."
+                  placeholder={t('media.transcribe.autoDetect')}
+                  searchPlaceholder={t('media.transcribe.searchLanguages')}
+                  emptyMessage={t('media.transcribe.noLanguages')}
                   disabled={isRunning}
                 />
               </div>
@@ -301,29 +307,29 @@ export function TranscribeDialog({
             <>
               {customConfigured ? (
                 <p className="text-xs text-muted-foreground">
-                  Using model{' '}
-                  <span className="font-medium text-foreground">{customCaptionMaker.model}</span>{' '}
-                  via {customCaptionMaker.baseUrl}.
+                  {t('media.transcribe.customUsingModel', {
+                    model: customCaptionMaker.model,
+                    baseUrl: customCaptionMaker.baseUrl,
+                  })}
                 </p>
               ) : (
                 <p
                   role="alert"
                   className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
                 >
-                  Configure base URL, API key, and model in Settings → AI → Custom AI before
-                  running.
+                  {t('media.transcribe.customConfigureHint')}
                 </p>
               )}
 
               <div className="space-y-1.5">
-                <Label className="text-sm">Language</Label>
+                <Label className="text-sm">{t('media.transcribe.language')}</Label>
                 <Combobox
                   value={customLanguageValue}
                   onValueChange={setCustomLanguageValue}
                   options={WHISPER_LANGUAGE_OPTIONS}
-                  placeholder="Auto-detect"
-                  searchPlaceholder="Search languages..."
-                  emptyMessage="No languages match that search."
+                  placeholder={t('media.transcribe.autoDetect')}
+                  searchPlaceholder={t('media.transcribe.searchLanguages')}
+                  emptyMessage={t('media.transcribe.noLanguages')}
                   disabled={isRunning}
                 />
               </div>
@@ -348,7 +354,7 @@ export function TranscribeDialog({
               {progressPercent !== null && (
                 <div
                   role="progressbar"
-                  aria-label="Transcription progress"
+                  aria-label={t('media.transcribe.progressAria')}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={progressPercent}
@@ -368,15 +374,15 @@ export function TranscribeDialog({
           {isRunning ? (
             <Button variant="destructive" onClick={onCancel}>
               <Square className="mr-1.5 h-3.5 w-3.5" />
-              Stop
+              {t('media.transcribe.stop')}
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleStart} disabled={provider === 'custom' && !customConfigured}>
-                Start Transcription
+                {t('media.transcribe.start')}
               </Button>
             </>
           )}

@@ -51,6 +51,7 @@ src/
 │   └── utils/             # Managed workers, media utilities
 ├── components/ui/         # shadcn/ui components
 ├── app/                   # App bootstrap, providers, debug utilities
+├── i18n/                  # i18next setup, supported languages, locale JSON + per-feature partials
 ├── routes/                # TanStack Router (file-based, auto-generated routeTree)
 ├── config/hotkeys.ts      # Keyboard shortcut definitions
 └── types/                 # Shared TypeScript types
@@ -67,6 +68,7 @@ src/
 - **Migrations**: `lib/migrations/` — versioned migrations + normalization run on every project load. Increment `CURRENT_SCHEMA_VERSION` in `types.ts` when adding new migrations
 - **Routing**: TanStack Router — run `npm run routes` after adding/changing route files
 - **Path alias**: `@/*` → `src/*`
+- **i18n**: i18next + react-i18next, initialized in `src/i18n/index.ts` (imported once from `main.tsx`). 8 languages (`en`, `es`, `fr`, `de`, `pt-BR`, `ja`, `ko`, `zh`) in `src/i18n/languages.ts`. Base strings in `src/i18n/locales/<lang>.json`; per-feature strings live in `src/i18n/locales/partials/<name>.json` (shape `{ "<lang>": { ...tree slice... } }`, deep-merged over base at startup). In components use `const { t } = useTranslation()`; outside React use `import { i18n } from '@/i18n'` then `i18n.t()` (`@/i18n` is allowed by the boundary checks — it's not `@/features/*` or `@/lib/*`). For strings with inline markup use `<Trans i18nKey=... components={{ strong: <strong/> }} />`. Resources are deliberately untyped (`i18next.d.ts`) so `t()` accepts any key. Language selector lives in the editor Settings dialog (General); persisted to `localStorage` key `freecut-language` by the language detector. When adding new partials, translate all 8 languages and keep identical key structure; never put a bare ASCII `"` inside a JSON string value.
 - **Styling**: Tailwind CSS 4 + shadcn/ui (Radix primitives)
 - **Media processing**: Mediabunny for decode, WebCodecs for export, Web Workers for heavy ops
 - **Storage**: Workspace folder via File System Access API (see `infrastructure/storage/workspace-fs/`). Source of truth is a user-picked directory on disk — projects, media metadata, thumbnails, waveforms, gif frames, decoded audio, transcripts all live as plain files. `WorkspaceGate` (`src/features/workspace-gate/`) blocks app render until a workspace is granted. IndexedDB is only used for a tiny handle registry (`freecut-handles-db` v1, at `infrastructure/storage/handles-db.ts`) that stores non-serializable `FileSystem*Handle` references. Legacy `video-editor-db` is read only by the one-time migration path under `infrastructure/storage/legacy-idb/` (reader.ts + migrate.ts); consumers import from the barrel `@/infrastructure/storage` which routes everything to workspace-fs

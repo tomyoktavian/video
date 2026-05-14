@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Volume2, VolumeX } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface UnsupportedCodecFile {
   fileName: string
@@ -32,20 +33,21 @@ export function UnsupportedAudioCodecDialog({
   onConfirm,
   onCancel,
 }: UnsupportedAudioCodecDialogProps) {
+  const { t } = useTranslation()
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <AlertDialogContent className="sm:max-w-[500px] overflow-hidden">
         <AlertDialogHeader className="overflow-hidden">
           <AlertDialogTitle className="flex items-center gap-2">
             <VolumeX className="w-5 h-5 text-yellow-500 shrink-0" />
-            Unsupported Audio Codec
+            {t('media.unsupportedCodec.title')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
               <p>
-                {files.length === 1 ? 'This file uses' : `${files.length} files use`} an audio codec
-                that cannot be decoded in the browser. Audio waveform visualization will not be
-                available.
+                {files.length === 1
+                  ? t('media.unsupportedCodec.bodySingle')
+                  : t('media.unsupportedCodec.bodyMultiple', { count: files.length })}
               </p>
 
               <div className="max-h-[200px] overflow-y-auto overflow-x-hidden space-y-2">
@@ -65,16 +67,17 @@ export function UnsupportedAudioCodecDialog({
                 ))}
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                Video playback and editing will work normally. Only audio waveform display is
-                affected.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('media.unsupportedCodec.note')}</p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Cancel Import</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Import Anyway</AlertDialogAction>
+          <AlertDialogCancel onClick={onCancel}>
+            {t('media.unsupportedCodec.cancelImport')}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {t('media.unsupportedCodec.importAnyway')}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

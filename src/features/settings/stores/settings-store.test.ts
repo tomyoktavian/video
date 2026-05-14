@@ -40,9 +40,12 @@ describe('settings-store', () => {
     it('updates string settings', () => {
       useSettingsStore.getState().setSetting('defaultWhisperLanguage', 'en')
       expect(useSettingsStore.getState().defaultWhisperLanguage).toBe('en')
+    })
 
-      useSettingsStore.getState().setSetting('editorDensity', 'default')
-      expect(useSettingsStore.getState().editorDensity).toBe('default')
+    it('normalizes removed editor density presets back to compact', () => {
+      useSettingsStore.getState().setSetting('editorDensity', 'default' as never)
+
+      expect(useSettingsStore.getState().editorDensity).toBe('compact')
     })
 
     it('updates whisper defaults', () => {

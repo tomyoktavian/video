@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { i18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -97,6 +99,7 @@ const btnSize = {
 } as const
 
 export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
+  const { t } = useTranslation()
   const [isSavingFrame, setIsSavingFrame] = useState(false)
 
   // Use granular selectors - Zustand v5 best practice
@@ -172,7 +175,7 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
       }
 
       if (!frameBlob) {
-        toast.error('Failed to capture the current frame.')
+        toast.error(i18n.t('preview.controls.captureFailed'))
         return
       }
 
@@ -180,7 +183,7 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
 
       const currentProjectId = useMediaLibraryStore.getState().currentProjectId
       if (!currentProjectId) {
-        toast.error('Downloaded the frame, but no project is selected for media library import.')
+        toast.error(i18n.t('preview.controls.frameDownloadedNoProject'))
         return
       }
 
@@ -204,10 +207,11 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
         mediaItems: [savedMedia, ...state.mediaItems],
       }))
 
-      toast.success(`Saved "${savedMedia.fileName}" to the media library and started the download.`)
+      toast.success(i18n.t('preview.controls.frameSaved', { name: savedMedia.fileName }))
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save frame.'
-      toast.error(`Downloaded frame, but could not save it to the media library. ${message}`)
+      const message =
+        error instanceof Error ? error.message : i18n.t('preview.controls.saveFrameFailed')
+      toast.error(i18n.t('preview.controls.frameDownloadedNotSaved', { message }))
     } finally {
       setIsSavingFrame(false)
     }
@@ -223,8 +227,8 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
           className="flex-shrink-0"
           style={btnSize}
           onClick={handleGoToStart}
-          data-tooltip="Go to Start (Home)"
-          aria-label="Go to start"
+          data-tooltip={t('preview.controls.goToStartTooltip')}
+          aria-label={t('preview.controls.goToStart')}
         >
           <SkipBack className="w-3.5 h-3.5" />
         </Button>
@@ -235,8 +239,8 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
           className="flex-shrink-0"
           style={btnSize}
           onClick={handlePreviousFrame}
-          data-tooltip="Previous Frame (Left Arrow)"
-          aria-label="Previous frame"
+          data-tooltip={t('preview.controls.prevFrameTooltip')}
+          aria-label={t('preview.controls.prevFrame')}
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </Button>
@@ -246,8 +250,10 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
           className="flex-shrink-0"
           style={btnSize}
           onClick={togglePlayPause}
-          data-tooltip={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          data-tooltip={
+            isPlaying ? t('preview.controls.pauseTooltip') : t('preview.controls.playTooltip')
+          }
+          aria-label={isPlaying ? t('preview.player.pause') : t('preview.player.play')}
         >
           {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
         </Button>
@@ -258,8 +264,8 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
           className="flex-shrink-0"
           style={btnSize}
           onClick={handleNextFrame}
-          data-tooltip="Next Frame (Right Arrow)"
-          aria-label="Next frame"
+          data-tooltip={t('preview.controls.nextFrameTooltip')}
+          aria-label={t('preview.controls.nextFrame')}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </Button>
@@ -270,8 +276,8 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
           className="flex-shrink-0"
           style={btnSize}
           onClick={handleGoToEnd}
-          data-tooltip="Go to End (End)"
-          aria-label="Go to end"
+          data-tooltip={t('preview.controls.goToEndTooltip')}
+          aria-label={t('preview.controls.goToEnd')}
         >
           <SkipForward className="w-3.5 h-3.5" />
         </Button>
@@ -292,8 +298,14 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
             void handleSaveFrame()
           }}
           disabled={isSavingFrame}
-          data-tooltip={isSavingFrame ? 'Saving Frame...' : 'Save Frame'}
-          aria-label={isSavingFrame ? 'Saving frame' : 'Save frame'}
+          data-tooltip={
+            isSavingFrame
+              ? t('preview.controls.savingFrameTooltip')
+              : t('preview.controls.saveFrameTooltip')
+          }
+          aria-label={
+            isSavingFrame ? t('preview.controls.savingFrame') : t('preview.controls.saveFrame')
+          }
         >
           {isSavingFrame ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -317,8 +329,16 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
               : 'text-muted-foreground hover:text-foreground'
           }`}
           onClick={toggleUseProxy}
-          data-tooltip={useProxy ? 'Proxy Playback: On' : 'Proxy Playback: Off'}
-          aria-label={useProxy ? 'Disable proxy playback' : 'Enable proxy playback'}
+          data-tooltip={
+            useProxy
+              ? t('preview.controls.proxyPlaybackOn')
+              : t('preview.controls.proxyPlaybackOff')
+          }
+          aria-label={
+            useProxy
+              ? t('preview.controls.disableProxyPlayback')
+              : t('preview.controls.enableProxyPlayback')
+          }
         >
           <Zap className="w-3.5 h-3.5" />
         </Button>

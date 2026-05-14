@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, RotateCcw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { GpuEffectDefinition } from '@/infrastructure/gpu/effects'
@@ -20,6 +21,7 @@ import {
   type GpuCurvesChannelKey,
 } from '@/shared/utils/gpu-curves'
 import type { GpuEffect, ItemEffect } from '@/types/effects'
+import { getEffectDefinitionName } from '@/features/effects/utils/effect-i18n'
 
 interface GpuCurvesPanelProps {
   effect: ItemEffect
@@ -44,11 +46,11 @@ type DraftParams = Record<string, number>
 type PointKey = keyof GpuCurvesChannelControl
 
 const CURVE_SIZE = 230
-const CHANNELS: Array<{ key: GpuCurvesChannelKey; label: string; color: string }> = [
-  { key: 'master', label: 'Master', color: '#e5e7eb' },
-  { key: 'red', label: 'Red', color: '#ef4444' },
-  { key: 'green', label: 'Green', color: '#22c55e' },
-  { key: 'blue', label: 'Blue', color: '#3b82f6' },
+const CHANNELS: Array<{ key: GpuCurvesChannelKey; labelKey: string; color: string }> = [
+  { key: 'master', labelKey: 'effects.curves.channelMaster', color: '#e5e7eb' },
+  { key: 'red', labelKey: 'effects.curves.channelRed', color: '#ef4444' },
+  { key: 'green', labelKey: 'effects.curves.channelGreen', color: '#22c55e' },
+  { key: 'blue', labelKey: 'effects.curves.channelBlue', color: '#3b82f6' },
 ]
 
 function clamp(value: number, min: number, max: number): number {
@@ -69,6 +71,7 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
   onToggle,
   onRemove,
 }: GpuCurvesPanelProps) {
+  const { t } = useTranslation()
   const svgRef = useRef<SVGSVGElement>(null)
   const [activeChannel, setActiveChannel] = useState<GpuCurvesChannelKey>('master')
   const [dragging, setDragging] = useState(false)
@@ -91,6 +94,7 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
   }, [draft])
 
   const activeChannelMeta = CHANNELS.find((channel) => channel.key === activeChannel)!
+  const activeChannelLabel = t(activeChannelMeta.labelKey)
   const activeControl = useMemo(
     () => readGpuCurvesChannelControl(draft, activeChannel),
     [activeChannel, draft],
@@ -210,14 +214,14 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
 
   return (
     <div className="space-y-0">
-      <PropertyRow label={definition.name}>
+      <PropertyRow label={getEffectDefinitionName(definition)}>
         <div className="flex items-center gap-1 min-w-0 w-full justify-end">
           <Button
             variant="ghost"
             size="icon"
             className={`h-6 w-6 flex-shrink-0 ${isDefault ? 'opacity-30' : ''}`}
             onClick={() => onReset(effect.id)}
-            title="Reset to defaults"
+            title={t('effects.panel.resetToDefaults')}
             disabled={isDefault}
           >
             <RotateCcw className="w-3 h-3" />
@@ -227,7 +231,9 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
             size="icon"
             className="h-6 w-6 flex-shrink-0"
             onClick={() => onToggle(effect.id)}
-            title={effect.enabled ? 'Disable effect' : 'Enable effect'}
+            title={
+              effect.enabled ? t('effects.panel.disableEffect') : t('effects.panel.enableEffect')
+            }
           >
             {effect.enabled ? (
               <Eye className="w-3 h-3" />
@@ -240,14 +246,14 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
             size="icon"
             className="h-6 w-6 flex-shrink-0"
             onClick={() => onRemove(effect.id)}
-            title="Remove effect"
+            title={t('effects.panel.removeEffect')}
           >
             <Trash2 className="w-3 h-3" />
           </Button>
         </div>
       </PropertyRow>
 
-      <PropertyRow label="Channel">
+      <PropertyRow label={t('effects.curves.channel')}>
         <div className="flex items-center gap-1 flex-wrap justify-end">
           {CHANNELS.map((channel) => (
             <Button
@@ -257,7 +263,7 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
               className="h-7 px-2 text-xs"
               onClick={() => setActiveChannel(channel.key)}
             >
-              {channel.label}
+              {t(channel.labelKey)}
             </Button>
           ))}
           <Button
@@ -267,7 +273,7 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
             onClick={handleResetChannel}
             disabled={!effect.enabled}
           >
-            Reset Channel
+            {t('effects.curves.resetChannel')}
           </Button>
         </div>
       </PropertyRow>
@@ -383,8 +389,7 @@ export const GpuCurvesPanel = memo(function GpuCurvesPanel({
           </svg>
         </div>
         <div className="mt-1 text-center text-[10px] text-muted-foreground">
-          Drag both points to shape the {activeChannelMeta.label.toLowerCase()} curve. Pull the left
-          point down and the right point up for a classic S-curve.
+          {t('effects.curves.dragHint', { channel: activeChannelLabel.toLowerCase() })}
         </div>
       </div>
     </div>

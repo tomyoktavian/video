@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Crop, RotateCcw, Video } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
@@ -129,6 +130,7 @@ function getResolvedCropPropertyValue(
  * - Slower speed = longer clip (same content plays slower)
  */
 export function VideoSection({ items }: VideoSectionProps) {
+  const { t } = useTranslation()
   const updateItem = useTimelineStore((s: TimelineState & TimelineActions) => s.updateItem)
   const applyAutoKeyframeOperations = useTimelineStore((s) => s.applyAutoKeyframeOperations)
   const currentFrame = useThrottledFrame()
@@ -487,8 +489,8 @@ export function VideoSection({ items }: VideoSectionProps) {
 
   return (
     <>
-      <PropertySection title="Playback" icon={Video} defaultOpen={true}>
-        <PropertyRow label="Speed">
+      <PropertySection title={t('editor.videoSection.playback')} icon={Video} defaultOpen={true}>
+        <PropertyRow label={t('editor.videoSection.speed')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={speed}
@@ -505,14 +507,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetSpeed}
-              title="Reset to 1x"
+              title={t('editor.videoSection.resetSpeed')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Fade In">
+        <PropertyRow label={t('editor.videoSection.fadeIn')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={fadeIn}
@@ -529,14 +531,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetFadeIn}
-              title="Reset to 0"
+              title={t('editor.videoSection.resetToZero')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Fade Out">
+        <PropertyRow label={t('editor.videoSection.fadeOut')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={fadeOut}
@@ -553,7 +555,7 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetFadeOut}
-              title="Reset to 0"
+              title={t('editor.videoSection.resetToZero')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -561,8 +563,8 @@ export function VideoSection({ items }: VideoSectionProps) {
         </PropertyRow>
       </PropertySection>
 
-      <PropertySection title="Cropping" icon={Crop} defaultOpen={true}>
-        <PropertyRow label="Left">
+      <PropertySection title={t('editor.videoSection.cropping')} icon={Crop} defaultOpen={true}>
+        <PropertyRow label={t('editor.videoSection.cropLeft')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={cropLeft}
@@ -586,14 +588,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={() => resetCropEdge('left')}
-              title="Reset left crop"
+              title={t('editor.videoSection.resetCropLeft')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Right">
+        <PropertyRow label={t('editor.videoSection.cropRight')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={cropRight}
@@ -617,14 +619,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={() => resetCropEdge('right')}
-              title="Reset right crop"
+              title={t('editor.videoSection.resetCropRight')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Top">
+        <PropertyRow label={t('editor.videoSection.cropTop')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={cropTop}
@@ -648,14 +650,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={() => resetCropEdge('top')}
-              title="Reset top crop"
+              title={t('editor.videoSection.resetCropTop')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Bottom">
+        <PropertyRow label={t('editor.videoSection.cropBottom')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={cropBottom}
@@ -679,14 +681,14 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={() => resetCropEdge('bottom')}
-              title="Reset bottom crop"
+              title={t('editor.videoSection.resetCropBottom')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Softness">
+        <PropertyRow label={t('editor.videoSection.softness')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={cropSoftness}
@@ -710,7 +712,7 @@ export function VideoSection({ items }: VideoSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={resetCropSoftness}
-              title="Reset crop softness"
+              title={t('editor.videoSection.resetSoftness')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>

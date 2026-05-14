@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Database, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -50,6 +51,7 @@ function computePercent(progress: MigrationProgress | null): number {
 }
 
 export function LegacyMigrationBanner({ onMigrated }: Props) {
+  const { t } = useTranslation()
   const [state, setState] = useState<State>({ kind: 'checking' })
   const [confirmDelete, setConfirmDelete] = useState(false)
   // The progress callback fires rapidly (once per write). We keep a ref
@@ -94,31 +96,36 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
         },
       })
       setState({ kind: 'done', report })
-      toast.success(`Migrated ${report.projects} project(s) and ${report.media} media item(s)`)
+      toast.success(
+        t('projects.legacyMigration.migratedToast', {
+          projects: report.projects,
+          media: report.media,
+        }),
+      )
       await onMigrated?.()
     } catch (error) {
       logger.error('Migration failed', error)
-      toast.error('Migration failed', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t('projects.legacyMigration.migrationFailed'), {
+        description: error instanceof Error ? error.message : t('projects.unknownError'),
       })
       setState({ kind: 'prompt' })
     }
-  }, [onMigrated])
+  }, [onMigrated, t])
 
   const handleDeleteLegacy = useCallback(async () => {
     try {
       await deleteLegacyIDB()
-      toast.success('Legacy browser storage cleared')
+      toast.success(t('projects.legacyMigration.storageCleared'))
       setState({ kind: 'dismissed' })
     } catch (error) {
       logger.error('Failed to delete legacy IDB', error)
-      toast.error('Failed to clear legacy storage', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t('projects.legacyMigration.storageClearFailed'), {
+        description: error instanceof Error ? error.message : t('projects.unknownError'),
       })
     } finally {
       setConfirmDelete(false)
     }
-  }, [])
+  }, [t])
 
   if (state.kind === 'checking' || state.kind === 'idle' || state.kind === 'dismissed') {
     return null
@@ -129,8 +136,13 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
     const percent = computePercent(progress)
     // Show label from progress if available; fall back to a generic line
     // during the brief gap before the first tick arrives.
-    const label = progress?.phaseLabel ?? 'Preparing migration…'
-    const countsLine = progress ? `${progress.processed} of ${progress.total}` : null
+    const label = progress?.phaseLabel ?? t('projects.legacyMigration.preparing')
+    const countsLine = progress
+      ? t('projects.legacyMigration.counts', {
+          processed: progress.processed,
+          total: progress.total,
+        })
+      : null
 
     return (
       <div
@@ -143,7 +155,7 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
           <div className="flex-1 min-w-0">
             <div className="font-medium truncate">{label}</div>
             <div className="text-muted-foreground text-xs mt-0.5">
-              This can take a moment for large libraries. Please don't close this tab.
+              {t('projects.legacyMigration.runningHint')}
             </div>
           </div>
           <div className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
@@ -173,11 +185,16 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
           <div className="flex items-start gap-3">
             <Database className="h-4 w-4 mt-0.5" />
             <div className="flex-1">
-              <div className="font-medium">Migration complete</div>
+              <div className="font-medium">{t('projects.legacyMigration.completeTitle')}</div>
               <div className="text-muted-foreground text-xs mt-1">
-                {report.projects} project(s), {report.media} media, {report.thumbnails}{' '}
-                thumbnail(s), {report.transcripts} transcript(s)
-                {report.errors.length > 0 && ` · ${report.errors.length} error(s) logged`}
+                {t('projects.legacyMigration.completeSummary', {
+                  projects: report.projects,
+                  media: report.media,
+                  thumbnails: report.thumbnails,
+                  transcripts: report.transcripts,
+                })}
+                {report.errors.length > 0 &&
+                  ` · ${t('projects.legacyMigration.errorsLogged', { count: report.errors.length })}`}
               </div>
             </div>
             <Button
@@ -186,10 +203,10 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
               className="gap-2"
               onClick={() => setConfirmDelete(true)}
             >
-              <Trash2 className="h-3 w-3" /> Delete legacy storage
+              <Trash2 className="h-3 w-3" /> {t('projects.legacyMigration.deleteStorage')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setState({ kind: 'dismissed' })}>
-              Dismiss
+              {t('projects.dismiss')}
             </Button>
           </div>
         </div>
@@ -197,18 +214,20 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete legacy browser storage?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {t('projects.legacyMigration.deleteStorageConfirmTitle')}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                This permanently deletes the old IndexedDB database (
-                <span className="font-mono">video-editor-db</span>) from this browser. Your
-                workspace folder is unaffected. Only do this after you've verified the migration
-                succeeded.
+                <Trans
+                  i18nKey="projects.legacyMigration.deleteStorageConfirmDescription"
+                  components={{ code: <span className="font-mono" /> }}
+                />
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={() => void handleDeleteLegacy()}>
-                Delete
+                {t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -223,17 +242,16 @@ export function LegacyMigrationBanner({ onMigrated }: Props) {
       <div className="flex items-start gap-3">
         <Database className="h-4 w-4 mt-0.5 text-muted-foreground" />
         <div className="flex-1">
-          <div className="font-medium">Legacy projects found</div>
+          <div className="font-medium">{t('projects.legacyMigration.promptTitle')}</div>
           <div className="text-muted-foreground text-xs mt-1">
-            Existing projects from before the workspace folder migration are in this browser's
-            IndexedDB. Bring them into your workspace so you can see them alongside new projects.
+            {t('projects.legacyMigration.promptDescription')}
           </div>
         </div>
         <Button size="sm" onClick={() => void handleMigrate()}>
-          Migrate
+          {t('projects.legacyMigration.migrate')}
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setState({ kind: 'dismissed' })}>
-          Later
+          {t('projects.later')}
         </Button>
       </div>
     </div>

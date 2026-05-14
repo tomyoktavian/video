@@ -1,4 +1,5 @@
 import { useCallback, useMemo, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Move, RotateCcw, Link2, Link2Off } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,7 @@ export const LayoutSection = memo(function LayoutSection({
   aspectLocked,
   onAspectLockToggle,
 }: LayoutSectionProps) {
+  const { t } = useTranslation()
   const itemIds = useMemo(() => items.map((item) => item.id), [items])
   const mediaTransformItemIds = useMemo(
     () => mediaTransformItems.map((item) => item.id),
@@ -683,9 +685,9 @@ export const LayoutSection = memo(function LayoutSection({
   }, [clearTransformUiState, mediaTransformItemIds, mediaTransformItems, onTransformChange])
 
   return (
-    <PropertySection title="Transform" icon={Move} defaultOpen={true}>
+    <PropertySection title={t('editor.layoutSection.transform')} icon={Move} defaultOpen={true}>
       {/* Position */}
-      <PropertyRow label="Position">
+      <PropertyRow label={t('editor.layoutSection.position')}>
         <div className="flex items-start gap-1 w-full">
           <div className="grid grid-cols-2 gap-1 flex-1">
             <div className="flex items-center gap-0.5">
@@ -718,7 +720,7 @@ export const LayoutSection = memo(function LayoutSection({
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleResetPosition}
-            title="Reset to center"
+            title={t('editor.layoutSection.resetPosition')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>
@@ -726,7 +728,7 @@ export const LayoutSection = memo(function LayoutSection({
       </PropertyRow>
 
       {/* Dimensions */}
-      <PropertyRow label="Size">
+      <PropertyRow label={t('editor.layoutSection.size')}>
         <div className="flex items-center gap-1 w-full">
           <NumberInput
             value={width}
@@ -749,7 +751,11 @@ export const LayoutSection = memo(function LayoutSection({
             size="icon"
             className={`h-7 w-7 flex-shrink-0 ${aspectLocked ? 'text-primary' : ''}`}
             onClick={onAspectLockToggle}
-            title={aspectLocked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
+            title={
+              aspectLocked
+                ? t('editor.layoutSection.unlockAspect')
+                : t('editor.layoutSection.lockAspect')
+            }
           >
             {aspectLocked ? (
               <Link2 className="w-3.5 h-3.5" />
@@ -778,7 +784,7 @@ export const LayoutSection = memo(function LayoutSection({
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleResetScale}
-            title="Reset to original size"
+            title={t('editor.layoutSection.resetSize')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>
@@ -786,7 +792,7 @@ export const LayoutSection = memo(function LayoutSection({
       </PropertyRow>
 
       {/* Rotation */}
-      <PropertyRow label="Rotation">
+      <PropertyRow label={t('editor.layoutSection.rotation')}>
         <div className="flex items-center gap-1 w-full">
           <SliderInput
             value={rotation}
@@ -808,7 +814,7 @@ export const LayoutSection = memo(function LayoutSection({
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleResetRotation}
-            title="Reset rotation"
+            title={t('editor.layoutSection.resetRotation')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>
@@ -816,7 +822,7 @@ export const LayoutSection = memo(function LayoutSection({
       </PropertyRow>
 
       {mediaTransformItems.length > 0 && (
-        <PropertyRow label="Anchor">
+        <PropertyRow label={t('editor.layoutSection.anchor')}>
           <div className="flex items-center gap-1 w-full">
             <div className="flex items-center gap-0.5 flex-1 min-w-0">
               <NumberInput
@@ -855,7 +861,7 @@ export const LayoutSection = memo(function LayoutSection({
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetAnchor}
-              title="Reset anchor to center"
+              title={t('editor.layoutSection.resetAnchor')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -864,23 +870,31 @@ export const LayoutSection = memo(function LayoutSection({
       )}
 
       {mediaTransformItems.length > 0 && (
-        <PropertyRow label="Flip">
+        <PropertyRow label={t('editor.layoutSection.flip')}>
           <div className="flex items-center justify-between gap-3 w-full">
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <Switch
                 checked={flipHorizontal === 'mixed' ? false : flipHorizontal}
                 onCheckedChange={handleFlipHorizontalChange}
-                aria-label="Flip video horizontally"
+                aria-label={t('editor.layoutSection.flipHorizontalAria')}
               />
-              <span>Horizontal{flipHorizontal === 'mixed' ? ' (mixed)' : ''}</span>
+              <span>
+                {flipHorizontal === 'mixed'
+                  ? t('editor.layoutSection.horizontalMixed')
+                  : t('editor.layoutSection.horizontal')}
+              </span>
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <Switch
                 checked={flipVertical === 'mixed' ? false : flipVertical}
                 onCheckedChange={handleFlipVerticalChange}
-                aria-label="Flip video vertically"
+                aria-label={t('editor.layoutSection.flipVerticalAria')}
               />
-              <span>Vertical{flipVertical === 'mixed' ? ' (mixed)' : ''}</span>
+              <span>
+                {flipVertical === 'mixed'
+                  ? t('editor.layoutSection.verticalMixed')
+                  : t('editor.layoutSection.vertical')}
+              </span>
             </label>
           </div>
         </PropertyRow>

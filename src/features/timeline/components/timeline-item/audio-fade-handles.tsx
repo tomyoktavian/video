@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/ui/cn'
 import { FloatingReadout } from './floating-readout'
 
@@ -41,6 +42,7 @@ export const AudioFadeHandles = memo(function AudioFadeHandles({
   onFadeCurveDotMouseDown,
   onFadeCurveDotDoubleClick,
 }: AudioFadeHandlesProps) {
+  const { t } = useTranslation()
   const [hoveredHandle, setHoveredHandle] = useState<'in' | 'out' | null>(null)
   const fadeInHandleRef = useRef<HTMLButtonElement | null>(null)
   const fadeOutHandleRef = useRef<HTMLButtonElement | null>(null)
@@ -104,7 +106,7 @@ export const AudioFadeHandles = memo(function AudioFadeHandles({
         onMouseLeave={() => {
           if (!isEditing) setHoveredHandle((current) => (current === 'in' ? null : current))
         }}
-        aria-label="Adjust audio fade in"
+        aria-label={t('timeline.fadeHandles.adjustAudioFadeIn')}
       />
       <button
         ref={fadeOutHandleRef}
@@ -124,7 +126,7 @@ export const AudioFadeHandles = memo(function AudioFadeHandles({
         onMouseLeave={() => {
           if (!isEditing) setHoveredHandle((current) => (current === 'out' ? null : current))
         }}
-        aria-label="Adjust audio fade out"
+        aria-label={t('timeline.fadeHandles.adjustAudioFadeOut')}
       />
 
       {fadeInCurveDot && (
@@ -140,7 +142,7 @@ export const AudioFadeHandles = memo(function AudioFadeHandles({
           }}
           onMouseEnter={() => setHoveredHandle(null)}
           onMouseLeave={() => setHoveredHandle((current) => (current === 'in' ? null : current))}
-          aria-label="Adjust audio fade in curve"
+          aria-label={t('timeline.fadeHandles.adjustAudioFadeInCurve')}
         />
       )}
       {fadeOutCurveDot && (
@@ -156,7 +158,7 @@ export const AudioFadeHandles = memo(function AudioFadeHandles({
           }}
           onMouseEnter={() => setHoveredHandle(null)}
           onMouseLeave={() => setHoveredHandle((current) => (current === 'out' ? null : current))}
-          aria-label="Adjust audio fade out curve"
+          aria-label={t('timeline.fadeHandles.adjustAudioFadeOutCurve')}
         />
       )}
 

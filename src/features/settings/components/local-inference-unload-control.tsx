@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ export function LocalInferenceUnloadControl({
   descriptionClassName,
   buttonClassName,
 }: LocalInferenceUnloadControlProps) {
+  const { t } = useTranslation()
   const runtimesById = useLocalInferenceStore((state) => state.runtimesById)
   const summary = useMemo(() => getLocalInferenceSummary(runtimesById), [runtimesById])
   const [unloadState, setUnloadState] = useState<UnloadState>('idle')
@@ -56,7 +58,7 @@ export function LocalInferenceUnloadControl({
 
   const description = useMemo(() => {
     if (!summary) {
-      return 'No local inference runtimes are active or resident.'
+      return t('projects.settings.localInference.noRuntimes')
     }
 
     const estimateLabel = formatEstimatedBytes(summary.totalEstimatedBytes)
@@ -64,13 +66,13 @@ export function LocalInferenceUnloadControl({
       summary.primaryLabel,
       summary.backendLabel,
       summary.activeJobs > 0
-        ? `${summary.activeJobs} active job${summary.activeJobs === 1 ? '' : 's'}`
+        ? t('projects.settings.localInference.activeJobs', { count: summary.activeJobs })
         : null,
       estimateLabel,
     ].filter(Boolean)
 
     return detailParts.join(' | ')
-  }, [summary])
+  }, [summary, t])
 
   const handleUnload = useCallback(async () => {
     if (!summary || summary.unloadableCount === 0 || unloadState === 'unloading') {
@@ -82,23 +84,21 @@ export function LocalInferenceUnloadControl({
     try {
       const unloadedCount = await localInferenceRuntimeRegistry.unloadAll()
       setUnloadState('done')
-      toast.success(
-        unloadedCount === 1
-          ? 'Unloaded 1 local runtime'
-          : `Unloaded ${unloadedCount} local runtimes`,
-      )
+      toast.success(t('projects.settings.localInference.unloadedToast', { count: unloadedCount }))
       scheduleReset()
     } catch (error) {
       log.error('Failed to unload local inference runtimes', error)
       setUnloadState('idle')
-      toast.error('Failed to unload local runtimes')
+      toast.error(t('projects.settings.localInference.unloadFailed'))
     }
-  }, [scheduleReset, summary, unloadState])
+  }, [scheduleReset, summary, unloadState, t])
 
   return (
     <div className={cn('flex items-start justify-between gap-4', className)}>
       <div className="min-w-0">
-        <Label className={cn('text-sm', labelClassName)}>Unload Local Models</Label>
+        <Label className={cn('text-sm', labelClassName)}>
+          {t('projects.settings.localInference.unloadLabel')}
+        </Label>
         <p className={cn('mt-0.5 text-xs text-muted-foreground', descriptionClassName)}>
           {description}
         </p>
@@ -116,10 +116,10 @@ export function LocalInferenceUnloadControl({
         {unloadState === 'done' && <Check className="h-3.5 w-3.5" />}
         {unloadState === 'idle' && <Trash2 className="h-3.5 w-3.5" />}
         {unloadState === 'unloading'
-          ? 'Unloading...'
+          ? t('projects.settings.localInference.unloading')
           : unloadState === 'done'
-            ? 'Unloaded'
-            : 'Unload'}
+            ? t('projects.settings.localInference.unloaded')
+            : t('projects.settings.localInference.unload')}
       </Button>
     </div>
   )

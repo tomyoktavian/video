@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/ui/cn'
 import type { AudioFadeHandle } from '../../utils/audio-fade'
 import { FloatingReadout } from './floating-readout'
@@ -32,6 +33,7 @@ export const VideoFadeHandles = memo(function VideoFadeHandles({
   onFadeHandleMouseDown,
   onFadeHandleDoubleClick,
 }: VideoFadeHandlesProps) {
+  const { t } = useTranslation()
   const [hoveredHandle, setHoveredHandle] = useState<AudioFadeHandle | null>(null)
   const fadeInHandleRef = useRef<HTMLButtonElement | null>(null)
   const fadeOutHandleRef = useRef<HTMLButtonElement | null>(null)
@@ -87,7 +89,7 @@ export const VideoFadeHandles = memo(function VideoFadeHandles({
         onMouseLeave={() => {
           if (!isEditing) setHoveredHandle((current) => (current === 'in' ? null : current))
         }}
-        aria-label="Adjust video fade in"
+        aria-label={t('timeline.fadeHandles.adjustVideoFadeIn')}
       />
       <button
         ref={fadeOutHandleRef}
@@ -111,7 +113,7 @@ export const VideoFadeHandles = memo(function VideoFadeHandles({
         onMouseLeave={() => {
           if (!isEditing) setHoveredHandle((current) => (current === 'out' ? null : current))
         }}
-        aria-label="Adjust video fade out"
+        aria-label={t('timeline.fadeHandles.adjustVideoFadeOut')}
       />
 
       {visibleLabelHandle && visibleLabel && (

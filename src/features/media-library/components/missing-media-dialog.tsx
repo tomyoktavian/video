@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createLogger } from '@/shared/logging/logger'
 
 const logger = createLogger('MissingMediaDialog')
@@ -20,6 +21,7 @@ import { showMediaFilePicker } from '@/features/media-library/utils/media-file-p
 import { getProjectBrokenMediaInfo } from '@/features/media-library/utils/broken-media'
 
 export function MissingMediaDialog() {
+  const { t } = useTranslation()
   const showDialog = useMediaLibraryStore((s) => s.showMissingMediaDialog)
   const closeDialog = useMediaLibraryStore((s) => s.closeMissingMediaDialog)
   const brokenMediaInfo = useMediaLibraryStore((s) => s.brokenMediaInfo)
@@ -216,11 +218,10 @@ export function MissingMediaDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2Off className="w-5 h-5 text-destructive" />
-            Missing Media Files
+            {t('media.missingMedia.title')}
           </DialogTitle>
           <DialogDescription>
-            {brokenItems.length} media file
-            {brokenItems.length !== 1 ? 's' : ''} could not be located.
+            {t('media.missingMedia.description', { count: brokenItems.length })}
           </DialogDescription>
         </DialogHeader>
 
@@ -230,13 +231,15 @@ export function MissingMediaDialog() {
             {permissionDenied.length > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded">
                 <AlertTriangle className="w-3 h-3 text-yellow-500" />
-                <span>{permissionDenied.length} need permission</span>
+                <span>
+                  {t('media.missingMedia.needPermission', { count: permissionDenied.length })}
+                </span>
               </div>
             )}
             {fileMissing.length > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 bg-destructive/10 border border-destructive/30 rounded">
                 <X className="w-3 h-3 text-destructive" />
-                <span>{fileMissing.length} not found</span>
+                <span>{t('media.missingMedia.notFound', { count: fileMissing.length })}</span>
               </div>
             )}
           </div>
@@ -254,7 +257,7 @@ export function MissingMediaDialog() {
               ) : (
                 <Folder className="w-4 h-4 mr-2" />
               )}
-              Scan Project Folder ({projectRootFolderName})
+              {t('media.missingMedia.scanProjectFolder', { name: projectRootFolderName ?? '' })}
             </Button>
           )}
 
@@ -271,8 +274,8 @@ export function MissingMediaDialog() {
               <FolderOpen className="w-4 h-4 mr-2" />
             )}
             {projectRootFolderHandle
-              ? 'Browse Another Folder...'
-              : 'Locate Folder (auto-match by filename)'}
+              ? t('media.missingMedia.browseAnotherFolder')
+              : t('media.missingMedia.locateFolder')}
           </Button>
 
           {/* List of broken media */}
@@ -300,8 +303,8 @@ export function MissingMediaDialog() {
                   <p className="text-sm font-medium truncate">{item.fileName}</p>
                   <p className="text-xs text-muted-foreground">
                     {item.errorType === 'permission_denied'
-                      ? 'Permission expired - grant access to restore'
-                      : 'File moved or deleted'}
+                      ? t('media.missingMedia.permissionExpired')
+                      : t('media.missingMedia.fileMovedOrDeleted')}
                   </p>
                 </div>
 
@@ -316,7 +319,9 @@ export function MissingMediaDialog() {
                   ) : (
                     <>
                       <Search className="w-3 h-3 mr-1" />
-                      {item.errorType === 'permission_denied' ? 'Grant Access' : 'Locate'}
+                      {item.errorType === 'permission_denied'
+                        ? t('media.missingMedia.grantAccess')
+                        : t('media.missingMedia.locate')}
                     </>
                   )}
                 </Button>
@@ -327,10 +332,10 @@ export function MissingMediaDialog() {
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="ghost" onClick={handleDismissAll} className="text-muted-foreground">
-            Work Offline
+            {t('media.missingMedia.workOffline')}
           </Button>
           <Button variant="outline" onClick={handleClose}>
-            Close
+            {t('common.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

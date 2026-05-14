@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useSettingsStore } from '@/features/editor/deps/settings'
 import { createLogger } from '@/shared/logging/logger'
+import { i18n } from '@/i18n'
 
 const logger = createLogger('AutoSave')
 
@@ -60,7 +61,7 @@ export function useAutoSave({ isDirty, onSave, enabled = true }: UseAutoSaveOpti
             event.success()
           } catch (error) {
             event.failure(error)
-            toast.error('Auto-save failed')
+            toast.error(i18n.t('editor.autoSave.failed'))
           } finally {
             isSavingRef.current = false
           }

@@ -6,7 +6,7 @@
  */
 
 import { createLogger } from '@/shared/logging/logger'
-import { createManagedWorker } from '@/shared/utils/managed-worker'
+import { createManagedWorker, rejectAndDeletePendingRequests } from '@/shared/utils/managed-worker'
 import type {
   ProcessMediaRequest,
   ProcessMediaResponse,
@@ -47,10 +47,10 @@ class MediaProcessorService {
         logger.error('Media processor worker error:', event.message)
         this.workerManager.terminate()
 
-        for (const [id, pending] of this.pendingRequests) {
-          pending.reject(new Error(`Worker error: ${event.message}`))
-          this.pendingRequests.delete(id)
-        }
+        rejectAndDeletePendingRequests(
+          this.pendingRequests,
+          new Error(`Worker error: ${event.message}`),
+        )
       }
 
       return () => {
@@ -122,10 +122,7 @@ class MediaProcessorService {
       // would hang forever waiting on a worker that no longer exists.
       const timeout = setTimeout(() => {
         const timeoutError = new Error('Media processing timeout')
-        for (const [, pending] of this.pendingRequests) {
-          pending.reject(timeoutError)
-        }
-        this.pendingRequests.clear()
+        rejectAndDeletePendingRequests(this.pendingRequests, timeoutError)
         this.workerManager.terminate()
         reject(timeoutError)
       }, PROCESS_MEDIA_TIMEOUT_MS)
@@ -232,10 +229,7 @@ class MediaProcessorService {
     this.workerManager.terminate()
 
     // Reject all pending requests
-    for (const [id, pending] of this.pendingRequests) {
-      pending.reject(new Error('Worker disposed'))
-      this.pendingRequests.delete(id)
-    }
+    rejectAndDeletePendingRequests(this.pendingRequests, new Error('Worker disposed'))
   }
 }
 

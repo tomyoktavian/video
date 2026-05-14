@@ -1,0 +1,1932 @@
+{
+  "en": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Media",
+        "text": "Text",
+        "shapes": "Shapes",
+        "effects": "Effects",
+        "transitions": "Transitions",
+        "ai": "AI",
+        "collapsePanel": "Collapse panel",
+        "expandPanel": "Expand panel",
+        "keyframeEditor": "Keyframe editor",
+        "hideKeyframeEditor": "Hide keyframe editor",
+        "showKeyframeEditor": "Show keyframe editor",
+        "templates": "Templates",
+        "textGroupSingle": "Single",
+        "textGroupTwoSpans": "2 spans",
+        "textGroupThreeSpans": "3 spans",
+        "addText": "Add text",
+        "pen": "Pen",
+        "penToolHint": "Draw a custom path shape with the pen tool",
+        "adjustmentLayer": "Adjustment layer",
+        "blankAdjustmentLayer": "Blank adjustment layer",
+        "presets": "Presets"
+      },
+      "tts": {
+        "seek": "Seek",
+        "dialogTitle": "Generate audio from text",
+        "dialogDescription": "Generate speech and insert it at the text clip's position.",
+        "kokoroUnsupported": "WebGPU is not available in this browser. Kokoro TTS needs Chrome 113+, Edge 113+, or Safari 26+.",
+        "mossUnsupported": "Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.",
+        "supertonicUnsupported": "This browser cannot run the local Supertonic TTS runtime. Try a recent Chrome or Edge browser.",
+        "engine": "Engine",
+        "engineSupportDetails": "TTS engine support details",
+        "kokoroDescription": "English voices on WebGPU.",
+        "supertonicDescription": "31-language local ONNX voices on WebGPU or WASM.",
+        "supportedLanguages": "Supported languages: {{languages}}.",
+        "kokoroOption": "Kokoro (English, WebGPU)",
+        "mossOption": "MOSS Nano (20 languages, CPU)",
+        "supertonicOption": "Supertonic 3 (31 languages, local ONNX)",
+        "language": "Language",
+        "autoDetectLanguage": "Auto detect",
+        "voice": "Voice",
+        "text": "Text",
+        "textPlaceholder": "Enter the text you want to hear spoken...",
+        "expressiveTags": "Expressive tags",
+        "speed": "Speed",
+        "progressPreparing": "Preparing local TTS...",
+        "insertedAndLinked": "Inserted and linked",
+        "generate": "Generate",
+        "generating": "Generating...",
+        "regenerate": "Regenerate",
+        "insertAndLink": "Insert and link",
+        "inserting": "Inserting...",
+        "errors": {
+          "openProject": "Open a project before generating audio.",
+          "enterText": "Enter some text to synthesize.",
+          "kokoroUnsupported": "WebGPU is required for Kokoro TTS. Try Chrome 113+, Edge 113+, or Safari 26+.",
+          "mossUnsupported": "Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.",
+          "supertonicUnsupported": "This browser cannot run the local Supertonic TTS runtime. Try a recent Chrome or Edge browser.",
+          "generateFailed": "Failed to generate speech.",
+          "insertFailed": "Failed to save and insert audio."
+        },
+        "notifications": {
+          "addedAndLinked": "Added \"{{fileName}}\" to timeline and linked with text.",
+          "savedNoTrack": "Saved \"{{fileName}}\" but no audio track is available."
+        }
+      },
+      "aiPanel": {
+        "textToSpeech": "Text to Speech",
+        "collapseTextToSpeech": "Collapse text to speech",
+        "expandTextToSpeech": "Expand text to speech",
+        "runsLocally": "{{runtime}} runs locally in the browser on {{backend}}.",
+        "history": "History ({{count}}) - {{size}}",
+        "clearAll": "Clear all",
+        "musicGeneration": "Music Generation",
+        "collapseMusicGeneration": "Collapse music generation",
+        "expandMusicGeneration": "Expand music generation",
+        "musicGenerationInfo": "Music generation info",
+        "musicgenDescription": "Uses Xenova's browser-ready MusicGen model through Transformers.js. The first download is large, then it stays cached locally.",
+        "musicgenPromptHint": "Prompt with genre, mood, tempo, and instrumentation. Shorter clips finish much faster.",
+        "musicgenUnsupported": "WebGPU is not available in this browser. MusicGen needs Chrome 113+, Edge 113+, or Safari 26+.",
+        "prompt": "Prompt",
+        "presets": "Presets",
+        "musicPromptPlaceholder": "Describe the kind of music you want to generate...",
+        "length": "Length",
+        "generateMusic": "Generate Music",
+        "musicHistory": "Music History ({{count}}) - {{size}}",
+        "remove": "Remove",
+        "saved": "Saved",
+        "saving": "Saving...",
+        "saveAndInsert": "Save & Insert",
+        "saveToLibrary": "Save to Library",
+        "progressPreparingMusic": "Preparing local music generation...",
+        "errors": {
+          "describeMusic": "Describe the music you want to generate.",
+          "musicgenUnsupported": "WebGPU is required for MusicGen. Try Chrome 113+, Edge 113+, or Safari 26+.",
+          "generateMusicFailed": "Failed to generate music.",
+          "saveAudioFailed": "Failed to save audio to the media library."
+        },
+        "notifications": {
+          "savedToLibrary": "Saved \"{{fileName}}\" to the media library.",
+          "savedAndAdded": "Saved \"{{fileName}}\" and added to timeline."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi Chill",
+          "lofiChillPrompt": "Warm lo-fi beat with dusty drums, mellow bass, and a dreamy synth lead",
+          "pop80sLabel": "80s Pop",
+          "pop80sPrompt": "80s pop track with bassy drums and synth",
+          "rock90sLabel": "90s Rock",
+          "rock90sPrompt": "90s rock song with loud guitars and heavy drums",
+          "upbeatEdmLabel": "Upbeat EDM",
+          "upbeatEdmPrompt": "A light and cheery EDM track, with syncopated drums, airy pads, and strong emotions bpm: 130",
+          "countryLabel": "Country",
+          "countryPrompt": "A cheerful country song with acoustic guitars",
+          "lofiElectroLabel": "Lo-fi Electro",
+          "lofiElectroPrompt": "Lofi slow bpm electro chill with organic samples"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "Clear {{property}} keyframes from {{count}} selected item(s)?",
+        "descriptionAll": "Clear all keyframes from {{count}} selected item(s)?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} job(s)"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} cue(s)"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} clips selected"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Drop on timeline",
+        "compoundClipsTimeline": "Compound clips still place best on the timeline.",
+        "presetsTimeline": "Text and shape presets still place best on the timeline.",
+        "dropOneItem": "Drop one item",
+        "oneMediaAtATime": "Place one media item at a time on the canvas.",
+        "audioGoesOnTimeline": "Audio goes on timeline",
+        "visualLayersOnly": "Canvas drop places visual layers only.",
+        "dropToPlace": "Drop to place",
+        "addAtPlayhead": "Add this media at the playhead and drop position.",
+        "dropOneFile": "Drop one file",
+        "oneVisualFileAtATime": "Canvas drop imports one visual file at a time.",
+        "importAndPlace": "Import and place",
+        "importAndPlaceDescription": "Import this file and place it on the canvas.",
+        "noCompatibleTrack": "No unlocked compatible track is available for this drop.",
+        "unableToLoadMedia": "Unable to load dropped media.",
+        "mediaNoLongerAvailable": "Dropped media is no longer available.",
+        "dragDropUnsupported": "Drag-drop is not supported in this browser. Use Chrome or Edge.",
+        "filesRejected": "Some files were rejected: {{errors}}",
+        "dropAudioOnTimeline": "Drop audio on the timeline instead.",
+        "unableToInspectVideo": "Unable to inspect dropped video.",
+        "unableToInspectFile": "Unable to inspect dropped file.",
+        "unableToImportFile": "Unable to import dropped file."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} scene(s)"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} completed for {{count}} item(s).",
+        "couldntProcessItems": "Could not {{action}} for {{count}} item(s){{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} item(s) updated.",
+        "itemsUpdatedFailed": "{{count}} item(s) updated. Failed: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} error(s) logged"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "Retry still has {{count}} error(s).",
+        "failedCount": "{{count}} migration error(s)"
+      },
+      "list": {
+        "movedToTrashCount": "Moved {{count}} project(s) to trash.",
+        "selectedCount": "{{count}} selected",
+        "deleteN": "Delete {{count}}",
+        "projectCount": "{{count}} project(s)",
+        "bulkDeleteTitle": "Delete {{count}} selected project(s)?"
+      },
+      "trash": {
+        "emptiedTrash": "Emptied {{count}} project(s) from trash.",
+        "emptiedTrashWithFailures": "Could not delete {{count}} project(s)."
+      },
+      "relativeTime": {
+        "minutesAgo": "{{count}} min ago",
+        "hoursAgo": "{{count}} hr ago",
+        "daysAgo": "{{count}} day(s) ago",
+        "weeksAgo": "{{count}} week(s) ago",
+        "monthsAgo": "{{count}} mo ago",
+        "yearsAgo": "{{count}} yr ago"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} command(s) imported",
+          "remappedCount": "{{count}} remapped",
+          "ignoredCount": "{{count}} ignored",
+          "customCount": "{{count}} custom"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} active job(s)",
+          "unloadedToast": "Unloaded {{count}} local runtime(s)."
+        }
+      }
+    }
+  },
+  "es": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Medios",
+        "text": "Texto",
+        "shapes": "Formas",
+        "effects": "Efectos",
+        "transitions": "Transiciones",
+        "ai": "IA",
+        "collapsePanel": "Contraer panel",
+        "expandPanel": "Expandir panel",
+        "keyframeEditor": "Editor de fotogramas clave",
+        "hideKeyframeEditor": "Ocultar editor de fotogramas clave",
+        "showKeyframeEditor": "Mostrar editor de fotogramas clave",
+        "templates": "Plantillas",
+        "textGroupSingle": "Simple",
+        "textGroupTwoSpans": "2 fragmentos",
+        "textGroupThreeSpans": "3 fragmentos",
+        "addText": "Añadir texto",
+        "pen": "Pluma",
+        "penToolHint": "Dibuja una forma de ruta personalizada con la herramienta pluma",
+        "adjustmentLayer": "Capa de ajuste",
+        "blankAdjustmentLayer": "Capa de ajuste en blanco",
+        "presets": "Preajustes"
+      },
+      "tts": {
+        "seek": "Buscar",
+        "dialogTitle": "Generar audio desde texto",
+        "dialogDescription": "Genera voz e ins?rtala en la posici?n del clip de texto.",
+        "kokoroUnsupported": "WebGPU no est? disponible en este navegador. Kokoro TTS necesita Chrome 113+, Edge 113+ o Safari 26+.",
+        "mossUnsupported": "El almacenamiento gestionado por el navegador no est? disponible. MOSS TTS multiling?e funciona mejor en un navegador Chromium reciente.",
+        "supertonicUnsupported": "Este navegador no puede ejecutar el runtime local de Supertonic TTS. Prueba con una versión reciente de Chrome o Edge.",
+        "engine": "Motor",
+        "engineSupportDetails": "Detalles de compatibilidad del motor TTS",
+        "kokoroDescription": "Voces en ingl?s con WebGPU.",
+        "supertonicDescription": "Voces ONNX locales en 31 idiomas con WebGPU o WASM.",
+        "supportedLanguages": "Idiomas compatibles: {{languages}}.",
+        "kokoroOption": "Kokoro (ingl?s, WebGPU)",
+        "mossOption": "MOSS Nano (20 idiomas, CPU)",
+        "supertonicOption": "Supertonic 3 (31 idiomas, ONNX local)",
+        "language": "Idioma",
+        "autoDetectLanguage": "Detectar automáticamente",
+        "voice": "Voz",
+        "text": "Texto",
+        "textPlaceholder": "Escribe el texto que quieres escuchar...",
+        "expressiveTags": "Etiquetas expresivas",
+        "speed": "Velocidad",
+        "progressPreparing": "Preparando TTS local...",
+        "insertedAndLinked": "Insertado y vinculado",
+        "generate": "Generar",
+        "generating": "Generando...",
+        "regenerate": "Regenerar",
+        "insertAndLink": "Insertar y vincular",
+        "inserting": "Insertando...",
+        "errors": {
+          "openProject": "Abre un proyecto antes de generar audio.",
+          "enterText": "Introduce texto para sintetizar.",
+          "kokoroUnsupported": "WebGPU es necesario para Kokoro TTS. Prueba Chrome 113+, Edge 113+ o Safari 26+.",
+          "mossUnsupported": "El almacenamiento gestionado por el navegador es necesario para MOSS TTS multiling?e. Prueba un navegador Chromium reciente.",
+          "supertonicUnsupported": "Este navegador no puede ejecutar el runtime local de Supertonic TTS. Prueba con una versión reciente de Chrome o Edge.",
+          "generateFailed": "No se pudo generar la voz.",
+          "insertFailed": "No se pudo guardar e insertar el audio."
+        },
+        "notifications": {
+          "addedAndLinked": "Se a?adi? \"{{fileName}}\" a la l?nea de tiempo y se vincul? con el texto.",
+          "savedNoTrack": "Se guard? \"{{fileName}}\", pero no hay una pista de audio disponible."
+        }
+      },
+      "aiPanel": {
+        "textToSpeech": "Texto a voz",
+        "collapseTextToSpeech": "Contraer texto a voz",
+        "expandTextToSpeech": "Expandir texto a voz",
+        "runsLocally": "{{runtime}} se ejecuta localmente en el navegador con {{backend}}.",
+        "history": "Historial ({{count}}) - {{size}}",
+        "clearAll": "Borrar todo",
+        "musicGeneration": "Generaci?n de m?sica",
+        "collapseMusicGeneration": "Contraer generaci?n de m?sica",
+        "expandMusicGeneration": "Expandir generaci?n de m?sica",
+        "musicGenerationInfo": "Informaci?n de generaci?n de m?sica",
+        "musicgenDescription": "Usa el modelo MusicGen preparado para navegador de Xenova mediante Transformers.js. La primera descarga es grande; despu?s queda en cach? local.",
+        "musicgenPromptHint": "Describe g?nero, ?nimo, tempo e instrumentaci?n. Los clips m?s cortos terminan mucho m?s r?pido.",
+        "musicgenUnsupported": "WebGPU no est? disponible en este navegador. MusicGen necesita Chrome 113+, Edge 113+ o Safari 26+.",
+        "prompt": "Prompt",
+        "presets": "Preajustes",
+        "musicPromptPlaceholder": "Describe el tipo de m?sica que quieres generar...",
+        "length": "Duraci?n",
+        "generateMusic": "Generar m?sica",
+        "musicHistory": "Historial de m?sica ({{count}}) - {{size}}",
+        "remove": "Quitar",
+        "saved": "Guardado",
+        "saving": "Guardando...",
+        "saveAndInsert": "Guardar e insertar",
+        "saveToLibrary": "Guardar en biblioteca",
+        "progressPreparingMusic": "Preparando generaci?n local de m?sica...",
+        "errors": {
+          "describeMusic": "Describe la m?sica que quieres generar.",
+          "musicgenUnsupported": "WebGPU es necesario para MusicGen. Prueba Chrome 113+, Edge 113+ o Safari 26+.",
+          "generateMusicFailed": "No se pudo generar la m?sica.",
+          "saveAudioFailed": "No se pudo guardar el audio en la biblioteca multimedia."
+        },
+        "notifications": {
+          "savedToLibrary": "Se guard? \"{{fileName}}\" en la biblioteca multimedia.",
+          "savedAndAdded": "Se guard? \"{{fileName}}\" y se a?adi? a la l?nea de tiempo."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi Chill",
+          "lofiChillPrompt": "Warm lo-fi beat with dusty drums, mellow bass, and a dreamy synth lead",
+          "pop80sLabel": "80s Pop",
+          "pop80sPrompt": "80s pop track with bassy drums and synth",
+          "rock90sLabel": "90s Rock",
+          "rock90sPrompt": "90s rock song with loud guitars and heavy drums",
+          "upbeatEdmLabel": "Upbeat EDM",
+          "upbeatEdmPrompt": "A light and cheery EDM track, with syncopated drums, airy pads, and strong emotions bpm: 130",
+          "countryLabel": "Country",
+          "countryPrompt": "A cheerful country song with acoustic guitars",
+          "lofiElectroLabel": "Lo-fi Electro",
+          "lofiElectroPrompt": "Lofi slow bpm electro chill with organic samples"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "?Borrar los fotogramas clave de {{property}} de {{count}} elemento(s) seleccionado(s)?",
+        "descriptionAll": "?Borrar todos los fotogramas clave de {{count}} elemento(s) seleccionado(s)?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} tarea(s)"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} subt?tulo(s)"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} clips seleccionados"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Soltar en la línea de tiempo",
+        "compoundClipsTimeline": "Los clips compuestos siguen funcionando mejor en la línea de tiempo.",
+        "presetsTimeline": "Los preajustes de texto y forma siguen funcionando mejor en la línea de tiempo.",
+        "dropOneItem": "Suelta un elemento",
+        "oneMediaAtATime": "Coloca un elemento multimedia a la vez en el lienzo.",
+        "audioGoesOnTimeline": "El audio va en la línea de tiempo",
+        "visualLayersOnly": "Soltar en el lienzo solo coloca capas visuales.",
+        "dropToPlace": "Soltar para colocar",
+        "addAtPlayhead": "Añade este medio en el cabezal de reproducción y la posición de soltar.",
+        "dropOneFile": "Suelta un archivo",
+        "oneVisualFileAtATime": "Soltar en el lienzo importa un archivo visual a la vez.",
+        "importAndPlace": "Importar y colocar",
+        "importAndPlaceDescription": "Importa este archivo y colócalo en el lienzo.",
+        "noCompatibleTrack": "No hay una pista compatible desbloqueada disponible para este elemento.",
+        "unableToLoadMedia": "No se pudo cargar el medio soltado.",
+        "mediaNoLongerAvailable": "El medio soltado ya no está disponible.",
+        "dragDropUnsupported": "Arrastrar y soltar no es compatible con este navegador. Usa Chrome o Edge.",
+        "filesRejected": "Se rechazaron algunos archivos: {{errors}}",
+        "dropAudioOnTimeline": "Suelta el audio en la línea de tiempo.",
+        "unableToInspectVideo": "No se pudo inspeccionar el video soltado.",
+        "unableToInspectFile": "No se pudo inspeccionar el archivo soltado.",
+        "unableToImportFile": "No se pudo importar el archivo soltado."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} escena(s)"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} completado para {{count}} elemento(s).",
+        "couldntProcessItems": "No se pudo {{action}} para {{count}} elemento(s){{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} elemento(s) actualizados.",
+        "itemsUpdatedFailed": "{{count}} elemento(s) actualizados. Error: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} error(es) registrados"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "El reintento a?n tiene {{count}} error(es).",
+        "failedCount": "{{count}} error(es) de migraci?n"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} proyecto(s) movidos a la papelera.",
+        "selectedCount": "{{count}} seleccionados",
+        "deleteN": "Eliminar {{count}}",
+        "projectCount": "{{count}} proyecto(s)",
+        "bulkDeleteTitle": "?Eliminar {{count}} proyecto(s) seleccionado(s)?"
+      },
+      "trash": {
+        "emptiedTrash": "Se vaciaron {{count}} proyecto(s) de la papelera.",
+        "emptiedTrashWithFailures": "No se pudieron eliminar {{count}} proyecto(s)."
+      },
+      "relativeTime": {
+        "minutesAgo": "hace {{count}} min",
+        "hoursAgo": "hace {{count}} h",
+        "daysAgo": "hace {{count}} d?a(s)",
+        "weeksAgo": "hace {{count}} semana(s)",
+        "monthsAgo": "hace {{count}} mes(es)",
+        "yearsAgo": "hace {{count}} a?o(s)"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} comando(s) importados",
+          "remappedCount": "{{count}} reasignados",
+          "ignoredCount": "{{count}} ignorados",
+          "customCount": "{{count}} personalizados"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} tarea(s) activas",
+          "unloadedToast": "Se descargaron {{count}} runtime(s) locales."
+        }
+      }
+    }
+  },
+  "fr": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Médias",
+        "text": "Texte",
+        "shapes": "Formes",
+        "effects": "Effets",
+        "transitions": "Transitions",
+        "ai": "IA",
+        "collapsePanel": "Réduire le panneau",
+        "expandPanel": "Développer le panneau",
+        "keyframeEditor": "Éditeur d'images clés",
+        "hideKeyframeEditor": "Masquer l'éditeur d'images clés",
+        "showKeyframeEditor": "Afficher l'éditeur d'images clés",
+        "templates": "Modèles",
+        "textGroupSingle": "Simple",
+        "textGroupTwoSpans": "2 segments",
+        "textGroupThreeSpans": "3 segments",
+        "addText": "Ajouter du texte",
+        "pen": "Plume",
+        "penToolHint": "Dessiner une forme de tracé personnalisée avec l'outil plume",
+        "adjustmentLayer": "Calque d'ajustement",
+        "blankAdjustmentLayer": "Calque d'ajustement vide",
+        "presets": "Préréglages"
+      },
+      "tts": {
+        "seek": "Parcourir",
+        "dialogTitle": "G?n?rer de l?audio depuis le texte",
+        "dialogDescription": "G?n?rez une voix et ins?rez-la ? la position du clip de texte.",
+        "kokoroUnsupported": "WebGPU n?est pas disponible dans ce navigateur. Kokoro TTS n?cessite Chrome 113+, Edge 113+ ou Safari 26+.",
+        "mossUnsupported": "Le stockage g?r? par le navigateur n?est pas disponible. MOSS TTS multilingue fonctionne mieux dans un navigateur Chromium r?cent.",
+        "supertonicUnsupported": "Ce navigateur ne peut pas exécuter le runtime TTS local de Supertonic. Essayez une version récente de Chrome ou Edge.",
+        "engine": "Moteur",
+        "engineSupportDetails": "D?tails de compatibilit? du moteur TTS",
+        "kokoroDescription": "Voix anglaises sur WebGPU.",
+        "supertonicDescription": "Voix ONNX locales en 31 langues sur WebGPU ou WASM.",
+        "supportedLanguages": "Langues prises en charge : {{languages}}.",
+        "kokoroOption": "Kokoro (anglais, WebGPU)",
+        "mossOption": "MOSS Nano (20 langues, CPU)",
+        "supertonicOption": "Supertonic 3 (31 langues, ONNX local)",
+        "language": "Langue",
+        "autoDetectLanguage": "Détection automatique",
+        "voice": "Voix",
+        "text": "Texte",
+        "textPlaceholder": "Saisissez le texte ? lire...",
+        "expressiveTags": "Balises expressives",
+        "speed": "Vitesse",
+        "progressPreparing": "Pr?paration du TTS local...",
+        "insertedAndLinked": "Ins?r? et li?",
+        "generate": "G?n?rer",
+        "generating": "G?n?ration...",
+        "regenerate": "R?g?n?rer",
+        "insertAndLink": "Ins?rer et lier",
+        "inserting": "Insertion...",
+        "errors": {
+          "openProject": "Ouvrez un projet avant de g?n?rer de l?audio.",
+          "enterText": "Saisissez du texte ? synth?tiser.",
+          "kokoroUnsupported": "WebGPU est requis pour Kokoro TTS. Essayez Chrome 113+, Edge 113+ ou Safari 26+.",
+          "mossUnsupported": "Le stockage g?r? par le navigateur est requis pour MOSS TTS multilingue. Essayez un navigateur Chromium r?cent.",
+          "supertonicUnsupported": "Ce navigateur ne peut pas exécuter le runtime TTS local de Supertonic. Essayez une version récente de Chrome ou Edge.",
+          "generateFailed": "?chec de la g?n?ration vocale.",
+          "insertFailed": "?chec de l?enregistrement et de l?insertion de l?audio."
+        },
+        "notifications": {
+          "addedAndLinked": "? {{fileName}} ? a ?t? ajout? ? la timeline et li? au texte.",
+          "savedNoTrack": "? {{fileName}} ? a ?t? enregistr?, mais aucune piste audio n?est disponible."
+        }
+      },
+      "aiPanel": {
+        "textToSpeech": "Texte vers voix",
+        "collapseTextToSpeech": "R?duire le texte vers voix",
+        "expandTextToSpeech": "D?velopper le texte vers voix",
+        "runsLocally": "{{runtime}} s?ex?cute localement dans le navigateur avec {{backend}}.",
+        "history": "Historique ({{count}}) - {{size}}",
+        "clearAll": "Tout effacer",
+        "musicGeneration": "G?n?ration musicale",
+        "collapseMusicGeneration": "R?duire la g?n?ration musicale",
+        "expandMusicGeneration": "D?velopper la g?n?ration musicale",
+        "musicGenerationInfo": "Infos de g?n?ration musicale",
+        "musicgenDescription": "Utilise le mod?le MusicGen de Xenova pr?t pour le navigateur via Transformers.js. Le premier t?l?chargement est volumineux, puis il reste en cache local.",
+        "musicgenPromptHint": "D?crivez le genre, l?ambiance, le tempo et les instruments. Les clips plus courts finissent beaucoup plus vite.",
+        "musicgenUnsupported": "WebGPU n?est pas disponible dans ce navigateur. MusicGen n?cessite Chrome 113+, Edge 113+ ou Safari 26+.",
+        "prompt": "Prompt",
+        "presets": "Pr?r?glages",
+        "musicPromptPlaceholder": "D?crivez le type de musique ? g?n?rer...",
+        "length": "Dur?e",
+        "generateMusic": "G?n?rer la musique",
+        "musicHistory": "Historique musical ({{count}}) - {{size}}",
+        "remove": "Supprimer",
+        "saved": "Enregistr?",
+        "saving": "Enregistrement...",
+        "saveAndInsert": "Enregistrer et ins?rer",
+        "saveToLibrary": "Enregistrer dans la biblioth?que",
+        "progressPreparingMusic": "Pr?paration de la g?n?ration musicale locale...",
+        "errors": {
+          "describeMusic": "D?crivez la musique ? g?n?rer.",
+          "musicgenUnsupported": "WebGPU est requis pour MusicGen. Essayez Chrome 113+, Edge 113+ ou Safari 26+.",
+          "generateMusicFailed": "?chec de la g?n?ration musicale.",
+          "saveAudioFailed": "Impossible d?enregistrer l?audio dans la biblioth?que multim?dia."
+        },
+        "notifications": {
+          "savedToLibrary": "? {{fileName}} ? a ?t? enregistr? dans la biblioth?que multim?dia.",
+          "savedAndAdded": "? {{fileName}} ? a ?t? enregistr? et ajout? ? la timeline."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi Chill",
+          "lofiChillPrompt": "Warm lo-fi beat with dusty drums, mellow bass, and a dreamy synth lead",
+          "pop80sLabel": "80s Pop",
+          "pop80sPrompt": "80s pop track with bassy drums and synth",
+          "rock90sLabel": "90s Rock",
+          "rock90sPrompt": "90s rock song with loud guitars and heavy drums",
+          "upbeatEdmLabel": "Upbeat EDM",
+          "upbeatEdmPrompt": "A light and cheery EDM track, with syncopated drums, airy pads, and strong emotions bpm: 130",
+          "countryLabel": "Country",
+          "countryPrompt": "A cheerful country song with acoustic guitars",
+          "lofiElectroLabel": "Lo-fi Electro",
+          "lofiElectroPrompt": "Lofi slow bpm electro chill with organic samples"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "Effacer les images cl?s {{property}} de {{count}} ?l?ment(s) s?lectionn?(s) ?",
+        "descriptionAll": "Effacer toutes les images cl?s de {{count}} ?l?ment(s) s?lectionn?(s) ?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} t?che(s)"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} r?plique(s)"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} clips s?lectionn?s"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Déposer sur la timeline",
+        "compoundClipsTimeline": "Les clips composés se placent toujours mieux sur la timeline.",
+        "presetsTimeline": "Les préréglages de texte et de forme se placent toujours mieux sur la timeline.",
+        "dropOneItem": "Déposer un élément",
+        "oneMediaAtATime": "Placez un média à la fois sur le canevas.",
+        "audioGoesOnTimeline": "L'audio va sur la timeline",
+        "visualLayersOnly": "Le dépôt sur le canevas place uniquement des calques visuels.",
+        "dropToPlace": "Déposer pour placer",
+        "addAtPlayhead": "Ajoutez ce média à la tête de lecture et à la position de dépôt.",
+        "dropOneFile": "Déposer un fichier",
+        "oneVisualFileAtATime": "Le dépôt sur le canevas importe un fichier visuel à la fois.",
+        "importAndPlace": "Importer et placer",
+        "importAndPlaceDescription": "Importez ce fichier et placez-le sur le canevas.",
+        "noCompatibleTrack": "Aucune piste compatible déverrouillée n'est disponible pour ce dépôt.",
+        "unableToLoadMedia": "Impossible de charger le média déposé.",
+        "mediaNoLongerAvailable": "Le média déposé n'est plus disponible.",
+        "dragDropUnsupported": "Le glisser-déposer n'est pas pris en charge par ce navigateur. Utilisez Chrome ou Edge.",
+        "filesRejected": "Certains fichiers ont été refusés : {{errors}}",
+        "dropAudioOnTimeline": "Déposez plutôt l'audio sur la timeline.",
+        "unableToInspectVideo": "Impossible d'inspecter la vidéo déposée.",
+        "unableToInspectFile": "Impossible d'inspecter le fichier déposé.",
+        "unableToImportFile": "Impossible d'importer le fichier déposé."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} sc?ne(s)"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} termin? pour {{count}} ?l?ment(s).",
+        "couldntProcessItems": "Impossible de {{action}} pour {{count}} ?l?ment(s){{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} ?l?ment(s) mis ? jour.",
+        "itemsUpdatedFailed": "{{count}} ?l?ment(s) mis ? jour. ?chec : {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} erreur(s) consign?es"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "Le nouvel essai contient encore {{count}} erreur(s).",
+        "failedCount": "{{count}} erreur(s) de migration"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} projet(s) d?plac?s dans la corbeille.",
+        "selectedCount": "{{count}} s?lectionn?(s)",
+        "deleteN": "Supprimer {{count}}",
+        "projectCount": "{{count}} projet(s)",
+        "bulkDeleteTitle": "Supprimer {{count}} projet(s) s?lectionn?(s) ?"
+      },
+      "trash": {
+        "emptiedTrash": "{{count}} projet(s) supprim?s de la corbeille.",
+        "emptiedTrashWithFailures": "Impossible de supprimer {{count}} projet(s)."
+      },
+      "relativeTime": {
+        "minutesAgo": "il y a {{count}} min",
+        "hoursAgo": "il y a {{count}} h",
+        "daysAgo": "il y a {{count}} jour(s)",
+        "weeksAgo": "il y a {{count}} semaine(s)",
+        "monthsAgo": "il y a {{count}} mois",
+        "yearsAgo": "il y a {{count}} an(s)"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} commande(s) import?es",
+          "remappedCount": "{{count}} r?assign?es",
+          "ignoredCount": "{{count}} ignor?es",
+          "customCount": "{{count}} personnalis?s"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} t?che(s) active(s)",
+          "unloadedToast": "{{count}} runtime(s) locaux d?charg?s."
+        }
+      }
+    }
+  },
+  "de": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Medien",
+        "text": "Text",
+        "shapes": "Formen",
+        "effects": "Effekte",
+        "transitions": "Übergänge",
+        "ai": "KI",
+        "collapsePanel": "Panel einklappen",
+        "expandPanel": "Panel ausklappen",
+        "keyframeEditor": "Keyframe-Editor",
+        "hideKeyframeEditor": "Keyframe-Editor ausblenden",
+        "showKeyframeEditor": "Keyframe-Editor anzeigen",
+        "templates": "Vorlagen",
+        "textGroupSingle": "Einzeln",
+        "textGroupTwoSpans": "2 Abschnitte",
+        "textGroupThreeSpans": "3 Abschnitte",
+        "addText": "Text hinzufügen",
+        "pen": "Stift",
+        "penToolHint": "Eine eigene Pfadform mit dem Stiftwerkzeug zeichnen",
+        "adjustmentLayer": "Einstellungsebene",
+        "blankAdjustmentLayer": "Leere Einstellungsebene",
+        "presets": "Vorgaben"
+      },
+      "tts": {
+        "seek": "Suchen",
+        "dialogTitle": "Audio aus Text generieren",
+        "dialogDescription": "Sprache erzeugen und an der Position des Textclips einf?gen.",
+        "kokoroUnsupported": "WebGPU ist in diesem Browser nicht verf?gbar. Kokoro TTS ben?tigt Chrome 113+, Edge 113+ oder Safari 26+.",
+        "mossUnsupported": "Browserverwalteter Speicher ist nicht verf?gbar. MOSS mehrsprachiges TTS funktioniert am besten in einem aktuellen Chromium-Browser.",
+        "supertonicUnsupported": "Dieser Browser kann die lokale Supertonic-TTS-Laufzeit nicht ausführen. Versuche es mit einer aktuellen Version von Chrome oder Edge.",
+        "engine": "Engine",
+        "engineSupportDetails": "Details zur TTS-Engine-Unterst?tzung",
+        "kokoroDescription": "Englische Stimmen ?ber WebGPU.",
+        "supertonicDescription": "Lokale ONNX-Stimmen in 31 Sprachen mit WebGPU oder WASM.",
+        "supportedLanguages": "Unterst?tzte Sprachen: {{languages}}.",
+        "kokoroOption": "Kokoro (Englisch, WebGPU)",
+        "mossOption": "MOSS Nano (20 Sprachen, CPU)",
+        "supertonicOption": "Supertonic 3 (31 Sprachen, lokales ONNX)",
+        "language": "Sprache",
+        "autoDetectLanguage": "Automatisch erkennen",
+        "voice": "Stimme",
+        "text": "Text",
+        "textPlaceholder": "Gib den Text ein, den du h?ren m?chtest...",
+        "expressiveTags": "Ausdrucks-Tags",
+        "speed": "Geschwindigkeit",
+        "progressPreparing": "Lokales TTS wird vorbereitet...",
+        "insertedAndLinked": "Eingef?gt und verkn?pft",
+        "generate": "Generieren",
+        "generating": "Generieren...",
+        "regenerate": "Neu generieren",
+        "insertAndLink": "Einf?gen und verkn?pfen",
+        "inserting": "Einf?gen...",
+        "errors": {
+          "openProject": "?ffne ein Projekt, bevor du Audio generierst.",
+          "enterText": "Gib Text zum Synthetisieren ein.",
+          "kokoroUnsupported": "WebGPU ist f?r Kokoro TTS erforderlich. Versuche Chrome 113+, Edge 113+ oder Safari 26+.",
+          "mossUnsupported": "Browserverwalteter Speicher ist f?r MOSS mehrsprachiges TTS erforderlich. Versuche einen aktuellen Chromium-Browser.",
+          "supertonicUnsupported": "Dieser Browser kann die lokale Supertonic-TTS-Laufzeit nicht ausführen. Versuche es mit einer aktuellen Version von Chrome oder Edge.",
+          "generateFailed": "Sprache konnte nicht generiert werden.",
+          "insertFailed": "Audio konnte nicht gespeichert und eingef?gt werden."
+        },
+        "notifications": {
+          "addedAndLinked": "\"{{fileName}}\" wurde zur Timeline hinzugef?gt und mit Text verkn?pft.",
+          "savedNoTrack": "\"{{fileName}}\" wurde gespeichert, aber es ist keine Audiospur verf?gbar."
+        }
+      },
+      "aiPanel": {
+        "textToSpeech": "Text zu Sprache",
+        "collapseTextToSpeech": "Text zu Sprache einklappen",
+        "expandTextToSpeech": "Text zu Sprache ausklappen",
+        "runsLocally": "{{runtime}} l?uft lokal im Browser mit {{backend}}.",
+        "history": "Verlauf ({{count}}) - {{size}}",
+        "clearAll": "Alle l?schen",
+        "musicGeneration": "Musik generieren",
+        "collapseMusicGeneration": "Musikgenerierung einklappen",
+        "expandMusicGeneration": "Musikgenerierung ausklappen",
+        "musicGenerationInfo": "Infos zur Musikgenerierung",
+        "musicgenDescription": "Verwendet Xenovas browserf?higes MusicGen-Modell ?ber Transformers.js. Der erste Download ist gro?, danach bleibt es lokal im Cache.",
+        "musicgenPromptHint": "Beschreibe Genre, Stimmung, Tempo und Instrumentierung. K?rzere Clips sind deutlich schneller fertig.",
+        "musicgenUnsupported": "WebGPU ist in diesem Browser nicht verf?gbar. MusicGen ben?tigt Chrome 113+, Edge 113+ oder Safari 26+.",
+        "prompt": "Prompt",
+        "presets": "Vorgaben",
+        "musicPromptPlaceholder": "Beschreibe, welche Musik du erzeugen m?chtest...",
+        "length": "L?nge",
+        "generateMusic": "Musik generieren",
+        "musicHistory": "Musikverlauf ({{count}}) - {{size}}",
+        "remove": "Entfernen",
+        "saved": "Gespeichert",
+        "saving": "Speichern...",
+        "saveAndInsert": "Speichern und einf?gen",
+        "saveToLibrary": "In Bibliothek speichern",
+        "progressPreparingMusic": "Lokale Musikgenerierung wird vorbereitet...",
+        "errors": {
+          "describeMusic": "Beschreibe die Musik, die du erzeugen m?chtest.",
+          "musicgenUnsupported": "WebGPU ist f?r MusicGen erforderlich. Versuche Chrome 113+, Edge 113+ oder Safari 26+.",
+          "generateMusicFailed": "Musik konnte nicht generiert werden.",
+          "saveAudioFailed": "Audio konnte nicht in der Medienbibliothek gespeichert werden."
+        },
+        "notifications": {
+          "savedToLibrary": "\"{{fileName}}\" wurde in der Medienbibliothek gespeichert.",
+          "savedAndAdded": "\"{{fileName}}\" wurde gespeichert und zur Timeline hinzugef?gt."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi Chill",
+          "lofiChillPrompt": "Warm lo-fi beat with dusty drums, mellow bass, and a dreamy synth lead",
+          "pop80sLabel": "80s Pop",
+          "pop80sPrompt": "80s pop track with bassy drums and synth",
+          "rock90sLabel": "90s Rock",
+          "rock90sPrompt": "90s rock song with loud guitars and heavy drums",
+          "upbeatEdmLabel": "Upbeat EDM",
+          "upbeatEdmPrompt": "A light and cheery EDM track, with syncopated drums, airy pads, and strong emotions bpm: 130",
+          "countryLabel": "Country",
+          "countryPrompt": "A cheerful country song with acoustic guitars",
+          "lofiElectroLabel": "Lo-fi Electro",
+          "lofiElectroPrompt": "Lofi slow bpm electro chill with organic samples"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "{{property}}-Keyframes von {{count}} ausgew?hlten Element(en) l?schen?",
+        "descriptionAll": "Alle Keyframes von {{count}} ausgew?hlten Element(en) l?schen?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} Job(s)"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} Cue(s)"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} Clips ausgew?hlt"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Auf Timeline ablegen",
+        "compoundClipsTimeline": "Compound-Clips werden weiterhin am besten auf der Timeline platziert.",
+        "presetsTimeline": "Text- und Formvorgaben werden weiterhin am besten auf der Timeline platziert.",
+        "dropOneItem": "Ein Element ablegen",
+        "oneMediaAtATime": "Platziere jeweils ein Medienelement auf der Leinwand.",
+        "audioGoesOnTimeline": "Audio gehört auf die Timeline",
+        "visualLayersOnly": "Auf der Leinwand werden nur visuelle Ebenen platziert.",
+        "dropToPlace": "Zum Platzieren ablegen",
+        "addAtPlayhead": "Füge dieses Medium am Abspielkopf und an der Ablageposition hinzu.",
+        "dropOneFile": "Eine Datei ablegen",
+        "oneVisualFileAtATime": "Auf der Leinwand wird jeweils eine visuelle Datei importiert.",
+        "importAndPlace": "Importieren und platzieren",
+        "importAndPlaceDescription": "Importiere diese Datei und platziere sie auf der Leinwand.",
+        "noCompatibleTrack": "Für dieses Ablegen ist keine entsperrte kompatible Spur verfügbar.",
+        "unableToLoadMedia": "Abgelegtes Medium konnte nicht geladen werden.",
+        "mediaNoLongerAvailable": "Das abgelegte Medium ist nicht mehr verfügbar.",
+        "dragDropUnsupported": "Drag-and-drop wird in diesem Browser nicht unterstützt. Verwende Chrome oder Edge.",
+        "filesRejected": "Einige Dateien wurden abgelehnt: {{errors}}",
+        "dropAudioOnTimeline": "Lege Audio stattdessen auf der Timeline ab.",
+        "unableToInspectVideo": "Abgelegtes Video konnte nicht geprüft werden.",
+        "unableToInspectFile": "Abgelegte Datei konnte nicht geprüft werden.",
+        "unableToImportFile": "Abgelegte Datei konnte nicht importiert werden."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} Szene(n)"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} f?r {{count}} Element(e) abgeschlossen.",
+        "couldntProcessItems": "{{action}} konnte f?r {{count}} Element(e) nicht ausgef?hrt werden{{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} Element(e) aktualisiert.",
+        "itemsUpdatedFailed": "{{count}} Element(e) aktualisiert. Fehlgeschlagen: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} Fehler protokolliert"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "Der erneute Versuch hat noch {{count}} Fehler.",
+        "failedCount": "{{count}} Migrationsfehler"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} Projekt(e) in den Papierkorb verschoben.",
+        "selectedCount": "{{count}} ausgew?hlt",
+        "deleteN": "{{count}} l?schen",
+        "projectCount": "{{count}} Projekt(e)",
+        "bulkDeleteTitle": "{{count}} ausgew?hlte Projekt(e) l?schen?"
+      },
+      "trash": {
+        "emptiedTrash": "{{count}} Projekt(e) aus dem Papierkorb gel?scht.",
+        "emptiedTrashWithFailures": "{{count}} Projekt(e) konnten nicht gel?scht werden."
+      },
+      "relativeTime": {
+        "minutesAgo": "vor {{count}} Min.",
+        "hoursAgo": "vor {{count}} Std.",
+        "daysAgo": "vor {{count}} Tag(en)",
+        "weeksAgo": "vor {{count}} Woche(n)",
+        "monthsAgo": "vor {{count}} Monat(en)",
+        "yearsAgo": "vor {{count}} Jahr(en)"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} Befehl(e) importiert",
+          "remappedCount": "{{count}} neu zugeordnet",
+          "ignoredCount": "{{count}} ignoriert",
+          "customCount": "{{count}} benutzerdefiniert"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} aktive Job(s)",
+          "unloadedToast": "{{count}} lokale Runtime(s) entladen."
+        }
+      }
+    }
+  },
+  "pt-BR": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Mídia",
+        "text": "Texto",
+        "shapes": "Formas",
+        "effects": "Efeitos",
+        "transitions": "Transições",
+        "ai": "IA",
+        "collapsePanel": "Recolher painel",
+        "expandPanel": "Expandir painel",
+        "keyframeEditor": "Editor de keyframes",
+        "hideKeyframeEditor": "Ocultar editor de keyframes",
+        "showKeyframeEditor": "Mostrar editor de keyframes",
+        "templates": "Modelos",
+        "textGroupSingle": "Único",
+        "textGroupTwoSpans": "2 trechos",
+        "textGroupThreeSpans": "3 trechos",
+        "addText": "Adicionar texto",
+        "pen": "Caneta",
+        "penToolHint": "Desenhe uma forma de caminho personalizada com a ferramenta caneta",
+        "adjustmentLayer": "Camada de ajuste",
+        "blankAdjustmentLayer": "Camada de ajuste em branco",
+        "presets": "Predefinições"
+      },
+      "tts": {
+        "seek": "Buscar",
+        "dialogTitle": "Gerar áudio a partir de texto",
+        "dialogDescription": "Gere fala e insira na posição do clipe de texto.",
+        "kokoroUnsupported": "WebGPU não está disponível neste navegador. Kokoro TTS precisa do Chrome 113+, Edge 113+ ou Safari 26+.",
+        "mossUnsupported": "O armazenamento gerenciado pelo navegador não está disponível. O MOSS TTS multilíngue funciona melhor em um navegador Chromium recente.",
+        "engine": "Motor",
+        "engineSupportDetails": "Detalhes de suporte do motor TTS",
+        "kokoroDescription": "Vozes em inglês no WebGPU.",
+        "supportedLanguages": "Idiomas compatíveis: {{languages}}.",
+        "kokoroOption": "Kokoro (inglês, WebGPU)",
+        "mossOption": "MOSS Nano (20 idiomas, CPU)",
+        "voice": "Voz",
+        "text": "Texto",
+        "textPlaceholder": "Digite o texto que você quer ouvir...",
+        "speed": "Velocidade",
+        "progressPreparing": "Preparando TTS local...",
+        "insertedAndLinked": "Inserido e vinculado",
+        "generate": "Gerar",
+        "generating": "Gerando...",
+        "regenerate": "Gerar novamente",
+        "insertAndLink": "Inserir e vincular",
+        "inserting": "Inserindo...",
+        "errors": {
+          "openProject": "Abra um projeto antes de gerar áudio.",
+          "enterText": "Digite algum texto para sintetizar.",
+          "kokoroUnsupported": "WebGPU é necessário para Kokoro TTS. Tente Chrome 113+, Edge 113+ ou Safari 26+.",
+          "mossUnsupported": "O armazenamento gerenciado pelo navegador é necessário para MOSS TTS multilíngue. Tente um navegador Chromium recente.",
+          "generateFailed": "Falha ao gerar fala.",
+          "insertFailed": "Falha ao salvar e inserir áudio.",
+          "supertonicUnsupported": "Este navegador não consegue executar o runtime local do Supertonic TTS. Tente uma versão recente do Chrome ou Edge."
+        },
+        "notifications": {
+          "addedAndLinked": "\"{{fileName}}\" foi adicionado à linha do tempo e vinculado ao texto.",
+          "savedNoTrack": "\"{{fileName}}\" foi salvo, mas nenhuma faixa de áudio está disponível."
+        },
+        "supertonicUnsupported": "Este navegador não consegue executar o runtime local do Supertonic TTS. Tente uma versão recente do Chrome ou Edge.",
+        "supertonicDescription": "Vozes ONNX locais em 31 idiomas no WebGPU ou WASM.",
+        "supertonicOption": "Supertonic 3 (31 idiomas, ONNX local)",
+        "language": "Idioma",
+        "autoDetectLanguage": "Detectar automaticamente",
+        "expressiveTags": "Tags expressivas"
+      },
+      "aiPanel": {
+        "textToSpeech": "Texto para fala",
+        "collapseTextToSpeech": "Recolher texto para fala",
+        "expandTextToSpeech": "Expandir texto para fala",
+        "runsLocally": "{{runtime}} roda localmente no navegador em {{backend}}.",
+        "history": "Histórico ({{count}}) - {{size}}",
+        "clearAll": "Limpar tudo",
+        "musicGeneration": "Geração de música",
+        "collapseMusicGeneration": "Recolher geração de música",
+        "expandMusicGeneration": "Expandir geração de música",
+        "musicGenerationInfo": "Informações da geração de música",
+        "musicgenDescription": "Usa o modelo MusicGen da Xenova pronto para navegador via Transformers.js. O primeiro download é grande; depois ele fica em cache local.",
+        "musicgenPromptHint": "Descreva gênero, clima, tempo e instrumentos. Clipes mais curtos terminam muito mais rápido.",
+        "musicgenUnsupported": "WebGPU não está disponível neste navegador. MusicGen precisa do Chrome 113+, Edge 113+ ou Safari 26+.",
+        "prompt": "Comando",
+        "presets": "Predefinições",
+        "musicPromptPlaceholder": "Descreva o tipo de música que você quer gerar...",
+        "length": "Duração",
+        "generateMusic": "Gerar música",
+        "musicHistory": "Histórico de música ({{count}}) - {{size}}",
+        "remove": "Remover",
+        "saved": "Salvo",
+        "saving": "Salvando...",
+        "saveAndInsert": "Salvar e inserir",
+        "saveToLibrary": "Salvar na biblioteca",
+        "progressPreparingMusic": "Preparando geração local de música...",
+        "errors": {
+          "describeMusic": "Descreva a música que você quer gerar.",
+          "musicgenUnsupported": "WebGPU é necessário para MusicGen. Tente Chrome 113+, Edge 113+ ou Safari 26+.",
+          "generateMusicFailed": "Não foi possível gerar a música.",
+          "saveAudioFailed": "Não foi possível salvar o áudio na biblioteca de mídia."
+        },
+        "notifications": {
+          "savedToLibrary": "\"{{fileName}}\" foi salvo na biblioteca de mídia.",
+          "savedAndAdded": "\"{{fileName}}\" foi salvo e adicionado à linha do tempo."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi tranquilo",
+          "lofiChillPrompt": "Batida lo-fi quente com bateria vintage, baixo suave e lead de sintetizador sonhador",
+          "pop80sLabel": "Pop anos 80",
+          "pop80sPrompt": "Faixa pop dos anos 80 com bateria grave e sintetizador",
+          "rock90sLabel": "Rock anos 90",
+          "rock90sPrompt": "Música de rock dos anos 90 com guitarras altas e bateria pesada",
+          "upbeatEdmLabel": "EDM animado",
+          "upbeatEdmPrompt": "Faixa EDM leve e alegre, com bateria sincopada, pads aéreos e emoção forte bpm: 130",
+          "countryLabel": "Country / sertanejo",
+          "countryPrompt": "Música country alegre com violão acústico",
+          "lofiElectroLabel": "Lo-fi eletrônico",
+          "lofiElectroPrompt": "Lo-fi electro chill de BPM lento com samples orgânicos"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "Limpar keyframes de {{property}} de {{count}} item(ns) selecionado(s)?",
+        "descriptionAll": "Limpar todos os keyframes de {{count}} item(ns) selecionado(s)?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} tarefa(s)"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} legenda(s)"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} clipes selecionados"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Soltar na linha do tempo",
+        "compoundClipsTimeline": "Clipes compostos ainda ficam melhor na linha do tempo.",
+        "presetsTimeline": "Predefinições de texto e forma ainda ficam melhor na linha do tempo.",
+        "dropOneItem": "Solte um item",
+        "oneMediaAtATime": "Coloque um item de mídia por vez na tela.",
+        "audioGoesOnTimeline": "Áudio vai na linha do tempo",
+        "visualLayersOnly": "Soltar na tela coloca apenas camadas visuais.",
+        "dropToPlace": "Soltar para posicionar",
+        "addAtPlayhead": "Adicione esta mídia no indicador de reprodução e na posição de soltura.",
+        "dropOneFile": "Solte um arquivo",
+        "oneVisualFileAtATime": "Soltar na tela importa um arquivo visual por vez.",
+        "importAndPlace": "Importar e posicionar",
+        "importAndPlaceDescription": "Importe este arquivo e coloque-o na tela.",
+        "noCompatibleTrack": "Nenhuma faixa compatível desbloqueada está disponível para este item.",
+        "unableToLoadMedia": "Não foi possível carregar a mídia solta.",
+        "mediaNoLongerAvailable": "A mídia solta não está mais disponível.",
+        "dragDropUnsupported": "Arrastar e soltar não é compatível com este navegador. Use Chrome ou Edge.",
+        "filesRejected": "Alguns arquivos foram rejeitados: {{errors}}",
+        "dropAudioOnTimeline": "Solte o áudio na linha do tempo.",
+        "unableToInspectVideo": "Não foi possível inspecionar o vídeo solto.",
+        "unableToInspectFile": "Não foi possível inspecionar o arquivo solto.",
+        "unableToImportFile": "Não foi possível importar o arquivo solto."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} cena(s)"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} concluído para {{count}} item(ns).",
+        "couldntProcessItems": "Não foi possível {{action}} para {{count}} item(ns){{detail}}",
+        "noMediaNeededUpdating": "Nenhuma mídia do projeto precisava ser atualizada.",
+        "couldntProcessItems_one": "{{action}}: não foi possível processar {{count}} item{{detail}}",
+        "couldntProcessItems_other": "{{action}}: não foi possível processar {{count}} itens{{detail}}",
+        "partialOutcome": "{{action}}: {{succeeded}}/{{total}} concluídos. Precisa de atenção: {{failed}}."
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} item(ns) atualizados.",
+        "itemsUpdatedFailed": "{{count}} item(ns) atualizados. Falha: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} erro(s) registrados"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "A nova tentativa ainda tem {{count}} erro(s).",
+        "failedCount": "{{count}} erro(s) de migração"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} projeto(s) movidos para a lixeira.",
+        "selectedCount": "{{count}} selecionados",
+        "deleteN": "Excluir {{count}}",
+        "projectCount": "{{count}} projeto(s)",
+        "bulkDeleteTitle": "Excluir {{count}} projeto(s) selecionado(s)?"
+      },
+      "trash": {
+        "emptiedTrash": "{{count}} projeto(s) removidos da lixeira.",
+        "emptiedTrashWithFailures": "Não foi possível excluir {{count}} projeto(s)."
+      },
+      "relativeTime": {
+        "minutesAgo": "há {{count}} min",
+        "hoursAgo": "há {{count}} h",
+        "daysAgo": "há {{count}} dia(s)",
+        "weeksAgo": "há {{count}} semana(s)",
+        "monthsAgo": "há {{count}} mês(es)",
+        "yearsAgo": "há {{count}} ano(s)"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} comando(s) importados",
+          "remappedCount": "{{count}} remapeados",
+          "ignoredCount": "{{count}} ignorados",
+          "customCount": "{{count}} personalizados"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} tarefa(s) ativa(s)",
+          "unloadedToast": "{{count}} runtime(s) locais descarregados."
+        }
+      }
+    }
+  },
+  "ja": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "メディア",
+        "text": "テキスト",
+        "shapes": "図形",
+        "effects": "エフェクト",
+        "transitions": "トランジション",
+        "ai": "AI",
+        "collapsePanel": "パネルを折りたたむ",
+        "expandPanel": "パネルを展開",
+        "keyframeEditor": "キーフレームエディター",
+        "hideKeyframeEditor": "キーフレームエディターを非表示",
+        "showKeyframeEditor": "キーフレームエディターを表示",
+        "templates": "テンプレート",
+        "textGroupSingle": "単一",
+        "textGroupTwoSpans": "2スパン",
+        "textGroupThreeSpans": "3スパン",
+        "addText": "テキストを追加",
+        "pen": "ペン",
+        "penToolHint": "ペンツールでカスタムパス図形を描画",
+        "adjustmentLayer": "調整レイヤー",
+        "blankAdjustmentLayer": "空の調整レイヤー",
+        "presets": "プリセット"
+      },
+      "tts": {
+        "seek": "シーク",
+        "dialogTitle": "テキストから音声を生成",
+        "dialogDescription": "音声を生成してテキストクリップの位置に挿入します。",
+        "kokoroUnsupported": "このブラウザでは WebGPU を利用できません。Kokoro TTS には Chrome 113+、Edge 113+、または Safari 26+ が必要です。",
+        "mossUnsupported": "このブラウザではブラウザ管理ストレージを利用できません。MOSS 多言語 TTS は新しい Chromium ブラウザで最適に動作します。",
+        "engine": "エンジン",
+        "engineSupportDetails": "TTS エンジンの対応状況",
+        "kokoroDescription": "WebGPU の英語音声。",
+        "supportedLanguages": "対応言語: {{languages}}。",
+        "kokoroOption": "Kokoro (英語、WebGPU)",
+        "mossOption": "MOSS Nano (20言語、CPU)",
+        "voice": "音声",
+        "text": "テキスト",
+        "textPlaceholder": "読み上げたいテキストを入力...",
+        "speed": "速度",
+        "progressPreparing": "ローカル TTS を準備中...",
+        "insertedAndLinked": "挿入してリンク済み",
+        "generate": "生成",
+        "generating": "生成中...",
+        "regenerate": "再生成",
+        "insertAndLink": "挿入してリンク",
+        "inserting": "挿入中...",
+        "errors": {
+          "openProject": "音声を生成する前にプロジェクトを開いてください。",
+          "enterText": "合成するテキストを入力してください。",
+          "kokoroUnsupported": "Kokoro TTS には WebGPU が必要です。Chrome 113+、Edge 113+、または Safari 26+ をお試しください。",
+          "mossUnsupported": "MOSS 多言語 TTS にはブラウザ管理ストレージが必要です。新しい Chromium ブラウザをお試しください。",
+          "generateFailed": "音声を生成できませんでした。",
+          "insertFailed": "音声を保存して挿入できませんでした。",
+          "supertonicUnsupported": "このブラウザーではローカルの Supertonic TTS ランタイムを実行できません。最新の Chrome または Edge をお試しください。"
+        },
+        "notifications": {
+          "addedAndLinked": "\"{{fileName}}\" をタイムラインに追加し、テキストとリンクしました。",
+          "savedNoTrack": "\"{{fileName}}\" を保存しましたが、利用可能な音声トラックがありません。"
+        },
+        "supertonicUnsupported": "このブラウザーではローカルの Supertonic TTS ランタイムを実行できません。最新の Chrome または Edge をお試しください。",
+        "supertonicDescription": "WebGPU または WASM 上で動作する 31 言語対応のローカル ONNX 音声。",
+        "supertonicOption": "Supertonic 3（31 言語、ローカル ONNX）",
+        "language": "言語",
+        "autoDetectLanguage": "自動検出",
+        "expressiveTags": "表現タグ"
+      },
+      "aiPanel": {
+        "textToSpeech": "テキスト読み上げ",
+        "collapseTextToSpeech": "テキスト読み上げを折りたたむ",
+        "expandTextToSpeech": "テキスト読み上げを展開",
+        "runsLocally": "{{runtime}} はブラウザ内で {{backend}} を使ってローカル実行されます。",
+        "history": "履歴 ({{count}}) - {{size}}",
+        "clearAll": "すべてクリア",
+        "musicGeneration": "音楽生成",
+        "collapseMusicGeneration": "音楽生成を折りたたむ",
+        "expandMusicGeneration": "音楽生成を展開",
+        "musicGenerationInfo": "音楽生成情報",
+        "musicgenDescription": "Transformers.js 経由で、Xenova のブラウザ対応 MusicGen モデルを使用します。初回ダウンロードは大きめですが、その後はローカルにキャッシュされます。",
+        "musicgenPromptHint": "ジャンル、ムード、テンポ、楽器編成を指定してください。短いクリップほどかなり速く完了します。",
+        "musicgenUnsupported": "このブラウザでは WebGPU を利用できません。MusicGen には Chrome 113+、Edge 113+、または Safari 26+ が必要です。",
+        "prompt": "プロンプト",
+        "presets": "プリセット",
+        "musicPromptPlaceholder": "生成したい音楽の種類を説明してください...",
+        "length": "長さ",
+        "generateMusic": "音楽を生成",
+        "musicHistory": "音楽履歴 ({{count}}) - {{size}}",
+        "remove": "削除",
+        "saved": "保存済み",
+        "saving": "保存中...",
+        "saveAndInsert": "保存して挿入",
+        "saveToLibrary": "ライブラリに保存",
+        "progressPreparingMusic": "ローカル音楽生成を準備中...",
+        "errors": {
+          "describeMusic": "生成したい音楽を説明してください。",
+          "musicgenUnsupported": "MusicGen には WebGPU が必要です。Chrome 113+、Edge 113+、または Safari 26+ をお試しください。",
+          "generateMusicFailed": "音楽を生成できませんでした。",
+          "saveAudioFailed": "メディアライブラリに音声を保存できませんでした。"
+        },
+        "notifications": {
+          "savedToLibrary": "\"{{fileName}}\" をメディアライブラリに保存しました。",
+          "savedAndAdded": "\"{{fileName}}\" を保存してタイムラインに追加しました。"
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi チル",
+          "lofiChillPrompt": "温かい lo-fi ビート、ダスティなドラム、メロウなベース、夢のようなシンセリード",
+          "pop80sLabel": "80年代ポップ",
+          "pop80sPrompt": "太いドラムとシンセが印象的な80年代ポップトラック",
+          "rock90sLabel": "90年代ロック",
+          "rock90sPrompt": "大きなギターと重いドラムの90年代ロックソング",
+          "upbeatEdmLabel": "アップビート EDM",
+          "upbeatEdmPrompt": "明るく爽やかな EDM トラック、シンコペーションのドラム、空気感のあるパッド、強い感情 bpm: 130",
+          "countryLabel": "カントリー",
+          "countryPrompt": "アコースティックギターの入った明るいカントリーソング",
+          "lofiElectroLabel": "Lo-fi エレクトロ",
+          "lofiElectroPrompt": "オーガニックなサンプルを使った低速 BPM の lo-fi エレクトロチル"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "???? {{count}} ???? {{property}} ??????????????",
+        "descriptionAll": "???? {{count}} ??????????????????????"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} ?????"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} ?????"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} ??????????"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "タイムラインにドロップ",
+        "compoundClipsTimeline": "コンパウンドクリップはタイムラインに配置するのが最適です。",
+        "presetsTimeline": "テキストと図形のプリセットはタイムラインに配置するのが最適です。",
+        "dropOneItem": "1項目をドロップ",
+        "oneMediaAtATime": "キャンバスにはメディアを1つずつ配置してください。",
+        "audioGoesOnTimeline": "音声はタイムラインへ",
+        "visualLayersOnly": "キャンバスへのドロップはビジュアルレイヤーのみ配置します。",
+        "dropToPlace": "ドロップして配置",
+        "addAtPlayhead": "このメディアを再生ヘッドとドロップ位置に追加します。",
+        "dropOneFile": "1ファイルをドロップ",
+        "oneVisualFileAtATime": "キャンバスへのドロップではビジュアルファイルを1つずつ読み込みます。",
+        "importAndPlace": "読み込んで配置",
+        "importAndPlaceDescription": "このファイルを読み込み、キャンバスに配置します。",
+        "noCompatibleTrack": "このドロップに使えるロック解除済みの互換トラックがありません。",
+        "unableToLoadMedia": "ドロップしたメディアを読み込めませんでした。",
+        "mediaNoLongerAvailable": "ドロップしたメディアはもう利用できません。",
+        "dragDropUnsupported": "このブラウザーはドラッグ＆ドロップに対応していません。Chrome または Edge を使用してください。",
+        "filesRejected": "一部のファイルが拒否されました: {{errors}}",
+        "dropAudioOnTimeline": "音声はタイムラインにドロップしてください。",
+        "unableToInspectVideo": "ドロップした動画を検査できませんでした。",
+        "unableToInspectFile": "ドロップしたファイルを検査できませんでした。",
+        "unableToImportFile": "ドロップしたファイルを読み込めませんでした。"
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} ???"
+      },
+      "feedback": {
+        "completedForItems": "{{count}} ??? {{action}} ????????",
+        "couldntProcessItems": "{{count}} ??? {{action}} ???????????{{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} ??????????",
+        "itemsUpdatedFailed": "{{count}} ????????????: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} ????????"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "????? {{count}} ???????????",
+        "failedCount": "{{count}} ???????"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} ????????????????????",
+        "selectedCount": "{{count}} ????",
+        "deleteN": "{{count}} ????",
+        "projectCount": "{{count}} ????????",
+        "bulkDeleteTitle": "???? {{count}} ????????????????"
+      },
+      "trash": {
+        "emptiedTrash": "????? {{count}} ????????????????",
+        "emptiedTrashWithFailures": "{{count}} ????????????????????"
+      },
+      "relativeTime": {
+        "minutesAgo": "{{count}} ??",
+        "hoursAgo": "{{count}} ???",
+        "daysAgo": "{{count}} ??",
+        "weeksAgo": "{{count}} ???",
+        "monthsAgo": "{{count}} ???",
+        "yearsAgo": "{{count}} ??"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} ????????????",
+          "remappedCount": "{{count}} ???????",
+          "ignoredCount": "{{count}} ????",
+          "customCount": "???? {{count}} ?"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} ??????????",
+          "unloadedToast": "{{count}} ??????????????????????"
+        }
+      }
+    }
+  },
+  "ko": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "미디어",
+        "text": "텍스트",
+        "shapes": "도형",
+        "effects": "효과",
+        "transitions": "전환",
+        "ai": "AI",
+        "collapsePanel": "패널 접기",
+        "expandPanel": "패널 펼치기",
+        "keyframeEditor": "키프레임 편집기",
+        "hideKeyframeEditor": "키프레임 편집기 숨기기",
+        "showKeyframeEditor": "키프레임 편집기 표시",
+        "templates": "템플릿",
+        "textGroupSingle": "단일",
+        "textGroupTwoSpans": "2개 구간",
+        "textGroupThreeSpans": "3개 구간",
+        "addText": "텍스트 추가",
+        "pen": "펜",
+        "penToolHint": "펜 도구로 사용자 지정 경로 도형 그리기",
+        "adjustmentLayer": "조정 레이어",
+        "blankAdjustmentLayer": "빈 조정 레이어",
+        "presets": "프리셋"
+      },
+      "tts": {
+        "seek": "탐색",
+        "dialogTitle": "텍스트에서 오디오 생성",
+        "dialogDescription": "음성을 생성하고 텍스트 클립 위치에 삽입합니다.",
+        "kokoroUnsupported": "이 브라우저에서는 WebGPU를 사용할 수 없습니다. Kokoro TTS에는 Chrome 113+, Edge 113+ 또는 Safari 26+가 필요합니다.",
+        "mossUnsupported": "이 브라우저에서는 브라우저 관리 저장소를 사용할 수 없습니다. MOSS 다국어 TTS는 최신 Chromium 브라우저에서 가장 잘 작동합니다.",
+        "engine": "엔진",
+        "engineSupportDetails": "TTS 엔진 지원 정보",
+        "kokoroDescription": "WebGPU 기반 영어 음성입니다.",
+        "supportedLanguages": "지원 언어: {{languages}}.",
+        "kokoroOption": "Kokoro (영어, WebGPU)",
+        "mossOption": "MOSS Nano (20개 언어, CPU)",
+        "voice": "음성",
+        "text": "텍스트",
+        "textPlaceholder": "읽어 줄 텍스트를 입력하세요...",
+        "speed": "속도",
+        "progressPreparing": "로컬 TTS 준비 중...",
+        "insertedAndLinked": "삽입 및 연결됨",
+        "generate": "생성",
+        "generating": "생성 중...",
+        "regenerate": "다시 생성",
+        "insertAndLink": "삽입 및 연결",
+        "inserting": "삽입 중...",
+        "errors": {
+          "openProject": "오디오를 생성하기 전에 프로젝트를 여세요.",
+          "enterText": "합성할 텍스트를 입력하세요.",
+          "kokoroUnsupported": "Kokoro TTS에는 WebGPU가 필요합니다. Chrome 113+, Edge 113+ 또는 Safari 26+를 사용해 보세요.",
+          "mossUnsupported": "MOSS 다국어 TTS에는 브라우저 관리 저장소가 필요합니다. 최신 Chromium 브라우저를 사용해 보세요.",
+          "generateFailed": "음성을 생성하지 못했습니다.",
+          "insertFailed": "오디오를 저장하고 삽입하지 못했습니다.",
+          "supertonicUnsupported": "이 브라우저에서는 로컬 Supertonic TTS 런타임을 실행할 수 없습니다. 최신 Chrome 또는 Edge를 사용해 보세요."
+        },
+        "notifications": {
+          "addedAndLinked": "\"{{fileName}}\"을(를) 타임라인에 추가하고 텍스트와 연결했습니다.",
+          "savedNoTrack": "\"{{fileName}}\"을(를) 저장했지만 사용 가능한 오디오 트랙이 없습니다."
+        },
+        "supertonicUnsupported": "이 브라우저에서는 로컬 Supertonic TTS 런타임을 실행할 수 없습니다. 최신 Chrome 또는 Edge를 사용해 보세요.",
+        "supertonicDescription": "WebGPU 또는 WASM에서 실행되는 31개 언어 로컬 ONNX 음성입니다.",
+        "supertonicOption": "Supertonic 3 (31개 언어, 로컬 ONNX)",
+        "language": "언어",
+        "autoDetectLanguage": "자동 감지",
+        "expressiveTags": "표현 태그"
+      },
+      "aiPanel": {
+        "textToSpeech": "텍스트 음성 변환",
+        "collapseTextToSpeech": "텍스트 음성 변환 접기",
+        "expandTextToSpeech": "텍스트 음성 변환 펼치기",
+        "runsLocally": "{{runtime}}은(는) 브라우저에서 {{backend}}로 로컬 실행됩니다.",
+        "history": "기록 ({{count}}) - {{size}}",
+        "clearAll": "모두 지우기",
+        "musicGeneration": "음악 생성",
+        "collapseMusicGeneration": "음악 생성 접기",
+        "expandMusicGeneration": "음악 생성 펼치기",
+        "musicGenerationInfo": "음악 생성 정보",
+        "musicgenDescription": "Transformers.js를 통해 Xenova의 브라우저용 MusicGen 모델을 사용합니다. 첫 다운로드는 크지만 이후에는 로컬에 캐시됩니다.",
+        "musicgenPromptHint": "장르, 분위기, 템포, 악기 구성을 입력하세요. 짧은 클립일수록 훨씬 빠르게 끝납니다.",
+        "musicgenUnsupported": "이 브라우저에서는 WebGPU를 사용할 수 없습니다. MusicGen에는 Chrome 113+, Edge 113+ 또는 Safari 26+가 필요합니다.",
+        "prompt": "프롬프트",
+        "presets": "프리셋",
+        "musicPromptPlaceholder": "생성할 음악의 종류를 설명하세요...",
+        "length": "길이",
+        "generateMusic": "음악 생성",
+        "musicHistory": "음악 기록 ({{count}}) - {{size}}",
+        "remove": "제거",
+        "saved": "저장됨",
+        "saving": "저장 중...",
+        "saveAndInsert": "저장 및 삽입",
+        "saveToLibrary": "라이브러리에 저장",
+        "progressPreparingMusic": "로컬 음악 생성을 준비 중...",
+        "errors": {
+          "describeMusic": "생성할 음악을 설명하세요.",
+          "musicgenUnsupported": "MusicGen에는 WebGPU가 필요합니다. Chrome 113+, Edge 113+ 또는 Safari 26+를 사용해 보세요.",
+          "generateMusicFailed": "음악을 생성하지 못했습니다.",
+          "saveAudioFailed": "오디오를 미디어 라이브러리에 저장하지 못했습니다."
+        },
+        "notifications": {
+          "savedToLibrary": "\"{{fileName}}\"이(가) 미디어 라이브러리에 저장되었습니다.",
+          "savedAndAdded": "\"{{fileName}}\"이(가) 저장되어 타임라인에 추가되었습니다."
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi 칠",
+          "lofiChillPrompt": "따뜻한 lo-fi 비트, 먼지 느낌의 드럼, 부드러운 베이스, 꿈같은 신스 리드",
+          "pop80sLabel": "80년대 팝",
+          "pop80sPrompt": "묵직한 드럼과 신스가 있는 80년대 팝 트랙",
+          "rock90sLabel": "90년대 록",
+          "rock90sPrompt": "큰 기타와 묵직한 드럼이 있는 90년대 록 노래",
+          "upbeatEdmLabel": "신나는 EDM",
+          "upbeatEdmPrompt": "밝고 경쾌한 EDM 트랙, 싱코페이트 드럼, 포근한 패드, 강한 감정 bpm: 130",
+          "countryLabel": "컨트리",
+          "countryPrompt": "어쿠스틱 기타가 있는 밝은 컨트리 노래",
+          "lofiElectroLabel": "Lo-fi 일렉트로",
+          "lofiElectroPrompt": "오가닉 샘플이 있는 느린 BPM의 lo-fi 일렉트로 칠"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "??? {{count}}? ???? {{property}} ????? ?????",
+        "descriptionAll": "??? {{count}}? ???? ?? ????? ?????"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}}? ??"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}}? ?"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}}? ?? ???"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "타임라인에 놓기",
+        "compoundClipsTimeline": "컴파운드 클립은 타임라인에 배치하는 것이 가장 좋습니다.",
+        "presetsTimeline": "텍스트 및 도형 프리셋은 타임라인에 배치하는 것이 가장 좋습니다.",
+        "dropOneItem": "항목 하나 놓기",
+        "oneMediaAtATime": "캔버스에는 미디어 항목을 한 번에 하나씩 배치하세요.",
+        "audioGoesOnTimeline": "오디오는 타임라인으로",
+        "visualLayersOnly": "캔버스 드롭은 시각 레이어만 배치합니다.",
+        "dropToPlace": "놓아서 배치",
+        "addAtPlayhead": "이 미디어를 재생 헤드와 드롭 위치에 추가합니다.",
+        "dropOneFile": "파일 하나 놓기",
+        "oneVisualFileAtATime": "캔버스 드롭은 시각 파일을 한 번에 하나씩 가져옵니다.",
+        "importAndPlace": "가져와서 배치",
+        "importAndPlaceDescription": "이 파일을 가져와 캔버스에 배치합니다.",
+        "noCompatibleTrack": "이 드롭에 사용할 수 있는 잠금 해제된 호환 트랙이 없습니다.",
+        "unableToLoadMedia": "드롭한 미디어를 불러올 수 없습니다.",
+        "mediaNoLongerAvailable": "드롭한 미디어를 더 이상 사용할 수 없습니다.",
+        "dragDropUnsupported": "이 브라우저는 드래그 앤 드롭을 지원하지 않습니다. Chrome 또는 Edge를 사용하세요.",
+        "filesRejected": "일부 파일이 거부되었습니다: {{errors}}",
+        "dropAudioOnTimeline": "오디오는 타임라인에 놓으세요.",
+        "unableToInspectVideo": "드롭한 비디오를 검사할 수 없습니다.",
+        "unableToInspectFile": "드롭한 파일을 검사할 수 없습니다.",
+        "unableToImportFile": "드롭한 파일을 가져올 수 없습니다."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}}? ??"
+      },
+      "feedback": {
+        "completedForItems": "{{count}}? ??? ?? {{action}} ??.",
+        "couldntProcessItems": "{{count}}? ??? ?? {{action}}? ? ????{{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}}? ??? ?????????.",
+        "itemsUpdatedFailed": "{{count}}? ??? ?????????. ??: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}}? ?? ???"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "??? ??? {{count}}? ??? ????.",
+        "failedCount": "{{count}}? ?????? ??"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}}? ????? ????? ??????.",
+        "selectedCount": "{{count}}? ???",
+        "deleteN": "{{count}}? ??",
+        "projectCount": "{{count}}? ????",
+        "bulkDeleteTitle": "??? {{count}}? ????? ??????"
+      },
+      "trash": {
+        "emptiedTrash": "????? {{count}}? ????? ?????.",
+        "emptiedTrashWithFailures": "{{count}}? ????? ???? ?????."
+      },
+      "relativeTime": {
+        "minutesAgo": "{{count}}? ?",
+        "hoursAgo": "{{count}}?? ?",
+        "daysAgo": "{{count}}? ?",
+        "weeksAgo": "{{count}}? ?",
+        "monthsAgo": "{{count}}?? ?",
+        "yearsAgo": "{{count}}? ?"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}}? ?? ???",
+          "remappedCount": "{{count}}? ????",
+          "ignoredCount": "{{count}}? ???",
+          "customCount": "{{count}}? ??? ??"
+        },
+        "localInference": {
+          "activeJobs": "{{count}}? ?? ??",
+          "unloadedToast": "{{count}}? ?? ???? ???????."
+        }
+      }
+    }
+  },
+  "zh": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "媒体",
+        "text": "文本",
+        "shapes": "形状",
+        "effects": "效果",
+        "transitions": "转场",
+        "ai": "AI",
+        "collapsePanel": "收起面板",
+        "expandPanel": "展开面板",
+        "keyframeEditor": "关键帧编辑器",
+        "hideKeyframeEditor": "隐藏关键帧编辑器",
+        "showKeyframeEditor": "显示关键帧编辑器",
+        "templates": "模板",
+        "textGroupSingle": "单段",
+        "textGroupTwoSpans": "2 段",
+        "textGroupThreeSpans": "3 段",
+        "addText": "添加文本",
+        "pen": "钢笔",
+        "penToolHint": "使用钢笔工具绘制自定义路径形状",
+        "adjustmentLayer": "调整图层",
+        "blankAdjustmentLayer": "空白调整图层",
+        "presets": "预设"
+      },
+      "tts": {
+        "seek": "定位",
+        "dialogTitle": "从文本生成音频",
+        "dialogDescription": "生成语音并插入到文本剪辑的位置。",
+        "kokoroUnsupported": "此浏览器不支持 WebGPU. Kokoro TTS 需要 Chrome 113+, Edge 113+ 或 Safari 26+.",
+        "mossUnsupported": "此浏览器不支持浏览器管理的存储。MOSS 多语言 TTS 在较新的 Chromium 浏览器中效果最佳。",
+        "engine": "引擎",
+        "engineSupportDetails": "TTS 引擎支持详情",
+        "kokoroDescription": "基于 WebGPU 的英语语音。",
+        "supportedLanguages": "支持的语言：{{languages}}。",
+        "kokoroOption": "Kokoro (英语, WebGPU)",
+        "mossOption": "MOSS Nano (20 种语言, CPU)",
+        "voice": "语音",
+        "text": "文本",
+        "textPlaceholder": "输入你想听到朗读的文本...",
+        "speed": "速度",
+        "progressPreparing": "正在准备本地 TTS...",
+        "insertedAndLinked": "已插入并链接",
+        "generate": "生成",
+        "generating": "正在生成...",
+        "regenerate": "重新生成",
+        "insertAndLink": "插入并链接",
+        "inserting": "正在插入...",
+        "errors": {
+          "openProject": "生成音频前请先打开项目。",
+          "enterText": "请输入要合成的文本。",
+          "kokoroUnsupported": "Kokoro TTS 需要 WebGPU. 请尝试 Chrome 113+, Edge 113+ 或 Safari 26+.",
+          "mossUnsupported": "MOSS 多语言 TTS 需要浏览器管理的存储。请尝试较新的 Chromium 浏览器。",
+          "generateFailed": "无法生成语音。",
+          "insertFailed": "无法保存并插入音频。",
+          "supertonicUnsupported": "此浏览器无法运行本地 Supertonic TTS 运行时。请使用最新版 Chrome 或 Edge。"
+        },
+        "notifications": {
+          "addedAndLinked": "已将\"{{fileName}}\"添加到时间线并与文本链接。",
+          "savedNoTrack": "已保存\"{{fileName}}\"，但没有可用的音频轨道。"
+        },
+        "supertonicUnsupported": "此浏览器无法运行本地 Supertonic TTS 运行时。请使用最新版 Chrome 或 Edge。",
+        "supertonicDescription": "在 WebGPU 或 WASM 上运行的 31 种语言本地 ONNX 语音。",
+        "supertonicOption": "Supertonic 3（31 种语言，本地 ONNX）",
+        "language": "语言",
+        "autoDetectLanguage": "自动检测",
+        "expressiveTags": "表现标签"
+      },
+      "aiPanel": {
+        "textToSpeech": "文本转语音",
+        "collapseTextToSpeech": "折叠文本转语音",
+        "expandTextToSpeech": "展开文本转语音",
+        "runsLocally": "{{runtime}} 会在浏览器中通过 {{backend}} 本地运行。",
+        "history": "历史记录 ({{count}}) - {{size}}",
+        "clearAll": "全部清除",
+        "musicGeneration": "音乐生成",
+        "collapseMusicGeneration": "折叠音乐生成",
+        "expandMusicGeneration": "展开音乐生成",
+        "musicGenerationInfo": "音乐生成信息",
+        "musicgenDescription": "通过 Transformers.js 使用 Xenova 的浏览器版 MusicGen 模型。首次下载较大，之后会缓存在本地。",
+        "musicgenPromptHint": "请描述流派、情绪、速度和乐器。较短的片段会完成得更快。",
+        "musicgenUnsupported": "此浏览器不支持 WebGPU. MusicGen 需要 Chrome 113+, Edge 113+ 或 Safari 26+.",
+        "prompt": "提示词",
+        "presets": "预设",
+        "musicPromptPlaceholder": "描述你想生成的音乐类型...",
+        "length": "长度",
+        "generateMusic": "生成音乐",
+        "musicHistory": "音乐历史记录 ({{count}}) - {{size}}",
+        "remove": "移除",
+        "saved": "已保存",
+        "saving": "正在保存...",
+        "saveAndInsert": "保存并插入",
+        "saveToLibrary": "保存到库",
+        "progressPreparingMusic": "正在准备本地音乐生成...",
+        "errors": {
+          "describeMusic": "请描述你想生成的音乐。",
+          "musicgenUnsupported": "MusicGen 需要 WebGPU. 请尝试 Chrome 113+, Edge 113+ 或 Safari 26+.",
+          "generateMusicFailed": "无法生成音乐。",
+          "saveAudioFailed": "无法将音频保存到媒体库。"
+        },
+        "notifications": {
+          "savedToLibrary": "已将\"{{fileName}}\"保存到媒体库。",
+          "savedAndAdded": "已保存\"{{fileName}}\"并添加到时间线。"
+        },
+        "defaultTtsPrompt": "Welcome to freecut. This voice was generated locally in the browser.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi 放松",
+          "lofiChillPrompt": "温暖的 lo-fi 节拍，配有复古鼓点、柔和低音和梦幻合成器主旋律",
+          "pop80sLabel": "80 年代流行",
+          "pop80sPrompt": "80 年代流行曲，配有厚重鼓点和合成器",
+          "rock90sLabel": "90 年代摇滚",
+          "rock90sPrompt": "90 年代摇滚歌曲，配有响亮的吉他和厚重鼓点",
+          "upbeatEdmLabel": "欢快 EDM",
+          "upbeatEdmPrompt": "轻快愉快的 EDM 曲目，配有切分鼓点、空灵铺底和强烈情绪 bpm: 130",
+          "countryLabel": "乡村",
+          "countryPrompt": "一首欢快的乡村歌，配有原声吉他",
+          "lofiElectroLabel": "Lo-fi 电子",
+          "lofiElectroPrompt": "低速 lo-fi 电子\f，配有有机采样"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "????? {{count}} ?????? {{property}} ?????",
+        "descriptionAll": "????? {{count}} ?????????????"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} ???"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} ???"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "??? {{count}} ???"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "拖放到时间线",
+        "compoundClipsTimeline": "复合剪辑仍然最适合放在时间线上。",
+        "presetsTimeline": "文本和形状预设仍然最适合放在时间线上。",
+        "dropOneItem": "拖放一个项目",
+        "oneMediaAtATime": "一次只能在画布上放置一个媒体项目。",
+        "audioGoesOnTimeline": "音频应放到时间线",
+        "visualLayersOnly": "画布拖放只会放置视觉图层。",
+        "dropToPlace": "拖放以放置",
+        "addAtPlayhead": "在播放头和拖放位置添加此媒体。",
+        "dropOneFile": "拖放一个文件",
+        "oneVisualFileAtATime": "画布拖放一次只导入一个视觉文件。",
+        "importAndPlace": "导入并放置",
+        "importAndPlaceDescription": "导入此文件并将其放在画布上。",
+        "noCompatibleTrack": "没有可用于此拖放的未锁定兼容轨道。",
+        "unableToLoadMedia": "无法加载拖放的媒体。",
+        "mediaNoLongerAvailable": "拖放的媒体已不可用。",
+        "dragDropUnsupported": "此浏览器不支持拖放。请使用 Chrome 或 Edge。",
+        "filesRejected": "部分文件被拒绝：{{errors}}",
+        "dropAudioOnTimeline": "请将音频拖放到时间线。",
+        "unableToInspectVideo": "无法检查拖放的视频。",
+        "unableToInspectFile": "无法检查拖放的文件。",
+        "unableToImportFile": "无法导入拖放的文件。"
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} ???"
+      },
+      "feedback": {
+        "completedForItems": "?? {{count}} ????? {{action}}?",
+        "couldntProcessItems": "??? {{count}} ????? {{action}}{{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "??? {{count}} ????",
+        "itemsUpdatedFailed": "??? {{count}} ???????{{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "??? {{count}} ???"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "????? {{count}} ????",
+        "failedCount": "{{count}} ?????"
+      },
+      "list": {
+        "movedToTrashCount": "?? {{count}} ?????????",
+        "selectedCount": "??? {{count}} ?",
+        "deleteN": "?? {{count}} ?",
+        "projectCount": "{{count}} ???",
+        "bulkDeleteTitle": "????? {{count}} ????"
+      },
+      "trash": {
+        "emptiedTrash": "??????? {{count}} ????",
+        "emptiedTrashWithFailures": "???? {{count}} ????"
+      },
+      "relativeTime": {
+        "minutesAgo": "{{count}} ???",
+        "hoursAgo": "{{count}} ???",
+        "daysAgo": "{{count}} ??",
+        "weeksAgo": "{{count}} ??",
+        "monthsAgo": "{{count}} ???",
+        "yearsAgo": "{{count}} ??"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "??? {{count}} ???",
+          "remappedCount": "????? {{count}} ?",
+          "ignoredCount": "??? {{count}} ?",
+          "customCount": "{{count}} ????"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} ?????",
+          "unloadedToast": "??? {{count}} ???????"
+        }
+      }
+    }
+  },
+  "tr": {
+    "editor": {
+      "mediaSidebar": {
+        "media": "Medya",
+        "text": "Metin",
+        "shapes": "Şekiller",
+        "effects": "Efektler",
+        "transitions": "Geçişler",
+        "ai": "YZ",
+        "collapsePanel": "Paneli daralt",
+        "expandPanel": "Paneli genişlet",
+        "keyframeEditor": "Anahtar kare düzenleyici",
+        "hideKeyframeEditor": "Anahtar kare düzenleyiciyi gizle",
+        "showKeyframeEditor": "Anahtar kare düzenleyiciyi göster",
+        "templates": "Şablonlar",
+        "textGroupSingle": "Tek",
+        "textGroupTwoSpans": "2 aralık",
+        "textGroupThreeSpans": "3 aralık",
+        "addText": "Metin ekle",
+        "pen": "Kalem",
+        "penToolHint": "Kalem aracıyla özel bir yol şekli çizin",
+        "adjustmentLayer": "Ayar katmanı",
+        "blankAdjustmentLayer": "Boş ayar katmanı",
+        "presets": "Ön Ayarlar"
+      },
+      "tts": {
+        "seek": "Git",
+        "dialogTitle": "Metinden ses oluştur",
+        "dialogDescription": "Konuşma oluşturup metin klibinin konumuna ekleyin.",
+        "kokoroUnsupported": "Bu tarayıcıda WebGPU kullanılamıyor. Kokoro TTS için Chrome 113+, Edge 113+ veya Safari 26+ gerekir.",
+        "mossUnsupported": "Bu tarayıcıda tarayıcı tarafından yönetilen depolama kullanılamıyor. MOSS çok dilli TTS en iyi güncel bir Chromium tarayıcıda çalışır.",
+        "engine": "Motor",
+        "engineSupportDetails": "TTS motoru destek ayrıntıları",
+        "kokoroDescription": "WebGPU üzerinde İngilizce sesler.",
+        "supportedLanguages": "Desteklenen diller: {{languages}}.",
+        "kokoroOption": "Kokoro (İngilizce, WebGPU)",
+        "mossOption": "MOSS Nano (20 dil, CPU)",
+        "voice": "Ses",
+        "text": "Metin",
+        "textPlaceholder": "Seslendirilmesini istediğiniz metni girin...",
+        "speed": "Hız",
+        "progressPreparing": "Yerel TTS hazırlanıyor...",
+        "insertedAndLinked": "Eklendi ve bağlandı",
+        "generate": "Oluştur",
+        "generating": "Oluşturuluyor...",
+        "regenerate": "Yeniden oluştur",
+        "insertAndLink": "Ekle ve bağla",
+        "inserting": "Ekleniyor...",
+        "errors": {
+          "openProject": "Ses oluşturmadan önce bir proje açın.",
+          "enterText": "Sentezlemek için metin girin.",
+          "kokoroUnsupported": "Kokoro TTS için WebGPU gerekir. Chrome 113+, Edge 113+ veya Safari 26+ deneyin.",
+          "mossUnsupported": "MOSS çok dilli TTS için tarayıcı tarafından yönetilen depolama gerekir. Güncel bir Chromium tarayıcı deneyin.",
+          "generateFailed": "Konuşma oluşturulamadı.",
+          "insertFailed": "Ses kaydedilip eklenemedi.",
+          "supertonicUnsupported": "Bu tarayıcı yerel Supertonic TTS çalışma zamanını çalıştıramıyor. Güncel bir Chrome veya Edge deneyin."
+        },
+        "notifications": {
+          "addedAndLinked": "\"{{fileName}}\" zaman çizelgesine eklendi ve metinle bağlandı.",
+          "savedNoTrack": "\"{{fileName}}\" kaydedildi ancak kullanılabilir ses izi yok."
+        },
+        "supertonicUnsupported": "Bu tarayıcı yerel Supertonic TTS çalışma zamanını çalıştıramıyor. Güncel bir Chrome veya Edge deneyin.",
+        "supertonicDescription": "WebGPU veya WASM üzerinde 31 dilde yerel ONNX sesleri.",
+        "supertonicOption": "Supertonic 3 (31 dil, yerel ONNX)",
+        "language": "Dil",
+        "autoDetectLanguage": "Otomatik algıla",
+        "expressiveTags": "İfade etiketleri"
+      },
+      "aiPanel": {
+        "textToSpeech": "Metinden Sese",
+        "collapseTextToSpeech": "Metinden sese bölümünü daralt",
+        "expandTextToSpeech": "Metinden sese bölümünü genişlet",
+        "runsLocally": "{{runtime}}, tarayıcıda {{backend}} üzerinde yerel çalışır.",
+        "history": "Geçmiş ({{count}}) - {{size}}",
+        "clearAll": "Tümünü temizle",
+        "musicGeneration": "Müzik Oluşturma",
+        "collapseMusicGeneration": "Müzik oluşturmayı daralt",
+        "expandMusicGeneration": "Müzik oluşturmayı genişlet",
+        "musicGenerationInfo": "Müzik oluşturma bilgisi",
+        "musicgenDescription": "Transformers.js üzerinden Xenova'nın tarayıcıya hazır MusicGen modelini kullanır. İlk indirme büyüktür, sonra yerelde önbellekte kalır.",
+        "musicgenPromptHint": "Tür, ruh hali, tempo ve enstrümantasyon içeren istem yazın. Daha kısa klipler çok daha hızlı biter.",
+        "musicgenUnsupported": "Bu tarayıcıda WebGPU kullanılamıyor. MusicGen için Chrome 113+, Edge 113+ veya Safari 26+ gerekir.",
+        "prompt": "İstem",
+        "presets": "Ön Ayarlar",
+        "musicPromptPlaceholder": "Oluşturmak istediğiniz müziği açıklayın...",
+        "length": "Uzunluk",
+        "generateMusic": "Müzik Oluştur",
+        "musicHistory": "Müzik Geçmişi ({{count}}) - {{size}}",
+        "remove": "Kaldır",
+        "saved": "Kaydedildi",
+        "saving": "Kaydediliyor...",
+        "saveAndInsert": "Kaydet ve Ekle",
+        "saveToLibrary": "Kitaplığa Kaydet",
+        "progressPreparingMusic": "Yerel müzik oluşturma hazırlanıyor...",
+        "errors": {
+          "describeMusic": "Oluşturmak istediğiniz müziği açıklayın.",
+          "musicgenUnsupported": "MusicGen için WebGPU gerekir. Chrome 113+, Edge 113+ veya Safari 26+ deneyin.",
+          "generateMusicFailed": "Müzik oluşturulamadı.",
+          "saveAudioFailed": "Ses medya kitaplığına kaydedilemedi."
+        },
+        "notifications": {
+          "savedToLibrary": "\"{{fileName}}\" medya kitaplığına kaydedildi.",
+          "savedAndAdded": "\"{{fileName}}\" kaydedildi ve zaman çizelgesine eklendi."
+        },
+        "defaultTtsPrompt": "FreeCut'a hoş geldiniz. Bu ses tarayıcıda yerel olarak oluşturuldu.",
+        "musicPresets": {
+          "lofiChillLabel": "Lo-fi Rahat",
+          "lofiChillPrompt": "Tozlu davullar, yumuşak bas ve rüya gibi synth melodisiyle sıcak lo-fi beat",
+          "pop80sLabel": "80'ler Pop",
+          "pop80sPrompt": "Baslı davullar ve synth içeren 80'ler pop parçası",
+          "rock90sLabel": "90'lar Rock",
+          "rock90sPrompt": "Gür gitarlar ve güçlü davullarla 90'lar rock şarkısı",
+          "upbeatEdmLabel": "Enerjik EDM",
+          "upbeatEdmPrompt": "Senkoplu davullar, havadar pad'ler ve güçlü duygular içeren hafif ve neşeli EDM parçası bpm: 130",
+          "countryLabel": "Country",
+          "countryPrompt": "Akustik gitarlarla neşeli bir country şarkısı",
+          "lofiElectroLabel": "Lo-fi Elektro",
+          "lofiElectroPrompt": "Organik örneklerle yavaş bpm lo-fi elektro chill"
+        }
+      },
+      "clearKeyframesDialog": {
+        "descriptionProperty": "{{count}} seçili öğeden {{property}} anahtar kareleri temizlensin mi?",
+        "descriptionAll": "{{count}} seçili öğeden tüm anahtar kareler temizlensin mi?"
+      },
+      "localInferencePill": {
+        "jobs": "{{count}} iş"
+      },
+      "subtitleSection": {
+        "cueCount": "{{count}} ipucu"
+      },
+      "propertiesSidebar": {
+        "clipsSelected": "{{count}} klip seçildi"
+      }
+    },
+    "preview": {
+      "canvasDrop": {
+        "dropOnTimeline": "Zaman çizelgesine bırak",
+        "compoundClipsTimeline": "Bileşik klipler hâlâ en iyi zaman çizelgesine yerleşir.",
+        "presetsTimeline": "Metin ve şekil ön ayarları hâlâ en iyi zaman çizelgesine yerleşir.",
+        "dropOneItem": "Bir öğe bırak",
+        "oneMediaAtATime": "Tuvale tek seferde bir medya öğesi yerleştirin.",
+        "audioGoesOnTimeline": "Ses zaman çizelgesine gider",
+        "visualLayersOnly": "Tuvale bırakma yalnızca görsel katmanları yerleştirir.",
+        "dropToPlace": "Yerleştirmek için bırak",
+        "addAtPlayhead": "Bu medyayı oynatma kafasında ve bırakma konumunda ekle.",
+        "dropOneFile": "Bir dosya bırak",
+        "oneVisualFileAtATime": "Tuvale bırakma tek seferde bir görsel dosya içe aktarır.",
+        "importAndPlace": "İçe aktar ve yerleştir",
+        "importAndPlaceDescription": "Bu dosyayı içe aktar ve tuvale yerleştir.",
+        "noCompatibleTrack": "Bu bırakma için kilidi açık uyumlu iz yok.",
+        "unableToLoadMedia": "Bırakılan medya yüklenemedi.",
+        "mediaNoLongerAvailable": "Bırakılan medya artık kullanılamıyor.",
+        "dragDropUnsupported": "Bu tarayıcıda sürükle-bırak desteklenmiyor. Chrome veya Edge kullanın.",
+        "filesRejected": "Bazı dosyalar reddedildi: {{errors}}",
+        "dropAudioOnTimeline": "Sesi bunun yerine zaman çizelgesine bırakın.",
+        "unableToInspectVideo": "Bırakılan video incelenemedi.",
+        "unableToInspectFile": "Bırakılan dosya incelenemedi.",
+        "unableToImportFile": "Bırakılan dosya içe aktarılamadı."
+      }
+    },
+    "settings": {
+      "ai": {
+        "scene": "{{count}} sahne"
+      },
+      "feedback": {
+        "completedForItems": "{{action}} {{count}} öğe için tamamlandı.",
+        "couldntProcessItems": "{{count}} öğe için {{action}} yapılamadı{{detail}}"
+      },
+      "toasts": {
+        "itemsUpdated": "{{count}} öğe güncellendi.",
+        "itemsUpdatedFailed": "{{count}} öğe güncellendi. Başarısız: {{failed}}"
+      }
+    },
+    "projects": {
+      "legacyMigration": {
+        "errorsLogged": "{{count}} hata kaydedildi"
+      },
+      "legacyMigrationErrors": {
+        "retryStillFailing": "Yeniden deneme hâlâ {{count}} hata içeriyor.",
+        "failedCount": "{{count}} taşıma hatası"
+      },
+      "list": {
+        "movedToTrashCount": "{{count}} proje çöp kutusuna taşındı.",
+        "selectedCount": "{{count}} seçili",
+        "deleteN": "{{count}} sil",
+        "projectCount": "{{count}} proje",
+        "bulkDeleteTitle": "{{count}} seçili proje silinsin mi?"
+      },
+      "trash": {
+        "emptiedTrash": "Çöp kutusundan {{count}} proje boşaltıldı.",
+        "emptiedTrashWithFailures": "{{count}} proje silinemedi."
+      },
+      "relativeTime": {
+        "minutesAgo": "{{count}} dk önce",
+        "hoursAgo": "{{count}} sa önce",
+        "daysAgo": "{{count}} gün önce",
+        "weeksAgo": "{{count}} hafta önce",
+        "monthsAgo": "{{count}} ay önce",
+        "yearsAgo": "{{count}} yıl önce"
+      },
+      "settings": {
+        "hotkeys": {
+          "importedCommands": "{{count}} komut içe aktarıldı",
+          "remappedCount": "{{count}} yeniden eşlendi",
+          "ignoredCount": "{{count}} yok sayıldı",
+          "customCount": "{{count}} özel"
+        },
+        "localInference": {
+          "activeJobs": "{{count}} etkin iş",
+          "unloadedToast": "{{count}} yerel çalışma zamanı boşaltıldı."
+        }
+      }
+    }
+  }
+}

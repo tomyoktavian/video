@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MapPin, Trash2 } from 'lucide-react'
@@ -23,6 +24,7 @@ const MARKER_PRESET_COLORS = [
  * Allows editing frame position, label, and color.
  */
 export function MarkerPanel() {
+  const { t } = useTranslation()
   // Granular selectors (Zustand v5 best practice)
   const selectedMarkerId = useSelectionStore((s) => s.selectedMarkerId)
   const clearSelection = useSelectionStore((s) => s.clearSelection)
@@ -99,16 +101,16 @@ export function MarkerPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <MapPin className="w-8 h-8 text-muted-foreground/50 mb-2" />
-        <p className="text-xs text-muted-foreground">Marker not found</p>
+        <p className="text-xs text-muted-foreground">{t('editor.markerPanel.notFound')}</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <PropertySection title="Marker" icon={MapPin} defaultOpen={true}>
+      <PropertySection title={t('editor.markerPanel.title')} icon={MapPin} defaultOpen={true}>
         {/* Frame position */}
-        <PropertyRow label="Frame">
+        <PropertyRow label={t('editor.markerPanel.frame')}>
           <NumberInput
             value={selectedMarker.frame}
             onChange={handleFrameChange}
@@ -120,25 +122,25 @@ export function MarkerPanel() {
         </PropertyRow>
 
         {/* Timecode (read-only) */}
-        <PropertyRow label="Time">
+        <PropertyRow label={t('editor.markerPanel.time')}>
           <span className="text-xs font-mono tabular-nums text-muted-foreground">
             {formatTimecode(selectedMarker.frame)}
           </span>
         </PropertyRow>
 
         {/* Label */}
-        <PropertyRow label="Label">
+        <PropertyRow label={t('editor.markerPanel.label')}>
           <Input
             value={selectedMarker.label || ''}
             onChange={handleLabelChange}
-            placeholder="Enter label..."
+            placeholder={t('editor.markerPanel.labelPlaceholder')}
             className="h-7 text-xs flex-1 min-w-0"
           />
         </PropertyRow>
 
         {/* Color */}
         <ColorPicker
-          label="Color"
+          label={t('editor.markerPanel.color')}
           color={selectedMarker.color}
           onChange={handleColorChange}
           onReset={handleResetColor}
@@ -155,7 +157,7 @@ export function MarkerPanel() {
             onClick={handleDelete}
           >
             <Trash2 className="w-3 h-3 mr-1.5" />
-            Delete Marker
+            {t('editor.markerPanel.deleteMarker')}
           </Button>
         </div>
       </PropertySection>

@@ -1,5 +1,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
+import { i18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Trash2, Zap, RotateCcw, ChevronDown } from 'lucide-react'
 import { HexColorPicker } from 'react-colorful'
@@ -58,6 +60,7 @@ function TransitionColorPicker({
   initialColor: string
   onColorChange: (color: string) => void
 }) {
+  const { t } = useTranslation()
   const [color, setColor] = useState(initialColor)
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -91,7 +94,7 @@ function TransitionColorPicker({
     <div ref={containerRef} className="relative flex-1">
       <button
         type="button"
-        aria-label={`${label} color`}
+        aria-label={t('editor.transitionPanel.paramColorAria', { label })}
         onClick={() => setIsOpen((open) => !open)}
         className="flex w-full items-center gap-2"
       >
@@ -173,37 +176,37 @@ function getPresentationOptionLabel(
 }
 
 const DIRECTION_OPTIONS = [
-  { value: 'from-left', label: 'Left' },
-  { value: 'from-right', label: 'Right' },
-  { value: 'from-top', label: 'Top' },
-  { value: 'from-bottom', label: 'Bottom' },
+  { value: 'from-left', labelKey: 'editor.transitionPanel.directionLeft' },
+  { value: 'from-right', labelKey: 'editor.transitionPanel.directionRight' },
+  { value: 'from-top', labelKey: 'editor.transitionPanel.directionTop' },
+  { value: 'from-bottom', labelKey: 'editor.transitionPanel.directionBottom' },
 ] as const satisfies ReadonlyArray<{
   value: WipeDirection | SlideDirection | FlipDirection
-  label: string
+  labelKey: string
 }>
 
 const EASE_OPTIONS = [
-  { value: 'linear', label: 'Linear' },
-  { value: 'ease-in', label: 'In' },
-  { value: 'ease-out', label: 'Out' },
-  { value: 'ease-in-out', label: 'In & Out' },
-] as const satisfies ReadonlyArray<{ value: TransitionTiming; label: string }>
+  { value: 'linear', labelKey: 'editor.transitionPanel.easeLinear' },
+  { value: 'ease-in', labelKey: 'editor.transitionPanel.easeIn' },
+  { value: 'ease-out', labelKey: 'editor.transitionPanel.easeOut' },
+  { value: 'ease-in-out', labelKey: 'editor.transitionPanel.easeInOut' },
+] as const satisfies ReadonlyArray<{ value: TransitionTiming; labelKey: string }>
 
 const PLACEMENT_OPTIONS = [
   {
     value: 1,
-    label: 'Left',
-    title: 'Place transition before the cut',
+    labelKey: 'editor.transitionPanel.placementLeft',
+    titleKey: 'editor.transitionPanel.placementLeftTooltip',
   },
   {
     value: 0.5,
-    label: 'Center',
-    title: 'Center transition on the cut',
+    labelKey: 'editor.transitionPanel.placementCenter',
+    titleKey: 'editor.transitionPanel.placementCenterTooltip',
   },
   {
     value: 0,
-    label: 'Right',
-    title: 'Place transition after the cut',
+    labelKey: 'editor.transitionPanel.placementRight',
+    titleKey: 'editor.transitionPanel.placementRightTooltip',
   },
 ] as const
 
@@ -218,6 +221,7 @@ function getSupportedEaseOptions(
  * Allows editing presentation style, duration, timing, and direction.
  */
 export function TransitionPanel() {
+  const { t } = useTranslation()
   // Granular selectors (Zustand v5 best practice)
   const selectedTransitionId = useSelectionStore((s: SelectionState) => s.selectedTransitionId)
   const clearSelection = useSelectionStore((s: SelectionActions) => s.clearSelection)
@@ -263,7 +267,7 @@ export function TransitionPanel() {
   )
   const currentPresentationLabel = currentPresentationConfig
     ? getPresentationOptionLabel(currentPresentationConfig)
-    : 'Select preset'
+    : t('editor.transitionPanel.selectPreset')
   const transitionDefinition = useMemo(
     () =>
       selectedTransition
@@ -373,7 +377,9 @@ export function TransitionPanel() {
 
     return presentationConfigGroups
       .map(([category, configs]) => {
-        const categoryTitle = TRANSITION_CATEGORY_INFO[category]?.title ?? category
+        const categoryTitle = TRANSITION_CATEGORY_INFO[category]
+          ? i18n.t(TRANSITION_CATEGORY_INFO[category].titleKey)
+          : category
         const filtered = configs.filter((config) =>
           [config.id, config.label, config.description, config.direction, category, categoryTitle]
             .filter(Boolean)
@@ -568,15 +574,22 @@ export function TransitionPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Zap className="w-8 h-8 text-muted-foreground/50 mb-2" />
-        <p className="text-xs text-muted-foreground">Transition not found</p>
+        <p className="text-xs text-muted-foreground">{t('editor.transitionPanel.notFound')}</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <PropertySection title="Transition" icon={Zap} defaultOpen={true}>
-        <PropertyRow label="Preset" tooltip="Transition style preset">
+      <PropertySection
+        title={t('editor.transitionPanel.sectionTitle')}
+        icon={Zap}
+        defaultOpen={true}
+      >
+        <PropertyRow
+          label={t('editor.transitionPanel.preset')}
+          tooltip={t('editor.transitionPanel.presetTooltip')}
+        >
           <div className="w-full">
             <Button
               ref={presetTriggerRef}
@@ -606,10 +619,10 @@ export function TransitionPanel() {
                   <div className="border-b border-border p-1.5">
                     <input
                       type="search"
-                      aria-label="Search transitions"
+                      aria-label={t('editor.transitionPanel.searchTransitions')}
                       value={presetSearchQuery}
                       onChange={(event) => setPresetSearchQuery(event.currentTarget.value)}
-                      placeholder="Search transitions"
+                      placeholder={t('editor.transitionPanel.searchTransitions')}
                       className="h-7 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
                       autoFocus
                     />
@@ -619,7 +632,9 @@ export function TransitionPanel() {
                       <div key={category}>
                         {index > 0 && <div className="-mx-1 my-1 h-px bg-muted" />}
                         <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                          {TRANSITION_CATEGORY_INFO[category]?.title ?? category}
+                          {TRANSITION_CATEGORY_INFO[category]
+                            ? t(TRANSITION_CATEGORY_INFO[category].titleKey)
+                            : category}
                         </div>
                         {configs.map((config) => {
                           const value = getPresentationOptionValue(config)
@@ -646,7 +661,7 @@ export function TransitionPanel() {
                     ))}
                     {filteredPresentationConfigGroups.length === 0 && (
                       <div className="px-2 py-6 text-center text-xs text-muted-foreground">
-                        No transitions found
+                        {t('editor.transitionPanel.noTransitionsFound')}
                       </div>
                     )}
                   </div>
@@ -657,7 +672,10 @@ export function TransitionPanel() {
         </PropertyRow>
 
         {/* Duration slider */}
-        <PropertyRow label="Duration" tooltip="Transition duration">
+        <PropertyRow
+          label={t('editor.transitionPanel.duration')}
+          tooltip={t('editor.transitionPanel.durationTooltip')}
+        >
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={selectedTransition.durationInFrames}
@@ -675,7 +693,7 @@ export function TransitionPanel() {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetDuration}
-              title="Reset to 1s"
+              title={t('editor.transitionPanel.resetToDefault')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -683,24 +701,28 @@ export function TransitionPanel() {
         </PropertyRow>
 
         <PropertyRow
-          label="Placement"
-          tooltip="Position the transition before, across, or after the cut"
+          label={t('editor.transitionPanel.placement')}
+          tooltip={t('editor.transitionPanel.placementTooltip')}
         >
           <div className="flex items-center gap-0.5 p-0.5 bg-secondary rounded-md">
-            {PLACEMENT_OPTIONS.map(({ value, label, title }) => {
+            {PLACEMENT_OPTIONS.map(({ value, labelKey, titleKey }) => {
               const maxForPlacement =
                 leftClip && rightClip
                   ? getMaxTransitionDurationForHandles(leftClip, rightClip, value)
                   : 0
               const disabled = maxForPlacement < selectedTransition.durationInFrames
               const selected = selectedAlignment === value
+              const label = t(labelKey)
+              const title = t(titleKey)
 
               return (
                 <button
-                  key={label}
+                  key={labelKey}
                   type="button"
-                  aria-label={`${label} placement`}
-                  title={disabled ? `${title} (not enough source handle)` : title}
+                  aria-label={t('editor.transitionPanel.placementAria', { label })}
+                  title={
+                    disabled ? t('editor.transitionPanel.placementDisabled', { title }) : title
+                  }
                   disabled={disabled}
                   onClick={() => handlePlacementChange(value)}
                   className={cn(
@@ -719,7 +741,10 @@ export function TransitionPanel() {
         </PropertyRow>
 
         {easeOptions.length > 0 && (
-          <PropertyRow label="Ease" tooltip="Easing curve for the transition">
+          <PropertyRow
+            label={t('editor.transitionPanel.ease')}
+            tooltip={t('editor.transitionPanel.easeTooltip')}
+          >
             <div className="flex items-center gap-0.5 p-0.5 bg-secondary rounded-md">
               {easeOptions.map((option) => (
                 <button
@@ -733,7 +758,7 @@ export function TransitionPanel() {
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               ))}
             </div>
@@ -741,13 +766,16 @@ export function TransitionPanel() {
         )}
 
         {transitionDefinition?.hasDirection && directionOptions.length > 0 && (
-          <PropertyRow label="Direction" tooltip="Direction for the transition motion">
+          <PropertyRow
+            label={t('editor.transitionPanel.direction')}
+            tooltip={t('editor.transitionPanel.directionTooltip')}
+          >
             <div className="flex items-center gap-0.5 p-0.5 bg-secondary rounded-md">
               {directionOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  aria-label={option.label}
+                  aria-label={t(option.labelKey)}
                   onClick={() => handleDirectionChange(option.value)}
                   className={cn(
                     'px-3 py-1 text-xs rounded transition-colors',
@@ -756,7 +784,7 @@ export function TransitionPanel() {
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               ))}
             </div>
@@ -791,8 +819,8 @@ export function TransitionPanel() {
                 className="h-7 w-7 flex-shrink-0"
                 onClick={() => handleParameterReset(parameter)}
                 disabled={isParameterAtDefault(selectedTransition.properties, parameter)}
-                title={`Reset ${parameter.label}`}
-                aria-label={`Reset ${parameter.label}`}
+                title={t('editor.transitionPanel.resetParam', { label: parameter.label })}
+                aria-label={t('editor.transitionPanel.resetParam', { label: parameter.label })}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </Button>
@@ -810,7 +838,7 @@ export function TransitionPanel() {
             onClick={handleDelete}
           >
             <Trash2 className="w-3 h-3 mr-1.5" />
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </PropertySection>

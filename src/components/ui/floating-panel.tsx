@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,6 +120,7 @@ export const FloatingPanel = memo(function FloatingPanel({
   onClose,
   className = '',
 }: FloatingPanelProps) {
+  const { t } = useTranslation()
   const [bounds, setBounds] = useState<FloatingPanelBounds>(() => {
     const initial = storageKey ? loadBounds(storageKey, defaultBounds) : defaultBounds
     // When autoHeight/autoWidth, use small placeholders for positioning
@@ -327,7 +329,7 @@ export const FloatingPanel = memo(function FloatingPanel({
               type="button"
               className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50 transition-colors"
               onClick={onClose}
-              aria-label="Dock panel"
+              aria-label={t('appShell.dockPanel')}
             >
               ×
             </button>

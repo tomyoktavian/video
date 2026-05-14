@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Sparkles, Bug, Zap, ExternalLink } from 'lucide-react'
+import { i18n } from '@/i18n'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -13,11 +15,11 @@ const GITHUB_REPO_URL = 'https://github.com/walterlow/freecut'
 
 const GROUP_CONFIG: Record<
   ChangelogGroup,
-  { label: string; icon: ComponentType<{ className?: string }> }
+  { labelKey: string; icon: ComponentType<{ className?: string }> }
 > = {
-  added: { label: 'Added', icon: Sparkles },
-  fixed: { label: 'Fixed', icon: Bug },
-  improved: { label: 'Improved', icon: Zap },
+  added: { labelKey: 'editor.whatsNew.groupAdded', icon: Sparkles },
+  fixed: { labelKey: 'editor.whatsNew.groupFixed', icon: Bug },
+  improved: { labelKey: 'editor.whatsNew.groupImproved', icon: Zap },
 }
 
 const GROUP_ORDER: ChangelogGroup[] = ['added', 'fixed', 'improved']
@@ -27,7 +29,7 @@ function capitalize(s: string): string {
 }
 
 function formatEntryLabel(entry: ChangelogEntry): string {
-  return entry.version === 'current' ? 'This Week' : entry.version
+  return entry.version === 'current' ? i18n.t('editor.whatsNew.thisWeek') : entry.version
 }
 
 function formatWeekRange(mondayIso: string): string {
@@ -42,8 +44,9 @@ function formatWeekRange(mondayIso: string): string {
 
 function formatEntrySubtitle(entry: ChangelogEntry): string {
   if (entry.subtitle) return entry.subtitle
-  if (entry.version === 'current') return `As of ${formatSingleDate(entry.date)}`
-  return `Week of ${formatWeekRange(entry.date)}`
+  if (entry.version === 'current')
+    return i18n.t('editor.whatsNew.asOf', { date: formatSingleDate(entry.date) })
+  return i18n.t('editor.whatsNew.weekOf', { range: formatWeekRange(entry.date) })
 }
 
 function formatSingleDate(iso: string): string {
@@ -61,6 +64,7 @@ interface WhatsNewDialogProps {
 }
 
 export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
+  const { t } = useTranslation()
   const entries = useMemo<ChangelogEntry[]>(
     () => (data.current ? [data.current, ...data.releases] : data.releases),
     [],
@@ -81,7 +85,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
         <DialogHeader className="px-6 pt-5 pb-3">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            What's New
+            {t('editor.whatsNew.title')}
           </DialogTitle>
         </DialogHeader>
         <Separator />
@@ -106,7 +110,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
                           <span className="font-medium truncate">{formatEntryLabel(entry)}</span>
                           {isCurrent && (
                             <span className="text-[10px] uppercase tracking-wide text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
-                              New
+                              {t('editor.whatsNew.newBadge')}
                             </span>
                           )}
                         </div>
@@ -126,14 +130,18 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
         </div>
         <Separator />
         <div className="px-6 py-3 flex justify-between items-center text-xs text-muted-foreground">
-          <span>{latestReleaseVersion ? `Released: v${latestReleaseVersion}` : 'Pre-release'}</span>
+          <span>
+            {latestReleaseVersion
+              ? t('editor.whatsNew.released', { version: latestReleaseVersion })
+              : t('editor.whatsNew.preRelease')}
+          </span>
           <a
             href={`${GITHUB_REPO_URL}/blob/main/CHANGELOG.md`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 hover:text-foreground hover:underline"
           >
-            Full changelog
+            {t('editor.whatsNew.fullChangelog')}
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
@@ -148,12 +156,12 @@ function ChangelogEntryView({ entry }: { entry: ChangelogEntry }) {
       {GROUP_ORDER.map((groupKey) => {
         const items = entry.groups[groupKey]
         if (!items || items.length === 0) return null
-        const { label, icon: Icon } = GROUP_CONFIG[groupKey]
+        const { labelKey, icon: Icon } = GROUP_CONFIG[groupKey]
         return (
           <section key={groupKey} className="space-y-2.5">
             <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <Icon className="h-3.5 w-3.5" />
-              {label}
+              {i18n.t(labelKey)}
             </h3>
             <ul className="space-y-1.5 list-disc pl-5 marker:text-muted-foreground/60">
               {items.map((item, i) => (

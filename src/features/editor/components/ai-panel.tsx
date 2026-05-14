@@ -8,6 +8,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CheckCircle2,
   ChevronDown,
@@ -50,6 +51,7 @@ import {
 } from '@/shared/utils/tts-settings'
 import { SliderInput } from '@/shared/ui/property-controls'
 import { cn } from '@/shared/ui/cn'
+import { i18n } from '@/i18n'
 import {
   importMediaLibraryService,
   useMediaLibraryStore,
@@ -113,25 +115,32 @@ import {
 } from '../services/musicgen-service'
 import { customTtsService } from '../services/custom-tts-service'
 
-const DEFAULT_PROMPT = 'Welcome to freecut. This voice was generated locally in the browser.'
-
 const MUSIC_PROMPT_PRESETS = [
   {
-    label: 'Lo-fi Chill',
-    prompt: 'Warm lo-fi beat with dusty drums, mellow bass, and a dreamy synth lead',
+    labelKey: 'editor.aiPanel.musicPresets.lofiChillLabel',
+    promptKey: 'editor.aiPanel.musicPresets.lofiChillPrompt',
   },
-  { label: '80s Pop', prompt: '80s pop track with bassy drums and synth' },
-  { label: '90s Rock', prompt: '90s rock song with loud guitars and heavy drums' },
   {
-    label: 'Upbeat EDM',
-    prompt:
-      'A light and cheery EDM track, with syncopated drums, airy pads, and strong emotions bpm: 130',
+    labelKey: 'editor.aiPanel.musicPresets.pop80sLabel',
+    promptKey: 'editor.aiPanel.musicPresets.pop80sPrompt',
   },
-  { label: 'Country', prompt: 'A cheerful country song with acoustic guitars' },
-  { label: 'Lo-fi Electro', prompt: 'Lofi slow bpm electro chill with organic samples' },
+  {
+    labelKey: 'editor.aiPanel.musicPresets.rock90sLabel',
+    promptKey: 'editor.aiPanel.musicPresets.rock90sPrompt',
+  },
+  {
+    labelKey: 'editor.aiPanel.musicPresets.upbeatEdmLabel',
+    promptKey: 'editor.aiPanel.musicPresets.upbeatEdmPrompt',
+  },
+  {
+    labelKey: 'editor.aiPanel.musicPresets.countryLabel',
+    promptKey: 'editor.aiPanel.musicPresets.countryPrompt',
+  },
+  {
+    labelKey: 'editor.aiPanel.musicPresets.lofiElectroLabel',
+    promptKey: 'editor.aiPanel.musicPresets.lofiElectroPrompt',
+  },
 ]
-
-const DEFAULT_MUSIC_PROMPT = MUSIC_PROMPT_PRESETS[0]!.prompt
 
 const DEFAULT_IMAGE_PROMPT =
   'A cinematic photograph of a lone figure walking down a rain-soaked alleyway at night, neon signs reflecting in the puddles.'
@@ -254,7 +263,7 @@ const MiniAudioPlayer = memo(function MiniAudioPlayer({ src }: { src: string }) 
         type="button"
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm glow-primary-sm transition-colors hover:bg-primary/90"
         onClick={togglePlay}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? i18n.t('preview.player.pause') : i18n.t('preview.player.play')}
       >
         {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-px" />}
       </button>
@@ -268,7 +277,7 @@ const MiniAudioPlayer = memo(function MiniAudioPlayer({ src }: { src: string }) 
         max={100}
         step={0.1}
         className="min-w-0 flex-1"
-        aria-label="Seek"
+        aria-label={i18n.t('editor.tts.seek')}
       />
       <span className="shrink-0 select-none font-mono text-[10px] tabular-nums text-muted-foreground">
         {formatTime(currentTime)}
@@ -330,6 +339,7 @@ function insertAudioItemAtPlayhead(media: MediaMetadata, blobUrl: string): boole
 }
 
 export const AiPanel = memo(function AiPanel() {
+  const { t } = useTranslation()
   const currentProjectId = useMediaLibraryStore((state) => state.currentProjectId)
   const loadMediaItems = useMediaLibraryStore((state) => state.loadMediaItems)
   const selectMedia = useMediaLibraryStore((state) => state.selectMedia)
@@ -340,7 +350,7 @@ export const AiPanel = memo(function AiPanel() {
   const imageGeneratorConfig = useCustomAiStore((s) => s.imageGenerator)
   const isCustomImageGeneratorConfigured = isImageGeneratorConfigured(imageGeneratorConfig)
 
-  const [ttsText, setTtsText] = useState(DEFAULT_PROMPT)
+  const [ttsText, setTtsText] = useState(() => t('editor.aiPanel.defaultTtsPrompt'))
   const [ttsEngine, setTtsEngine] = useState<StoredTtsEngine>(() =>
     // First-run users with Custom TTS configured default to 'custom'; otherwise
     // Supertonic is the default local engine. Users who previously chose
@@ -366,7 +376,7 @@ export const AiPanel = memo(function AiPanel() {
   const [ttsGenerations, setTtsGenerations] = useState<AudioGeneration[]>([])
   const [ttsSectionOpen, setTtsSectionOpen] = useState(true)
 
-  const [musicPrompt, setMusicPrompt] = useState(DEFAULT_MUSIC_PROMPT)
+  const [musicPrompt, setMusicPrompt] = useState(() => t(MUSIC_PROMPT_PRESETS[0]!.promptKey))
   const [musicModel] = useState<MusicgenModelId>(DEFAULT_MUSICGEN_MODEL)
   const currentMusicModel = useMemo(() => getMusicgenModelDefinition(musicModel), [musicModel])
   const [musicDuration, setMusicDuration] = useState(currentMusicModel.defaultDurationSeconds)
@@ -393,6 +403,7 @@ export const AiPanel = memo(function AiPanel() {
   const [imageSectionOpen, setImageSectionOpen] = useState(true)
 
   const musicAbortRef = useRef<AbortController | null>(null)
+  const ttsTextareaRef = useRef<HTMLTextAreaElement>(null)
   const generationUrlsRef = useRef<Set<string>>(new Set())
 
   // Revoke all blob URLs on unmount
@@ -427,6 +438,13 @@ export const AiPanel = memo(function AiPanel() {
   const isCustomTtsEngine = ttsEngine === 'custom'
   const supportsNativeTtsSpeed =
     ttsEngine === 'kokoro' || ttsEngine === 'supertonic' || isCustomTtsEngine
+  const ttsSpeedMin = ttsEngine === 'supertonic' ? 0.8 : 0.5
+  const ttsSpeedMax = ttsEngine === 'supertonic' ? 1.3 : 2
+
+  useEffect(() => {
+    setTtsSpeed((current) => Math.min(ttsSpeedMax, Math.max(ttsSpeedMin, current)))
+  }, [ttsSpeedMax, ttsSpeedMin])
+
   const effectiveTtsSpeed = supportsNativeTtsSpeed ? ttsSpeed : 1
   const isTtsSupported =
     ttsEngine === 'kokoro'
@@ -492,21 +510,24 @@ export const AiPanel = memo(function AiPanel() {
 
   const handleTtsGenerate = useCallback(async () => {
     if (!currentProjectId) {
-      setTtsError('Open a project before generating audio.')
+      setTtsError(t('editor.tts.errors.openProject'))
       return
     }
     if (!trimmedTtsText) {
-      setTtsError('Enter some text to synthesize.')
+      setTtsError(t('editor.tts.errors.enterText'))
       return
     }
     if (!isTtsSupported) {
       setTtsError(
         ttsEngine === 'kokoro'
-          ? 'WebGPU is required for Kokoro TTS. Try Chrome 113+, Edge 113+, or Safari 26+.'
+          ? t('editor.tts.errors.kokoroUnsupported')
           : ttsEngine === 'supertonic'
-            ? 'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.'
+            ? t('editor.tts.errors.supertonicUnsupported', {
+                defaultValue:
+                  'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.',
+              })
             : ttsEngine === 'moss'
-              ? 'Browser-managed storage is required for MOSS multilingual TTS. Try a recent Chromium browser.'
+              ? t('editor.tts.errors.mossUnsupported')
               : 'Custom AI TTS is not configured. Open Settings → AI → Custom AI → Text to Speech.',
       )
       return
@@ -514,7 +535,9 @@ export const AiPanel = memo(function AiPanel() {
 
     setTtsError(null)
     setIsTtsGenerating(true)
-    setTtsProgress(ttsEngine === 'custom' ? 'Calling Custom AI TTS...' : 'Preparing local TTS...')
+    setTtsProgress(
+      ttsEngine === 'custom' ? 'Calling Custom AI TTS...' : t('editor.tts.progressPreparing'),
+    )
 
     try {
       const result =
@@ -617,7 +640,9 @@ export const AiPanel = memo(function AiPanel() {
       setTtsProgress(null)
     } catch (generationError) {
       setTtsError(
-        generationError instanceof Error ? generationError.message : 'Failed to generate speech.',
+        generationError instanceof Error
+          ? generationError.message
+          : t('editor.tts.errors.generateFailed'),
       )
       setTtsProgress(null)
     } finally {
@@ -637,16 +662,17 @@ export const AiPanel = memo(function AiPanel() {
     ttsSupertonicVoice,
     ttsSupertonicLanguage,
     ttsSupertonicQuality,
+    t,
   ])
 
   const handleMusicGenerate = useCallback(async () => {
     if (!currentProjectId) return null
     if (!trimmedMusicPrompt) {
-      setMusicError('Describe the music you want to generate.')
+      setMusicError(t('editor.aiPanel.errors.describeMusic'))
       return null
     }
     if (!isMusicSupported) {
-      setMusicError('WebGPU is required for MusicGen. Try Chrome 113+, Edge 113+, or Safari 26+.')
+      setMusicError(t('editor.aiPanel.errors.musicgenUnsupported'))
       return null
     }
 
@@ -655,7 +681,7 @@ export const AiPanel = memo(function AiPanel() {
 
     setMusicError(null)
     setIsMusicGenerating(true)
-    setMusicProgress('Preparing local music generation...')
+    setMusicProgress(t('editor.aiPanel.progressPreparingMusic'))
     setMusicProgressPct(null)
 
     try {
@@ -702,7 +728,9 @@ export const AiPanel = memo(function AiPanel() {
         // Intentional cancellation — no error shown.
       } else {
         setMusicError(
-          generationError instanceof Error ? generationError.message : 'Failed to generate music.',
+          generationError instanceof Error
+            ? generationError.message
+            : t('editor.aiPanel.errors.generateMusicFailed'),
         )
       }
     } finally {
@@ -711,7 +739,7 @@ export const AiPanel = memo(function AiPanel() {
       setMusicProgress(null)
       setMusicProgressPct(null)
     }
-  }, [currentProjectId, trimmedMusicPrompt, isMusicSupported, musicModel, musicDuration])
+  }, [currentProjectId, trimmedMusicPrompt, isMusicSupported, musicModel, musicDuration, t])
 
   const handleMusicCancel = useCallback(() => {
     musicAbortRef.current?.abort()
@@ -901,13 +929,13 @@ export const AiPanel = memo(function AiPanel() {
         setError(
           saveError instanceof Error
             ? saveError.message
-            : 'Failed to save audio to the media library.',
+            : t('editor.aiPanel.errors.saveAudioFailed'),
         )
         updateGenerationInList(setGenerations, generation.id, { saving: false })
         return null
       }
     },
-    [currentProjectId, loadMediaItems, selectMedia, updateGenerationInList],
+    [currentProjectId, loadMediaItems, selectMedia, t, updateGenerationInList],
   )
 
   const handleSave = useCallback(
@@ -920,11 +948,13 @@ export const AiPanel = memo(function AiPanel() {
       if (media) {
         showNotification({
           type: 'success',
-          message: `Saved "${media.fileName}" to the media library.`,
+          message: t('editor.aiPanel.notifications.savedToLibrary', {
+            fileName: media.fileName,
+          }),
         })
       }
     },
-    [saveGeneration, showNotification],
+    [saveGeneration, showNotification, t],
   )
 
   const handleSaveAndInsert = useCallback(
@@ -940,11 +970,11 @@ export const AiPanel = memo(function AiPanel() {
       showNotification({
         type: inserted ? 'success' : 'warning',
         message: inserted
-          ? `Saved "${media.fileName}" and added to timeline.`
-          : `Saved "${media.fileName}" but no audio track is available.`,
+          ? t('editor.aiPanel.notifications.savedAndAdded', { fileName: media.fileName })
+          : t('editor.tts.notifications.savedNoTrack', { fileName: media.fileName }),
       })
     },
-    [saveGeneration, showNotification],
+    [saveGeneration, showNotification, t],
   )
 
   const removeGenerationFromList = useCallback(
@@ -1004,9 +1034,13 @@ export const AiPanel = memo(function AiPanel() {
               <button
                 type="button"
                 className="flex w-full items-center justify-between gap-2 text-left"
-                aria-label={ttsSectionOpen ? 'Collapse text to speech' : 'Expand text to speech'}
+                aria-label={
+                  ttsSectionOpen
+                    ? t('editor.aiPanel.collapseTextToSpeech')
+                    : t('editor.aiPanel.expandTextToSpeech')
+                }
               >
-                <h2 className="text-sm font-medium">Text to Speech</h2>
+                <h2 className="text-sm font-medium">{t('editor.aiPanel.textToSpeech')}</h2>
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 text-muted-foreground transition-transform',
@@ -1021,22 +1055,26 @@ export const AiPanel = memo(function AiPanel() {
             {!isTtsSupported && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
                 {ttsEngine === 'kokoro'
-                  ? 'WebGPU is not available in this browser. Kokoro TTS needs Chrome 113+, Edge 113+, or Safari 26+.'
+                  ? t('editor.tts.kokoroUnsupported')
                   : ttsEngine === 'supertonic'
-                    ? 'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.'
+                    ? t('editor.tts.supertonicUnsupported', {
+                        defaultValue:
+                          'Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium browser, Firefox, or Safari.',
+                      })
                     : ttsEngine === 'moss'
-                      ? 'Browser-managed storage is not available in this browser. MOSS multilingual TTS works best in a recent Chromium browser.'
+                      ? t('editor.tts.mossUnsupported')
                       : 'Configure Base URL, API key, and model in Settings → AI → Custom AI → Text to Speech.'}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="ai-tts-text">Text</Label>
+              <Label htmlFor="ai-tts-text">{t('editor.tts.text')}</Label>
               <Textarea
+                ref={ttsTextareaRef}
                 id="ai-tts-text"
                 value={text}
                 onChange={(event) => setText(event.target.value)}
-                placeholder="Enter the text you want to hear spoken..."
+                placeholder={t('editor.tts.textPlaceholder')}
                 className="min-h-24 resize-y bg-secondary/30 text-sm"
                 disabled={isGenerating}
               />
@@ -1044,7 +1082,7 @@ export const AiPanel = memo(function AiPanel() {
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label>Engine</Label>
+                <Label>{t('editor.tts.engine')}</Label>
                 <Select
                   value={ttsEngine}
                   onValueChange={(value) => setTtsEngine(value as StoredTtsEngine)}
@@ -1055,13 +1093,15 @@ export const AiPanel = memo(function AiPanel() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="kokoro" className="text-xs">
-                      Kokoro (English, WebGPU)
+                      {t('editor.tts.kokoroOption')}
                     </SelectItem>
                     <SelectItem value="supertonic" className="text-xs">
-                      Supertonic 3 (31 languages, WebGPU/WASM)
+                      {t('editor.tts.supertonicOption', {
+                        defaultValue: 'Supertonic 3 (31 languages, WebGPU/WASM)',
+                      })}
                     </SelectItem>
                     <SelectItem value="moss" className="text-xs">
-                      MOSS Nano (20 languages, CPU)
+                      {t('editor.tts.mossOption')}
                     </SelectItem>
                     <SelectItem value="custom" className="text-xs">
                       Custom AI (OpenAI-compatible)
@@ -1073,7 +1113,7 @@ export const AiPanel = memo(function AiPanel() {
               {!isCustomTtsEngine && (
                 <div className="grid grid-cols-1 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Voice</Label>
+                    <Label>{t('editor.tts.voice')}</Label>
                     <Select
                       value={voice}
                       onValueChange={(value) => {
@@ -1107,7 +1147,7 @@ export const AiPanel = memo(function AiPanel() {
 
                   {ttsEngine === 'supertonic' && (
                     <div className="space-y-1.5">
-                      <Label>Language</Label>
+                      <Label>{t('editor.tts.language', { defaultValue: 'Language' })}</Label>
                       <Select
                         value={ttsSupertonicLanguage}
                         onValueChange={(value) =>
@@ -1142,11 +1182,11 @@ export const AiPanel = memo(function AiPanel() {
             <div className="flex items-center gap-2">
               {supportsNativeTtsSpeed && (
                 <SliderInput
-                  label="Speed"
+                  label={t('editor.tts.speed')}
                   value={speed}
                   onChange={setSpeed}
-                  min={0.5}
-                  max={2}
+                  min={ttsSpeedMin}
+                  max={ttsSpeedMax}
                   step={0.05}
                   unit="x"
                   disabled={isGenerating}
@@ -1165,7 +1205,7 @@ export const AiPanel = memo(function AiPanel() {
                 ) : (
                   <WandSparkles className="h-3.5 w-3.5" />
                 )}
-                {isGenerating ? 'Generating...' : 'Generate'}
+                {isGenerating ? t('editor.tts.generating') : t('editor.tts.generate')}
               </Button>
             </div>
 
@@ -1184,7 +1224,10 @@ export const AiPanel = memo(function AiPanel() {
             <p className="text-[11px] text-muted-foreground">
               {isCustomTtsEngine
                 ? `${currentTtsRuntimeLabel} sends each request to your configured ${currentTtsBackendLabel} endpoint.`
-                : `${currentTtsRuntimeLabel} runs locally in the browser on ${currentTtsBackendLabel}.`}
+                : t('editor.aiPanel.runsLocally', {
+                    runtime: currentTtsRuntimeLabel,
+                    backend: currentTtsBackendLabel,
+                  })}
             </p>
 
             {progress && (
@@ -1203,7 +1246,10 @@ export const AiPanel = memo(function AiPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">
-                    History ({generations.length}) - {formatBytes(totalBytes)}
+                    {t('editor.aiPanel.history', {
+                      count: generations.length,
+                      size: formatBytes(totalBytes),
+                    })}
                   </span>
                   <Button
                     variant="ghost"
@@ -1213,7 +1259,7 @@ export const AiPanel = memo(function AiPanel() {
                     disabled={anySaving}
                   >
                     <Trash2 className="h-3 w-3" />
-                    Clear all
+                    {t('editor.aiPanel.clearAll')}
                   </Button>
                 </div>
 
@@ -1241,10 +1287,12 @@ export const AiPanel = memo(function AiPanel() {
                   type="button"
                   className="flex flex-1 items-center justify-between gap-2 text-left"
                   aria-label={
-                    musicSectionOpen ? 'Collapse music generation' : 'Expand music generation'
+                    musicSectionOpen
+                      ? t('editor.aiPanel.collapseMusicGeneration')
+                      : t('editor.aiPanel.expandMusicGeneration')
                   }
                 >
-                  <h2 className="text-sm font-medium">Music Generation</h2>
+                  <h2 className="text-sm font-medium">{t('editor.aiPanel.musicGeneration')}</h2>
                   <ChevronDown
                     className={cn(
                       'h-4 w-4 text-muted-foreground transition-transform',
@@ -1258,7 +1306,7 @@ export const AiPanel = memo(function AiPanel() {
                   <button
                     type="button"
                     className="rounded-full p-0.5 text-muted-foreground hover:text-foreground"
-                    aria-label="Music generation info"
+                    aria-label={t('editor.aiPanel.musicGenerationInfo')}
                     onMouseEnter={() => setMusicInfoOpen(true)}
                     onMouseLeave={() => setMusicInfoOpen(false)}
                   >
@@ -1282,8 +1330,7 @@ export const AiPanel = memo(function AiPanel() {
                     </span>
                   </div>
                   <p className="leading-relaxed text-muted-foreground">
-                    Uses Xenova&apos;s browser-ready MusicGen model through Transformers.js. The
-                    first download is large, then it stays cached locally.
+                    {t('editor.aiPanel.musicgenDescription')}
                   </p>
                   <table className="w-full text-[11px]">
                     <tbody>
@@ -1298,8 +1345,7 @@ export const AiPanel = memo(function AiPanel() {
                     </tbody>
                   </table>
                   <p className="leading-relaxed text-muted-foreground">
-                    Prompt with genre, mood, tempo, and instrumentation. Shorter clips finish much
-                    faster.
+                    {t('editor.aiPanel.musicgenPromptHint')}
                   </p>
                 </PopoverContent>
               </Popover>
@@ -1309,26 +1355,29 @@ export const AiPanel = memo(function AiPanel() {
           <CollapsibleContent className="space-y-4 pt-3">
             {!isMusicSupported && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
-                WebGPU is not available in this browser. MusicGen needs Chrome 113+, Edge 113+, or
-                Safari 26+.
+                {t('editor.aiPanel.musicgenUnsupported')}
               </div>
             )}
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="ai-music-prompt">Prompt</Label>
+                <Label htmlFor="ai-music-prompt">{t('editor.aiPanel.prompt')}</Label>
                 <Select
                   value=""
                   onValueChange={(value) => setMusicPrompt(value)}
                   disabled={isMusicGenerating}
                 >
                   <SelectTrigger className="h-6 w-auto gap-1 border-none bg-transparent px-1.5 text-[11px] text-muted-foreground shadow-none hover:text-foreground">
-                    <SelectValue placeholder="Presets" />
+                    <SelectValue placeholder={t('editor.aiPanel.presets')} />
                   </SelectTrigger>
                   <SelectContent align="end">
                     {MUSIC_PROMPT_PRESETS.map((preset) => (
-                      <SelectItem key={preset.label} value={preset.prompt} className="text-xs">
-                        {preset.label}
+                      <SelectItem
+                        key={preset.labelKey}
+                        value={t(preset.promptKey)}
+                        className="text-xs"
+                      >
+                        {t(preset.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1338,14 +1387,14 @@ export const AiPanel = memo(function AiPanel() {
                 id="ai-music-prompt"
                 value={musicPrompt}
                 onChange={(event) => setMusicPrompt(event.target.value)}
-                placeholder="Describe the kind of music you want to generate..."
+                placeholder={t('editor.aiPanel.musicPromptPlaceholder')}
                 className="min-h-24 resize-y bg-secondary/30 text-sm"
                 disabled={isMusicGenerating}
               />
             </div>
 
             <SliderInput
-              label="Length"
+              label={t('editor.aiPanel.length')}
               value={musicDuration}
               onChange={(value) => setMusicDuration(Math.round(value))}
               min={currentMusicModel.minDurationSeconds}
@@ -1364,7 +1413,7 @@ export const AiPanel = memo(function AiPanel() {
                   className="h-7 shrink-0 gap-1.5 text-muted-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               )}
               <Button
@@ -1382,7 +1431,7 @@ export const AiPanel = memo(function AiPanel() {
                 ) : (
                   <WandSparkles className="h-3.5 w-3.5" />
                 )}
-                {isMusicGenerating ? 'Generating...' : 'Generate Music'}
+                {isMusicGenerating ? t('editor.tts.generating') : t('editor.aiPanel.generateMusic')}
               </Button>
             </div>
 
@@ -1410,7 +1459,10 @@ export const AiPanel = memo(function AiPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">
-                    Music History ({musicGenerations.length}) - {formatBytes(totalMusicBytes)}
+                    {t('editor.aiPanel.musicHistory', {
+                      count: musicGenerations.length,
+                      size: formatBytes(totalMusicBytes),
+                    })}
                   </span>
                   <Button
                     variant="ghost"
@@ -1420,7 +1472,7 @@ export const AiPanel = memo(function AiPanel() {
                     disabled={anyMusicSaving}
                   >
                     <Trash2 className="h-3 w-3" />
-                    Clear all
+                    {t('editor.aiPanel.clearAll')}
                   </Button>
                 </div>
 
@@ -1545,6 +1597,7 @@ const GenerationRow = memo(function GenerationRow({
   onSaveAndInsert: (gen: Generation) => Promise<void>
   onRemove: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const saved = gen.savedMediaId !== null
 
   return (
@@ -1569,7 +1622,7 @@ const GenerationRow = memo(function GenerationRow({
             type="button"
             className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
             onClick={() => onRemove(gen.id)}
-            aria-label="Remove"
+            aria-label={t('editor.aiPanel.remove')}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -1584,7 +1637,7 @@ const GenerationRow = memo(function GenerationRow({
         {saved ? (
           <span className="flex items-center gap-1 text-[11px] text-emerald-400">
             <CheckCircle2 className="h-3 w-3" />
-            Saved
+            {t('editor.aiPanel.saved')}
           </span>
         ) : (
           <>
@@ -1602,7 +1655,7 @@ const GenerationRow = memo(function GenerationRow({
               ) : (
                 <ListPlus className="h-3 w-3" />
               )}
-              {gen.saving ? 'Saving...' : 'Save & Insert'}
+              {gen.saving ? t('editor.aiPanel.saving') : t('editor.aiPanel.saveAndInsert')}
             </Button>
             <Button
               variant="ghost"
@@ -1614,7 +1667,7 @@ const GenerationRow = memo(function GenerationRow({
               disabled={gen.saving}
             >
               <Download className="h-3 w-3" />
-              Save to Library
+              {t('editor.aiPanel.saveToLibrary')}
             </Button>
           </>
         )}

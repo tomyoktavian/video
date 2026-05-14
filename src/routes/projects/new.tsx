@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { createLogger } from '@/shared/logging/logger'
 import { ProjectForm } from '@/features/projects/components/project-form'
@@ -26,6 +27,7 @@ export const Route = createFileRoute('/projects/new')({
 
 function NewProject() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const createProject = useCreateProject()
 
@@ -42,12 +44,12 @@ function NewProject() {
           params: { projectId: result.project.id },
         })
       } else {
-        toast.error('Failed to create project', { description: result.error })
+        toast.error(t('projects.toasts.createFailed'), { description: result.error })
         setIsSubmitting(false)
       }
     } catch (error) {
       logger.error('Failed to create project:', error)
-      toast.error('Failed to create project', { description: 'Please try again' })
+      toast.error(t('projects.toasts.createFailed'), { description: t('projects.tryAgain') })
       setIsSubmitting(false)
     }
   }
@@ -65,7 +67,7 @@ function NewProject() {
               href="https://github.com/walterlow/freecut"
               target="_blank"
               rel="noopener noreferrer"
-              data-tooltip="View on GitHub"
+              data-tooltip={t('projects.viewOnGitHub')}
               data-tooltip-side="left"
             >
               <Github className="w-5 h-5" />

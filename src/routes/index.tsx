@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Trans, useTranslation } from 'react-i18next'
 import { Layers, ArrowRight, Play, FolderOpen, Download, Star, ExternalLink } from 'lucide-react'
 import { FreeCutLogo } from '@/components/brand/freecut-logo'
 import { Button } from '@/components/ui/button'
@@ -13,87 +14,11 @@ export const Route = createFileRoute('/')({
   component: LandingPage,
 })
 
-const faqItems = [
-  {
-    question: 'Is FreeCut really free?',
-    answer:
-      'Yes, FreeCut is completely free and open source under the MIT license. There are no hidden fees, subscriptions, or watermarks.',
-  },
-  {
-    question: 'Do I need to install anything?',
-    answer:
-      'No installation required. FreeCut runs entirely in your browser. Just open the website and start editing.',
-  },
-  {
-    question: 'Where are my videos stored?',
-    answer:
-      'Your videos and projects are stored locally in your browser or referenced to your local files using modern storage APIs.',
-  },
-  {
-    id: 'browser-support',
-    question: 'What browsers are supported?',
-    answer: (
-      <>
-        <p className="mb-3">
-          FreeCut currently works best in Chrome or Edge 113+. It relies on modern browser APIs like
-          WebGPU, WebCodecs, OPFS, and File System Access, so the full workflow is currently
-          Chromium-first.
-        </p>
-        <p>
-          <strong>Brave users:</strong> The File System Access API is disabled by default. To enable
-          it, navigate to{' '}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            brave://flags/#file-system-access-api
-          </code>
-          , set it to <strong>Enabled</strong>, and relaunch the browser.
-        </p>
-      </>
-    ),
-  },
-  {
-    question: 'What export formats are supported?',
-    answer:
-      'Video: MP4, MOV, WebM, MKV. Audio: MP3, AAC, WAV (PCM). The current export UI exposes H.264, H.265, VP8, VP9, and AV1 with low, medium, high, and ultra quality presets.',
-  },
-  {
-    question: 'Future Improvements',
-    answer:
-      'The current focus is beta hardening: align product docs with shipped behavior, tighten accessibility and test coverage, and make defaults like FPS, snap, preview quality, and export settings flow through the real editor.',
-  },
-  {
-    question: 'Special shoutout',
-    answer: (
-      <>
-        <p className="mb-3">
-          A huge thank you to{' '}
-          <a
-            href="https://mediabunny.dev/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary underline hover:text-primary/80"
-          >
-            Mediabunny
-          </a>{' '}
-          for making browser-based video encoding easy. This project wouldn't exist without their
-          amazing work!
-        </p>
-        <p className="mb-2 font-medium text-foreground">Built with:</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>React</li>
-          <li>TypeScript</li>
-          <li>Vite</li>
-          <li>Shadcn</li>
-        </ul>
-      </>
-    ),
-  },
-]
-
 const showcaseItems = [
   {
     id: 'timeline',
-    title: 'Timeline Editing',
-    description: 'Multi-track editing with video, audio, text, and shapes',
+    titleKey: 'projects.landing.showcase.timeline.title',
+    descriptionKey: 'projects.landing.showcase.timeline.description',
     icon: Layers,
     media: '/assets/landing/timeline.png',
     className: 'md:col-span-2 md:row-span-1',
@@ -101,8 +26,8 @@ const showcaseItems = [
   },
   {
     id: 'keyframe',
-    title: 'Simple KeyFrame Editor',
-    description: 'Intuitive keyframe animation for smooth transitions',
+    titleKey: 'projects.landing.showcase.keyframe.title',
+    descriptionKey: 'projects.landing.showcase.keyframe.description',
     icon: Play,
     media: '/assets/landing/keyframe.png',
     className: 'md:row-span-2',
@@ -110,8 +35,8 @@ const showcaseItems = [
   },
   {
     id: 'projects',
-    title: 'Project Management',
-    description: 'Create, organize, and manage your projects',
+    titleKey: 'projects.landing.showcase.projects.title',
+    descriptionKey: 'projects.landing.showcase.projects.description',
     icon: FolderOpen,
     media: '/assets/landing/projects.png',
     className: '',
@@ -119,8 +44,8 @@ const showcaseItems = [
   },
   {
     id: 'export',
-    title: 'Export on the Web',
-    description: 'Render your videos locally with your browser.',
+    titleKey: 'projects.landing.showcase.export.title',
+    descriptionKey: 'projects.landing.showcase.export.description',
     icon: Download,
     media: '/assets/landing/export.png',
     className: '',
@@ -129,6 +54,78 @@ const showcaseItems = [
 ]
 
 function LandingPage() {
+  const { t } = useTranslation()
+  const faqItems: Array<{ id?: string; question: string; answer: React.ReactNode }> = [
+    {
+      question: t('projects.landing.faq.free.question'),
+      answer: t('projects.landing.faq.free.answer'),
+    },
+    {
+      question: t('projects.landing.faq.install.question'),
+      answer: t('projects.landing.faq.install.answer'),
+    },
+    {
+      question: t('projects.landing.faq.storage.question'),
+      answer: t('projects.landing.faq.storage.answer'),
+    },
+    {
+      id: 'browser-support',
+      question: t('projects.landing.faq.browsers.question'),
+      answer: (
+        <>
+          <p className="mb-3">{t('projects.landing.faq.browsers.answerP1')}</p>
+          <p>
+            <Trans
+              i18nKey="projects.landing.faq.browsers.answerP2"
+              components={{
+                strong: <strong />,
+                code: <code className="rounded bg-muted px-1 py-0.5 text-xs" />,
+              }}
+            />
+          </p>
+        </>
+      ),
+    },
+    {
+      question: t('projects.landing.faq.exportFormats.question'),
+      answer: t('projects.landing.faq.exportFormats.answer'),
+    },
+    {
+      question: t('projects.landing.faq.future.question'),
+      answer: t('projects.landing.faq.future.answer'),
+    },
+    {
+      question: t('projects.landing.faq.shoutout.question'),
+      answer: (
+        <>
+          <p className="mb-3">
+            <Trans
+              i18nKey="projects.landing.faq.shoutout.answerP1"
+              components={{
+                link: (
+                  <a
+                    href="https://mediabunny.dev/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline hover:text-primary/80"
+                  />
+                ),
+              }}
+            />
+          </p>
+          <p className="mb-2 font-medium text-foreground">
+            {t('projects.landing.faq.shoutout.builtWith')}
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>React</li>
+            <li>TypeScript</li>
+            <li>Vite</li>
+            <li>Shadcn</li>
+          </ul>
+        </>
+      ),
+    },
+  ]
   return (
     <div className="min-h-screen bg-background text-foreground select-text">
       {/* Hero Section */}
@@ -142,27 +139,29 @@ function LandingPage() {
           <div className="mb-6 flex items-center gap-3">
             <FreeCutLogo size="lg" />
             <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-medium text-primary">
-              Beta
+              {t('projects.landing.beta')}
             </span>
           </div>
 
           <h1 className="mb-4 max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Edit videos. <span className="text-primary">In your browser.</span>
+            <Trans
+              i18nKey="projects.landing.heroTitle"
+              components={{ accent: <span className="text-primary" /> }}
+            />
           </h1>
 
           <p className="mb-6 max-w-lg text-lg text-muted-foreground sm:text-xl">
-            Professional video editing, zero installation. Create stunning content in your browser.
+            {t('projects.landing.heroSubtitle')}
           </p>
 
           <p className="mb-6 max-w-lg text-sm text-amber-600 dark:text-amber-500">
-            ⚠️ DISCLAIMER: This is very much in beta and might be buggy. I hope you still enjoy the
-            experience.
+            {t('projects.landing.disclaimer')}
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <Button asChild size="lg" className="gap-2 px-8">
               <Link to="/projects">
-                Get Started
+                {t('projects.landing.getStarted')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -174,7 +173,7 @@ function LandingPage() {
                 rel="noopener noreferrer"
               >
                 <Star className="h-4 w-4" />
-                Star on GitHub
+                {t('projects.landing.starOnGitHub')}
               </a>
             </Button>
           </div>
@@ -186,10 +185,10 @@ function LandingPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Multi featured editing capabilities
+              {t('projects.landing.showcaseHeading')}
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              A complete video editing suite, right in your browser.
+              {t('projects.landing.showcaseSubheading')}
             </p>
           </div>
 
@@ -204,7 +203,7 @@ function LandingPage() {
                   {item.media ? (
                     <img
                       src={item.media}
-                      alt={item.title}
+                      alt={t(item.titleKey)}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
@@ -212,7 +211,9 @@ function LandingPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-3 text-muted-foreground/50">
                         <item.icon className="h-12 w-12" />
-                        <span className="text-xs uppercase tracking-wider">Screenshot</span>
+                        <span className="text-xs uppercase tracking-wider">
+                          {t('projects.landing.screenshot')}
+                        </span>
                       </div>
                       {/* Subtle grid pattern */}
                       <div
@@ -234,8 +235,8 @@ function LandingPage() {
                       <item.icon className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                      <h3 className="font-semibold">{t(item.titleKey)}</h3>
+                      <p className="text-xs text-muted-foreground">{t(item.descriptionKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -249,9 +250,11 @@ function LandingPage() {
       <section className="border-t border-border px-6 py-20">
         <div className="mx-auto max-w-4xl">
           <div className="mb-10 text-center">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">See it in Action</h2>
+            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+              {t('projects.landing.seeItInAction')}
+            </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Watch a quick demo of FreeCut's editing capabilities.
+              {t('projects.landing.seeItInActionSubheading')}
             </p>
           </div>
 
@@ -264,7 +267,7 @@ function LandingPage() {
             <div className="relative aspect-video w-full overflow-hidden bg-muted">
               <img
                 src="/assets/landing/timeline.png"
-                alt="FreeCut demo preview"
+                alt={t('projects.landing.demoPreviewAlt')}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/20" />
@@ -274,7 +277,7 @@ function LandingPage() {
                 </div>
               </div>
               <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-white backdrop-blur-sm">
-                <span>Watch Demo on YouTube</span>
+                <span>{t('projects.landing.watchDemoOnYouTube')}</span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </div>
             </div>
@@ -287,9 +290,9 @@ function LandingPage() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-10 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Frequently Asked Questions
+              {t('projects.landing.faqHeading')}
             </h2>
-            <p className="text-muted-foreground">Everything you need to know about FreeCut.</p>
+            <p className="text-muted-foreground">{t('projects.landing.faqSubheading')}</p>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
@@ -306,14 +309,14 @@ function LandingPage() {
       {/* CTA Footer Section */}
       <section className="border-t border-border px-6 py-20">
         <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h2 className="mb-4 text-2xl font-bold sm:text-3xl">Ready to start editing?</h2>
-          <p className="mb-8 text-muted-foreground">
-            Jump in and create your first project in seconds.
-          </p>
+          <h2 className="mb-4 text-2xl font-bold sm:text-3xl">
+            {t('projects.landing.ctaHeading')}
+          </h2>
+          <p className="mb-8 text-muted-foreground">{t('projects.landing.ctaSubheading')}</p>
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <Button asChild size="lg" className="gap-2 px-8">
               <Link to="/projects">
-                Start Editing
+                {t('projects.landing.startEditing')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -325,7 +328,7 @@ function LandingPage() {
                 rel="noopener noreferrer"
               >
                 <Star className="h-4 w-4" />
-                Star on GitHub
+                {t('projects.landing.starOnGitHub')}
               </a>
             </Button>
           </div>
@@ -335,7 +338,7 @@ function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border px-6 py-8">
         <div className="mx-auto max-w-5xl text-center text-sm text-muted-foreground">
-          MIT License © {new Date().getFullYear()} FreeCut
+          {t('projects.landing.footer', { year: new Date().getFullYear() })}
         </div>
       </footer>
     </div>

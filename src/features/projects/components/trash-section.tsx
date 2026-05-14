@@ -23,6 +23,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ChevronRight, Trash2, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -51,6 +52,7 @@ type ConfirmTarget =
   | null
 
 export function TrashSection() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [entries, setEntries] = useState<TrashedProjectEntry[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -89,15 +91,15 @@ export function TrashSection() {
       const result = await restoreProject(entry.id)
       setBusyId(null)
       if (result.success) {
-        toast.success(`Restored "${entry.marker.originalName}"`)
+        toast.success(t('projects.toasts.restored', { name: entry.marker.originalName }))
         // `restoreProject` updates the live projects list which cascades
         // to our refresh via the useEffect on `projects`. No manual call
         // needed.
       } else {
-        toast.error('Failed to restore project', { description: result.error })
+        toast.error(t('projects.toasts.restoreFailed'), { description: result.error })
       }
     },
-    [restoreProject],
+    [restoreProject, t],
   )
 
   const handleDeleteForever = useCallback(
@@ -106,15 +108,15 @@ export function TrashSection() {
       const result = await permanentlyDeleteProject(entry.id)
       setBusyId(null)
       if (result.success) {
-        toast.success(`Deleted "${entry.marker.originalName}" forever`)
+        toast.success(t('projects.trash.deletedForever', { name: entry.marker.originalName }))
         // Permanent delete doesn't touch the live projects list, so we
         // refresh the trash list by hand.
         await refresh()
       } else {
-        toast.error('Failed to delete project', { description: result.error })
+        toast.error(t('projects.toasts.deleteFailed'), { description: result.error })
       }
     },
-    [permanentlyDeleteProject, refresh],
+    [permanentlyDeleteProject, refresh, t],
   )
 
   const handleEmptyTrash = useCallback(async () => {
@@ -132,17 +134,15 @@ export function TrashSection() {
     await refresh()
 
     if (failures.length === 0) {
-      toast.success(
-        succeeded === 1
-          ? 'Emptied trash (1 project deleted)'
-          : `Emptied trash (${succeeded} projects deleted)`,
-      )
+      toast.success(t('projects.trash.emptiedTrash', { count: succeeded }))
     } else {
-      toast.error(`Emptied trash with ${failures.length} failure(s)`, {
-        description: `Could not delete: ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '…' : ''}`,
+      toast.error(t('projects.trash.emptiedTrashWithFailures', { count: failures.length }), {
+        description: t('projects.trash.couldNotDelete', {
+          names: `${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '…' : ''}`,
+        }),
       })
     }
-  }, [entries, permanentlyDeleteProject, refresh])
+  }, [entries, permanentlyDeleteProject, refresh, t])
 
   const confirmAction = useCallback(async () => {
     if (!confirm) return
@@ -173,13 +173,13 @@ export function TrashSection() {
           >
             <ChevronRight className={`w-4 h-4 transition-transform ${open ? 'rotate-90' : ''}`} />
             <Trash2 className="w-4 h-4" />
-            <span className="font-medium">Trash</span>
+            <span className="font-medium">{t('projects.trash.title')}</span>
             <span className="text-xs font-mono tabular-nums px-1.5 py-0.5 rounded-full bg-muted text-foreground/70">
               {entries.length}
             </span>
             {!open && (
               <span className="text-xs text-muted-foreground/70 ml-1">
-                auto-deletes after 30 days
+                {t('projects.trash.autoDeletes')}
               </span>
             )}
           </CollapsibleTrigger>
@@ -193,7 +193,7 @@ export function TrashSection() {
               onClick={() => setConfirm({ kind: 'empty', count: entries.length })}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              {isEmptying ? 'Emptying…' : 'Empty trash'}
+              {isEmptying ? t('projects.trash.emptying') : t('projects.trash.emptyTrash')}
             </Button>
           )}
         </div>
@@ -211,7 +211,9 @@ export function TrashSection() {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">{entry.marker.originalName}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      Deleted {formatRelativeTime(entry.marker.deletedAt)}
+                      {t('projects.trash.deletedAt', {
+                        time: formatRelativeTime(entry.marker.deletedAt),
+                      })}
                     </div>
                   </div>
                   <Button
@@ -223,7 +225,7 @@ export function TrashSection() {
                     onClick={() => void handleRestore(entry)}
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    Restore
+                    {t('projects.trash.restore')}
                   </Button>
                   <Button
                     data-testid={`trash-delete-${entry.id}`}
@@ -240,7 +242,7 @@ export function TrashSection() {
                     }
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete forever
+                    {t('projects.trash.deleteForever')}
                   </Button>
                 </div>
               )
@@ -259,24 +261,28 @@ export function TrashSection() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {confirm?.kind === 'empty' ? 'Empty trash?' : 'Delete project forever?'}
+              {confirm?.kind === 'empty'
+                ? t('projects.trash.emptyTrashConfirmTitle')
+                : t('projects.trash.deleteForeverConfirmTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirm?.kind === 'empty'
-                ? `This will permanently delete ${confirm.count} project(s) and any media they exclusively reference. This action cannot be undone.`
+                ? t('projects.trash.emptyTrashConfirmDescription', { count: confirm.count })
                 : confirm?.kind === 'single'
-                  ? `This will permanently delete "${confirm.name}" and any media it exclusively references. This action cannot be undone.`
+                  ? t('projects.trash.deleteForeverConfirmDescription', { name: confirm.name })
                   : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               data-testid="trash-confirm-action"
               onClick={() => void confirmAction()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {confirm?.kind === 'empty' ? 'Empty trash' : 'Delete forever'}
+              {confirm?.kind === 'empty'
+                ? t('projects.trash.emptyTrash')
+                : t('projects.trash.deleteForever')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

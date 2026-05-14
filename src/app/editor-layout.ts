@@ -1,43 +1,11 @@
 /**
  * Editor density presets.
  *
- * `default` approximates the roomier original shell.
  * `compact` is tuned to keep more of the editor visible on a 1920x1080 display.
  *
  * Prefer changing presets here before editing one-off component sizes.
  */
 export const EDITOR_DENSITY_PRESETS = {
-  default: {
-    toolbarHeight: 56,
-    sidebarRailWidth: 48,
-    sidebarHeaderHeight: 40,
-    sidebarHeaderButtonSize: 20,
-    toolbarButtonSize: 20,
-    leftSidebarDefaultWidth: 360,
-    leftSidebarMinWidth: 240,
-    leftSidebarMaxWidth: 680,
-    rightSidebarDefaultWidth: 320,
-    rightSidebarMinWidth: 320,
-    rightSidebarMaxWidth: 640,
-    sidebarRevealToggleHeight: 80,
-    previewPadding: 48,
-    previewSplitHeaderHeight: 36,
-    previewControlsHeight: 36,
-    previewControlButtonSize: 32,
-    timelineDefaultSize: 30,
-    timelineMinSize: 15,
-    timelineMaxSize: 80,
-    graphPanelSizeIncrease: 12,
-    timelineHeaderHeight: 44,
-    timelineTracksHeaderHeight: 44,
-    timelineRulerHeight: 44,
-    timelineSidebarWidth: 192,
-    timelineMeterWidth: 92,
-    timelineMixerWidth: 280,
-    timelineTrackHeight: 100,
-    timelineClipLabelRowHeight: 24,
-    timelineWaveformRowHeight: 30,
-  },
   compact: {
     toolbarHeight: 48,
     sidebarRailWidth: 44,
@@ -78,18 +46,12 @@ type RightSidebarLayoutBounds = { rightSidebarMinWidth: number; rightSidebarMaxW
 
 export const DEFAULT_EDITOR_DENSITY_PRESET: EditorDensityPresetName = 'compact'
 
-export const EDITOR_DENSITY_OPTIONS = [
-  { value: 'compact', label: 'Compact' },
-  { value: 'default', label: 'Default' },
-] as const satisfies ReadonlyArray<{
-  value: EditorDensityPresetName
-  label: string
-}>
+export function normalizeEditorDensityPreset(value: unknown): EditorDensityPresetName {
+  return value === 'compact' ? value : DEFAULT_EDITOR_DENSITY_PRESET
+}
 
-export function getEditorLayout(
-  preset: EditorDensityPresetName = DEFAULT_EDITOR_DENSITY_PRESET,
-): EditorLayout {
-  return EDITOR_DENSITY_PRESETS[preset]
+export function getEditorLayout(preset: unknown = DEFAULT_EDITOR_DENSITY_PRESET): EditorLayout {
+  return EDITOR_DENSITY_PRESETS[normalizeEditorDensityPreset(preset)]
 }
 
 export const EDITOR_LAYOUT = getEditorLayout()

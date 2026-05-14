@@ -37,8 +37,8 @@ export type CaptionStylePatch = Pick<
 export interface CaptionStylePreset {
   id: string
   label: string
-  /** One-line description shown as button tooltip / muted helper text. */
-  hint: string
+  /** i18n key for the one-line description shown as button tooltip. */
+  hintKey: string
   patch: Omit<CaptionStylePatch, 'transform' | 'fontSize'>
   /** Canvas-relative layout overrides — see top-of-file comment. */
   layout?: {
@@ -57,7 +57,7 @@ export const CAPTION_STYLE_PRESETS: readonly CaptionStylePreset[] = [
   {
     id: 'netflix',
     label: 'Netflix',
-    hint: 'Inter on a rounded dark box, lower-third — broadcast-grade neutral.',
+    hintKey: 'editor.captionPresets.netflixHint',
     patch: {
       fontFamily: 'Inter',
       fontWeight: 'semibold',
@@ -79,7 +79,7 @@ export const CAPTION_STYLE_PRESETS: readonly CaptionStylePreset[] = [
   {
     id: 'youtube',
     label: 'YouTube',
-    hint: 'Roboto with a soft drop shadow, no box — the auto-captions vibe.',
+    hintKey: 'editor.captionPresets.youtubeHint',
     patch: {
       fontFamily: 'Roboto',
       fontWeight: 'medium',
@@ -101,7 +101,7 @@ export const CAPTION_STYLE_PRESETS: readonly CaptionStylePreset[] = [
   {
     id: 'bold-yellow',
     label: 'Bold Yellow',
-    hint: 'Roboto Slab in cinema yellow with a black drop shadow — DVD-era classic.',
+    hintKey: 'editor.captionPresets.boldYellowHint',
     patch: {
       fontFamily: 'Roboto Slab',
       fontWeight: 'bold',
@@ -123,7 +123,7 @@ export const CAPTION_STYLE_PRESETS: readonly CaptionStylePreset[] = [
   {
     id: 'minimal-stroke',
     label: 'Outlined',
-    hint: 'Manrope with a hairline outline — clean, modern, no shadow.',
+    hintKey: 'editor.captionPresets.outlinedHint',
     patch: {
       fontFamily: 'Manrope',
       fontWeight: 'medium',
@@ -145,7 +145,7 @@ export const CAPTION_STYLE_PRESETS: readonly CaptionStylePreset[] = [
   {
     id: 'tiktok',
     label: 'TikTok',
-    hint: 'Anton display, oversized and centered — vertical-video viral look.',
+    hintKey: 'editor.captionPresets.tiktokHint',
     patch: {
       fontFamily: 'Anton',
       fontWeight: 'normal',

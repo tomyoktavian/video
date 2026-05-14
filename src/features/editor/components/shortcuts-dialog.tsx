@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ interface ShortcutsDialogProps {
 }
 
 export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
+  const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal>
       <DialogContent
@@ -22,8 +24,8 @@ export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
         className="h-[98vh] max-h-[98vh] max-w-[min(1600px,98vw)] gap-0 overflow-hidden border-white/10 bg-[#09090b]/96 p-0 shadow-[0_40px_120px_rgba(0,0,0,0.55)] sm:rounded-lg"
       >
         <DialogHeader className="sr-only">
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
-          <DialogDescription>Edit keyboard shortcut bindings.</DialogDescription>
+          <DialogTitle>{t('editor.shortcutsDialog.title')}</DialogTitle>
+          <DialogDescription>{t('editor.shortcutsDialog.description')}</DialogDescription>
         </DialogHeader>
         <div className="flex min-h-0 flex-1 flex-col">
           <HotkeyEditor />

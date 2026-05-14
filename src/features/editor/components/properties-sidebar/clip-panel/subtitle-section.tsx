@@ -1,6 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { memo, useCallback, useEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Captions } from 'lucide-react'
+import { i18n } from '@/i18n'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -61,7 +63,11 @@ export const SubtitleSection = memo(function SubtitleSection({
   if (segments.length > 1) {
     const totalCues = segments.reduce((sum, segment) => sum + segment.cues.length, 0)
     return (
-      <PropertySection title="Subtitle" icon={Captions} defaultOpen={true}>
+      <PropertySection
+        title={i18n.t('editor.subtitleSection.title')}
+        icon={Captions}
+        defaultOpen={true}
+      >
         <div className="space-y-3 px-1">
           <CaptionStyleControls
             items={segments}
@@ -70,8 +76,10 @@ export const SubtitleSection = memo(function SubtitleSection({
           />
 
           <p className="text-xs text-muted-foreground">
-            {segments.length} segments selected · {totalCues} cues total. Style applies to all.
-            Select a single segment to edit individual cues.
+            {i18n.t('editor.subtitleSection.multiSelectHint', {
+              segments: segments.length,
+              cues: totalCues,
+            })}
           </p>
         </div>
       </PropertySection>
@@ -132,20 +140,25 @@ const SingleSubtitleSegmentEditor = memo(function SingleSubtitleSegmentEditor({
     segment.source.type === 'embedded-subtitles'
       ? (segment.source.trackName ??
         segment.source.language ??
-        `Track ${segment.source.trackNumber}`)
+        i18n.t('editor.subtitleSection.trackLabel', { number: segment.source.trackNumber }))
       : segment.source.type === 'subtitle-import'
         ? segment.source.fileName
-        : 'Transcript'
+        : i18n.t('editor.subtitleSection.transcript')
 
   // Memoize the items array passed to CaptionStyleControls so identity is
   // stable across re-renders that don't actually change the segment object.
   const styleItems = useMemo(() => [segment], [segment])
 
   return (
-    <PropertySection title="Subtitle" icon={Captions} defaultOpen={true}>
+    <PropertySection
+      title={i18n.t('editor.subtitleSection.title')}
+      icon={Captions}
+      defaultOpen={true}
+    >
       <div className="space-y-3 px-1">
         <p className="text-xs text-muted-foreground">
-          {segment.cues.length} cues · {sourceLabel}
+          {i18n.t('editor.subtitleSection.cueCount', { count: segment.cues.length })} ·{' '}
+          {sourceLabel}
         </p>
 
         <CaptionStyleControls
@@ -263,6 +276,7 @@ const SubtitleCueRow = memo(function SubtitleCueRow({
   onChange,
   onSeek,
 }: SubtitleCueRowProps) {
+  const { t } = useTranslation()
   const parsed = useMemo(() => parseSubtitleCueText(text), [text])
   const flags = useMemo(() => getCueFormatFlags(parsed), [parsed])
 
@@ -285,14 +299,14 @@ const SubtitleCueRow = memo(function SubtitleCueRow({
       <div className="flex items-center gap-2 pb-1.5">
         <button
           type="button"
-          title="Seek playhead to this cue"
+          title={t('editor.subtitleSection.seekToCue')}
           onClick={() => onSeek?.(startSeconds)}
           className="rounded text-[10px] font-semibold uppercase tracking-wide tabular-nums px-1.5 py-0.5 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
         >
           #{index + 1}
         </button>
         <Label className="sr-only" htmlFor={`cue-${cueId}-start`}>
-          Start
+          {t('editor.subtitleSection.start')}
         </Label>
         <Input
           id={`cue-${cueId}-start`}
@@ -312,7 +326,7 @@ const SubtitleCueRow = memo(function SubtitleCueRow({
         />
         <span className="text-[10px] text-muted-foreground">→</span>
         <Label className="sr-only" htmlFor={`cue-${cueId}-end`}>
-          End
+          {t('editor.subtitleSection.end')}
         </Label>
         <Input
           id={`cue-${cueId}-end`}
@@ -339,28 +353,31 @@ const SubtitleCueRow = memo(function SubtitleCueRow({
         <FormatToggleButton
           active={flags.italic}
           onClick={() => handleToggle('italic')}
-          label="Italic"
+          label={t('editor.subtitleSection.italic')}
           glyph="I"
           glyphStyle={{ fontStyle: 'italic' }}
         />
         <FormatToggleButton
           active={flags.bold}
           onClick={() => handleToggle('bold')}
-          label="Bold"
+          label={t('editor.subtitleSection.bold')}
           glyph="B"
           glyphStyle={{ fontWeight: 700 }}
         />
         <FormatToggleButton
           active={flags.underline}
           onClick={() => handleToggle('underline')}
-          label="Underline"
+          label={t('editor.subtitleSection.underline')}
           glyph="U"
           glyphStyle={{ textDecoration: 'underline' }}
         />
         {parsed.alignment && (
           <span
             className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground"
-            title={`Cue position: ${parsed.alignment.verticalAlign} ${parsed.alignment.textAlign}`}
+            title={t('editor.subtitleSection.cuePosition', {
+              vertical: parsed.alignment.verticalAlign,
+              horizontal: parsed.alignment.textAlign,
+            })}
           >
             {parsed.alignment.verticalAlign === 'top'
               ? '▲'

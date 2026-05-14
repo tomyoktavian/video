@@ -1,4 +1,5 @@
 import { CURRENT_SCHEMA_VERSION } from '@/core/projects/migrations'
+import { i18n } from '@/i18n'
 import type { Project } from '@/types/project'
 
 /**
@@ -28,13 +29,13 @@ export function formatRelativeTime(timestamp: number): string {
   const months = Math.floor(days / 30)
   const years = Math.floor(days / 365)
 
-  if (seconds < 60) return 'just now'
-  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
-  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
-  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`
-  if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`
-  if (months < 12) return `${months} month${months > 1 ? 's' : ''} ago`
-  return `${years} year${years > 1 ? 's' : ''} ago`
+  if (seconds < 60) return i18n.t('projects.relativeTime.justNow')
+  if (minutes < 60) return i18n.t('projects.relativeTime.minutesAgo', { count: minutes })
+  if (hours < 24) return i18n.t('projects.relativeTime.hoursAgo', { count: hours })
+  if (days < 7) return i18n.t('projects.relativeTime.daysAgo', { count: days })
+  if (weeks < 4) return i18n.t('projects.relativeTime.weeksAgo', { count: weeks })
+  if (months < 12) return i18n.t('projects.relativeTime.monthsAgo', { count: months })
+  return i18n.t('projects.relativeTime.yearsAgo', { count: years })
 }
 
 /**
@@ -173,7 +174,7 @@ export function duplicateProject(project: Project): Project {
   return {
     ...project,
     id: generateProjectId(),
-    name: `${project.name} (Copy)`,
+    name: i18n.t('projects.copySuffix', { name: project.name }),
     createdAt: now,
     updatedAt: now,
   }
@@ -187,7 +188,11 @@ export function formatProjectUpgradeBackupName(
   fromVersion: number,
   toVersion: number,
 ): string {
-  return `${projectName} (Backup before upgrade v${fromVersion} to v${toVersion})`
+  return i18n.t('projects.upgradeBackupName', {
+    name: projectName,
+    from: fromVersion,
+    to: toVersion,
+  })
 }
 
 /**

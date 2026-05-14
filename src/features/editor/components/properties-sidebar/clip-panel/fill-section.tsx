@@ -1,4 +1,5 @@
 import { useCallback, useMemo, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Droplet, RotateCcw } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,7 @@ export const FillSection = memo(function FillSection({
   canvas,
   onTransformChange,
 }: FillSectionProps) {
+  const { t } = useTranslation()
   const itemIds = useMemo(() => items.map((item) => item.id), [items])
   const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
 
@@ -261,9 +263,9 @@ export const FillSection = memo(function FillSection({
   }, [items, itemIds, onTransformChange, canvas])
 
   return (
-    <PropertySection title="Composite" icon={Droplet} defaultOpen={true}>
+    <PropertySection title={t('editor.fillSection.composite')} icon={Droplet} defaultOpen={true}>
       {/* Opacity */}
-      <PropertyRow label="Opacity">
+      <PropertyRow label={t('editor.fillSection.opacity')}>
         <div className="flex items-center gap-1 w-full">
           <SliderInput
             value={opacity}
@@ -285,7 +287,7 @@ export const FillSection = memo(function FillSection({
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleResetOpacity}
-            title="Reset to 100%"
+            title={t('editor.fillSection.resetOpacity')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>
@@ -293,14 +295,20 @@ export const FillSection = memo(function FillSection({
       </PropertyRow>
 
       {/* Blend Mode */}
-      <PropertyRow label="Blend">
+      <PropertyRow label={t('editor.fillSection.blend')}>
         <Select
           value={hasShapeMask ? 'normal' : blendMode === 'mixed' ? undefined : blendMode}
           onValueChange={handleBlendModeChange}
           disabled={hasShapeMask}
         >
           <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-            <SelectValue placeholder={hasShapeMask || blendMode !== 'mixed' ? 'Normal' : 'Mixed'} />
+            <SelectValue
+              placeholder={
+                hasShapeMask || blendMode !== 'mixed'
+                  ? t('editor.fillSection.blendNormal')
+                  : t('editor.fillSection.blendMixed')
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {BLEND_MODE_GROUPS.map((group) => (
@@ -320,7 +328,7 @@ export const FillSection = memo(function FillSection({
       </PropertyRow>
 
       {/* Corner Radius */}
-      <PropertyRow label="Radius">
+      <PropertyRow label={t('editor.fillSection.radius')}>
         <div className="flex items-center gap-1 w-full">
           <NumberInput
             value={cornerRadius}
@@ -342,7 +350,7 @@ export const FillSection = memo(function FillSection({
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleResetCornerRadius}
-            title="Reset to 0"
+            title={t('editor.fillSection.resetRadius')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>

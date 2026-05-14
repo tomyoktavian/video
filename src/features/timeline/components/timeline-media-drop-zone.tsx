@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { TimelineItem as TimelineItemType } from '@/types/timeline'
 import type { MediaMetadata } from '@/types/storage'
@@ -104,14 +105,15 @@ const NewTrackZoneGhostOverlay = memo(function NewTrackZoneGhostOverlay({
   const previewsRef = useRef<TimelineDropGhostPreviewsHandle>(null)
 
   useEffect(() => {
+    const previews = previewsRef.current
     const unregister = registerNewTrackZoneGhostOverlay(zone, {
-      sync: (ghostPreviews) => previewsRef.current?.sync(ghostPreviews),
-      clear: () => previewsRef.current?.clear(),
+      sync: (ghostPreviews) => previews?.sync(ghostPreviews),
+      clear: () => previews?.clear(),
     })
 
     return () => {
       unregister()
-      previewsRef.current?.clear()
+      previews?.clear()
     }
   }, [zone])
 
@@ -123,6 +125,7 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
   zone,
   anchorTrackId,
 }: TimelineMediaDropZoneProps) {
+  const { t } = useTranslation()
   const previewOwnerId = `zone:${zone}`
   const zoneRef = useRef<HTMLDivElement>(null)
   const dragPreviewCacheRef = useRef<{
@@ -799,7 +802,7 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
       }
       updateDragOverFlags(true, hasExternalFiles)
     },
-    [clearOwnedPreview, clearZoneGhostPreviews, previewOwnerId, updateDragOverFlags],
+    [clearOwnedPreview, clearZoneGhostPreviews, previewOwnerId, updateDragOverFlags, zone],
   )
 
   const handleDragEnterCapture = useCallback(
@@ -865,12 +868,14 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
       clearZoneGhostPreviews,
       clearPendingDragPreview,
       claimPreviewOwnership,
+      clearOwnedPreview,
       externalPreviewItemsRef,
       getDropFrame,
       lastDragFrameRef,
       processPendingDragPreview,
       resetDragPreviewCache,
       updateDragOverFlags,
+      zone,
     ],
   )
 
@@ -998,7 +1003,7 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
           if (isTimelineTemplateDragData(data)) {
             const templateDrop = buildTimelineTemplateItem(data, dropFrame)
             if (!templateDrop) {
-              toast.error('Unable to add dropped timeline item')
+              toast.error(t('timeline.track.unableToAddDroppedItem'))
               return
             }
 
@@ -1023,9 +1028,9 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
             addItems,
             currentTracks: useTimelineStore.getState().tracks,
             dropResult,
-            emptyMessage: 'Unable to add dropped media items',
+            emptyMessage: t('timeline.track.unableToAddDroppedMediaItems'),
             notify: toast,
-            partialFailureLabel: 'dropped media items',
+            partialFailureLabel: t('timeline.track.droppedMediaItems'),
             requestedCount: entries.length,
             setTracks: useTimelineStore.getState().setTracks,
           })
@@ -1055,9 +1060,9 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
         addItems,
         currentTracks: useTimelineStore.getState().tracks,
         dropResult,
-        emptyMessage: 'Unable to add dropped files to the timeline',
+        emptyMessage: t('timeline.track.unableToAddDroppedFiles'),
         notify: toast,
-        partialFailureLabel: 'dropped files',
+        partialFailureLabel: t('timeline.track.droppedFiles'),
         requestedCount: droppedEntries.length,
         setTracks: useTimelineStore.getState().setTracks,
       })
@@ -1076,6 +1081,7 @@ export const TimelineMediaDropZone = memo(function TimelineMediaDropZone({
       previewOwnerId,
       resetDragPreviewCache,
       resolveTimelineItemsForEntries,
+      t,
       updateDragOverFlags,
       zone,
     ],

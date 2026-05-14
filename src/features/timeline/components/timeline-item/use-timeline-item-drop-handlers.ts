@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { toast } from 'sonner'
+import { i18n } from '@/i18n'
 import type { TimelineItem as TimelineItemType } from '@/types/timeline'
 import { getMediaDragData } from '@/features/timeline/deps/media-library-resolver'
 import {
@@ -315,7 +316,9 @@ export function useTimelineItemDropHandlers({
       useTrackDropPreviewStore.getState().clearGhostPreviews()
       addEffects(targetItemIds.map((itemId) => ({ itemId, effects })))
       if (targetItemIds.length > 1) {
-        toast.success(`Applied effect to ${targetItemIds.length} clips`)
+        toast.success(
+          i18n.t('timeline.itemActions.appliedEffectToClips', { count: targetItemIds.length }),
+        )
       }
     },
     [addEffects, resolveDirectEffectDropTemplate, resolveEffectDropTargets],

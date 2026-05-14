@@ -1,50 +1,55 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
 import { DEFAULT_PROJECT_FPS_OPTIONS, isAllowedProjectFps } from './project-fps'
 
 /**
  * Validation schema for project creation/update form
  */
-export const projectFormSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Project name is required')
-    .max(100, 'Project name must be less than 100 characters')
-    .refine((name) => name.trim().length > 0, {
-      message: 'Project name cannot be only whitespace',
-    }),
+export function createProjectFormSchema(t: (key: string) => string) {
+  return z.object({
+    name: z
+      .string()
+      .min(1, t('projects.validation.nameRequired'))
+      .max(100, t('projects.validation.nameTooLong'))
+      .refine((name) => name.trim().length > 0, {
+        message: t('projects.validation.nameWhitespace'),
+      }),
 
-  description: z
-    .string()
-    .max(500, 'Description must be less than 500 characters')
-    .optional()
-    .or(z.literal('')),
+    description: z
+      .string()
+      .max(500, t('projects.validation.descriptionTooLong'))
+      .optional()
+      .or(z.literal('')),
 
-  width: z
-    .number()
-    .int('Width must be an integer')
-    .min(320, 'Width must be at least 320px')
-    .max(7680, 'Width must be at most 7680px (8K)'),
+    width: z
+      .number()
+      .int(t('projects.validation.widthInteger'))
+      .min(320, t('projects.validation.widthMin'))
+      .max(7680, t('projects.validation.widthMax')),
 
-  height: z
-    .number()
-    .int('Height must be an integer')
-    .min(240, 'Height must be at least 240px')
-    .max(4320, 'Height must be at most 4320px (8K)'),
+    height: z
+      .number()
+      .int(t('projects.validation.heightInteger'))
+      .min(240, t('projects.validation.heightMin'))
+      .max(4320, t('projects.validation.heightMax')),
 
-  fps: z
-    .number()
-    .int('FPS must be an integer')
-    .min(1, 'FPS must be at least 1')
-    .max(240, 'FPS must be at most 240')
-    .refine((fps) => isAllowedProjectFps(fps), {
-      message: 'FPS should be a supported frame rate',
-    }),
+    fps: z
+      .number()
+      .int(t('projects.validation.fpsInteger'))
+      .min(1, t('projects.validation.fpsMin'))
+      .max(240, t('projects.validation.fpsMax'))
+      .refine((fps) => isAllowedProjectFps(fps), {
+        message: t('projects.validation.fpsUnsupported'),
+      }),
 
-  backgroundColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color (e.g., #000000)')
-    .optional(),
-})
+    backgroundColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, t('projects.validation.invalidHexColor'))
+      .optional(),
+  })
+}
+
+export const projectFormSchema = createProjectFormSchema(i18n.t.bind(i18n))
 
 /**
  * Type inferred from the schema

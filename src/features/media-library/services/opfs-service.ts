@@ -1,4 +1,5 @@
 import type { OPFSWorkerMessage, OPFSWorkerResponse, UploadProgress } from '../workers/opfs-worker'
+import { getOpfsFileBlob } from '@/infrastructure/browser/opfs-file-access'
 import { createManagedWorker } from '@/shared/utils/managed-worker'
 import { formatBytes } from '@/shared/utils/format-utils'
 
@@ -19,31 +20,6 @@ class OPFSService {
    * Maps file path to pending Promise
    */
   private pendingReads = new Map<string, Promise<ArrayBuffer>>()
-
-  private async getFileHandle(path: string): Promise<FileSystemFileHandle> {
-    const root = await navigator.storage.getDirectory()
-    const parts = path.split('/').filter((part) => part)
-
-    if (parts.length === 0) {
-      throw new Error('Invalid path')
-    }
-
-    let dir = root
-    for (let index = 0; index < parts.length - 1; index += 1) {
-      const part = parts[index]
-      if (!part) {
-        continue
-      }
-      dir = await dir.getDirectoryHandle(part)
-    }
-
-    const fileName = parts[parts.length - 1]
-    if (!fileName) {
-      throw new Error('Invalid path: missing filename')
-    }
-
-    return dir.getFileHandle(fileName)
-  }
 
   /**
    * Initialize the OPFS worker
@@ -116,8 +92,10 @@ class OPFSService {
    * file objects directly instead of forcing a full ArrayBuffer read first.
    */
   async getFileBlob(path: string): Promise<Blob> {
-    const fileHandle = await this.getFileHandle(path)
-    return fileHandle.getFile()
+    return getOpfsFileBlob(path, {
+      invalidPath: 'Invalid path',
+      missingFileName: 'Invalid path: missing filename',
+    })
   }
 
   /**

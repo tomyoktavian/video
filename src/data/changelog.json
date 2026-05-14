@@ -1,17 +1,20 @@
 {
   "current": {
     "version": "current",
-    "date": "2026-05-02",
+    "date": "2026-05-14",
     "groups": {
       "added": [
         {
-          "title": "Motion, iris, shape, and DaVinci-style wipe transition packs"
+          "title": "Translated UI in 9 languages: English, Spanish, French, German, Portuguese (Brazil), Turkish, Japanese, Korean, and Chinese (Simplified)"
         },
         {
-          "title": "Lens warp zoom transition"
+          "title": "Language picker in editor settings, with auto-detection from your browser"
         },
         {
-          "title": "Liquid distort transition"
+          "title": "Effect names, timeline labels, and media library all translate alongside the rest of the UI"
+        },
+        {
+          "title": "Supertonic voice engine added to AI text-to-speech"
         },
         {
           "title": "Searchable transition preset picker"
@@ -93,6 +96,107 @@
     }
   },
   "releases": [
+    {
+      "version": "2026.05.04",
+      "date": "2026-05-04",
+      "groups": {
+        "fixed": [
+          {
+            "title": "Filmstrips reload reliably after reopening a project from your workspace folder"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2026.04.27",
+      "date": "2026-04-27",
+      "groups": {
+        "added": [
+          {
+            "title": "Motion, iris, shape, and DaVinci-style wipe transition packs"
+          },
+          {
+            "title": "Lens warp zoom transition"
+          },
+          {
+            "title": "Liquid distort transition"
+          },
+          {
+            "title": "Searchable transition preset picker"
+          },
+          {
+            "title": "Tunable transition parameters in the properties panel"
+          },
+          {
+            "title": "Transition placement controls with alignment-aware drops"
+          },
+          {
+            "title": "Compound clips can now host transitions"
+          },
+          {
+            "title": "Reset buttons on transition parameter sliders"
+          },
+          {
+            "title": "Extract embedded subtitles from video files (works for MKVs over 2GB)"
+          },
+          {
+            "title": "Subtitle segments on the timeline with live cue overlay during playback"
+          },
+          {
+            "title": "Cue editor in the inspector with bold/italic/underline, positioning, and click-to-seek"
+          },
+          {
+            "title": "Subtitle style presets, including a TikTok-style preset"
+          },
+          {
+            "title": "Burn or embed subtitles in exports"
+          },
+          {
+            "title": "Reverse playback for video, audio, and GPU effects"
+          },
+          {
+            "title": "Reverse-aware exports preserve the reversed audio and video"
+          },
+          {
+            "title": "Detect and remove silence across selected clips with preview overlay and ripple delete"
+          }
+        ],
+        "fixed": [
+          {
+            "title": "Effect drag overlays no longer stick or hijack adjacent lanes"
+          },
+          {
+            "title": "Transition preset selection syncs with the chosen direction"
+          },
+          {
+            "title": "Removed the transition duration cap"
+          },
+          {
+            "title": "Multi-channel audio downmixes to stereo with proper coefficients on export"
+          },
+          {
+            "title": "Subtitle cues trim and split alongside their segment"
+          },
+          {
+            "title": "Cue time inputs accept 4-digit seconds without truncating"
+          },
+          {
+            "title": "Preview no longer drifts from stale player frames while paused"
+          },
+          {
+            "title": "Paused scrub stays on the rendered path with sharp output"
+          }
+        ],
+        "improved": [
+          {
+            "title": "Subtitle cue editor stays responsive with hundreds of cues"
+          },
+          {
+            "title": "Smoother playback start when entering a transition"
+          }
+        ]
+      }
+    },
     {
       "version": "2026.04.20",
       "date": "2026-04-20",

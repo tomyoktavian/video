@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { GlobalTooltip } from '@/components/ui/global-tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 import { WorkspaceGate } from '@/features/workspace-gate'
 import { routeTree } from './routeTree.gen'
 
@@ -63,6 +64,7 @@ export function App() {
           <RouterProvider router={router} />
         </WorkspaceGate>
         <GlobalTooltip />
+        <PwaInstallPrompt />
         <Toaster />
       </TooltipProvider>
     </ErrorBoundary>

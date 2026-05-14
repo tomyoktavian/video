@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/ui/cn'
 
 interface InteractionLockRegionProps {
@@ -20,6 +21,7 @@ export function InteractionLockRegion({
   overlayClassName,
   style,
 }: InteractionLockRegionProps) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn('relative min-h-0', className)}
@@ -41,7 +43,7 @@ export function InteractionLockRegion({
             'absolute inset-0 z-10 cursor-not-allowed rounded-[inherit] bg-background/10',
             overlayClassName,
           )}
-          title="Finish or exit mask editing to continue"
+          title={t('editor.interactionLock.maskEditing')}
         />
       ) : null}
     </div>

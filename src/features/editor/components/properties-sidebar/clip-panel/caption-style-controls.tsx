@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/shared/ui/cn'
@@ -38,6 +39,7 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
   canvasWidth,
   canvasHeight,
 }: CaptionStyleControlsProps) {
+  const { t } = useTranslation()
   const updateItem = useTimelineStore((s) => s.updateItem)
 
   const applyPatch = useCallback(
@@ -94,14 +96,14 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
     <div className="space-y-1">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pb-1.5">
-          Style preset
+          {t('editor.captionStyleControls.stylePreset')}
         </p>
         <div className="grid grid-cols-3 gap-1.5">
           {CAPTION_STYLE_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              title={preset.hint}
+              title={t(preset.hintKey)}
               onClick={() => applyPreset(preset)}
               className={cn(
                 'rounded border px-2 py-1.5 text-[11px] text-center transition-colors',
@@ -119,7 +121,7 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
       <Separator className="my-1" />
 
       <ColorPicker
-        label="Color"
+        label={t('editor.captionStyleControls.color')}
         color={sampleColor}
         onChange={(color) => applyPatch({ color })}
         onLiveChange={(color) => applyPatch({ color })}
@@ -127,7 +129,7 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
         defaultColor="#ffffff"
       />
 
-      <PropertyRow label="Size">
+      <PropertyRow label={t('editor.captionStyleControls.size')}>
         <SliderInput
           value={sampleFontSize}
           onChange={(fontSize) => applyPatch({ fontSize })}
@@ -140,7 +142,7 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
         />
       </PropertyRow>
 
-      <PropertyRow label="Vertical">
+      <PropertyRow label={t('editor.captionStyleControls.vertical')}>
         <SliderInput
           value={verticalY}
           onChange={updateVerticalPosition}
@@ -153,7 +155,7 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
         />
       </PropertyRow>
 
-      <PropertyRow label="Background">
+      <PropertyRow label={t('editor.captionStyleControls.background')}>
         <div className="flex flex-1 min-w-0">
           <button
             type="button"
@@ -169,13 +171,15 @@ export const CaptionStyleControls = memo(function CaptionStyleControls({
                 : 'border-border hover:bg-secondary/40 text-muted-foreground',
             )}
           >
-            {hasBackground ? 'On' : 'Off'}
+            {hasBackground
+              ? t('editor.captionStyleControls.on')
+              : t('editor.captionStyleControls.off')}
           </button>
         </div>
       </PropertyRow>
 
       {hasBackground && (
-        <PropertyRow label="Padding">
+        <PropertyRow label={t('editor.captionStyleControls.padding')}>
           <SliderInput
             value={sampleTextPadding}
             onChange={(textPadding) => applyPatch({ textPadding })}

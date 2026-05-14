@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, memo, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { TimelineHeader } from './timeline-header'
 import { TimelineContent } from './timeline-content'
@@ -61,6 +62,7 @@ interface TimelineProps {
  * Follows modular architecture with granular Zustand selectors
  */
 export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
+  const { t } = useTranslation()
   const hotkeys = useResolvedHotkeys()
   const editorDensity = useSettingsStore((s) => s.editorDensity)
   const editorLayout = getEditorLayout(editorDensity)
@@ -864,7 +866,7 @@ export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
     <div
       className="timeline-bg h-full border-t border-border flex flex-col overflow-hidden"
       role="region"
-      aria-label="Timeline"
+      aria-label={t('timeline.region')}
     >
       {/* Timeline Header */}
       <TimelineHeader
@@ -895,7 +897,7 @@ export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
             style={{ height: EDITOR_LAYOUT_CSS_VALUES.timelineTracksHeaderHeight }}
           >
             <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-              Tracks
+              {t('timeline.tracks')}
             </span>
             <div className="flex items-center gap-1">
               {/* Add track button */}
@@ -906,8 +908,8 @@ export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
                 onClick={handleAddTrack}
                 title={
                   nextTrackKind === 'audio'
-                    ? 'Add audio track to audio section'
-                    : 'Add video track at top'
+                    ? t('timeline.addAudioTrackHint')
+                    : t('timeline.addVideoTrackHint')
                 }
               >
                 <Plus className="w-3 h-3" />
@@ -921,12 +923,12 @@ export const Timeline = memo(function Timeline({ duration }: TimelineProps) {
                 disabled={tracks.length === 0 || (!activeTrackId && selectedTrackIds.length === 0)}
                 title={
                   tracks.length === 0
-                    ? 'No tracks to remove'
+                    ? t('timeline.noTracksToRemove')
                     : !activeTrackId && selectedTrackIds.length === 0
-                      ? 'Select a track to remove'
+                      ? t('timeline.selectTrackToRemove')
                       : selectedTrackIds.length > 0
-                        ? `Remove ${selectedTrackIds.length} selected track(s)`
-                        : 'Remove active track'
+                        ? t('timeline.removeSelectedTracks', { count: selectedTrackIds.length })
+                        : t('timeline.removeActiveTrack')
                 }
               >
                 <Minus className="w-3 h-3" />

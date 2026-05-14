@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Search, ArrowUpDown, X, Trash2, AlertTriangle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,7 @@ interface MarqueeRect {
 const MARQUEE_DRAG_THRESHOLD = 4
 
 export function ProjectList({ onEditProject }: ProjectListProps) {
+  const { t } = useTranslation()
   const [localSearchQuery, setLocalSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [anchorId, setAnchorId] = useState<string | null>(null)
@@ -306,13 +308,19 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
     clearSelection()
 
     if (failures.length === 0) {
-      toast.success(`Moved ${ids.length} project${ids.length === 1 ? '' : 's'} to trash`)
+      toast.success(t('projects.list.movedToTrashCount', { count: ids.length }))
     } else if (failures.length < ids.length) {
-      toast.warning(`Moved ${ids.length - failures.length} to trash, ${failures.length} failed`, {
-        description: failures[0]?.error,
-      })
+      toast.warning(
+        t('projects.list.movedToTrashPartial', {
+          moved: ids.length - failures.length,
+          failed: failures.length,
+        }),
+        {
+          description: failures[0]?.error,
+        },
+      )
     } else {
-      toast.error('Failed to delete selected projects', { description: failures[0]?.error })
+      toast.error(t('projects.list.deleteSelectedFailed'), { description: failures[0]?.error })
     }
   }
 
@@ -330,7 +338,7 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search projects..."
+              placeholder={t('projects.list.searchPlaceholder')}
               value={localSearchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9 pr-9"
@@ -353,10 +361,10 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
             onValueChange={(value) => setFilterResolution(value === 'all' ? undefined : value)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Resolutions" />
+              <SelectValue placeholder={t('projects.list.allResolutions')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Resolutions</SelectItem>
+              <SelectItem value="all">{t('projects.list.allResolutions')}</SelectItem>
               {uniqueResolutions.map((res) => (
                 <SelectItem key={res} value={res}>
                   {res}
@@ -371,13 +379,13 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
             onValueChange={(value) => setFilterFps(value === 'all' ? undefined : Number(value))}
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All FPS" />
+              <SelectValue placeholder={t('projects.list.allFps')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All FPS</SelectItem>
+              <SelectItem value="all">{t('projects.list.allFps')}</SelectItem>
               {uniqueFps.map((fps) => (
                 <SelectItem key={fps} value={fps.toString()}>
-                  {fps} fps
+                  {t('projects.list.fpsOption', { fps })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -391,26 +399,29 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('projects.list.sortBy')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSortField('name')}>
-                Name {sortField === 'name' && `(${sortDirection === 'asc' ? '↑' : '↓'})`}
+                {t('projects.list.sortName')}{' '}
+                {sortField === 'name' && `(${sortDirection === 'asc' ? '↑' : '↓'})`}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortField('updatedAt')}>
-                Last Modified{' '}
+                {t('projects.list.sortLastModified')}{' '}
                 {sortField === 'updatedAt' && `(${sortDirection === 'asc' ? '↑' : '↓'})`}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortField('createdAt')}>
-                Date Created{' '}
+                {t('projects.list.sortDateCreated')}{' '}
                 {sortField === 'createdAt' && `(${sortDirection === 'asc' ? '↑' : '↓'})`}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortField('resolution')}>
-                Resolution{' '}
+                {t('projects.list.sortResolution')}{' '}
                 {sortField === 'resolution' && `(${sortDirection === 'asc' ? '↑' : '↓'})`}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={toggleSortDirection}>
-                {sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                {sortDirection === 'asc'
+                  ? t('projects.list.ascending')
+                  : t('projects.list.descending')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -419,7 +430,7 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" onClick={handleClearFilters}>
               <X className="w-4 h-4 mr-2" />
-              Clear Filters
+              {t('projects.list.clearFilters')}
             </Button>
           )}
 
@@ -430,10 +441,10 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
           {selectionCount > 0 && (
             <>
               <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {selectionCount} selected
+                {t('projects.list.selectedCount', { count: selectionCount })}
               </span>
               <Button variant="ghost" size="sm" onClick={clearSelection}>
-                Clear
+                {t('projects.list.clearSelection')}
               </Button>
               <Button
                 variant="destructive"
@@ -442,7 +453,7 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
                 onClick={() => setShowBulkDeleteDialog(true)}
               >
                 <Trash2 className="w-4 h-4" />
-                Delete {selectionCount}
+                {t('projects.list.deleteN', { count: selectionCount })}
               </Button>
             </>
           )}
@@ -452,10 +463,11 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
       {/* Empty State - No Projects */}
       {isEmpty && (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <h2 className="text-3xl font-semibold text-foreground mb-2">Welcome to FreeCut</h2>
+          <h2 className="text-3xl font-semibold text-foreground mb-2">
+            {t('projects.list.welcomeTitle')}
+          </h2>
           <p className="text-muted-foreground max-w-md mb-6">
-            Get started by creating your first video project. Choose your resolution, frame rate,
-            and start editing!
+            {t('projects.list.welcomeDescription')}
           </p>
         </div>
       )}
@@ -466,13 +478,14 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
           <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
             <Search className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">No projects found</h3>
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            {t('projects.list.noResultsTitle')}
+          </h3>
           <p className="text-muted-foreground max-w-md mb-6">
-            We couldn't find any projects matching your search criteria. Try adjusting your filters
-            or search terms.
+            {t('projects.list.noResultsDescription')}
           </p>
           <Button variant="outline" onClick={handleClearFilters}>
-            Clear Filters
+            {t('projects.list.clearFilters')}
           </Button>
         </div>
       )}
@@ -483,8 +496,11 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">
               {filteredProjects.length === allProjects.length
-                ? `${allProjects.length} project${allProjects.length === 1 ? '' : 's'}`
-                : `${filteredProjects.length} of ${allProjects.length} project${allProjects.length === 1 ? '' : 's'}`}
+                ? t('projects.list.projectCount', { count: allProjects.length })
+                : t('projects.list.projectCountFiltered', {
+                    shown: filteredProjects.length,
+                    total: allProjects.length,
+                  })}
             </p>
           </div>
 
@@ -523,21 +539,22 @@ export function ProjectList({ onEditProject }: ProjectListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Delete {selectionCount} project{selectionCount === 1 ? '' : 's'}?
+              {t('projects.list.bulkDeleteTitle', { count: selectionCount })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              These projects will be moved to trash. You can restore them from the Trash section
-              until they're permanently deleted.
+              {t('projects.list.bulkDeleteDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isBulkDeleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmBulkDelete}
               disabled={isBulkDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isBulkDeleting ? 'Deleting...' : `Delete ${selectionCount}`}
+              {isBulkDeleting
+                ? t('common.deleting')
+                : t('projects.list.deleteN', { count: selectionCount })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

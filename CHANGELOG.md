@@ -4,7 +4,20 @@ All notable changes to FreeCut. Weekly CalVer: `YYYY.MM.DD` = the Monday of the 
 
 <!-- Entries below are generated via the `changelog` skill. Newest first. -->
 
-## [Current] — week of 2026-04-27
+## [Current] — week of 2026-05-11
+
+### Added
+- Translated UI in 9 languages: English, Spanish, French, German, Portuguese (Brazil), Turkish, Japanese, Korean, and Chinese (Simplified)
+- Language picker in editor settings, with auto-detection from your browser
+- Effect names, timeline labels, and media library all translate alongside the rest of the UI
+- Supertonic voice engine added to AI text-to-speech
+
+## [2026.05.04] — week of 2026-05-04 to 2026-05-10
+
+### Fixed
+- Filmstrips reload reliably after reopening a project from your workspace folder
+
+## [2026.04.27] — week of 2026-04-27 to 2026-05-03
 
 ### Added
 - Motion, iris, shape, and DaVinci-style wipe transition packs

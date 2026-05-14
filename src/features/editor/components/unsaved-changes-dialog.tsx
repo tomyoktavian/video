@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ export function UnsavedChangesDialog({
   projectName,
 }: UnsavedChangesDialogProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSaveAndExit = async () => {
@@ -55,20 +57,21 @@ export function UnsavedChangesDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogTitle>{t('unsavedChanges.title')}</AlertDialogTitle>
           <AlertDialogDescription>
             {projectName ? (
-              <>
-                You have unsaved changes in <strong>{projectName}</strong>. Would you like to save
-                before leaving?
-              </>
+              <Trans
+                i18nKey="unsavedChanges.descriptionWithName"
+                values={{ name: projectName }}
+                components={{ strong: <strong /> }}
+              />
             ) : (
-              'You have unsaved changes. Would you like to save before leaving?'
+              t('unsavedChanges.description')
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2 sm:gap-0">
-          <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSaving}>{t('common.cancel')}</AlertDialogCancel>
           <Button
             variant="destructive"
             onClick={handleDiscard}
@@ -76,11 +79,11 @@ export function UnsavedChangesDialog({
             className="gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            Discard
+            {t('unsavedChanges.discard')}
           </Button>
           <AlertDialogAction onClick={handleSaveAndExit} disabled={isSaving} className="gap-2">
             <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save & Exit'}
+            {isSaving ? t('unsavedChanges.saving') : t('unsavedChanges.saveAndExit')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

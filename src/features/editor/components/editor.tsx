@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback, memo, lazy, Suspense } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { createLogger } from '@/shared/logging/logger'
+import { i18n } from '@/i18n'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Toolbar } from './toolbar'
@@ -196,14 +198,14 @@ export const Editor = memo(function Editor({ projectId, project, migration }: Ed
         toVersion: migration.currentSchemaVersion,
         backupName,
       })
-      toast.success('Backup created before upgrade', {
+      toast.success(i18n.t('editor.editor.backupCreated'), {
         description: backup.name,
       })
       setUpgradeApproved(true)
     } catch (error) {
       logger.error('Failed to create upgrade backup:', error)
-      toast.error('Failed to create backup before upgrade', {
-        description: error instanceof Error ? error.message : 'Please try again.',
+      toast.error(i18n.t('editor.editor.backupFailed'), {
+        description: error instanceof Error ? error.message : i18n.t('editor.editor.tryAgain'),
       })
     } finally {
       setIsPreparingUpgrade(false)
@@ -317,6 +319,7 @@ export const LoadedEditor = memo(function LoadedEditor({
   project,
   migration,
 }: EditorProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [bundleExportDialogOpen, setBundleExportDialogOpen] = useState(false)
@@ -490,10 +493,10 @@ export const LoadedEditor = memo(function LoadedEditor({
     try {
       await saveTimeline(projectId)
       logger.debug('Project saved successfully')
-      toast.success('Project saved')
+      toast.success(i18n.t('editor.editor.projectSaved'))
     } catch (error) {
       logger.error('Failed to save project:', error)
-      toast.error('Failed to save project')
+      toast.error(i18n.t('editor.editor.projectSaveFailed'))
       throw error // Re-throw so callers know save failed
     } finally {
       isSavingRef.current = false
@@ -526,7 +529,7 @@ export const LoadedEditor = memo(function LoadedEditor({
             suggestedName: `${baseName}${compoundSuffix}.freecut.zip`,
             types: [
               {
-                description: 'FreeCut Project Bundle',
+                description: i18n.t('editor.editor.projectBundle'),
                 accept: { 'application/zip': ['.freecut.zip'] },
               },
             ],
@@ -607,7 +610,7 @@ export const LoadedEditor = memo(function LoadedEditor({
       className="h-screen bg-background flex flex-col overflow-hidden"
       style={editorLayoutCssVars as import('react').CSSProperties}
       role="application"
-      aria-label="FreeCut Video Editor"
+      aria-label={t('editor.editor.appLabel')}
     >
       {/* Top Toolbar */}
       <InteractionLockRegion locked={isMaskEditingActive}>

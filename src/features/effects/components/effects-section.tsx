@@ -1,4 +1,5 @@
 import { useCallback, useMemo, memo, useRef, useState, useEffect, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { Sparkles, Plus, Eye, EyeOff, Search } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
@@ -22,6 +23,10 @@ import {
   getResolvedAnimatedEffectParamValue,
 } from '@/features/effects/deps/keyframes-contract'
 import { buildEffectAnimatableProperty, type AnimatableProperty } from '@/types/keyframe'
+import {
+  getEffectCategoryLabel,
+  getEffectDefinitionName,
+} from '@/features/effects/utils/effect-i18n'
 
 interface EffectsSectionProps {
   /** Visual items (already filtered to exclude audio) */
@@ -34,6 +39,7 @@ interface EffectsSectionProps {
  * Memoized to prevent re-renders when items prop hasn't changed.
  */
 export const EffectsSection = memo(function EffectsSection({ items }: EffectsSectionProps) {
+  const { t } = useTranslation()
   const addEffect = useTimelineStore((s) => s.addEffect)
   const addEffects = useTimelineStore((s) => s.addEffects)
   const updateEffect = useTimelineStore((s) => s.updateEffect)
@@ -547,7 +553,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
     return gpuCategories
       .map(({ category, effects: catEffects }) => ({
         category,
-        effects: catEffects.filter((def) => def.name.toLowerCase().includes(q)),
+        effects: catEffects.filter((def) => getEffectDefinitionName(def).toLowerCase().includes(q)),
       }))
       .filter(({ effects: catEffects }) => catEffects.length > 0)
   }, [gpuCategories, searchQuery])
@@ -563,7 +569,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
   if (visualItems.length === 0) return null
 
   return (
-    <PropertySection title="Effects" icon={Sparkles} defaultOpen={true}>
+    <PropertySection title={t('effects.section.title')} icon={Sparkles} defaultOpen={true}>
       {/* Add Effect Picker + Toggle All */}
       <div className="px-2 pb-2 flex gap-1">
         <Button
@@ -574,7 +580,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
           onClick={() => (pickerOpen ? closePicker() : openPicker())}
         >
           <Plus className="w-3 h-3 mr-1" />
-          Add Effect
+          {t('effects.section.addEffect')}
         </Button>
         {pickerOpen &&
           createPortal(
@@ -592,7 +598,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search effects..."
+                    placeholder={t('effects.section.searchEffects')}
                     className="w-full h-7 pl-7 pr-2 text-xs bg-transparent rounded-sm border border-input placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 </div>
@@ -605,7 +611,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
                   <div key={category}>
                     {index > 0 && <div className="-mx-1 my-1 h-px bg-muted" />}
                     <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                      {getEffectCategoryLabel(t, category)}
                     </div>
                     {catEffects.map((def) => (
                       <button
@@ -626,7 +632,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
                         ) : (
                           <span className="w-8 h-[18px] rounded-sm bg-muted flex-shrink-0" />
                         )}
-                        {def.name}
+                        {getEffectDefinitionName(def)}
                       </button>
                     ))}
                   </div>
@@ -636,7 +642,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
                   <>
                     {filteredCategories.length > 0 && <div className="-mx-1 my-1 h-px bg-muted" />}
                     <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                      Presets
+                      {t('effects.section.presets')}
                     </div>
                     {filteredPresets.map((preset) => (
                       <button
@@ -666,7 +672,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
                 {/* No results */}
                 {!hasResults && (
                   <div className="px-2 py-4 text-xs text-muted-foreground text-center">
-                    No effects found
+                    {t('effects.section.noEffectsFound')}
                   </div>
                 )}
               </div>
@@ -679,7 +685,9 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
             size="sm"
             className="h-7 px-2"
             onClick={handleToggleAll}
-            title={allEffectsEnabled ? 'Disable all effects' : 'Enable all effects'}
+            title={
+              allEffectsEnabled ? t('effects.section.disableAll') : t('effects.section.enableAll')
+            }
           >
             {allEffectsEnabled ? (
               <EyeOff className="w-3.5 h-3.5" />
@@ -761,7 +769,7 @@ export const EffectsSection = memo(function EffectsSection({ items }: EffectsSec
       {/* Empty state */}
       {effects.length === 0 && (
         <div className="px-2 py-3 text-xs text-muted-foreground text-center">
-          No effects applied. Click "Add Effect" to get started.
+          {t('effects.section.emptyState')}
         </div>
       )}
     </PropertySection>

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Music, RotateCcw, Volume2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,7 @@ const AUDIO_PITCH_LIVE_THROTTLE_MS = 50
  * Shown for video and audio clips.
  */
 export function AudioSection({ items }: AudioSectionProps) {
+  const { t } = useTranslation()
   const updateItem = useTimelineStore((s) => s.updateItem)
   const setPropertiesPreviewNew = useGizmoStore((s) => s.setPropertiesPreviewNew)
   const clearPreview = useGizmoStore((s) => s.clearPreview)
@@ -299,8 +301,8 @@ export function AudioSection({ items }: AudioSectionProps) {
 
   return (
     <>
-      <PropertySection title="Audio" icon={Volume2} defaultOpen={true}>
-        <PropertyRow label="Gain">
+      <PropertySection title={t('editor.audioSection.audio')} icon={Volume2} defaultOpen={true}>
+        <PropertyRow label={t('editor.audioSection.gain')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={volume}
@@ -322,14 +324,14 @@ export function AudioSection({ items }: AudioSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetVolume}
-              title="Reset to 0 dB"
+              title={t('editor.audioSection.resetGain')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Fade In">
+        <PropertyRow label={t('editor.audioSection.fadeIn')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={fadeIn}
@@ -346,14 +348,14 @@ export function AudioSection({ items }: AudioSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetFadeIn}
-              title="Reset to 0"
+              title={t('editor.audioSection.resetToZero')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Fade Out">
+        <PropertyRow label={t('editor.audioSection.fadeOut')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={fadeOut}
@@ -370,7 +372,7 @@ export function AudioSection({ items }: AudioSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetFadeOut}
-              title="Reset to 0"
+              title={t('editor.audioSection.resetToZero')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -378,8 +380,8 @@ export function AudioSection({ items }: AudioSectionProps) {
         </PropertyRow>
       </PropertySection>
 
-      <PropertySection title="Pitch" icon={Music} defaultOpen={true}>
-        <PropertyRow label="Semi Tones">
+      <PropertySection title={t('editor.audioSection.pitch')} icon={Music} defaultOpen={true}>
+        <PropertyRow label={t('editor.audioSection.semitones')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={pitchSemitones}
@@ -397,14 +399,14 @@ export function AudioSection({ items }: AudioSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetPitchSemitones}
-              title="Reset semitone pitch"
+              title={t('editor.audioSection.resetSemitones')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </PropertyRow>
 
-        <PropertyRow label="Cents">
+        <PropertyRow label={t('editor.audioSection.cents')}>
           <div className="flex items-center gap-1 w-full">
             <SliderInput
               value={pitchCents}
@@ -422,7 +424,7 @@ export function AudioSection({ items }: AudioSectionProps) {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetPitchCents}
-              title="Reset cent pitch"
+              title={t('editor.audioSection.resetCents')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -430,7 +432,7 @@ export function AudioSection({ items }: AudioSectionProps) {
         </PropertyRow>
       </PropertySection>
 
-      <PropertySection title="Equalizer" defaultOpen={true}>
+      <PropertySection title={t('editor.audioSection.equalizer')} defaultOpen={true}>
         <AudioEqPanelContent items={items} targetLabel="" layoutMode="compact" />
       </PropertySection>
     </>

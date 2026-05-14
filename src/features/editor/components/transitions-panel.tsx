@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Blend, Info } from 'lucide-react'
+import { i18n } from '@/i18n'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useSelectionStore } from '@/shared/state/selection'
 import { resolveTransitionTargetFromSelection } from '@/features/editor/deps/timeline-utils'
@@ -95,14 +97,15 @@ const CategorySection = memo(function CategorySection({
   onDragStart,
   onDragEnd,
 }: CategorySectionProps) {
-  const info = TRANSITION_CATEGORY_INFO[category] || { title: category }
+  const info = TRANSITION_CATEGORY_INFO[category]
+  const title = info ? i18n.t(info.titleKey) : category
 
   if (configs.length === 0) return null
 
   return (
     <div className="space-y-2">
       <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-        {info.title}
+        {title}
       </div>
       <div className="grid grid-cols-4 gap-1.5">
         {configs.map((config, index) => (
@@ -122,6 +125,7 @@ const CategorySection = memo(function CategorySection({
 })
 
 export const TransitionsPanel = memo(function TransitionsPanel() {
+  const { t } = useTranslation()
   const addTransition = useTimelineStore((s) => s.addTransition)
   const updateTransition = useTimelineStore((s) => s.updateTransition)
   const items = useTimelineStore((s) => s.items)
@@ -221,30 +225,17 @@ export const TransitionsPanel = memo(function TransitionsPanel() {
           <Info className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div className="text-muted-foreground leading-relaxed">
             {hasValidClickTarget ? (
-              <span className="text-primary">
-                Click to apply to the selected cut, or drag a transition onto any valid cut in the
-                timeline.
-              </span>
+              <span className="text-primary">{t('editor.transitions.hintClickToApply')}</span>
             ) : adjacentInfo?.reason ? (
               <span>
-                Drag a transition onto a valid cut. Click-to-apply is unavailable here:{' '}
-                {adjacentInfo.reason}.
+                {t('editor.transitions.hintUnavailable', { reason: adjacentInfo.reason })}
               </span>
             ) : selectionCount === 1 ? (
-              <span>
-                Drag a transition onto a valid cut, or place clips next to each other and select one
-                clip to click-apply.
-              </span>
+              <span>{t('editor.transitions.hintSelectOne')}</span>
             ) : selectionCount > 1 ? (
-              <span>
-                Drag a transition onto a valid cut, or select a single video or image clip to
-                click-apply.
-              </span>
+              <span>{t('editor.transitions.hintSelectSingle')}</span>
             ) : (
-              <span>
-                Drag a transition onto a valid cut, or select a video or image clip to add a
-                transition to its neighbor.
-              </span>
+              <span>{t('editor.transitions.hintSelectClip')}</span>
             )}
           </div>
         </div>

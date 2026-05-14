@@ -12,6 +12,7 @@
  */
 
 import { useMemo, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Volume1, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -24,6 +25,7 @@ interface MonitorVolumeControlProps {
 }
 
 export function MonitorVolumeControl({ buttonStyle }: MonitorVolumeControlProps) {
+  const { t } = useTranslation()
   const volume = usePlaybackStore((s) => s.volume)
   const muted = usePlaybackStore((s) => s.muted)
   const setVolume = usePlaybackStore((s) => s.setVolume)
@@ -45,17 +47,19 @@ export function MonitorVolumeControl({ buttonStyle }: MonitorVolumeControlProps)
           size="icon"
           className="flex-shrink-0"
           style={buttonStyle}
-          data-tooltip={muted ? 'Monitor muted' : `Monitor ${percent}%`}
-          aria-label="Monitor volume"
+          data-tooltip={
+            muted ? t('preview.monitor.muted') : t('preview.monitor.percent', { percent })
+          }
+          aria-label={t('preview.monitor.volume')}
         >
           <Icon className="w-3.5 h-3.5" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-3 space-y-3" align="center" side="top" sideOffset={6}>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium">Monitor</span>
+          <span className="text-xs font-medium">{t('preview.monitor.title')}</span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            This device only
+            {t('preview.monitor.thisDeviceOnly')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -64,7 +68,7 @@ export function MonitorVolumeControl({ buttonStyle }: MonitorVolumeControlProps)
             size="icon"
             className="h-7 w-7 shrink-0"
             onClick={toggleMute}
-            aria-label={muted ? 'Unmute monitor' : 'Mute monitor'}
+            aria-label={muted ? t('preview.monitor.unmute') : t('preview.monitor.mute')}
           >
             {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           </Button>
@@ -81,11 +85,11 @@ export function MonitorVolumeControl({ buttonStyle }: MonitorVolumeControlProps)
             className="flex-1"
           />
           <span className="text-xs text-muted-foreground tabular-nums w-9 text-right">
-            {muted ? 'Mute' : `${percent}%`}
+            {muted ? t('preview.monitor.muteShort') : `${percent}%`}
           </span>
         </div>
         <p className="text-[10px] text-muted-foreground leading-snug">
-          Preview only — does not affect the project's master bus or exports.
+          {t('preview.monitor.previewOnlyNote')}
         </p>
       </PopoverContent>
     </Popover>

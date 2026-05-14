@@ -100,20 +100,20 @@ export const TRANSITION_ICON_MAP: Record<string, LucideIcon> = {
   CircleDot,
 }
 
-/** Display labels for transition categories */
-export const TRANSITION_CATEGORY_INFO: Record<string, { title: string }> = {
-  basic: { title: 'Basic' },
-  dissolve: { title: 'Dissolve' },
-  motion: { title: 'Motion' },
-  wipe: { title: 'Wipe' },
-  slide: { title: 'Slide' },
-  flip: { title: 'Flip' },
-  mask: { title: 'Mask' },
-  iris: { title: 'Iris' },
-  shape: { title: 'Shape' },
-  light: { title: 'Light' },
-  chromatic: { title: 'Chromatic' },
-  custom: { title: 'Custom' },
+/** i18n keys for transition category display labels */
+export const TRANSITION_CATEGORY_INFO: Record<string, { titleKey: string }> = {
+  basic: { titleKey: 'editor.transitions.category.basic' },
+  dissolve: { titleKey: 'editor.transitions.category.dissolve' },
+  motion: { titleKey: 'editor.transitions.category.motion' },
+  wipe: { titleKey: 'editor.transitions.category.wipe' },
+  slide: { titleKey: 'editor.transitions.category.slide' },
+  flip: { titleKey: 'editor.transitions.category.flip' },
+  mask: { titleKey: 'editor.transitions.category.mask' },
+  iris: { titleKey: 'editor.transitions.category.iris' },
+  shape: { titleKey: 'editor.transitions.category.shape' },
+  light: { titleKey: 'editor.transitions.category.light' },
+  chromatic: { titleKey: 'editor.transitions.category.chromatic' },
+  custom: { titleKey: 'editor.transitions.category.custom' },
 }
 
 /** Ordered list of categories for UI rendering */

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { createManagedWorker } from './managed-worker'
+import { createManagedWorker, rejectAndDeletePendingRequests } from './managed-worker'
 
 type MockWorker = {
   terminate: ReturnType<typeof vi.fn>
@@ -79,5 +79,23 @@ describe('createManagedWorker', () => {
 
     expect(createWorker).not.toHaveBeenCalled()
     expect(managedWorker.peekWorker()).toBeNull()
+  })
+})
+
+describe('rejectAndDeletePendingRequests', () => {
+  it('rejects each pending request with the same error and deletes it from the map', () => {
+    const firstReject = vi.fn()
+    const secondReject = vi.fn()
+    const pendingRequests = new Map([
+      ['first', { reject: firstReject }],
+      ['second', { reject: secondReject }],
+    ])
+    const error = new Error('Worker disposed')
+
+    rejectAndDeletePendingRequests(pendingRequests, error)
+
+    expect(firstReject).toHaveBeenCalledWith(error)
+    expect(secondReject).toHaveBeenCalledWith(error)
+    expect(pendingRequests.size).toBe(0)
   })
 })

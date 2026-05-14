@@ -9,10 +9,9 @@
 //   1. Compute the Monday-of-last-week (or --date override) -> new version.
 //   2. Move `current` into `releases` with that version and date.
 //   3. Update CHANGELOG.md with the new entry.
-//   4. Bump package.json version.
 //
 // Does NOT commit or push. Operator runs:
-//   git add src/data/changelog.json CHANGELOG.md package.json
+//   git add src/data/changelog.json CHANGELOG.md
 //   git commit -m "chore(release): <version>"
 //   git push
 
@@ -24,7 +23,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 const CHANGELOG_JSON = resolve(REPO_ROOT, 'src', 'data', 'changelog.json');
 const CHANGELOG_MD = resolve(REPO_ROOT, 'CHANGELOG.md');
-const PACKAGE_JSON = resolve(REPO_ROOT, 'package.json');
 
 const GROUP_ORDER = ['added', 'fixed', 'improved'];
 const GROUP_LABEL = { added: 'Added', fixed: 'Fixed', improved: 'Improved' };
@@ -137,17 +135,13 @@ function main() {
   const newEntryMd = renderMarkdownEntry(releaseEntry, mondayIso);
   insertIntoMarkdown(newEntryMd);
 
-  const pkg = loadJson(PACKAGE_JSON);
-  pkg.version = version;
-  writeJson(PACKAGE_JSON, pkg);
-
   console.log(`
 Rollup complete.
   Version:   ${version}
-  Files:     src/data/changelog.json, CHANGELOG.md, package.json
+  Files:     src/data/changelog.json, CHANGELOG.md
 
 Next steps (run manually when ready):
-  git add src/data/changelog.json CHANGELOG.md package.json
+  git add src/data/changelog.json CHANGELOG.md
   git commit -m "chore(release): ${version}"
   git push
 `);

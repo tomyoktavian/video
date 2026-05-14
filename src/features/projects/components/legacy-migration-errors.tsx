@@ -23,6 +23,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,7 @@ function groupByStore(errors: StoreError[]): Array<{ store: string; count: numbe
 }
 
 export function LegacyMigrationErrors({ onRetried }: Props) {
+  const { t } = useTranslation()
   const [state, setState] = useState<State>({ kind: 'checking' })
   const [expanded, setExpanded] = useState(false)
 
@@ -84,23 +86,25 @@ export function LegacyMigrationErrors({ onRetried }: Props) {
     try {
       const report = await migrateFromLegacyIDB()
       if (report.errors.length === 0) {
-        toast.success('Retry succeeded — all items migrated.')
+        toast.success(t('projects.legacyMigrationErrors.retrySucceeded'))
         setState({ kind: 'idle' })
       } else {
-        toast.warning(`Retry completed with ${report.errors.length} item(s) still failing.`)
+        toast.warning(
+          t('projects.legacyMigrationErrors.retryStillFailing', { count: report.errors.length }),
+        )
         setState({ kind: 'show', errors: report.errors })
       }
       await onRetried?.()
     } catch (error) {
       logger.error('retry migration failed', error)
-      toast.error('Retry failed', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t('projects.legacyMigrationErrors.retryFailed'), {
+        description: error instanceof Error ? error.message : t('projects.unknownError'),
       })
       // Fall back to whatever the persisted state looks like now.
       const errors = await getMigrationErrors()
       setState(errors.length > 0 ? { kind: 'show', errors } : { kind: 'idle' })
     }
-  }, [onRetried])
+  }, [onRetried, t])
 
   const grouped = useMemo(() => (state.kind === 'show' ? groupByStore(state.errors) : []), [state])
 
@@ -112,7 +116,7 @@ export function LegacyMigrationErrors({ onRetried }: Props) {
     return (
       <div className="panel-bg border border-border rounded-lg p-4 flex items-center gap-3 text-sm">
         <RefreshCw className="h-4 w-4 animate-spin" />
-        <span>Retrying migration…</span>
+        <span>{t('projects.legacyMigrationErrors.retrying')}</span>
       </div>
     )
   }
@@ -125,11 +129,11 @@ export function LegacyMigrationErrors({ onRetried }: Props) {
         <AlertTriangle className="h-4 w-4 mt-0.5 text-yellow-500 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="font-medium">
-            {total} item{total === 1 ? '' : 's'} failed to migrate
+            {t('projects.legacyMigrationErrors.failedCount', { count: total })}
           </div>
           <div className="text-muted-foreground text-xs mt-1">
-            {grouped.map(({ store, count }) => `${count} ${store}`).join(', ')}. Retry to copy
-            anything still missing from the legacy database.
+            {grouped.map(({ store, count }) => `${count} ${store}`).join(', ')}.{' '}
+            {t('projects.legacyMigrationErrors.retryHint')}
           </div>
 
           {expanded && (
@@ -147,13 +151,13 @@ export function LegacyMigrationErrors({ onRetried }: Props) {
           )}
         </div>
         <Button size="sm" onClick={() => void handleRetry()} className="gap-2">
-          <RefreshCw className="h-3 w-3" /> Retry
+          <RefreshCw className="h-3 w-3" /> {t('projects.retry')}
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)}>
-          {expanded ? 'Hide details' : 'Show details'}
+          {expanded ? t('projects.hideDetails') : t('projects.showDetails')}
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setState({ kind: 'dismissed' })}>
-          Dismiss
+          {t('projects.dismiss')}
         </Button>
       </div>
     </div>

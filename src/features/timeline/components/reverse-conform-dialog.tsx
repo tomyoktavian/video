@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,6 +26,7 @@ function isAbortError(error: unknown): boolean {
 }
 
 export function ReverseConformDialog() {
+  const { t } = useTranslation()
   const request = useReverseConformDialogStore((state) => state.request)
   const close = useReverseConformDialogStore((state) => state.close)
   const useProxy = usePlaybackStore((state) => state.useProxy)
@@ -35,14 +37,21 @@ export function ReverseConformDialog() {
   const [isCancelling, setIsCancelling] = useState(false)
 
   const clipCount = request?.videoItems.length ?? 0
-  const title = error ? 'Reverse Failed' : isCancelling ? 'Cancelling Reverse' : 'Preparing Reverse'
+  const title = error
+    ? t('timeline.reverseConform.titleFailed')
+    : isCancelling
+      ? t('timeline.reverseConform.titleCancelling')
+      : t('timeline.reverseConform.titlePreparing')
   const description = useMemo(() => {
     if (!request) return ''
     if (error) return error
-    if (isCancelling) return 'Stopping the reverse render and leaving the clip unchanged.'
+    if (isCancelling) return t('timeline.reverseConform.cancellingDescription')
     const currentClip = Math.min(clipIndex + 1, clipCount)
-    return `Reversing clip ${currentClip} of ${clipCount}. The timeline will update when this finishes.`
-  }, [clipCount, clipIndex, error, isCancelling, request])
+    return t('timeline.reverseConform.progressDescription', {
+      current: currentClip,
+      total: clipCount,
+    })
+  }, [clipCount, clipIndex, error, isCancelling, request, t])
 
   useEffect(() => {
     if (!request) return
@@ -82,7 +91,9 @@ export function ReverseConformDialog() {
           return
         }
         log.warn('Reverse conform dialog failed', { error: caught })
-        setError(caught instanceof Error ? caught.message : 'Could not prepare the reversed clip.')
+        setError(
+          caught instanceof Error ? caught.message : t('timeline.reverseConform.couldNotPrepare'),
+        )
       }
     })()
 
@@ -92,7 +103,7 @@ export function ReverseConformDialog() {
         abortRef.current = null
       }
     }
-  }, [close, request, useProxy])
+  }, [close, request, useProxy, t])
 
   const handleCancel = () => {
     setIsCancelling(true)
@@ -126,7 +137,7 @@ export function ReverseConformDialog() {
         <DialogFooter>
           {error ? (
             <Button type="button" onClick={handleCloseError}>
-              Close
+              {t('common.close')}
             </Button>
           ) : (
             <Button
@@ -135,7 +146,7 @@ export function ReverseConformDialog() {
               onClick={handleCancel}
               disabled={isCancelling}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
           )}
         </DialogFooter>

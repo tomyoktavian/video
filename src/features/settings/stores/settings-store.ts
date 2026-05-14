@@ -13,7 +13,7 @@ import {
   normalizeSelectableWhisperModel,
 } from '@/shared/utils/whisper-settings'
 import type { EditorDensityPresetName } from '@/app/editor-layout'
-import { DEFAULT_EDITOR_DENSITY_PRESET } from '@/app/editor-layout'
+import { DEFAULT_EDITOR_DENSITY_PRESET, normalizeEditorDensityPreset } from '@/app/editor-layout'
 import {
   HOTKEYS,
   normalizeHotkeyBinding,
@@ -211,6 +211,9 @@ export const useSettingsStore = create<SettingsStore>()(
               ),
             }
           }
+          if (key === 'editorDensity') {
+            return { editorDensity: normalizeEditorDensityPreset(value) }
+          }
           return { [key]: value }
         }),
 
@@ -285,6 +288,7 @@ export const useSettingsStore = create<SettingsStore>()(
           ...typedState,
           defaultWhisperModel: normalizeSelectableWhisperModel(typedState.defaultWhisperModel),
           hotkeyOverrides: sanitizeHotkeyOverrides(typedState.hotkeyOverrides),
+          editorDensity: normalizeEditorDensityPreset(typedState.editorDensity),
           captioningIntervalUnit,
           captioningIntervalValue: clampCaptioningIntervalValue(
             typedState.captioningIntervalValue,

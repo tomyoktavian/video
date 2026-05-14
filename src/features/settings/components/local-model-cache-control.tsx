@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Loader2, RotateCcw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ interface LocalModelCacheControlProps {
 }
 
 export function LocalModelCacheControl({ className }: LocalModelCacheControlProps) {
+  const { t } = useTranslation()
   const [cacheSummaries, setCacheSummaries] = useState<LocalModelCacheSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [clearingCacheId, setClearingCacheId] = useState<LocalModelCacheSummary['id'] | null>(null)
@@ -58,14 +60,14 @@ export function LocalModelCacheControl({ className }: LocalModelCacheControlProp
     } catch (error) {
       log.error('Failed to inspect local model cache state', error)
       if (mountedRef.current) {
-        toast.error('Failed to inspect local model cache')
+        toast.error(t('projects.settings.modelCache.inspectFailed'))
       }
     } finally {
       if (mountedRef.current) {
         setIsLoading(false)
       }
     }
-  }, [inspectionSupported])
+  }, [inspectionSupported, t])
 
   useEffect(() => {
     void refreshCacheSummaries()
@@ -94,26 +96,30 @@ export function LocalModelCacheControl({ className }: LocalModelCacheControlProp
         const deleted = await clearLocalModelCache(summary)
         await refreshCacheSummaries()
         scheduleReset(summary.id)
-        toast.success(deleted ? `Cleared ${summary.label}` : `${summary.label} was already empty`)
+        toast.success(
+          deleted
+            ? t('projects.settings.modelCache.clearedToast', { label: summary.label })
+            : t('projects.settings.modelCache.alreadyEmptyToast', { label: summary.label }),
+        )
       } catch (error) {
         log.error(`Failed to clear local model cache ${summary.id}`, error)
-        toast.error(`Failed to clear ${summary.label}`)
+        toast.error(t('projects.settings.modelCache.clearFailed', { label: summary.label }))
       } finally {
         if (mountedRef.current) {
           setClearingCacheId(null)
         }
       }
     },
-    [refreshCacheSummaries, scheduleReset],
+    [refreshCacheSummaries, scheduleReset, t],
   )
 
   return (
     <div className={cn('space-y-3', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium">Local AI Model Cache</p>
+          <p className="text-sm font-medium">{t('projects.settings.modelCache.title')}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Shows cached model size. Clear a model to force a fresh download next time.
+            {t('projects.settings.modelCache.description')}
           </p>
         </div>
         <Button
@@ -126,13 +132,15 @@ export function LocalModelCacheControl({ className }: LocalModelCacheControlProp
           disabled={!inspectionSupported || isLoading}
         >
           <RotateCcw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
-          {isLoading ? 'Checking...' : 'Refresh'}
+          {isLoading
+            ? t('projects.settings.modelCache.checking')
+            : t('projects.settings.modelCache.refresh')}
         </Button>
       </div>
 
       {!inspectionSupported && (
         <p className="text-xs text-muted-foreground">
-          Cache inspection is unavailable in this environment.
+          {t('projects.settings.modelCache.inspectionUnavailable')}
         </p>
       )}
 
@@ -142,14 +150,16 @@ export function LocalModelCacheControl({ className }: LocalModelCacheControlProp
           const isCleared = clearedCacheId === summary.id
           const sizeLabel =
             summary.inspectionState === 'timed-out'
-              ? 'Unavailable'
+              ? t('projects.settings.modelCache.unavailable')
               : summary.inspectionState === 'error'
-                ? 'Unavailable'
+                ? t('projects.settings.modelCache.unavailable')
                 : !summary.downloaded
                   ? '0 B'
                   : summary.sizeStatus === 'exact' || summary.sizeStatus === 'partial'
-                    ? `Approx. ${formatBytes(summary.totalBytes)}`
-                    : 'Unavailable'
+                    ? t('projects.settings.modelCache.approxSize', {
+                        size: formatBytes(summary.totalBytes),
+                      })
+                    : t('projects.settings.modelCache.unavailable')
 
           return (
             <div
@@ -172,7 +182,11 @@ export function LocalModelCacheControl({ className }: LocalModelCacheControlProp
                 {isClearing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {isCleared && !isClearing && <Check className="h-3.5 w-3.5" />}
                 {!isClearing && !isCleared && <Trash2 className="h-3.5 w-3.5" />}
-                {isClearing ? 'Clearing...' : isCleared ? 'Cleared' : 'Clear'}
+                {isClearing
+                  ? t('common.clearing')
+                  : isCleared
+                    ? t('projects.settings.modelCache.cleared')
+                    : t('projects.settings.modelCache.clear')}
               </Button>
             </div>
           )

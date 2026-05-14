@@ -1,4 +1,5 @@
 import type { MouseEvent, PropsWithChildren } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TRACK_SECTION_DIVIDER_HEIGHT } from '@/features/timeline/constants'
 import { cn } from '@/shared/ui/cn'
 
@@ -30,6 +31,7 @@ export function TrackRowFrame({
   resizeHandleLabel,
   resizeHandlePosition = 'bottom',
 }: TrackRowFrameProps) {
+  const { t } = useTranslation()
   const resizeHandlePositionClass = resizeHandlePosition === 'top' ? 'top-0' : 'bottom-0'
 
   return (
@@ -57,7 +59,7 @@ export function TrackRowFrame({
             'absolute inset-x-0 z-30 h-[6px] cursor-row-resize bg-transparent focus-visible:outline-none',
             resizeHandlePositionClass,
           )}
-          aria-label={resizeHandleLabel ?? 'Resize track height'}
+          aria-label={resizeHandleLabel ?? t('timeline.trackRow.resizeTrackHeight')}
           onMouseDown={onResizeMouseDown}
           onDoubleClick={onResizeDoubleClick}
         />
@@ -67,6 +69,7 @@ export function TrackRowFrame({
 }
 
 export function TrackSectionDivider({ className, onMouseDown }: TrackSectionDividerProps) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn('relative', className)}
@@ -84,7 +87,7 @@ export function TrackSectionDivider({ className, onMouseDown }: TrackSectionDivi
           type="button"
           data-track-section-divider="true"
           className="absolute inset-0 z-40 cursor-row-resize bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-          aria-label="Resize video and audio track sections"
+          aria-label={t('timeline.trackRow.resizeSections')}
           onMouseDown={onMouseDown}
         />
       )}

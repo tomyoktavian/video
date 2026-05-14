@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef, useEffect, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeftRight, RotateCcw, LayoutDashboard, Clock } from 'lucide-react'
@@ -96,6 +97,7 @@ const ColorPicker = memo(function ColorPicker({
  * Displays and allows editing of canvas dimensions and shows project duration.
  */
 export const CanvasPanel = memo(function CanvasPanel() {
+  const { t } = useTranslation()
   // Granular selectors
   const currentProject = useProjectStore((s) => s.currentProject)
   const updateProject = useProjectStore((s) => s.updateProject)
@@ -133,12 +135,12 @@ export const CanvasPanel = memo(function CanvasPanel() {
           markDirty,
         })
       } catch (error) {
-        toast.error('Failed to update canvas settings', {
-          description: error instanceof Error ? error.message : 'Please try again.',
+        toast.error(t('editor.canvasPanel.updateFailed'), {
+          description: error instanceof Error ? error.message : t('editor.canvasPanel.tryAgain'),
         })
       }
     },
-    [currentProject, markDirty, updateProject],
+    [currentProject, markDirty, updateProject, t],
   )
 
   const handleWidthChange = useCallback(
@@ -218,7 +220,7 @@ export const CanvasPanel = memo(function CanvasPanel() {
   if (!currentProject) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-xs text-muted-foreground">No project loaded</p>
+        <p className="text-xs text-muted-foreground">{t('editor.canvasPanel.noProjectLoaded')}</p>
       </div>
     )
   }
@@ -226,7 +228,11 @@ export const CanvasPanel = memo(function CanvasPanel() {
   return (
     <div className="space-y-4">
       {/* Canvas Section */}
-      <PropertySection title="Canvas" icon={LayoutDashboard} defaultOpen={true}>
+      <PropertySection
+        title={t('editor.canvasPanel.canvas')}
+        icon={LayoutDashboard}
+        defaultOpen={true}
+      >
         <LinkedDimensions
           width={width}
           height={height}
@@ -249,7 +255,7 @@ export const CanvasPanel = memo(function CanvasPanel() {
             onClick={handleSwapDimensions}
           >
             <ArrowLeftRight className="w-3 h-3 mr-1.5" />
-            Swap
+            {t('editor.canvasPanel.swap')}
           </Button>
           <Button
             variant="outline"
@@ -258,12 +264,12 @@ export const CanvasPanel = memo(function CanvasPanel() {
             onClick={handleResetDimensions}
           >
             <RotateCcw className="w-3 h-3 mr-1.5" />
-            Reset
+            {t('common.reset')}
           </Button>
         </div>
 
         {/* Background Color */}
-        <PropertyRow label="Background">
+        <PropertyRow label={t('editor.canvasPanel.background')}>
           <div className="flex items-center gap-1 w-full">
             <ColorPicker
               initialColor={storedBackgroundColor}
@@ -274,7 +280,7 @@ export const CanvasPanel = memo(function CanvasPanel() {
               size="icon"
               className="h-7 w-7 flex-shrink-0"
               onClick={handleResetBackgroundColor}
-              title="Reset to black"
+              title={t('editor.canvasPanel.resetToBlack')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
@@ -285,20 +291,20 @@ export const CanvasPanel = memo(function CanvasPanel() {
       <Separator />
 
       {/* Duration Section */}
-      <PropertySection title="Duration" icon={Clock} defaultOpen={true}>
-        <PropertyRow label="Duration">
+      <PropertySection title={t('editor.canvasPanel.duration')} icon={Clock} defaultOpen={true}>
+        <PropertyRow label={t('editor.canvasPanel.duration')}>
           <span className="text-xs text-muted-foreground tabular-nums">
             {formatDuration(timelineDuration)}
           </span>
         </PropertyRow>
 
-        <PropertyRow label="Frame Rate">
+        <PropertyRow label={t('editor.canvasPanel.frameRate')}>
           <span className="text-xs text-muted-foreground tabular-nums">
             {currentProject.metadata.fps} fps
           </span>
         </PropertyRow>
 
-        <PropertyRow label="Total Frames">
+        <PropertyRow label={t('editor.canvasPanel.totalFrames')}>
           <span className="text-xs text-muted-foreground tabular-nums">{timelineDuration} fr</span>
         </PropertyRow>
       </PropertySection>

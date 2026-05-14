@@ -4,6 +4,7 @@
  */
 
 import { memo, useState, useCallback, useMemo, useEffect, useRef, useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ZoomIn,
   ZoomOut,
@@ -31,13 +32,13 @@ import type {
   KeyframeRef,
   BezierControlPoints,
 } from '@/types/keyframe'
-import { PROPERTY_LABELS } from '@/types/keyframe'
 import type { GraphViewport, GraphKeyframePoint } from './types'
 import { DEFAULT_GRAPH_PADDING, PROPERTY_VALUE_RANGES } from './types'
 import { GraphGrid } from './graph-grid'
 import { GraphKeyframes } from './graph-keyframe'
 import { GraphCurves, GraphExtensionLines, GraphPlayhead } from './graph-curve'
 import { GraphHandles } from './graph-handles'
+import { getKeyframePropertyLabel } from '@/features/keyframes/utils/property-i18n'
 import { GraphTransitionRegions } from './graph-transition-regions'
 import { useGraphInteraction } from './use-graph-interaction'
 import { KeyframeSvgMarquee } from '../keyframe-marquee'
@@ -171,6 +172,7 @@ export const ValueGraphEditor = memo(function ValueGraphEditor({
   disabled = false,
   className,
 }: ValueGraphEditorProps) {
+  const { t } = useTranslation()
   const padding = useMemo(
     () => (hideXLabels ? { ...DEFAULT_GRAPH_PADDING, bottom: 8 } : DEFAULT_GRAPH_PADDING),
     [hideXLabels],
@@ -905,12 +907,16 @@ export const ValueGraphEditor = memo(function ValueGraphEditor({
               disabled={disabled || availableProperties.length === 0}
             >
               <SelectTrigger className="w-[140px] h-7 text-xs focus:ring-0 focus:ring-offset-0">
-                <SelectValue placeholder="Select property" />
+                <SelectValue
+                  placeholder={t('timeline.keyframeEditor.selectProperty', {
+                    defaultValue: 'Select property',
+                  })}
+                />
               </SelectTrigger>
               <SelectContent>
                 {availableProperties.map((prop) => (
                   <SelectItem key={prop} value={prop} className="text-xs">
-                    {PROPERTY_LABELS[prop]}
+                    {getKeyframePropertyLabel(t, prop)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -918,7 +924,7 @@ export const ValueGraphEditor = memo(function ValueGraphEditor({
 
             {/* Keyframe count */}
             <span className="text-xs text-muted-foreground">
-              {keyframes.length} keyframe{keyframes.length !== 1 ? 's' : ''}
+              {t('timeline.keyframeEditor.keyframes', { count: keyframes.length })}
             </span>
           </div>
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Cpu, Loader2 } from 'lucide-react'
 import {
   formatEstimatedBytes,
@@ -6,22 +7,23 @@ import {
   useLocalInferenceStore,
 } from '@/shared/state/local-inference'
 
-function getStateLabel(state: 'loading' | 'running' | 'ready' | 'error'): string {
-  switch (state) {
-    case 'loading':
-      return 'Local AI Loading'
-    case 'running':
-      return 'Local AI Active'
-    case 'error':
-      return 'Local AI Error'
-    case 'ready':
-      return 'Local AI Ready'
-  }
-}
-
 export function LocalInferenceStatusPill() {
+  const { t } = useTranslation()
   const runtimesById = useLocalInferenceStore((state) => state.runtimesById)
   const summary = useMemo(() => getLocalInferenceSummary(runtimesById), [runtimesById])
+
+  function getStateLabel(state: 'loading' | 'running' | 'ready' | 'error'): string {
+    switch (state) {
+      case 'loading':
+        return t('editor.localInferencePill.loading')
+      case 'running':
+        return t('editor.localInferencePill.active')
+      case 'error':
+        return t('editor.localInferencePill.error')
+      case 'ready':
+        return t('editor.localInferencePill.ready')
+    }
+  }
 
   if (!summary) {
     return null
@@ -32,7 +34,7 @@ export function LocalInferenceStatusPill() {
     summary.primaryLabel,
     summary.backendLabel,
     summary.activeJobs > 0
-      ? `${summary.activeJobs} job${summary.activeJobs === 1 ? '' : 's'}`
+      ? t('editor.localInferencePill.jobs', { count: summary.activeJobs })
       : null,
     estimateLabel,
   ].filter(Boolean)

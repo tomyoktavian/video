@@ -1,0 +1,101 @@
+{
+  "en": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "Unable to add dropped item",
+        "unableToAddDroppedMediaItems": "Unable to add dropped media items",
+        "unableToAddDroppedFiles": "Unable to add dropped files to the timeline",
+        "droppedMediaItems": "dropped media items",
+        "droppedFiles": "dropped files"
+      }
+    }
+  },
+  "es": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "No se pudo a Agregar soltados elemento",
+        "unableToAddDroppedMediaItems": "No se pudo a Agregar soltados Medios elementos",
+        "unableToAddDroppedFiles": "No se pudo a Agregar soltados archivos a the timeline",
+        "droppedMediaItems": "soltados Medios elementos",
+        "droppedFiles": "soltados archivos"
+      }
+    }
+  },
+  "fr": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "Impossible a Ajouter deposes element",
+        "unableToAddDroppedMediaItems": "Impossible a Ajouter deposes Media elements",
+        "unableToAddDroppedFiles": "Impossible a Ajouter deposes fichiers a the timeline",
+        "droppedMediaItems": "deposes Media elements",
+        "droppedFiles": "deposes fichiers"
+      }
+    }
+  },
+  "de": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "Nicht moglich zu Hinzufugen abgelegte Element",
+        "unableToAddDroppedMediaItems": "Nicht moglich zu Hinzufugen abgelegte Medien Elemente",
+        "unableToAddDroppedFiles": "Nicht moglich zu Hinzufugen abgelegte Dateien zu the timeline",
+        "droppedMediaItems": "abgelegte Medien Elemente",
+        "droppedFiles": "abgelegte Dateien"
+      }
+    }
+  },
+  "pt-BR": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "Nao foi possivel adicionar o item solto",
+        "unableToAddDroppedMediaItems": "Nao foi possivel adicionar os itens de midia soltos",
+        "unableToAddDroppedFiles": "Nao foi possivel adicionar os arquivos soltos a linha do tempo",
+        "droppedMediaItems": "itens de midia soltos",
+        "droppedFiles": "arquivos soltos"
+      }
+    }
+  },
+  "ja": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "ドロップした項目を追加できません",
+        "unableToAddDroppedMediaItems": "ドロップしたメディア項目を追加できません",
+        "unableToAddDroppedFiles": "ドロップしたファイルをタイムラインに追加できません",
+        "droppedMediaItems": "ドロップしたメディア項目",
+        "droppedFiles": "ドロップしたファイル"
+      }
+    }
+  },
+  "ko": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "드롭한 항목을 추가할 수 없음",
+        "unableToAddDroppedMediaItems": "드롭한 미디어 항목을 추가할 수 없음",
+        "unableToAddDroppedFiles": "드롭한 파일을 타임라인에 추가할 수 없음",
+        "droppedMediaItems": "드롭한 미디어 항목",
+        "droppedFiles": "드롭한 파일"
+      }
+    }
+  },
+  "zh": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "无法添加拖放的项目",
+        "unableToAddDroppedMediaItems": "无法添加拖放的媒体项目",
+        "unableToAddDroppedFiles": "无法将拖放的文件添加到时间线",
+        "droppedMediaItems": "拖放的媒体项目",
+        "droppedFiles": "拖放的文件"
+      }
+    }
+  },
+  "tr": {
+    "timeline": {
+      "track": {
+        "unableToAddDroppedItem": "Bırakılan öğe eklenemedi",
+        "unableToAddDroppedMediaItems": "Bırakılan medya öğeleri eklenemedi",
+        "unableToAddDroppedFiles": "Bırakılan dosyalar zaman çizelgesine eklenemedi",
+        "droppedMediaItems": "bırakılan medya öğeleri",
+        "droppedFiles": "bırakılan dosyalar"
+      }
+    }
+  }
+}

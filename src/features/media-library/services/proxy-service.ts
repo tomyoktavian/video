@@ -25,11 +25,19 @@ import { isVideoProxyCandidate } from '@/config/proxy-generation'
 import {
   mirrorBlobToWorkspace,
   mirrorJsonToWorkspace,
+  proxyDir,
+  proxyFilePath,
+  proxyMetaPath,
   readWorkspaceBlob,
   removeWorkspaceCacheEntry,
-} from '@/infrastructure/storage/workspace-fs/cache-mirror'
-import { proxyDir, proxyFilePath, proxyMetaPath } from '@/infrastructure/storage/workspace-fs/paths'
-import { PROXY_DIR, PROXY_SCHEMA_VERSION } from '../proxy-constants'
+} from '@/features/media-library/deps/storage'
+import {
+  PROXY_DIR,
+  PROXY_FILE_NAME,
+  PROXY_META_FILE_NAME,
+  PROXY_SCHEMA_VERSION,
+  proxyOpfsFilePath,
+} from '../proxy-constants'
 import type { ProxyWorkerRequest, ProxyWorkerResponse } from '../workers/proxy-generation-worker'
 import { useMediaLibraryStore } from '../stores/media-library-store'
 import { enqueueBackgroundMediaWork } from './background-media-work'
@@ -39,10 +47,6 @@ const logger = createLogger('ProxyService')
 function revokeRegisteredObjectUrl(url: string): void {
   unregisterObjectUrl(url)
   URL.revokeObjectURL(url)
-}
-
-function getProxyOpfsPath(proxyKey: string): string {
-  return `${PROXY_DIR}/${proxyKey}/proxy.mp4`
 }
 
 function isBestEffortProxyCleanupError(error: unknown): boolean {
@@ -414,7 +418,7 @@ class ProxyService {
           const mediaDir = await proxyRoot.getDirectoryHandle(proxyKey)
 
           // Check metadata
-          const metaHandle = await mediaDir.getFileHandle('meta.json')
+          const metaHandle = await mediaDir.getFileHandle(PROXY_META_FILE_NAME)
           const metaFile = await metaHandle.getFile()
           const metadata: ProxyMetadata = JSON.parse(await metaFile.text())
 
@@ -455,7 +459,7 @@ class ProxyService {
           }
 
           // Load proxy file and create blob URL
-          const proxyHandle = await mediaDir.getFileHandle('proxy.mp4')
+          const proxyHandle = await mediaDir.getFileHandle(PROXY_FILE_NAME)
           const proxyFile = await proxyHandle.getFile()
 
           if (proxyFile.size === 0) {
@@ -467,7 +471,7 @@ class ProxyService {
           const blobUrl = URL.createObjectURL(proxyFile)
           registerObjectUrl(blobUrl, proxyFile, {
             storageType: 'opfs',
-            opfsPath: getProxyOpfsPath(proxyKey),
+            opfsPath: proxyOpfsFilePath(proxyKey),
             fileSize: proxyFile.size,
           })
           this.proxyBlobUrlByKey.set(proxyKey, blobUrl)
@@ -526,21 +530,21 @@ class ProxyService {
       const mediaDir = await opfsProxyRoot.getDirectoryHandle(proxyKey, {
         create: true,
       })
-      const proxyHandle = await mediaDir.getFileHandle('proxy.mp4', { create: true })
+      const proxyHandle = await mediaDir.getFileHandle(PROXY_FILE_NAME, { create: true })
       const proxyWritable = await proxyHandle.createWritable()
       await proxyWritable.write(proxyBlob)
       await proxyWritable.close()
 
-      const metaHandle = await mediaDir.getFileHandle('meta.json', { create: true })
+      const metaHandle = await mediaDir.getFileHandle(PROXY_META_FILE_NAME, { create: true })
       const metaWritable = await metaHandle.createWritable()
       await metaWritable.write(JSON.stringify(metadata))
       await metaWritable.close()
 
-      const opfsProxyFile = await (await mediaDir.getFileHandle('proxy.mp4')).getFile()
+      const opfsProxyFile = await (await mediaDir.getFileHandle(PROXY_FILE_NAME)).getFile()
       const blobUrl = URL.createObjectURL(opfsProxyFile)
       registerObjectUrl(blobUrl, opfsProxyFile, {
         storageType: 'opfs',
-        opfsPath: getProxyOpfsPath(proxyKey),
+        opfsPath: proxyOpfsFilePath(proxyKey),
         fileSize: opfsProxyFile.size,
       })
       this.proxyBlobUrlByKey.set(proxyKey, blobUrl)
@@ -626,7 +630,7 @@ class ProxyService {
       const root = await navigator.storage.getDirectory()
       const proxyRoot = await root.getDirectoryHandle(PROXY_DIR)
       const mediaDir = await proxyRoot.getDirectoryHandle(proxyKey)
-      const proxyHandle = await mediaDir.getFileHandle('proxy.mp4')
+      const proxyHandle = await mediaDir.getFileHandle(PROXY_FILE_NAME)
       const proxyFile = await proxyHandle.getFile()
 
       if (proxyFile.size === 0) {
@@ -642,7 +646,7 @@ class ProxyService {
       const blobUrl = URL.createObjectURL(proxyFile)
       registerObjectUrl(blobUrl, proxyFile, {
         storageType: 'opfs',
-        opfsPath: getProxyOpfsPath(proxyKey),
+        opfsPath: proxyOpfsFilePath(proxyKey),
         fileSize: proxyFile.size,
       })
       this.proxyBlobUrlByKey.set(proxyKey, blobUrl)
@@ -654,7 +658,7 @@ class ProxyService {
       void mirrorBlobToWorkspace(proxyFilePath(proxyKey), proxyFile)
       void (async () => {
         try {
-          const metaHandle = await mediaDir.getFileHandle('meta.json')
+          const metaHandle = await mediaDir.getFileHandle(PROXY_META_FILE_NAME)
           const metaFile = await metaHandle.getFile()
           const metadata = JSON.parse(await metaFile.text()) as ProxyMetadata
           await mirrorJsonToWorkspace(proxyMetaPath(proxyKey), metadata)
@@ -739,7 +743,7 @@ class ProxyService {
       for (const proxyKey of proxyKeys) {
         try {
           const mediaDir = await proxyRoot.getDirectoryHandle(proxyKey)
-          const proxyHandle = await mediaDir.getFileHandle('proxy.mp4')
+          const proxyHandle = await mediaDir.getFileHandle(PROXY_FILE_NAME)
           const proxyFile = await proxyHandle.getFile()
 
           if (proxyFile.size === 0) {
@@ -762,7 +766,7 @@ class ProxyService {
           const freshUrl = URL.createObjectURL(proxyFile)
           registerObjectUrl(freshUrl, proxyFile, {
             storageType: 'opfs',
-            opfsPath: getProxyOpfsPath(proxyKey),
+            opfsPath: proxyOpfsFilePath(proxyKey),
             fileSize: proxyFile.size,
           })
           this.proxyBlobUrlByKey.set(proxyKey, freshUrl)

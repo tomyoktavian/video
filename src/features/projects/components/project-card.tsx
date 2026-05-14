@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
@@ -54,6 +55,7 @@ export function ProjectCard({
   onCardClick,
 }: ProjectCardProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -79,30 +81,30 @@ export function ProjectCard({
     setClearLocalFiles(false)
 
     if (!result.success) {
-      toast.error('Failed to delete project', { description: result.error })
+      toast.error(t('projects.toasts.deleteFailed'), { description: result.error })
       return
     }
 
     if (wantedLocalDelete && !result.localFilesDeleted) {
-      toast.warning(`Moved "${result.originalName}" to trash`, {
-        description: 'Local files were not removed — you may need to delete the folder manually.',
+      toast.warning(t('projects.toasts.movedToTrash', { name: result.originalName }), {
+        description: t('projects.toasts.localFilesNotRemoved'),
       })
       return
     }
 
-    toast.success(`Moved "${result.originalName}" to trash`, {
+    toast.success(t('projects.toasts.movedToTrash', { name: result.originalName }), {
       description: wantedLocalDelete
-        ? 'Local files deleted — undo will not restore them.'
-        : 'You can undo this for the next few seconds.',
+        ? t('projects.toasts.localFilesDeleted')
+        : t('projects.toasts.canUndo'),
       duration: 8000,
       action: {
-        label: 'Undo',
+        label: t('projects.undo'),
         onClick: async () => {
           const undo = await restoreProject(projectId)
           if (undo.success) {
-            toast.success(`Restored "${result.originalName}"`)
+            toast.success(t('projects.toasts.restored', { name: result.originalName }))
           } else {
-            toast.error('Failed to restore project', { description: undo.error })
+            toast.error(t('projects.toasts.restoreFailed'), { description: undo.error })
           }
         },
       },
@@ -118,7 +120,7 @@ export function ProjectCard({
     setIsDuplicating(false)
 
     if (!result.success) {
-      toast.error('Failed to duplicate project', { description: result.error })
+      toast.error(t('projects.toasts.duplicateFailed'), { description: result.error })
     }
   }
 
@@ -200,7 +202,7 @@ export function ProjectCard({
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-2 text-white">
             <PlayCircle className="w-6 h-6" />
-            <span className="font-medium">Double-click to open</span>
+            <span className="font-medium">{t('projects.card.doubleClickToOpen')}</span>
           </div>
         </div>
 
@@ -249,12 +251,12 @@ export function ProjectCard({
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <PlayCircle className="w-4 h-4" />
-                  Open in Editor
+                  {t('projects.card.openInEditor')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEdit} className="flex items-center gap-2">
                 <Edit2 className="w-4 h-4" />
-                Edit Settings
+                {t('projects.card.editSettings')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDuplicate}
@@ -262,7 +264,7 @@ export function ProjectCard({
                 className="flex items-center gap-2"
               >
                 <Copy className="w-4 h-4" />
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+                {isDuplicating ? t('projects.card.duplicating') : t('projects.card.duplicate')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -271,7 +273,7 @@ export function ProjectCard({
                 className="flex items-center gap-2 text-destructive focus:text-destructive"
               >
                 <Trash2 className="w-4 h-4" />
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t('common.deleting') : t('common.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -289,11 +291,14 @@ export function ProjectCard({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
-                Delete Project
+                {t('projects.card.deleteProjectTitle')}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete <strong>{project.name}</strong>? This action cannot
-                be undone and will permanently remove the project and all its contents.
+                <Trans
+                  i18nKey="projects.card.deleteProjectDescription"
+                  values={{ name: project.name }}
+                  components={{ strong: <strong /> }}
+                />
               </AlertDialogDescription>
             </AlertDialogHeader>
             {project.rootFolderHandle && (
@@ -307,23 +312,25 @@ export function ProjectCard({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
-                    Also delete local files on disk
+                    {t('projects.card.alsoDeleteLocalFiles')}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Remove files from the linked folder
-                    {project.rootFolderName ? ` "${project.rootFolderName}"` : ''}. This cannot be
-                    undone.
+                    {project.rootFolderName
+                      ? t('projects.card.removeFilesFromNamedFolder', {
+                          folder: project.rootFolderName,
+                        })
+                      : t('projects.card.removeFilesFromFolder')}
                   </p>
                 </div>
               </label>
             )}
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete Project
+                {t('projects.card.deleteProjectTitle')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createLogger } from '@/shared/logging/logger'
 
 const logger = createLogger('OrphanedClipsDialog')
@@ -25,6 +26,7 @@ const itemTypeIcons = {
 }
 
 export function OrphanedClipsDialog() {
+  const { t } = useTranslation()
   const showDialog = useMediaLibraryStore((s) => s.showOrphanedClipsDialog)
   const closeDialog = useMediaLibraryStore((s) => s.closeOrphanedClipsDialog)
   const orphanedClips = useMediaLibraryStore((s) => s.orphanedClips)
@@ -143,12 +145,10 @@ export function OrphanedClipsDialog() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2Off className="w-5 h-5 text-destructive" />
-              Missing Media References
+              {t('media.orphanedClips.title')}
             </DialogTitle>
             <DialogDescription>
-              {remainingOrphans.length} timeline clip
-              {remainingOrphans.length !== 1 ? 's' : ''} reference
-              {remainingOrphans.length === 1 ? 's' : ''} media that no longer exists.
+              {t('media.orphanedClips.description', { count: remainingOrphans.length })}
             </DialogDescription>
           </DialogHeader>
 
@@ -165,7 +165,7 @@ export function OrphanedClipsDialog() {
               ) : (
                 <Wand2 className="w-4 h-4 mr-2" />
               )}
-              Auto-match from Library (by filename)
+              {t('media.orphanedClips.autoMatch')}
             </Button>
 
             {/* List of orphaned clips */}
@@ -186,7 +186,7 @@ export function OrphanedClipsDialog() {
                         {orphan.fileName}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {orphan.itemType} clip - Media deleted
+                        {t(`media.orphanedClips.clipMediaDeleted.${orphan.itemType}`)}
                       </p>
                     </div>
 
@@ -202,7 +202,7 @@ export function OrphanedClipsDialog() {
                         ) : (
                           <>
                             <Search className="w-3 h-3 mr-1" />
-                            Select
+                            {t('media.orphanedClips.select')}
                           </>
                         )}
                       </Button>
@@ -224,7 +224,7 @@ export function OrphanedClipsDialog() {
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="destructive" onClick={handleRemoveAll} className="order-2 sm:order-1">
               <Trash2 className="w-4 h-4 mr-2" />
-              Remove All Clips
+              {t('media.orphanedClips.removeAll')}
             </Button>
             <div className="flex-1" />
             <Button
@@ -232,10 +232,10 @@ export function OrphanedClipsDialog() {
               onClick={handleDismiss}
               className="text-muted-foreground order-1 sm:order-2"
             >
-              Keep as Broken
+              {t('media.orphanedClips.keepAsBroken')}
             </Button>
             <Button variant="outline" onClick={handleClose} className="order-3">
-              Close
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -250,7 +250,7 @@ export function OrphanedClipsDialog() {
         }}
         onSelect={handleMediaSelected}
         filterType={selectedOrphan?.itemType}
-        title={`Select replacement for "${selectedOrphan?.fileName}"`}
+        title={t('media.orphanedClips.selectReplacement', { name: selectedOrphan?.fileName ?? '' })}
       />
     </>
   )

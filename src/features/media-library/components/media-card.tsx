@@ -1,4 +1,6 @@
 import { Fragment, memo, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { i18n } from '@/i18n'
 import {
   Video,
   FileAudio,
@@ -176,6 +178,8 @@ async function getSubtitleSourceBlob(media: MediaMetadata): Promise<Blob> {
   return blob
 }
 
+// Internal Error messages stay technical; user-facing strings use i18n below.
+
 function markSubtitleSourceUnreadable(
   media: MediaMetadata,
   errorType: 'permission_denied' | 'file_missing',
@@ -199,31 +203,31 @@ function getSubtitleExtractionErrorMessage(error: unknown, media: MediaMetadata)
   if (error instanceof FileAccessError) {
     if (error.type === 'permission_denied') {
       markSubtitleSourceUnreadable(media, 'permission_denied')
-      return `FreeCut needs permission to read "${media.fileName}" before extracting subtitles.`
+      return i18n.t('media.card.subtitlesNeedPermission', { name: media.fileName })
     }
     if (error.type === 'file_missing') {
       markSubtitleSourceUnreadable(media, 'file_missing')
-      return `FreeCut could not find "${media.fileName}". Relink the file and try again.`
+      return i18n.t('media.card.subtitlesFileMissing', { name: media.fileName })
     }
-    return `FreeCut could not read "${media.fileName}" right now. Close any app using it and try again.`
+    return i18n.t('media.card.subtitlesCannotRead', { name: media.fileName })
   }
 
   const errorName = getErrorName(error)
   if (errorName) {
     if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
       markSubtitleSourceUnreadable(media, 'permission_denied')
-      return `FreeCut needs permission to read "${media.fileName}" before extracting subtitles.`
+      return i18n.t('media.card.subtitlesNeedPermission', { name: media.fileName })
     }
     if (errorName === 'NotFoundError') {
       markSubtitleSourceUnreadable(media, 'file_missing')
-      return `FreeCut could not find "${media.fileName}". Relink the file and try again.`
+      return i18n.t('media.card.subtitlesFileMissing', { name: media.fileName })
     }
     if (errorName === 'NotReadableError') {
-      return `FreeCut could not read "${media.fileName}" right now. Close any app using it and try again.`
+      return i18n.t('media.card.subtitlesCannotRead', { name: media.fileName })
     }
   }
 
-  return error instanceof Error ? error.message : 'Failed to extract embedded subtitles'
+  return error instanceof Error ? error.message : i18n.t('media.card.subtitlesExtractFailed')
 }
 
 function MediaCardActionMenuItems({
@@ -254,6 +258,7 @@ function MediaCardActionMenuItems({
   onSetCoverToCompounds,
   onDelete,
 }: MediaCardActionMenuProps) {
+  const { t } = useTranslation()
   const hasBrokenGroup = isBroken && !!onRelink
   const canShowGenerateProxy = canGenerateProxy && !hasProxy && proxyStatus !== 'generating'
   const showProxyGroup = !isBroken && (canShowGenerateProxy || hasProxy)
@@ -282,7 +287,7 @@ function MediaCardActionMenuItems({
   if (hasBrokenGroup) {
     groups.push(
       <Fragment key="broken">
-        <ContextMenuLabel>File</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuFile')}</ContextMenuLabel>
         <ContextMenuItem
           onClick={(event) => {
             event.stopPropagation()
@@ -291,7 +296,7 @@ function MediaCardActionMenuItems({
           className="text-primary focus:text-primary"
         >
           <RefreshCw className="w-3 h-3 mr-2" />
-          Relink File...
+          {t('media.card.relinkFile')}
         </ContextMenuItem>
       </Fragment>,
     )
@@ -300,11 +305,11 @@ function MediaCardActionMenuItems({
   if (showProxyGroup) {
     groups.push(
       <Fragment key="proxy">
-        <ContextMenuLabel>Proxy</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuProxy')}</ContextMenuLabel>
         {canShowGenerateProxy && (
           <ContextMenuItem onClick={onGenerateProxy}>
             <Zap className="w-3 h-3 mr-2" />
-            Generate Proxy
+            {t('media.card.generateProxy')}
           </ContextMenuItem>
         )}
         {hasProxy && (
@@ -313,7 +318,7 @@ function MediaCardActionMenuItems({
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="w-3 h-3 mr-2" />
-            Delete Proxy
+            {t('media.card.deleteProxy')}
           </ContextMenuItem>
         )}
       </Fragment>,
@@ -323,11 +328,11 @@ function MediaCardActionMenuItems({
   if (showTranscriptGroup) {
     groups.push(
       <Fragment key="transcript">
-        <ContextMenuLabel>Transcript</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuTranscript')}</ContextMenuLabel>
         {canShowGenerateTranscript && (
           <ContextMenuItem onClick={onGenerateTranscript}>
             <FileText className="w-3 h-3 mr-2" />
-            {hasTranscript ? 'Refresh Transcript' : 'Generate Transcript'}
+            {hasTranscript ? t('media.card.refreshTranscript') : t('media.card.generateTranscript')}
           </ContextMenuItem>
         )}
         {hasTranscript && !isBroken && !isTranscribing && (
@@ -342,7 +347,7 @@ function MediaCardActionMenuItems({
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="w-3 h-3 mr-2" />
-            Delete Transcript
+            {t('media.card.deleteTranscript')}
           </ContextMenuItem>
         )}
       </Fragment>,
@@ -360,7 +365,7 @@ function MediaCardActionMenuItems({
   if (showEmbeddedSubtitleGroup) {
     groups.push(
       <Fragment key="embedded-subtitles">
-        <ContextMenuLabel>Captions</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuCaptions')}</ContextMenuLabel>
         <ContextMenuItem
           onClick={onExtractEmbeddedSubtitles}
           disabled={isExtractingEmbeddedSubtitles}
@@ -370,7 +375,7 @@ function MediaCardActionMenuItems({
           ) : (
             <FileText className="w-3 h-3 mr-2" />
           )}
-          Extract Embedded Subtitles
+          {t('media.card.extractEmbeddedSubtitles')}
         </ContextMenuItem>
       </Fragment>,
     )
@@ -379,11 +384,11 @@ function MediaCardActionMenuItems({
   if (showAiGroup || showSpoilerItem) {
     groups.push(
       <Fragment key="ai">
-        <ContextMenuLabel>AI</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuAi')}</ContextMenuLabel>
         {showAiGroup && (
           <ContextMenuItem onClick={onAnalyzeWithAI}>
             <Sparkles className="w-3 h-3 mr-2" />
-            Analyze with AI
+            {t('media.card.analyzeWithAI')}
           </ContextMenuItem>
         )}
         {showSpoilerItem && (
@@ -399,10 +404,10 @@ function MediaCardActionMenuItems({
   if (isImageMedia && !isBroken && onSetCoverToCompounds) {
     groups.push(
       <Fragment key="compound-cover">
-        <ContextMenuLabel>Compound</ContextMenuLabel>
+        <ContextMenuLabel>{t('media.card.menuCompound')}</ContextMenuLabel>
         <ContextMenuItem onClick={onSetCoverToCompounds}>
           <Sparkles className="w-3 h-3 mr-2" />
-          Set cover to compound…
+          {t('media.card.setCoverToCompound')}
         </ContextMenuItem>
       </Fragment>,
     )
@@ -412,7 +417,7 @@ function MediaCardActionMenuItems({
     <Fragment key="destructive">
       <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
         <Trash2 className="w-3 h-3 mr-2" />
-        Delete
+        {t('common.delete')}
       </ContextMenuItem>
     </Fragment>,
   )
@@ -446,6 +451,7 @@ export const MediaCard = memo(function MediaCard({
   onRelink,
   viewMode = 'grid',
 }: MediaCardProps) {
+  const { t } = useTranslation()
   const isOnline = !!onlineEpisode
   const mediaId = isOnline ? '' : (media?.id ?? '')
   const fileName = isOnline
@@ -698,7 +704,7 @@ export const MediaCard = memo(function MediaCard({
               store.clearTranscriptProgress(target.id)
 
               const baseMessage =
-                error instanceof Error ? error.message : 'Failed to transcribe media'
+                error instanceof Error ? error.message : i18n.t('media.card.transcribeFailed')
               lastErrorMessage = isTranscriptionOutOfMemoryError(error)
                 ? TRANSCRIPTION_OOM_HINT
                 : baseMessage
@@ -710,24 +716,27 @@ export const MediaCard = memo(function MediaCard({
             if (targets.length === 1) {
               store.showNotification({
                 type: 'success',
-                message: `Transcript ready for '${targets[0]!.fileName}'`,
+                message: i18n.t('media.card.transcriptReadyFor', { name: targets[0]!.fileName }),
               })
             } else {
               store.showNotification({
                 type: 'success',
-                message: `Transcripts ready for ${succeeded} media files`,
+                message: i18n.t('media.card.transcriptsReady', { count: succeeded }),
               })
             }
             setTranscribeDialogOpen(false)
           } else if (failed > 0) {
-            const msg = lastErrorMessage ?? 'Failed to transcribe media'
+            const msg = lastErrorMessage ?? i18n.t('media.card.transcribeFailed')
             setTranscribeErrorMessage(msg)
             store.showNotification({
               type: 'error',
               message:
                 targets.length === 1
                   ? msg
-                  : `Transcription failed for ${failed} of ${targets.length} media files`,
+                  : i18n.t('media.card.transcriptionFailedFor', {
+                      failed,
+                      total: targets.length,
+                    }),
             })
           } else {
             setTranscribeDialogOpen(false)
@@ -774,20 +783,23 @@ export const MediaCard = memo(function MediaCard({
       const [only] = targets
       store.showNotification({
         type: 'success',
-        message: `Transcript deleted for '${only!.fileName}'`,
+        message: i18n.t('media.card.transcriptDeletedFor', { name: only!.fileName }),
       })
     } else if (targets.length > 1 && failures === 0) {
       store.showNotification({
         type: 'success',
-        message: `Deleted ${targets.length} transcripts`,
+        message: i18n.t('media.card.transcriptsDeleted', { count: targets.length }),
       })
     } else if (failures > 0) {
       store.showNotification({
         type: 'error',
         message:
           failures === targets.length
-            ? 'Failed to delete transcript'
-            : `Failed to delete ${failures} of ${targets.length} transcripts`,
+            ? i18n.t('media.card.transcriptDeleteFailed')
+            : i18n.t('media.card.transcriptDeleteFailedFor', {
+                failed: failures,
+                total: targets.length,
+              }),
       })
     }
   }
@@ -799,7 +811,7 @@ export const MediaCard = memo(function MediaCard({
     if (targets.length === 0) {
       store.showNotification({
         type: 'error',
-        message: 'Choose an MKV or WebM video with embedded text subtitles.',
+        message: i18n.t('media.card.chooseMkvOrWebm'),
       })
       return
     }
@@ -834,7 +846,9 @@ export const MediaCard = memo(function MediaCard({
           const hasPermission = await requestSubtitleSourcePermission(target)
           if (!hasPermission) {
             markSubtitleSourceUnreadable(target, 'permission_denied')
-            lastErrorMessage = `FreeCut needs permission to read "${target.fileName}" before extracting subtitles.`
+            lastErrorMessage = i18n.t('media.card.subtitlesNeedPermission', {
+              name: target.fileName,
+            })
             useSubtitleScanProgressStore.getState().markEntryStatus(i, 'error')
             continue
           }
@@ -871,12 +885,17 @@ export const MediaCard = memo(function MediaCard({
     }
 
     if (succeeded > 0) {
-      const fileWord = succeeded === 1 ? 'file' : 'files'
-      const trackWord = totalTracksCached === 1 ? 'track' : 'tracks'
       const summary =
         succeeded === targets.length
-          ? `Cached ${totalTracksCached} subtitle ${trackWord} across ${succeeded} ${fileWord}.`
-          : `Cached subtitles for ${succeeded} of ${targets.length} files (${totalTracksCached} ${trackWord}).`
+          ? i18n.t('media.card.subtitlesCachedAll', {
+              tracks: totalTracksCached,
+              files: succeeded,
+            })
+          : i18n.t('media.card.subtitlesCachedPartial', {
+              succeeded,
+              total: targets.length,
+              tracks: totalTracksCached,
+            })
       useSubtitleScanProgressStore.getState().finish(summary)
       return
     }
@@ -885,7 +904,7 @@ export const MediaCard = memo(function MediaCard({
     useSubtitleScanProgressStore.getState().close()
     store.showNotification({
       type: 'error',
-      message: lastErrorMessage ?? 'Failed to scan embedded subtitles.',
+      message: lastErrorMessage ?? i18n.t('media.card.subtitlesScanFailed'),
     })
   }
 
@@ -1418,7 +1437,7 @@ export const MediaCard = memo(function MediaCard({
     : null
   const transcriptProgressLabel = transcriptProgress
     ? `${getTranscriptionStageLabel(transcriptProgress.stage)} (${transcriptProgressPercent}%)`
-    : 'Transcribing...'
+    : t('media.card.transcribing')
 
   const transcribeDialog = (
     <TranscribeDialog
@@ -1659,7 +1678,7 @@ export const MediaCard = memo(function MediaCard({
                 {!isBroken && !isImporting && isTagging && (
                   <div
                     className="absolute bottom-0.5 left-0.5 p-0.5 rounded bg-purple-500/90 text-white"
-                    title="Analyzing with AI"
+                    title={t('media.card.analyzingWithAI')}
                   >
                     <Loader2 className="w-2.5 h-2.5 animate-spin" />
                   </div>
@@ -1681,7 +1700,7 @@ export const MediaCard = memo(function MediaCard({
                   transcriptProgressPercent !== null && (
                     <div
                       role="progressbar"
-                      aria-label="Transcript progress"
+                      aria-label={t('media.card.transcriptProgressAria')}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={transcriptProgressPercent}
@@ -1698,7 +1717,9 @@ export const MediaCard = memo(function MediaCard({
                   <button
                     type="button"
                     onClick={handleAudioToggle}
-                    aria-label={audioPlaying ? 'Stop audio' : 'Play audio'}
+                    aria-label={
+                      audioPlaying ? t('media.card.stopAudio') : t('media.card.playAudio')
+                    }
                     aria-pressed={audioPlaying}
                     className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors"
                   >
@@ -1720,7 +1741,9 @@ export const MediaCard = memo(function MediaCard({
               {/* Info — single row: icon + name + duration */}
               <div className="flex-1 min-w-0 flex items-center gap-1.5">
                 {isImporting ? (
-                  <span className="text-[10px] text-muted-foreground">Importing...</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t('media.card.importing')}
+                  </span>
                 ) : (
                   <>
                     <div className="p-0.5 rounded bg-primary/90 text-primary-foreground flex-shrink-0">
@@ -1838,7 +1861,9 @@ export const MediaCard = memo(function MediaCard({
               {isImporting && (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
-                  <div className="text-[9px] text-white/60 uppercase tracking-wider">Importing</div>
+                  <div className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {t('media.card.importing')}
+                  </div>
                 </div>
               )}
 
@@ -1866,7 +1891,7 @@ export const MediaCard = memo(function MediaCard({
                   {!isBroken && isTagging && (
                     <div
                       className="p-0.5 rounded bg-purple-500/90 text-white pointer-events-none"
-                      title="Analyzing with AI"
+                      title={t('media.card.analyzingWithAI')}
                     >
                       <Loader2 className="w-2.5 h-2.5 animate-spin" />
                     </div>
@@ -1879,7 +1904,7 @@ export const MediaCard = memo(function MediaCard({
                   {!isBroken && hasCaptions && (
                     <div
                       className="p-0.5 rounded bg-purple-500/90 text-white pointer-events-none"
-                      title={`${media?.aiCaptions!.length} AI caption${media?.aiCaptions!.length === 1 ? '' : 's'}`}
+                      title={t('media.card.aiCaptionsCount', { count: media?.aiCaptions!.length })}
                     >
                       <Sparkles className="w-2.5 h-2.5" />
                     </div>
@@ -1897,7 +1922,7 @@ export const MediaCard = memo(function MediaCard({
                 <button
                   type="button"
                   onClick={handleAudioToggle}
-                  aria-label={audioPlaying ? 'Stop audio' : 'Play audio'}
+                  aria-label={audioPlaying ? t('media.card.stopAudio') : t('media.card.playAudio')}
                   aria-pressed={audioPlaying}
                   className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors group/play"
                 >
@@ -1947,7 +1972,7 @@ export const MediaCard = memo(function MediaCard({
                 transcriptProgressPercent !== null && (
                   <div
                     role="progressbar"
-                    aria-label="Transcript progress"
+                    aria-label={t('media.card.transcriptProgressAria')}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={transcriptProgressPercent}

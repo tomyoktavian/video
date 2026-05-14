@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { PROJECT_TEMPLATES, getAspectRatio, type ProjectTemplate } from '../utils/validation'
 
@@ -14,6 +15,7 @@ export function ProjectTemplatePicker({
   onSelectCustom,
   isCustomSelected,
 }: ProjectTemplatePickerProps) {
+  const { t } = useTranslation()
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {PROJECT_TEMPLATES.map((template) => {
@@ -92,16 +94,18 @@ export function ProjectTemplatePicker({
           </div>
           <div className="flex-1 text-left">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Custom
+              {t('projects.templatePicker.custom')}
             </p>
             <h3
               className={`font-medium text-sm transition-colors mt-1 ${
                 isCustomSelected ? 'text-primary' : 'text-foreground group-hover:text-primary'
               }`}
             >
-              Custom Size
+              {t('projects.templatePicker.customSize')}
             </h3>
-            <p className="text-xs text-muted-foreground mt-2">Enter dimensions</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              {t('projects.templatePicker.enterDimensions')}
+            </p>
           </div>
         </button>
       )}

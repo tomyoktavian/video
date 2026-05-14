@@ -3,6 +3,7 @@ import {
   getObjectUrlSourceMetadata,
   type ObjectUrlSourceMetadata,
 } from './object-url-registry'
+import { getOpfsFileBlob } from './opfs-file-access'
 
 type MediabunnyModule = typeof import('mediabunny')
 
@@ -27,31 +28,6 @@ function canUseDirectFileAccess(
   return Boolean(metadata.fileHandle || metadata.opfsPath)
 }
 
-async function getOpfsFileHandle(path: string): Promise<FileSystemFileHandle> {
-  const root = await navigator.storage.getDirectory()
-  const parts = path.split('/').filter((part) => part)
-
-  if (parts.length === 0) {
-    throw new Error('Invalid OPFS path')
-  }
-
-  let dir = root
-  for (let index = 0; index < parts.length - 1; index += 1) {
-    const part = parts[index]
-    if (!part) {
-      continue
-    }
-    dir = await dir.getDirectoryHandle(part)
-  }
-
-  const fileName = parts[parts.length - 1]
-  if (!fileName) {
-    throw new Error('Invalid OPFS path: missing filename')
-  }
-
-  return dir.getFileHandle(fileName)
-}
-
 function createBrowserFileStreamSource(
   mb: MediabunnyModule,
   metadata: ObjectUrlSourceMetadata & ({ fileHandle: FileSystemFileHandle } | { opfsPath: string }),
@@ -67,8 +43,7 @@ function createBrowserFileStreamSource(
         }
 
         if (metadata.opfsPath) {
-          const handle = await getOpfsFileHandle(metadata.opfsPath)
-          return handle.getFile()
+          return getOpfsFileBlob(metadata.opfsPath)
         }
 
         throw new Error('Missing file-backed source metadata')

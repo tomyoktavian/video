@@ -1,4 +1,5 @@
 import { useCallback, useMemo, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Maximize2, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { TimelineItem } from '@/types/timeline'
@@ -36,6 +37,7 @@ const CORNER_LABELS: Record<CornerKey, string> = {
  * Only shown for single-item selection.
  */
 export const CornerPinSection = memo(function CornerPinSection({ items }: CornerPinSectionProps) {
+  const { t } = useTranslation()
   const updateItem = useTimelineStore((s) => s.updateItem)
   const {
     isEditing: isCornerPinEditing,
@@ -124,7 +126,11 @@ export const CornerPinSection = memo(function CornerPinSection({ items }: Corner
   if (!item || items.length > 1) return null
 
   return (
-    <PropertySection title="Corner Pin" icon={Maximize2} defaultOpen={false}>
+    <PropertySection
+      title={t('editor.cornerPinSection.title')}
+      icon={Maximize2}
+      defaultOpen={false}
+    >
       {/* Edit + Reset toolbar */}
       <div className="flex items-center gap-1 px-1 mb-2">
         <Button
@@ -132,10 +138,16 @@ export const CornerPinSection = memo(function CornerPinSection({ items }: Corner
           size="sm"
           className="h-7 text-xs flex-1 gap-1"
           onClick={toggleEditMode}
-          title={isEditingThisItem ? 'Exit corner pin editor' : 'Edit corners on preview'}
+          title={
+            isEditingThisItem
+              ? t('editor.cornerPinSection.exitEditor')
+              : t('editor.cornerPinSection.editOnPreview')
+          }
         >
           <Maximize2 className="w-3 h-3" />
-          {isEditingThisItem ? 'Editing...' : 'Edit'}
+          {isEditingThisItem
+            ? t('editor.cornerPinSection.editing')
+            : t('editor.cornerPinSection.edit')}
         </Button>
         {hasAnyOffset && (
           <Button
@@ -143,7 +155,7 @@ export const CornerPinSection = memo(function CornerPinSection({ items }: Corner
             size="icon"
             className="h-7 w-7 flex-shrink-0"
             onClick={handleReset}
-            title="Reset corner pin"
+            title={t('editor.cornerPinSection.reset')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>

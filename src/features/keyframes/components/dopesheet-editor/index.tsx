@@ -15,6 +15,7 @@ import {
   type ReactNode,
 } from 'react'
 import { flushSync } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { useHotkeys } from 'react-hotkeys-hook'
 import {
   ClipboardPaste,
@@ -56,7 +57,6 @@ import type {
   Keyframe,
   KeyframeRef,
 } from '@/types/keyframe'
-import { PROPERTY_LABELS } from '@/types/keyframe'
 import type { BlockedFrameRange } from '../../utils/transition-region'
 import { HOTKEY_OPTIONS } from '@/config/hotkeys'
 import { getFrameAxisX, getFrameFromAxisX, getVisibleKeyframeX } from './layout'
@@ -88,6 +88,10 @@ import {
   removeSelectionIds,
 } from './row-action-helpers'
 import { getDisplayedGroupFrameGroups as getDisplayedGroupFrameGroupsState } from './sheet-preview-frame-groups'
+import {
+  getKeyframeGroupLabel,
+  getKeyframePropertyLabel,
+} from '@/features/keyframes/utils/property-i18n'
 
 interface DopesheetEditorProps {
   /** Shared time viewport when split mode needs synchronized frame zoom/pan */
@@ -712,6 +716,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
   visualizationMode = 'dopesheet',
   className,
 }: DopesheetEditorProps) {
+  const { t } = useTranslation()
   const timelineRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const graphPaneRef = useRef<HTMLDivElement>(null)
@@ -2843,6 +2848,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
     (row: DopesheetPropertyRow, options?: { indented?: boolean }) => {
       const rowLocked = isPropertyLocked(row.property)
       const curveVisible = graphVisibleProperties.has(row.property)
+      const rowLabel = getKeyframePropertyLabel(t, row.property)
 
       return (
         <div
@@ -2878,8 +2884,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 event.stopPropagation()
                 togglePropertyCurve(row.property)
               }}
-              title={`Show ${PROPERTY_LABELS[row.property]} curve`}
-              aria-label={`Show ${PROPERTY_LABELS[row.property]} curve`}
+              title={t('timeline.keyframeEditor.showPropertyCurve', {
+                property: rowLabel,
+                defaultValue: `Show ${rowLabel} curve`,
+              })}
+              aria-label={t('timeline.keyframeEditor.showPropertyCurve', {
+                property: rowLabel,
+                defaultValue: `Show ${rowLabel} curve`,
+              })}
               aria-pressed={curveVisible}
             >
               <LineChart className={MINI_ICON_CLASS} />
@@ -2899,13 +2911,25 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               }}
               title={
                 rowLocked
-                  ? `Unlock ${PROPERTY_LABELS[row.property]} row`
-                  : `Lock ${PROPERTY_LABELS[row.property]} row`
+                  ? t('timeline.keyframeEditor.unlockPropertyRow', {
+                      property: rowLabel,
+                      defaultValue: `Unlock ${rowLabel} row`,
+                    })
+                  : t('timeline.keyframeEditor.lockPropertyRow', {
+                      property: rowLabel,
+                      defaultValue: `Lock ${rowLabel} row`,
+                    })
               }
               aria-label={
                 rowLocked
-                  ? `Unlock ${PROPERTY_LABELS[row.property]} row`
-                  : `Lock ${PROPERTY_LABELS[row.property]} row`
+                  ? t('timeline.keyframeEditor.unlockPropertyRow', {
+                      property: rowLabel,
+                      defaultValue: `Unlock ${rowLabel} row`,
+                    })
+                  : t('timeline.keyframeEditor.lockPropertyRow', {
+                      property: rowLabel,
+                      defaultValue: `Lock ${rowLabel} row`,
+                    })
               }
               aria-pressed={rowLocked}
             >
@@ -2925,13 +2949,25 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               disabled={disabled || rowLocked || !onPropertyValueCommit}
               title={
                 autoKeyEnabledByProperty[row.property]
-                  ? `Auto-key enabled for ${PROPERTY_LABELS[row.property]}`
-                  : `Enable auto-key for ${PROPERTY_LABELS[row.property]}`
+                  ? t('timeline.keyframeEditor.autoKeyEnabledFor', {
+                      target: rowLabel,
+                      defaultValue: `Auto-key enabled for ${rowLabel}`,
+                    })
+                  : t('timeline.keyframeEditor.enableAutoKeyFor', {
+                      target: rowLabel,
+                      defaultValue: `Enable auto-key for ${rowLabel}`,
+                    })
               }
               aria-label={
                 autoKeyEnabledByProperty[row.property]
-                  ? `Auto-key enabled for ${PROPERTY_LABELS[row.property]}`
-                  : `Enable auto-key for ${PROPERTY_LABELS[row.property]}`
+                  ? t('timeline.keyframeEditor.autoKeyEnabledFor', {
+                      target: rowLabel,
+                      defaultValue: `Auto-key enabled for ${rowLabel}`,
+                    })
+                  : t('timeline.keyframeEditor.enableAutoKeyFor', {
+                      target: rowLabel,
+                      defaultValue: `Enable auto-key for ${rowLabel}`,
+                    })
               }
               aria-pressed={autoKeyEnabledByProperty[row.property] ?? false}
             >
@@ -2939,7 +2975,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
             </Button>
           </div>
           <div className="flex h-full min-w-0 flex-1 items-center truncate pl-[10px] pr-1 text-[9px] font-medium leading-none text-foreground/90">
-            {PROPERTY_LABELS[row.property]}
+            {rowLabel}
           </div>
           <div className="ml-auto flex items-center gap-0">
             <Input
@@ -2989,7 +3025,10 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 !onPropertyValueCommit ||
                 (!row.controls.hasKeyframeAtCurrentFrame && isCurrentFrameBlocked)
               }
-              aria-label={`${PROPERTY_LABELS[row.property]} value at playhead`}
+              aria-label={t('timeline.keyframeEditor.propertyValueAtPlayhead', {
+                property: rowLabel,
+                defaultValue: `${rowLabel} value at playhead`,
+              })}
             />
             <div className="flex items-center gap-0 rounded-sm border border-border/70 bg-background/85 px-0">
               <Button
@@ -2999,8 +3038,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
                 onClick={() => handleRowNavigate(row.property, row.controls.prevKeyframe)}
                 disabled={disabled || row.controls.prevKeyframe === null || !onNavigateToKeyframe}
-                title={`Previous ${PROPERTY_LABELS[row.property]} keyframe`}
-                aria-label={`Previous ${PROPERTY_LABELS[row.property]} keyframe`}
+                title={t('timeline.keyframeEditor.previousPropertyKeyframe', {
+                  property: rowLabel,
+                  defaultValue: `Previous ${rowLabel} keyframe`,
+                })}
+                aria-label={t('timeline.keyframeEditor.previousPropertyKeyframe', {
+                  property: rowLabel,
+                  defaultValue: `Previous ${rowLabel} keyframe`,
+                })}
               >
                 <ChevronLeft className="h-[9px] w-[9px]" />
               </Button>
@@ -3026,13 +3071,25 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 }
                 title={
                   row.controls.hasKeyframeAtCurrentFrame
-                    ? `Remove ${PROPERTY_LABELS[row.property]} keyframe at playhead`
-                    : `Toggle ${PROPERTY_LABELS[row.property]} keyframe at playhead`
+                    ? t('timeline.keyframeEditor.removePropertyKeyframeAtPlayhead', {
+                        property: rowLabel,
+                        defaultValue: `Remove ${rowLabel} keyframe at playhead`,
+                      })
+                    : t('timeline.keyframeEditor.togglePropertyKeyframeAtPlayhead', {
+                        property: rowLabel,
+                        defaultValue: `Toggle ${rowLabel} keyframe at playhead`,
+                      })
                 }
                 aria-label={
                   row.controls.hasKeyframeAtCurrentFrame
-                    ? `Remove ${PROPERTY_LABELS[row.property]} keyframe at playhead`
-                    : `Toggle ${PROPERTY_LABELS[row.property]} keyframe at playhead`
+                    ? t('timeline.keyframeEditor.removePropertyKeyframeAtPlayhead', {
+                        property: rowLabel,
+                        defaultValue: `Remove ${rowLabel} keyframe at playhead`,
+                      })
+                    : t('timeline.keyframeEditor.togglePropertyKeyframeAtPlayhead', {
+                        property: rowLabel,
+                        defaultValue: `Toggle ${rowLabel} keyframe at playhead`,
+                      })
                 }
               >
                 <span
@@ -3051,8 +3108,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
                 onClick={() => handleRowNavigate(row.property, row.controls.nextKeyframe)}
                 disabled={disabled || row.controls.nextKeyframe === null || !onNavigateToKeyframe}
-                title={`Next ${PROPERTY_LABELS[row.property]} keyframe`}
-                aria-label={`Next ${PROPERTY_LABELS[row.property]} keyframe`}
+                title={t('timeline.keyframeEditor.nextPropertyKeyframe', {
+                  property: rowLabel,
+                  defaultValue: `Next ${rowLabel} keyframe`,
+                })}
+                aria-label={t('timeline.keyframeEditor.nextPropertyKeyframe', {
+                  property: rowLabel,
+                  defaultValue: `Next ${rowLabel} keyframe`,
+                })}
               >
                 <ChevronRight className="h-[9px] w-[9px]" />
               </Button>
@@ -3067,8 +3130,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 handleClearProperty(row.property)
               }}
               disabled={!canClearRow(row)}
-              title={`Clear ${PROPERTY_LABELS[row.property]} keyframes`}
-              aria-label={`Clear ${PROPERTY_LABELS[row.property]} keyframes`}
+              title={t('timeline.keyframeEditor.clearPropertyKeyframes', {
+                property: rowLabel,
+                defaultValue: `Clear ${rowLabel} keyframes`,
+              })}
+              aria-label={t('timeline.keyframeEditor.clearPropertyKeyframes', {
+                property: rowLabel,
+                defaultValue: `Clear ${rowLabel} keyframes`,
+              })}
             >
               <X className="h-[9px] w-[9px]" />
             </Button>
@@ -3095,6 +3164,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
       onNavigateToKeyframe,
       onPropertyValueCommit,
       propertyValues,
+      t,
       togglePropertyCurve,
       toggleLockedProperty,
       valueDrafts,
@@ -3103,6 +3173,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
   )
   const renderGroupHeaderContent = useCallback(
     (group: DopesheetPropertyGroup) => {
+      const groupLabel = getKeyframeGroupLabel(t, group.id, group.label)
       const groupProperties = group.rows.map((row) => row.property)
       const curveVisible = groupProperties.some((p) => graphVisibleProperties.has(p))
       const allRowsLocked =
@@ -3139,8 +3210,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 toggleGroupCurves(groupProperties)
               }}
               disabled={groupProperties.length === 0}
-              title={`Show all ${group.label} curves`}
-              aria-label={`Show all ${group.label} curves`}
+              title={t('timeline.keyframeEditor.showAllGroupCurves', {
+                group: groupLabel,
+                defaultValue: `Show all ${groupLabel} curves`,
+              })}
+              aria-label={t('timeline.keyframeEditor.showAllGroupCurves', {
+                group: groupLabel,
+                defaultValue: `Show all ${groupLabel} curves`,
+              })}
               aria-pressed={curveVisible}
             >
               <LineChart className={MINI_ICON_CLASS} />
@@ -3164,8 +3241,28 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 }))
               }}
               disabled={groupProperties.length === 0}
-              title={allRowsLocked ? `Unlock ${group.label} rows` : `Lock ${group.label} rows`}
-              aria-label={allRowsLocked ? `Unlock ${group.label} rows` : `Lock ${group.label} rows`}
+              title={
+                allRowsLocked
+                  ? t('timeline.keyframeEditor.unlockGroupRows', {
+                      group: groupLabel,
+                      defaultValue: `Unlock ${groupLabel} rows`,
+                    })
+                  : t('timeline.keyframeEditor.lockGroupRows', {
+                      group: groupLabel,
+                      defaultValue: `Lock ${groupLabel} rows`,
+                    })
+              }
+              aria-label={
+                allRowsLocked
+                  ? t('timeline.keyframeEditor.unlockGroupRows', {
+                      group: groupLabel,
+                      defaultValue: `Unlock ${groupLabel} rows`,
+                    })
+                  : t('timeline.keyframeEditor.lockGroupRows', {
+                      group: groupLabel,
+                      defaultValue: `Lock ${groupLabel} rows`,
+                    })
+              }
               aria-pressed={allRowsLocked}
             >
               <Lock className={MINI_ICON_CLASS} />
@@ -3187,13 +3284,25 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               disabled={disabled || unlockedRows.length === 0 || !onPropertyValueCommit}
               title={
                 groupAutoKeyEnabled
-                  ? `Auto-key enabled for ${group.label}`
-                  : `Enable auto-key for ${group.label}`
+                  ? t('timeline.keyframeEditor.autoKeyEnabledFor', {
+                      target: groupLabel,
+                      defaultValue: `Auto-key enabled for ${groupLabel}`,
+                    })
+                  : t('timeline.keyframeEditor.enableAutoKeyFor', {
+                      target: groupLabel,
+                      defaultValue: `Enable auto-key for ${groupLabel}`,
+                    })
               }
               aria-label={
                 groupAutoKeyEnabled
-                  ? `Auto-key enabled for ${group.label}`
-                  : `Enable auto-key for ${group.label}`
+                  ? t('timeline.keyframeEditor.autoKeyEnabledFor', {
+                      target: groupLabel,
+                      defaultValue: `Auto-key enabled for ${groupLabel}`,
+                    })
+                  : t('timeline.keyframeEditor.enableAutoKeyFor', {
+                      target: groupLabel,
+                      defaultValue: `Enable auto-key for ${groupLabel}`,
+                    })
               }
               aria-pressed={groupAutoKeyEnabled}
             >
@@ -3205,7 +3314,17 @@ export const DopesheetEditor = memo(function DopesheetEditor({
             className="group flex min-w-0 flex-1 items-center gap-px rounded-sm px-0 text-left leading-none transition-colors hover:bg-background/40"
             onClick={() => toggleGroup(group.id)}
             aria-expanded={isOpen}
-            aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${group.label}`}
+            aria-label={
+              isOpen
+                ? t('timeline.keyframeEditor.collapseGroup', {
+                    group: groupLabel,
+                    defaultValue: `Collapse ${groupLabel}`,
+                  })
+                : t('timeline.keyframeEditor.expandGroup', {
+                    group: groupLabel,
+                    defaultValue: `Expand ${groupLabel}`,
+                  })
+            }
           >
             {isOpen ? (
               <ChevronDown
@@ -3223,7 +3342,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               />
             )}
             <span className="truncate pl-px text-[9px] font-medium uppercase leading-none tracking-[0.06em] text-foreground/90">
-              {group.label}
+              {groupLabel}
             </span>
           </button>
           <div className="ml-auto flex items-center gap-0 rounded-sm border border-border/70 bg-background/90 px-px shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
@@ -3240,8 +3359,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 )
               }}
               disabled={disabled || group.prevKeyframe === null || !onNavigateToKeyframe}
-              title={`Previous ${group.label} keyframe`}
-              aria-label={`Previous ${group.label} keyframe`}
+              title={t('timeline.keyframeEditor.previousGroupKeyframe', {
+                group: groupLabel,
+                defaultValue: `Previous ${groupLabel} keyframe`,
+              })}
+              aria-label={t('timeline.keyframeEditor.previousGroupKeyframe', {
+                group: groupLabel,
+                defaultValue: `Previous ${groupLabel} keyframe`,
+              })}
             >
               <ChevronLeft className={MINI_ICON_CLASS} />
             </Button>
@@ -3266,13 +3391,25 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               disabled={!canToggleCurrentFrame}
               title={
                 hasUnlockedCurrentKeyframes
-                  ? `Remove ${group.label} keyframes at playhead`
-                  : `Toggle ${group.label} keyframes at playhead`
+                  ? t('timeline.keyframeEditor.removeGroupKeyframesAtPlayhead', {
+                      group: groupLabel,
+                      defaultValue: `Remove ${groupLabel} keyframes at playhead`,
+                    })
+                  : t('timeline.keyframeEditor.toggleGroupKeyframesAtPlayhead', {
+                      group: groupLabel,
+                      defaultValue: `Toggle ${groupLabel} keyframes at playhead`,
+                    })
               }
               aria-label={
                 hasUnlockedCurrentKeyframes
-                  ? `Remove ${group.label} keyframes at playhead`
-                  : `Toggle ${group.label} keyframes at playhead`
+                  ? t('timeline.keyframeEditor.removeGroupKeyframesAtPlayhead', {
+                      group: groupLabel,
+                      defaultValue: `Remove ${groupLabel} keyframes at playhead`,
+                    })
+                  : t('timeline.keyframeEditor.toggleGroupKeyframesAtPlayhead', {
+                      group: groupLabel,
+                      defaultValue: `Toggle ${groupLabel} keyframes at playhead`,
+                    })
               }
             >
               <span
@@ -3297,8 +3434,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 )
               }}
               disabled={disabled || group.nextKeyframe === null || !onNavigateToKeyframe}
-              title={`Next ${group.label} keyframe`}
-              aria-label={`Next ${group.label} keyframe`}
+              title={t('timeline.keyframeEditor.nextGroupKeyframe', {
+                group: groupLabel,
+                defaultValue: `Next ${groupLabel} keyframe`,
+              })}
+              aria-label={t('timeline.keyframeEditor.nextGroupKeyframe', {
+                group: groupLabel,
+                defaultValue: `Next ${groupLabel} keyframe`,
+              })}
             >
               <ChevronRight className={MINI_ICON_CLASS} />
             </Button>
@@ -3313,8 +3456,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 handleClearGroup(group)
               }}
               disabled={!canClearAny}
-              title={`Clear all ${group.label} keyframes`}
-              aria-label={`Clear all ${group.label} keyframes`}
+              title={t('timeline.keyframeEditor.clearAllGroupKeyframes', {
+                group: groupLabel,
+                defaultValue: `Clear all ${groupLabel} keyframes`,
+              })}
+              aria-label={t('timeline.keyframeEditor.clearAllGroupKeyframes', {
+                group: groupLabel,
+                defaultValue: `Clear all ${groupLabel} keyframes`,
+              })}
             >
               <X className={MINI_ICON_CLASS} />
             </Button>
@@ -3338,6 +3487,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
       onRemoveKeyframes,
       onNavigateToKeyframe,
       onPropertyValueCommit,
+      t,
       toggleGroupCurves,
       toggleGroup,
     ],
@@ -3582,8 +3732,8 @@ export const DopesheetEditor = memo(function DopesheetEditor({
     [expandedGroups, groupedPropertyRows, renderGroupHeaderContent, renderPropertyRowContent],
   )
   const emptyStateMessage = hasPropertyFilters
-    ? 'No parameters match the current view'
-    : 'No keyframes to display'
+    ? t('timeline.keyframeEditor.noParametersMatch')
+    : t('timeline.keyframeEditor.noKeyframesToDisplay')
 
   return (
     <div
@@ -3593,7 +3743,9 @@ export const DopesheetEditor = memo(function DopesheetEditor({
       <div className="flex items-center justify-between px-2 flex-shrink-0 min-h-7">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">Parameters</span>
+            <span className="text-xs text-muted-foreground">
+              {t('timeline.keyframeEditor.parameters')}
+            </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -3601,7 +3753,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                   size="sm"
                   className="h-7 w-7 p-0"
                   disabled={disabled || availableProperties.length === 0}
-                  aria-label="Parameter display options"
+                  aria-label={t('timeline.keyframeEditor.parameterDisplayOptions')}
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
@@ -3614,7 +3766,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                   }}
                 >
                   <Check className={cn('h-3.5 w-3.5', !showKeyframedOnly && 'opacity-0')} />
-                  Display Parameters with Keyframes
+                  {t('timeline.keyframeEditor.displayKeyframedParameters')}
                 </DropdownMenuItem>
                 {allPropertyGroups.length > 0 && <DropdownMenuSeparator />}
                 {allPropertyGroups.map((group) => {
@@ -3628,20 +3780,22 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                       }}
                     >
                       <Check className={cn('h-3.5 w-3.5', !isVisible && 'opacity-0')} />
-                      {`Display ${group.label} Parameters`}
+                      {t('timeline.keyframeEditor.displayGroupParameters', {
+                        group: getKeyframeGroupLabel(t, group.id, group.label),
+                      })}
                     </DropdownMenuItem>
                   )
                 })}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setAllGroupsExpanded(true)}>
-                  Expand All Parameters
+                  {t('timeline.keyframeEditor.expandAllParameters')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setAllGroupsExpanded(false)}>
-                  Collapse All Parameters
+                  {t('timeline.keyframeEditor.collapseAllParameters')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={resetParameterView}>
-                  Reset Parameter View
+                  {t('timeline.keyframeEditor.resetParameterView')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -3649,23 +3803,27 @@ export const DopesheetEditor = memo(function DopesheetEditor({
 
           {hasPropertyFilters && (
             <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-              Filtered
+              {t('timeline.keyframeEditor.filtered')}
             </span>
           )}
 
           {visualizationMode === 'graph' && graphDisplayProperty && (
             <span className="text-xs text-muted-foreground">
-              Graph: {PROPERTY_LABELS[graphDisplayProperty]}
+              {t('timeline.keyframeEditor.graphLabel', {
+                property: getKeyframePropertyLabel(t, graphDisplayProperty),
+              })}
             </span>
           )}
 
           <span className="text-xs text-muted-foreground">
-            {visibleKeyframes.length} keyframe{visibleKeyframes.length !== 1 ? 's' : ''}
+            {t('timeline.keyframeEditor.keyframes', { count: visibleKeyframes.length })}
           </span>
 
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-muted-foreground">Local</span>
+              <span className="text-[10px] text-muted-foreground">
+                {t('timeline.keyframeEditor.local')}
+              </span>
               <Input
                 type="number"
                 value={localFrameInputValue}
@@ -3681,7 +3839,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 onKeyDown={(event) =>
                   handleHeaderFrameInputKeyDown(event, 'local', commitLocalFrameInput)
                 }
-                aria-label="Local frame"
+                aria-label={t('timeline.keyframeEditor.localFrame')}
                 className="h-5 w-12 px-1 text-center text-[10px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 min={0}
                 max={Math.max(totalFrames - 1, 0)}
@@ -3695,7 +3853,9 @@ export const DopesheetEditor = memo(function DopesheetEditor({
             </div>
             {globalFrame !== null && (
               <div className="flex items-center gap-0.5">
-                <span className="text-[10px] text-muted-foreground">Global</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {t('timeline.keyframeEditor.global')}
+                </span>
                 <Input
                   type="number"
                   value={globalFrameInputValue}
@@ -3711,7 +3871,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                   onKeyDown={(event) =>
                     handleHeaderFrameInputKeyDown(event, 'global', commitGlobalFrameInput)
                   }
-                  aria-label="Global frame"
+                  aria-label={t('timeline.keyframeEditor.globalFrame')}
                   className="h-5 w-14 px-1 text-center text-[10px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   disabled={
                     disabled ||
@@ -3729,7 +3889,9 @@ export const DopesheetEditor = memo(function DopesheetEditor({
           {visualizationMode === 'graph' && interpolationOptions.length > 0 && (
             <div
               className="flex items-center gap-0.5 rounded-md border border-border/80 bg-muted/20 px-0.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-              aria-label="Interpolation controls"
+              aria-label={t('timeline.keyframeEditor.interpolationControls', {
+                defaultValue: 'Interpolation controls',
+              })}
             >
               {interpolationOptions.map((option) => {
                 const isActive = selectedInterpolation === option.value
@@ -3746,7 +3908,10 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                     onClick={() => onInterpolationChange?.(option.value)}
                     disabled={disabled || interpolationDisabled || !onInterpolationChange}
                     title={option.label}
-                    aria-label={`Set interpolation to ${option.label}`}
+                    aria-label={t('timeline.keyframeEditor.setInterpolationTo', {
+                      label: option.label,
+                      defaultValue: `Set interpolation to ${option.label}`,
+                    })}
                     aria-pressed={isActive}
                   >
                     <InterpolationTypeIcon type={option.value} />
@@ -3763,8 +3928,8 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-6 w-6 p-0"
                 onClick={onCopyKeyframes}
                 disabled={disabled || selectedRefs.length === 0 || !onCopyKeyframes}
-                title="Copy selected keyframes"
-                aria-label="Copy selected keyframes"
+                title={t('timeline.keyframeEditor.copySelectedKeyframes')}
+                aria-label={t('timeline.keyframeEditor.copySelectedKeyframes')}
               >
                 <Copy className="h-3 w-3" />
               </Button>
@@ -3774,8 +3939,8 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-6 w-6 p-0"
                 onClick={onCutKeyframes}
                 disabled={disabled || selectedRefs.length === 0 || !onCutKeyframes}
-                title="Cut selected keyframes"
-                aria-label="Cut selected keyframes"
+                title={t('timeline.keyframeEditor.cutSelectedKeyframes')}
+                aria-label={t('timeline.keyframeEditor.cutSelectedKeyframes')}
               >
                 <Scissors className="h-3 w-3" />
               </Button>
@@ -3785,15 +3950,23 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-6 w-6 p-0"
                 onClick={onPasteKeyframes}
                 disabled={disabled || !hasKeyframeClipboard || !onPasteKeyframes}
-                title={isKeyframeClipboardCut ? 'Move keyframes from clipboard' : 'Paste keyframes'}
+                title={
+                  isKeyframeClipboardCut
+                    ? t('timeline.keyframeEditor.moveKeyframesFromClipboard')
+                    : t('timeline.keyframeEditor.pasteKeyframes')
+                }
                 aria-label={
-                  isKeyframeClipboardCut ? 'Move keyframes from clipboard' : 'Paste keyframes'
+                  isKeyframeClipboardCut
+                    ? t('timeline.keyframeEditor.moveKeyframesFromClipboard')
+                    : t('timeline.keyframeEditor.pasteKeyframes')
                 }
               >
                 <ClipboardPaste className="h-3 w-3" />
               </Button>
               {isKeyframeClipboardCut && hasKeyframeClipboard && (
-                <span className="pl-0.5 text-[10px] font-medium text-amber-500">Cut</span>
+                <span className="pl-0.5 text-[10px] font-medium text-amber-500">
+                  {t('timeline.keyframeEditor.cut')}
+                </span>
               )}
             </div>
           )}
@@ -3804,14 +3977,14 @@ export const DopesheetEditor = memo(function DopesheetEditor({
               className="h-6 w-6 p-0 text-destructive hover:text-destructive"
               onClick={handleRemoveKeyframes}
               disabled={disabled || selectedRefs.length === 0 || !onRemoveKeyframes}
-              title="Remove selected keyframes"
+              title={t('timeline.keyframeEditor.removeSelectedKeyframes')}
             >
               <Trash2 className="h-3 w-3" />
             </Button>
             <div className="mx-0.5 h-3.5 w-px bg-border/80" />
             <MiniZoomControl
               icon={<MoveHorizontal className="h-3 w-3" />}
-              label="Horizontal zoom"
+              label={t('timeline.keyframeEditor.horizontalZoom')}
               value={horizontalZoomValue}
               disabled={disabled || horizontalZoomRatioBase <= 1}
               onValueChange={setHorizontalZoomValue}
@@ -3822,7 +3995,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 <div className="mx-0.5 h-3.5 w-px bg-border/80" />
                 <MiniZoomControl
                   icon={<MoveVertical className="h-3 w-3" />}
-                  label="Vertical zoom"
+                  label={t('timeline.keyframeEditor.verticalZoom')}
                   value={graphVerticalZoomValue}
                   disabled={
                     disabled || visibleGraphProperties.length === 0 || verticalZoomRatioBase <= 1
@@ -3841,9 +4014,15 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="h-6 w-6 p-0"
                 disabled={disabled}
                 aria-label={
-                  visualizationMode === 'graph' ? 'Graph view options' : 'Sheet view options'
+                  visualizationMode === 'graph'
+                    ? t('timeline.keyframeEditor.graphViewOptions')
+                    : t('timeline.keyframeEditor.sheetViewOptions')
                 }
-                title={visualizationMode === 'graph' ? 'Graph view options' : 'Sheet view options'}
+                title={
+                  visualizationMode === 'graph'
+                    ? t('timeline.keyframeEditor.graphViewOptions')
+                    : t('timeline.keyframeEditor.sheetViewOptions')
+                }
               >
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
@@ -3856,7 +4035,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 }}
               >
                 <Check className={cn('h-3.5 w-3.5', graphRulerUnit !== 'seconds' && 'opacity-0')} />
-                Display Time Ruler in Seconds
+                {t('timeline.keyframeEditor.displayTimeRulerSeconds')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={(event) => {
@@ -3865,7 +4044,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 }}
               >
                 <Check className={cn('h-3.5 w-3.5', graphRulerUnit !== 'frames' && 'opacity-0')} />
-                Display Time Ruler in Frames
+                {t('timeline.keyframeEditor.displayTimeRulerFrames')}
               </DropdownMenuItem>
               {visualizationMode === 'graph' && (
                 <>
@@ -3877,7 +4056,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                     }}
                   >
                     <Check className={cn('h-3.5 w-3.5', !showAllGraphHandles && 'opacity-0')} />
-                    Show All Handles
+                    {t('timeline.keyframeEditor.showAllHandles')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={(event) => {
@@ -3886,7 +4065,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                     }}
                   >
                     <Check className={cn('h-3.5 w-3.5', !autoZoomGraphHeight && 'opacity-0')} />
-                    Auto Zoom Graph Height
+                    {t('timeline.keyframeEditor.autoZoomGraphHeight')}
                   </DropdownMenuItem>
                 </>
               )}
@@ -3920,7 +4099,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="px-1 flex items-center text-[10px] font-medium text-muted-foreground"
                 style={{ height: RULER_HEIGHT }}
               >
-                Property
+                {t('timeline.keyframeEditor.property')}
               </div>
               <div
                 data-testid="dopesheet-ruler"
@@ -4010,7 +4189,7 @@ export const DopesheetEditor = memo(function DopesheetEditor({
                 className="px-1 flex items-center text-[10px] font-medium text-muted-foreground"
                 style={{ height: RULER_HEIGHT }}
               >
-                Property
+                {t('timeline.keyframeEditor.property')}
               </div>
               <div
                 data-testid="dopesheet-ruler"

@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useTimelineStore,
   useItemsStore,
@@ -161,6 +162,7 @@ const AudioEqPanelSurface = memo(function AudioEqPanelSurface({
 })
 
 export const AudioMeterPanel = memo(function AudioMeterPanel() {
+  const { t } = useTranslation()
   const [panelMode, setPanelMode] = useState<PanelMode>('meter')
   const [eqPanelTarget, setEqPanelTarget] = useState<EqPanelTarget | null>(null)
   const mixerFloating = useEditorStore((s) => s.mixerFloating)
@@ -871,7 +873,7 @@ export const AudioMeterPanel = memo(function AudioMeterPanel() {
       <DropdownMenuTrigger asChild>
         <button
           className="h-5 w-5 shrink-0 flex items-center justify-center rounded text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 transition-colors"
-          aria-label="Panel mode"
+          aria-label={t('editor.audioMeters.panelMode')}
         >
           <MoreHorizontal size={14} />
         </button>
@@ -881,13 +883,13 @@ export const AudioMeterPanel = memo(function AudioMeterPanel() {
           <span className="w-4 inline-flex items-center justify-start">
             {panelMode === 'meter' && <Check className="h-3.5 w-3.5" />}
           </span>
-          Meters
+          {t('editor.audioMeters.meters')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setPanelMode('mixer')}>
           <span className="w-4 inline-flex items-center justify-start">
             {panelMode === 'mixer' && <Check className="h-3.5 w-3.5" />}
           </span>
-          Mixer
+          {t('editor.audioMeters.mixer')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -899,7 +901,7 @@ export const AudioMeterPanel = memo(function AudioMeterPanel() {
           <span className="w-4 inline-flex items-center justify-start">
             {mixerFloating && <Check className="h-3.5 w-3.5" />}
           </span>
-          Float Mixer
+          {t('editor.audioMeters.floatMixer')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -944,7 +946,7 @@ export const AudioMeterPanel = memo(function AudioMeterPanel() {
 
   const floatingMixer = mixerFloating ? (
     <FloatingPanel
-      title="Mixer"
+      title={t('editor.audioMeters.mixer')}
       defaultBounds={FLOATING_MIXER_DEFAULT_BOUNDS}
       minWidth={200}
       minHeight={280}
@@ -1042,14 +1044,14 @@ export const AudioMeterPanel = memo(function AudioMeterPanel() {
       <aside
         className="panel-bg border-l border-border flex h-full flex-col overflow-hidden"
         style={{ width: EDITOR_LAYOUT_CSS_VALUES.timelineMeterWidth }}
-        aria-label="Audio meter"
+        aria-label={t('editor.audioMeters.audioMeter')}
       >
         <div
           className="flex min-w-0 items-center justify-between gap-1 border-b border-border bg-secondary/20 px-1.5"
           style={{ height: EDITOR_LAYOUT_CSS_VALUES.timelineTracksHeaderHeight }}
         >
           <span className="min-w-0 text-xs text-muted-foreground font-mono uppercase tracking-[0.12em]">
-            Meters
+            {t('editor.audioMeters.meters')}
           </span>
           {modeDropdown}
         </div>

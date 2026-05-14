@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { FloatingPanel } from '@/components/ui/floating-panel'
 import { Input } from '@/components/ui/input'
@@ -241,6 +242,7 @@ function FillerEntryEditor({
   placeholder: string
   onChange: (entries: string[]) => void
 }) {
+  const { t } = useTranslation()
   const [value, setValue] = useState('')
 
   const commit = useCallback(() => {
@@ -270,12 +272,12 @@ function FillerEntryEditor({
           className="h-8 text-xs"
         />
         <Button type="button" variant="secondary" size="sm" onClick={commit}>
-          Add
+          {t('timeline.fillerRemoval.add')}
         </Button>
       </div>
       <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-md border bg-muted/20 p-2">
         {entries.length === 0 ? (
-          <span className="text-xs text-muted-foreground">None</span>
+          <span className="text-xs text-muted-foreground">{t('timeline.fillerRemoval.none')}</span>
         ) : (
           entries.map((entry) => (
             <button
@@ -283,7 +285,7 @@ function FillerEntryEditor({
               type="button"
               onClick={() => onChange(removeEntry(entries, entry))}
               className="inline-flex overflow-hidden rounded border bg-background text-xs hover:bg-muted"
-              title="Remove"
+              title={t('timeline.fillerRemoval.remove')}
             >
               <span className="px-2 py-1">{entry}</span>
               <span className="border-l border-border px-1.5 py-1 font-medium text-destructive">
@@ -308,6 +310,7 @@ function UndoRedoControls({
   onUndo: () => void
   onRedo: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -317,9 +320,9 @@ function UndoRedoControls({
         disabled={!canUndo}
         onClick={onUndo}
         className="h-6 px-2 text-xs"
-        title="Undo tag/settings edit"
+        title={t('timeline.fillerRemoval.undoEditTitle')}
       >
-        Undo
+        {t('timeline.fillerRemoval.undo')}
       </Button>
       <Button
         type="button"
@@ -328,9 +331,9 @@ function UndoRedoControls({
         disabled={!canRedo}
         onClick={onRedo}
         className="h-6 px-2 text-xs"
-        title="Redo tag/settings edit"
+        title={t('timeline.fillerRemoval.redoEditTitle')}
       >
-        Redo
+        {t('timeline.fillerRemoval.redo')}
       </Button>
     </div>
   )
@@ -347,6 +350,7 @@ function FillerMatchList({
   selectedRangeIds: ReadonlySet<string>
   onToggleRange: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const mediaById = useMediaLibraryStore((state) => state.mediaById)
   const itemsById = useItemsStore((state) => state.itemById)
   const timelineFps = useTimelineSettingsStore((state) => state.fps)
@@ -404,12 +408,14 @@ function FillerMatchList({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium">Found</Label>
+        <Label className="text-xs font-medium">{t('timeline.fillerRemoval.found')}</Label>
         <span className="text-xs text-muted-foreground">{matches.length}</span>
       </div>
       <div className="max-h-36 overflow-y-auto rounded-md border bg-muted/20">
         {matches.length === 0 ? (
-          <div className="px-3 py-2 text-xs text-muted-foreground">No entries found</div>
+          <div className="px-3 py-2 text-xs text-muted-foreground">
+            {t('timeline.fillerRemoval.noEntriesFound')}
+          </div>
         ) : (
           matches.map(({ id, mediaId, media, range }) => (
             <div
@@ -421,24 +427,28 @@ function FillerMatchList({
                 checked={selectedRangeIds.has(id)}
                 onChange={() => onToggleRange(id)}
                 className="h-4 w-4 shrink-0"
-                aria-label={`Include ${range.text || 'filler range'}`}
+                aria-label={t('timeline.fillerRemoval.includeRange', {
+                  text: range.text || t('timeline.fillerRemoval.fillerRange'),
+                })}
               />
               <button
                 type="button"
                 onClick={() => handlePlayRange(mediaId, range)}
                 className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
-                title="Play this range"
+                title={t('timeline.fillerRemoval.playThisRange')}
               >
                 <span className="min-w-0">
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="truncate font-medium">{range.text || 'Filler'}</span>
+                    <span className="truncate font-medium">
+                      {range.text || t('timeline.fillerRemoval.filler')}
+                    </span>
                     {range.audioConfidence && (
                       <span
                         className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none ${getConfidenceClass(
                           range.audioConfidence.level,
                         )}`}
                       >
-                        {range.audioConfidence.level}
+                        {t(`timeline.fillerRemoval.confidence.${range.audioConfidence.level}`)}
                       </span>
                     )}
                   </span>
@@ -459,6 +469,7 @@ function FillerMatchList({
 }
 
 export function FillerRemovalDialog() {
+  const { t } = useTranslation()
   const isOpen = useFillerRemovalDialogStore((state) => state.isOpen)
   const itemIds = useFillerRemovalDialogStore((state) => state.itemIds)
   const settings = useFillerRemovalDialogStore((state) => state.settings)
@@ -641,19 +652,21 @@ export function FillerRemovalDialog() {
         })
         setHasApplied(false)
         if (nextSummary.rangeCount === 0) {
-          toast.info('No removable filler words detected with these settings')
+          toast.info(t('timeline.fillerRemoval.toastNoRemovable'))
         }
       } catch (error) {
         if (isStale()) return
         logger.warn('Filler preview failed', error)
-        toast.error(error instanceof Error ? error.message : 'Failed to preview filler words')
+        toast.error(
+          error instanceof Error ? error.message : t('timeline.fillerRemoval.toastPreviewFailed'),
+        )
       } finally {
         if (!isStale()) setIsAnalyzing(false)
       }
     }
 
     void run()
-  }, [draft, itemIds, updatePreview])
+  }, [draft, itemIds, t, updatePreview])
 
   const handleScoreAudio = useCallback(() => {
     const startedVersion = draftVersionRef.current
@@ -676,18 +689,20 @@ export function FillerRemovalDialog() {
           rangesByMediaId: selectedRanges,
           summary: nextSummary,
         })
-        toast.success('Audio confidence scored. High-confidence entries are selected.')
+        toast.success(t('timeline.fillerRemoval.toastAudioScored'))
       } catch (error) {
         if (isStale()) return
         logger.warn('Audio confidence scoring failed', error)
-        toast.error(error instanceof Error ? error.message : 'Failed to score audio confidence')
+        toast.error(
+          error instanceof Error ? error.message : t('timeline.fillerRemoval.toastScoreFailed'),
+        )
       } finally {
         if (!isStale()) setIsScoringAudio(false)
       }
     }
 
     void run()
-  }, [draft, itemIds, reviewRangesByMediaId, updatePreview])
+  }, [draft, itemIds, reviewRangesByMediaId, t, updatePreview])
 
   const handleApply = useCallback(() => {
     let result: RemoveSilenceResult | null = null
@@ -697,22 +712,22 @@ export function FillerRemovalDialog() {
         .removeFillerWordsFromItems(itemIds, selectedRangesByMediaId)
     } catch (error) {
       logger.warn('Filler removal failed', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to remove filler words')
+      toast.error(
+        error instanceof Error ? error.message : t('timeline.fillerRemoval.toastRemoveFailed'),
+      )
       return
     } finally {
       clearFillerPreviewOverlays(itemIds)
     }
 
     if (!result || result.removedItemCount === 0) {
-      toast.info('No filler words found inside the selected clips')
+      toast.info(t('timeline.fillerRemoval.toastNoneInClips'))
       return
     }
 
-    toast.success(
-      `Removed ${result.removedItemCount} filler segment${result.removedItemCount === 1 ? '' : 's'}`,
-    )
+    toast.success(t('timeline.fillerRemoval.toastRemoved', { count: result.removedItemCount }))
     setHasApplied(true)
-  }, [itemIds, selectedRangesByMediaId])
+  }, [itemIds, selectedRangesByMediaId, t])
 
   const handleToggleRange = useCallback(
     (id: string) => {
@@ -739,7 +754,7 @@ export function FillerRemovalDialog() {
 
   return (
     <FloatingPanel
-      title="Remove Filler Words"
+      title={t('timeline.fillerRemoval.title')}
       defaultBounds={FILLER_REMOVAL_PANEL_DEFAULT_BOUNDS}
       minWidth={340}
       minHeight={220}
@@ -759,18 +774,19 @@ export function FillerRemovalDialog() {
     >
       <section
         role="dialog"
-        aria-label="Remove Filler Words"
+        aria-label={t('timeline.fillerRemoval.title')}
         aria-modal="false"
         className="flex flex-col"
       >
         <div className="p-3">
           <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm leading-tight">
             <div className="font-medium">
-              {selectedSummary.rangeCount} filler range
-              {selectedSummary.rangeCount === 1 ? '' : 's'} selected
+              {t('timeline.fillerRemoval.rangesSelected', { count: selectedSummary.rangeCount })}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              About {formatSeconds(selectedSummary.totalSeconds)} will be removed.
+              {t('timeline.fillerRemoval.aboutWillBeRemoved', {
+                duration: formatSeconds(selectedSummary.totalSeconds),
+              })}
             </div>
           </div>
 
@@ -793,14 +809,14 @@ export function FillerRemovalDialog() {
                     })
                   }
                 >
-                  {preset.label}
+                  {t(`timeline.fillerRemoval.preset.${preset.id}`)}
                 </Button>
               ))}
             </div>
             <div className="space-y-2 rounded-md border bg-muted/20 p-2">
               <NumberSetting
                 id="filler-padding"
-                label="Cut padding"
+                label={t('timeline.fillerRemoval.cutPadding')}
                 value={draft.paddingMs}
                 min={0}
                 max={500}
@@ -810,7 +826,7 @@ export function FillerRemovalDialog() {
               />
               <NumberSetting
                 id="filler-word-duration"
-                label="Max word"
+                label={t('timeline.fillerRemoval.maxWord')}
                 value={draft.maxSimpleFillerMs}
                 min={100}
                 max={3000}
@@ -822,7 +838,7 @@ export function FillerRemovalDialog() {
               />
               <NumberSetting
                 id="filler-phrase-duration"
-                label="Max phrase"
+                label={t('timeline.fillerRemoval.maxPhrase')}
                 value={draft.maxPhraseFillerMs}
                 min={250}
                 max={5000}
@@ -841,9 +857,9 @@ export function FillerRemovalDialog() {
             />
             <FillerEntryEditor
               id="filler-words"
-              label="Words"
+              label={t('timeline.fillerRemoval.words')}
               entries={draft.fillerWords}
-              placeholder="Add word"
+              placeholder={t('timeline.fillerRemoval.addWord')}
               onChange={(fillerWords) => updateDraft((current) => ({ ...current, fillerWords }))}
             />
             <div className="flex flex-wrap gap-1.5">
@@ -868,9 +884,9 @@ export function FillerRemovalDialog() {
             </div>
             <FillerEntryEditor
               id="filler-phrases"
-              label="Phrases"
+              label={t('timeline.fillerRemoval.phrases')}
               entries={draft.fillerPhrases}
-              placeholder="Add phrase"
+              placeholder={t('timeline.fillerRemoval.addPhrase')}
               onChange={(fillerPhrases) =>
                 updateDraft((current) => ({ ...current, fillerPhrases }))
               }
@@ -880,7 +896,7 @@ export function FillerRemovalDialog() {
 
         <div className="flex flex-col-reverse gap-2 border-t border-border bg-secondary/10 p-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" size="sm" onClick={handleClose} disabled={isAnalyzing}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="secondary"
@@ -888,7 +904,9 @@ export function FillerRemovalDialog() {
             onClick={handleUpdatePreview}
             disabled={isAnalyzing || isScoringAudio}
           >
-            {isAnalyzing ? 'Updating...' : 'Update Preview'}
+            {isAnalyzing
+              ? t('timeline.fillerRemoval.updating')
+              : t('timeline.fillerRemoval.updatePreview')}
           </Button>
           <Button
             variant="secondary"
@@ -896,7 +914,9 @@ export function FillerRemovalDialog() {
             onClick={handleScoreAudio}
             disabled={isAnalyzing || isScoringAudio || totalReviewedRangeCount === 0}
           >
-            {isScoringAudio ? 'Scoring...' : 'Score Audio'}
+            {isScoringAudio
+              ? t('timeline.fillerRemoval.scoring')
+              : t('timeline.fillerRemoval.scoreAudio')}
           </Button>
           <Button
             size="sm"
@@ -905,7 +925,7 @@ export function FillerRemovalDialog() {
               isAnalyzing || isScoringAudio || hasApplied || selectedSummary.rangeCount === 0
             }
           >
-            {hasApplied ? 'Removed' : 'Remove'}
+            {hasApplied ? t('timeline.fillerRemoval.removed') : t('timeline.fillerRemoval.remove')}
           </Button>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { useState, useRef, memo, useCallback, useEffect, useLayoutEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createLogger } from '@/shared/logging/logger'
 
 const logger = createLogger('TimelineTrack')
@@ -116,6 +117,7 @@ function TrackGapContextMenu({
   onCloseGap: () => void
   onDismiss: () => void
 }) {
+  const { t } = useTranslation()
   const triggerRef = useRef<HTMLSpanElement | null>(null)
 
   useLayoutEffect(() => {
@@ -148,7 +150,9 @@ function TrackGapContextMenu({
         />
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem onClick={onCloseGap}>Ripple Delete</ContextMenuItem>
+        <ContextMenuItem onClick={onCloseGap}>
+          {t('timeline.contextMenu.rippleDelete')}
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   )
@@ -162,14 +166,15 @@ const TrackDropGhostOverlay = memo(function TrackDropGhostOverlay({
   const previewsRef = useRef<TimelineDropGhostPreviewsHandle>(null)
 
   useEffect(() => {
+    const previews = previewsRef.current
     const unregister = registerTrackDropGhostOverlay(trackId, {
-      sync: (ghostPreviews) => previewsRef.current?.sync(ghostPreviews),
-      clear: () => previewsRef.current?.clear(),
+      sync: (ghostPreviews) => previews?.sync(ghostPreviews),
+      clear: () => previews?.clear(),
     })
 
     return () => {
       unregister()
-      previewsRef.current?.clear()
+      previews?.clear()
     }
   }, [trackId])
 
@@ -246,6 +251,7 @@ const TimelineTrackItems = memo(function TimelineTrackItems({
  */
 
 export const TimelineTrack = memo(function TimelineTrack({ track }: TimelineTrackProps) {
+  const { t } = useTranslation()
   const previewOwnerId = `track:${track.id}`
   const [gapContextMenuRequest, setGapContextMenuRequest] =
     useState<TrackGapContextMenuRequest | null>(null)
@@ -1164,7 +1170,7 @@ export const TimelineTrack = memo(function TimelineTrack({ track }: TimelineTrac
         if (isTimelineTemplateDragData(data)) {
           const templateItem = buildTimelineTemplateItem(data, dropFrame)
           if (!templateItem) {
-            toast.error('Unable to add dropped timeline item')
+            toast.error(t('timeline.track.unableToAddDroppedItem'))
             return
           }
 
@@ -1185,9 +1191,9 @@ export const TimelineTrack = memo(function TimelineTrack({ track }: TimelineTrac
           addItems,
           currentTracks: useTimelineStore.getState().tracks,
           dropResult,
-          emptyMessage: 'Unable to add dropped media items',
+          emptyMessage: t('timeline.track.unableToAddDroppedMediaItems'),
           notify: toast,
-          partialFailureLabel: 'dropped media items',
+          partialFailureLabel: t('timeline.track.droppedMediaItems'),
           requestedCount: entries.length,
           setTracks: useTimelineStore.getState().setTracks,
         })
@@ -1217,9 +1223,9 @@ export const TimelineTrack = memo(function TimelineTrack({ track }: TimelineTrac
       addItems,
       currentTracks: useTimelineStore.getState().tracks,
       dropResult,
-      emptyMessage: 'Unable to add dropped files to the timeline',
+      emptyMessage: t('timeline.track.unableToAddDroppedFiles'),
       notify: toast,
-      partialFailureLabel: 'dropped files',
+      partialFailureLabel: t('timeline.track.droppedFiles'),
       requestedCount: droppedEntries.length,
       setTracks: useTimelineStore.getState().setTracks,
     })
@@ -1269,7 +1275,9 @@ export const TimelineTrack = memo(function TimelineTrack({ track }: TimelineTrac
         {/* Locked track overlay indicator */}
         {isTrackLocked && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="text-xs text-muted-foreground/50 font-mono">LOCKED</div>
+            <div className="text-xs text-muted-foreground/50 font-mono">
+              {t('timeline.track.locked')}
+            </div>
           </div>
         )}
       </div>

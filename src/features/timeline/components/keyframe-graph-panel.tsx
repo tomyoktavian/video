@@ -6,6 +6,7 @@
  */
 
 import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -93,22 +94,38 @@ interface KeyframeGraphPanelProps {
 
 type KeyframeEditorMode = 'graph' | 'dopesheet'
 const KEYFRAME_EDITOR_MODE_STORAGE_KEY = 'timeline:keyframeEditorMode'
-const EASING_OPTIONS: Array<{ value: EasingType; label: string }> = [
-  { value: 'linear', label: 'Linear' },
-  { value: 'ease-in', label: 'Ease In' },
-  { value: 'ease-in-out', label: 'Ease In-Out' },
-  { value: 'ease-out', label: 'Ease Out' },
+const EASING_OPTIONS: Array<{ value: EasingType; labelKey: string }> = [
+  { value: 'linear', labelKey: 'timeline.keyframeEditor.easing.linear' },
+  { value: 'ease-in', labelKey: 'timeline.keyframeEditor.easing.easeIn' },
+  { value: 'ease-in-out', labelKey: 'timeline.keyframeEditor.easing.easeInOut' },
+  { value: 'ease-out', labelKey: 'timeline.keyframeEditor.easing.easeOut' },
 ]
 const BEZIER_PRESETS = [
-  { value: 'soft', label: 'Soft', points: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 } },
-  { value: 'ease-out', label: 'Ease Out', points: { x1: 0.215, y1: 0.61, x2: 0.355, y2: 1 } },
-  { value: 'ease-in', label: 'Ease In', points: { x1: 0.55, y1: 0.055, x2: 0.675, y2: 0.19 } },
+  {
+    value: 'soft',
+    labelKey: 'timeline.keyframeEditor.bezierPreset.soft',
+    points: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+  },
+  {
+    value: 'ease-out',
+    labelKey: 'timeline.keyframeEditor.bezierPreset.easeOut',
+    points: { x1: 0.215, y1: 0.61, x2: 0.355, y2: 1 },
+  },
+  {
+    value: 'ease-in',
+    labelKey: 'timeline.keyframeEditor.bezierPreset.easeIn',
+    points: { x1: 0.55, y1: 0.055, x2: 0.675, y2: 0.19 },
+  },
   {
     value: 'ease-in-out',
-    label: 'Ease In-Out',
+    labelKey: 'timeline.keyframeEditor.bezierPreset.easeInOut',
     points: { x1: 0.645, y1: 0.045, x2: 0.355, y2: 1 },
   },
-  { value: 'overshoot', label: 'Overshoot', points: { x1: 0.34, y1: 1.56, x2: 0.64, y2: 1 } },
+  {
+    value: 'overshoot',
+    labelKey: 'timeline.keyframeEditor.bezierPreset.overshoot',
+    points: { x1: 0.34, y1: 1.56, x2: 0.64, y2: 1 },
+  },
 ] as const
 const BEZIER_INPUT_KEYS = ['x1', 'y1', 'x2', 'y2'] as const
 const SPRING_INPUT_KEYS = ['tension', 'friction', 'mass'] as const
@@ -279,6 +296,7 @@ function AdvancedEasingControls({
   applyBezier,
   applySpring,
 }: AdvancedEasingControlsProps) {
+  const { t } = useTranslation()
   const [bezierDraft, setBezierDraft] = useState<Record<BezierInputKey, string>>(() =>
     selectedBezierPoints
       ? toBezierDraft(selectedBezierPoints)
@@ -381,19 +399,19 @@ function AdvancedEasingControls({
     >
       {selectedBezierPoints && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-medium text-foreground">Bezier</span>
+          <span className="font-medium text-foreground">{t('timeline.keyframeEditor.bezier')}</span>
           <Select value={selectedBezierPreset} onValueChange={handleBezierPresetChange}>
             <SelectTrigger className="h-7 w-[130px] text-xs focus:ring-0 focus:ring-offset-0">
-              <SelectValue placeholder="Preset" />
+              <SelectValue placeholder={t('timeline.keyframeEditor.preset')} />
             </SelectTrigger>
             <SelectContent>
               {BEZIER_PRESETS.map((preset) => (
                 <SelectItem key={preset.value} value={preset.value} className="text-xs">
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </SelectItem>
               ))}
               <SelectItem value="custom" className="text-xs">
-                Custom
+                {t('timeline.keyframeEditor.custom')}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -416,18 +434,18 @@ function AdvancedEasingControls({
             className="h-7 px-2 text-[11px]"
             onClick={() => handleBezierPresetChange('soft')}
           >
-            Reset
+            {t('common.reset')}
           </Button>
           <span className="text-[11px] text-muted-foreground">
             {hasMixedBezierConfig
-              ? 'Mixed curves selected'
-              : 'Drag graph handles for custom curves'}
+              ? t('timeline.keyframeEditor.mixedCurves')
+              : t('timeline.keyframeEditor.dragHandlesHint')}
           </span>
         </div>
       )}
       {selectedSpringParameters && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-medium text-foreground">Spring</span>
+          <span className="font-medium text-foreground">{t('timeline.keyframeEditor.spring')}</span>
           {SPRING_INPUT_KEYS.map((key) => (
             <label key={key} className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <span className="capitalize">{key}</span>
@@ -450,12 +468,12 @@ function AdvancedEasingControls({
               applySpring({ ...DEFAULT_SPRING_PARAMS })
             }}
           >
-            Reset
+            {t('common.reset')}
           </Button>
           <span className="text-[11px] text-muted-foreground">
             {hasMixedSpringConfig
-              ? 'Mixed spring settings selected'
-              : 'Lower friction increases bounce'}
+              ? t('timeline.keyframeEditor.mixedSpring')
+              : t('timeline.keyframeEditor.springHint')}
           </span>
         </div>
       )}
@@ -473,6 +491,11 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
   onClose,
   placement = 'bottom',
 }: KeyframeGraphPanelProps) {
+  const { t } = useTranslation()
+  const easingOptions = useMemo(
+    () => EASING_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) })),
+    [t],
+  )
   const hotkeys = useResolvedHotkeys()
   // Ref to measure container width
   const containerRef = useRef<HTMLDivElement>(null)
@@ -1084,32 +1107,29 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
       })
     })
 
-    if (isKeyframeClipboardCut && (skippedUnsupported > 0 || skippedBlocked > 0)) {
+    const buildSkipReasons = (): string[] => {
       const reasons: string[] = []
       if (skippedUnsupported > 0) {
-        reasons.push(`${skippedUnsupported} unsupported by the selected clip`)
+        reasons.push(t('timeline.keyframeEditor.reasonUnsupported', { count: skippedUnsupported }))
       }
       if (skippedBlocked > 0) {
-        reasons.push(`${skippedBlocked} blocked by transition regions`)
+        reasons.push(t('timeline.keyframeEditor.reasonBlocked', { count: skippedBlocked }))
       }
+      return reasons
+    }
 
-      toast.warning('Unable to paste cut keyframes here', {
-        description: `${reasons.join('. ')}. The cut keyframes stay in the clipboard.`,
+    if (isKeyframeClipboardCut && (skippedUnsupported > 0 || skippedBlocked > 0)) {
+      toast.warning(t('timeline.keyframeEditor.unableToPasteCut'), {
+        description: t('timeline.keyframeEditor.unableToPasteCutDescription', {
+          reasons: buildSkipReasons().join('. '),
+        }),
       })
       return
     }
 
     if (payloads.length === 0) {
-      const reasons: string[] = []
-      if (skippedUnsupported > 0) {
-        reasons.push(`${skippedUnsupported} unsupported by the selected clip`)
-      }
-      if (skippedBlocked > 0) {
-        reasons.push(`${skippedBlocked} blocked by transition regions`)
-      }
-
-      toast.warning('No keyframes pasted', {
-        description: reasons.join('. '),
+      toast.warning(t('timeline.keyframeEditor.noKeyframesPasted'), {
+        description: buildSkipReasons().join('. '),
       })
       return
     }
@@ -1133,25 +1153,21 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
 
     const pastedCount = insertedRefs.length
     const skippedCount = skippedUnsupported + skippedBlocked
-    const actionLabel = isKeyframeClipboardCut ? 'Moved' : 'Pasted'
-    const keyframeLabel = `${pastedCount} keyframe${pastedCount === 1 ? '' : 's'}`
+    const summaryText = isKeyframeClipboardCut
+      ? t('timeline.keyframeEditor.movedKeyframes', { count: pastedCount })
+      : t('timeline.keyframeEditor.pastedKeyframes', { count: pastedCount })
 
     if (skippedCount > 0) {
-      const reasons: string[] = []
-      if (skippedUnsupported > 0) {
-        reasons.push(`${skippedUnsupported} unsupported by the selected clip`)
-      }
-      if (skippedBlocked > 0) {
-        reasons.push(`${skippedBlocked} blocked by transition regions`)
-      }
-
-      toast.warning(`${actionLabel} ${keyframeLabel}`, {
-        description: `${skippedCount} skipped. ${reasons.join('. ')}`,
+      toast.warning(summaryText, {
+        description: t('timeline.keyframeEditor.skippedDescription', {
+          count: skippedCount,
+          reasons: buildSkipReasons().join('. '),
+        }),
       })
       return
     }
 
-    toast.success(`${actionLabel} ${keyframeLabel}`)
+    toast.success(summaryText)
   }, [
     availableProperties,
     clearKeyframeClipboard,
@@ -1162,6 +1178,7 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
     selectKeyframes,
     selectedItemForEditor,
     transitionBlockedRanges,
+    t,
   ])
 
   useHotkeys(
@@ -1481,7 +1498,7 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
       <div className="h-8 flex items-center justify-between px-3 bg-secondary/30 border-b border-border">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">
-            Keyframe Editor
+            {t('timeline.keyframeEditor.title')}
             {selectedItemForEditor && (
               <span className="ml-2 text-foreground">
                 - {selectedItemForEditor.label || selectedItemForEditor.type}
@@ -1503,7 +1520,7 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
               setEditorMode('graph')
             }}
           >
-            Graph
+            {t('timeline.keyframeEditor.graph')}
           </Button>
           <Button
             variant={editorMode === 'dopesheet' ? 'secondary' : 'ghost'}
@@ -1514,7 +1531,7 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
               setEditorMode('dopesheet')
             }}
           >
-            Sheet
+            {t('timeline.keyframeEditor.sheet')}
           </Button>
           <Button
             variant="ghost"
@@ -1580,7 +1597,7 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
                 hasKeyframeClipboard={Boolean(keyframeClipboard?.keyframes.length)}
                 isKeyframeClipboardCut={isKeyframeClipboardCut}
                 selectedInterpolation={selectedEditorEasing}
-                interpolationOptions={EASING_OPTIONS}
+                interpolationOptions={easingOptions}
                 onInterpolationChange={handleSelectedKeyframeEasingChange}
                 interpolationDisabled={selectedEditorKeyframes.length === 0}
                 onNavigateToKeyframe={handleNavigateToKeyframe}
@@ -1590,7 +1607,9 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
             </ErrorBoundary>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              {selectedItemForEditor ? 'Loading...' : 'Select an item to view the editor'}
+              {selectedItemForEditor
+                ? t('common.loading')
+                : t('timeline.keyframeEditor.selectItem')}
             </div>
           )}
         </div>

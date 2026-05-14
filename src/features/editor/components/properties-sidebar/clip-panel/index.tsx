@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useEffect, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Film, Image, Shapes, Sparkles, Type, Volume2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -67,6 +68,7 @@ function computeItemTypeInfo(items: TimelineItem[]) {
  * Memoized to prevent re-renders when props haven't changed.
  */
 export const ClipPanel = memo(function ClipPanel() {
+  const { t } = useTranslation()
   // Granular selectors with explicit types
   const clipInspectorTab = useEditorStore((s) => s.clipInspectorTab)
   const setClipInspectorTab = useEditorStore((s) => s.setClipInspectorTab)
@@ -254,35 +256,35 @@ export const ClipPanel = memo(function ClipPanel() {
         <TabsList className={`grid w-full ${tabGridCols} h-8`}>
           <TabsTrigger value="video" disabled={!showVideoTab} className="text-xs gap-1 px-1.5">
             <Film className="h-3 w-3 shrink-0" />
-            Video
+            {t('editor.clipPanel.tabVideo')}
           </TabsTrigger>
           {showAudioTab && (
             <TabsTrigger value="audio" className="text-xs gap-1 px-1.5">
               <Volume2 className="h-3 w-3 shrink-0" />
-              Audio
+              {t('editor.clipPanel.tabAudio')}
             </TabsTrigger>
           )}
           {showTextTab && (
             <TabsTrigger value="text" className="text-xs gap-1 px-1.5">
               <Type className="h-3 w-3 shrink-0" />
-              Text
+              {t('editor.clipPanel.tabText')}
             </TabsTrigger>
           )}
           {showShapeTab && (
             <TabsTrigger value="shape" className="text-xs gap-1 px-1.5">
               <Shapes className="h-3 w-3 shrink-0" />
-              Shape
+              {t('editor.clipPanel.tabShape')}
             </TabsTrigger>
           )}
           {showImageTab && (
             <TabsTrigger value="image" className="text-xs gap-1 px-1.5">
               <Image className="h-3 w-3 shrink-0" />
-              Image
+              {t('editor.clipPanel.tabImage')}
             </TabsTrigger>
           )}
           <TabsTrigger value="effects" disabled={!showEffectsTab} className="text-xs gap-1 px-1.5">
             <Sparkles className="h-3 w-3 shrink-0" />
-            Effects
+            {t('editor.clipPanel.tabEffects')}
           </TabsTrigger>
         </TabsList>
 
@@ -354,7 +356,7 @@ export const ClipPanel = memo(function ClipPanel() {
               {/* Explanatory text for adjustment layers */}
               {hasAdjustmentItems && (
                 <div className="px-2 py-2 text-xs text-muted-foreground bg-purple-500/10 rounded border border-purple-500/20">
-                  Effects on adjustment layers apply to all items on tracks above.
+                  {t('editor.clipPanel.adjustmentLayerHint')}
                 </div>
               )}
               <EffectsSection items={visualItems} />

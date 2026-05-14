@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Layers, RotateCw, Sparkles, Trash2, ChevronRight } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
@@ -42,6 +43,7 @@ import { compoundClipThumbnailService } from '../services/compound-clip-thumbnai
  * Hidden when no compositions exist.
  */
 export function CompositionsSection() {
+  const { t } = useTranslation()
   const compositions = useCompositionsStore((s) => s.compositions)
   const compositionById = useCompositionsStore((s) => s.compositionById)
   const enterComposition = useCompositionNavigationStore((s) => s.enterComposition)
@@ -206,7 +208,7 @@ export function CompositionsSection() {
           />
           <Layers className="w-3 h-3 text-violet-400" />
           <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-            Compound Clips
+            {t('media.compositions.sectionTitle')}
           </span>
           <span className="text-[10px] tabular-nums text-muted-foreground/60">
             {compositions.length}
@@ -266,22 +268,19 @@ export function CompositionsSection() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete compound clip?</AlertDialogTitle>
+            <AlertDialogTitle>{t('media.compositions.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <p>
-                  Are you sure you want to delete &ldquo;{deleteTarget?.name}&rdquo;? This action
-                  cannot be undone.
-                </p>
+                <p>{t('media.compositions.deleteBody', { name: deleteTarget?.name ?? '' })}</p>
                 {deleteImpact.totalReferenceCount > 0 && (
                   <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
                     <Trash2 className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-yellow-600 dark:text-yellow-400">
-                      <p className="font-medium">All remaining instances will be removed</p>
+                      <p className="font-medium">{t('media.compositions.deleteInstancesTitle')}</p>
                       <p className="text-xs mt-1 text-yellow-600/80 dark:text-yellow-400/80">
-                        {deleteImpact.totalReferenceCount} compound clip instance
-                        {deleteImpact.totalReferenceCount > 1 ? 's' : ''} across the timeline and
-                        nested compound clips will also be deleted.
+                        {t('media.compositions.deleteInstancesDetail', {
+                          count: deleteImpact.totalReferenceCount,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -290,12 +289,12 @@ export function CompositionsSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -341,6 +340,7 @@ const CompositionCard = memo(function CompositionCard({
   onCommitRename,
   onCancelRename,
 }: CompositionCardProps) {
+  const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   const thumbnailContainerRef = useRef<HTMLDivElement | null>(null)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
@@ -562,20 +562,22 @@ const CompositionCard = memo(function CompositionCard({
         </ContextMenuTrigger>
 
         <ContextMenuContent>
-          <ContextMenuItem onClick={onEnter}>Enter Compound Clip</ContextMenuItem>
+          <ContextMenuItem onClick={onEnter}>{t('media.compositions.enter')}</ContextMenuItem>
           <ContextMenuItem onClick={onAddCover}>
             <Sparkles className="mr-2 h-3 w-3" />
-            Add Cover…
+            {t('media.compositions.addCover')}
           </ContextMenuItem>
           {composition.spoilerMetadata && (
             <ContextMenuItem onClick={onRegenerateNarration}>
               <RotateCw className="mr-2 h-3 w-3" />
-              Regenerate Narration…
+              {t('media.compositions.regenerateNarration')}
             </ContextMenuItem>
           )}
-          <ContextMenuItem onClick={onStartRename}>Rename</ContextMenuItem>
+          <ContextMenuItem onClick={onStartRename}>
+            {t('media.compositions.rename')}
+          </ContextMenuItem>
           <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-            Delete
+            {t('common.delete')}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -647,7 +649,7 @@ const CompositionCard = memo(function CompositionCard({
                 <Layers className="w-2.5 h-2.5" />
               </div>
               <span className="text-[10px] text-muted-foreground">
-                {durationLabel} &middot; {itemCount} item{itemCount !== 1 ? 's' : ''}
+                {durationLabel} &middot; {t('media.compositions.itemCount', { count: itemCount })}
               </span>
             </div>
           </div>

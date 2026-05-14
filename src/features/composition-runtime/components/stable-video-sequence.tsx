@@ -29,17 +29,20 @@ import {
   groupStableVideoItems,
   type StableVideoGroup,
 } from '../utils/video-scene'
-import { collectTransitionParticipantClipIds } from '../utils/transition-scene'
+import {
+  buildTransitionShadowItems,
+  collectTransitionParticipantClipIds,
+  resolveSameOriginTransitionActiveIndex,
+  resolveTransitionParticipantIndexKey,
+  resolveTransitionParticipantItems,
+} from '../utils/transition-scene'
 import { buildTransitionShadowWarmupRequests } from '../utils/transition-shadow-warmup'
 import { createLogger } from '@/shared/logging/logger'
 import { useMediaLibraryStore } from '@/features/composition-runtime/deps/stores'
-import {
-  appendResolvedAudioEqSources,
-  areAudioEqStagesEqual,
-  getAudioEqSettings,
-} from '@/shared/utils/audio-eq'
+import { appendResolvedAudioEqSources, getAudioEqSettings } from '@/shared/utils/audio-eq'
 import { resolveReverseConformedVideoItem } from '@/shared/utils/reverse-conform-item'
 import { useNestedMediaResolutionMode } from '../contexts/nested-media-resolution-context'
+import { areGroupPropsEqual } from './stable-video-sequence-comparator'
 
 const warmupLog = createLogger('StableVideoWarmup')
 const SAME_ORIGIN_SHADOW_MOUNT_LOOKAHEAD_FRAMES = 8
@@ -78,98 +81,6 @@ interface StableVideoSequenceProps {
  * 2. Memoizes the RENDERED OUTPUT so renderItem isn't called every frame
  * This prevents re-renders of canvas-based effects like halftone on every frame.
  */
-/**
- * Custom comparison for GroupRenderer to ensure re-render when item properties change.
- * Default React.memo shallow comparison only checks reference equality, which may miss
- * cases where group.items contains items with changed properties (like speed after rate stretch).
- */
-function areGroupPropsEqual(
-  prevProps: {
-    group: StableVideoGroup<StableVideoSequenceItem>
-    renderItem: (item: StableVideoSequenceItem) => React.ReactNode
-    transitionWindows?: ResolvedTransitionWindow<TimelineItem>[]
-  },
-  nextProps: {
-    group: StableVideoGroup<StableVideoSequenceItem>
-    renderItem: (item: StableVideoSequenceItem) => React.ReactNode
-    transitionWindows?: ResolvedTransitionWindow<TimelineItem>[]
-  },
-): boolean {
-  // Quick reference check first
-  if (
-    prevProps.group === nextProps.group &&
-    prevProps.renderItem === nextProps.renderItem &&
-    prevProps.transitionWindows === nextProps.transitionWindows
-  ) {
-    return true
-  }
-
-  // If renderItem changed, need to re-render
-  if (prevProps.renderItem !== nextProps.renderItem) {
-    return false
-  }
-
-  if (prevProps.transitionWindows !== nextProps.transitionWindows) {
-    return false
-  }
-
-  // Check if group structure changed
-  if (
-    prevProps.group.originKey !== nextProps.group.originKey ||
-    prevProps.group.minFrom !== nextProps.group.minFrom ||
-    prevProps.group.maxEnd !== nextProps.group.maxEnd ||
-    prevProps.group.items.length !== nextProps.group.items.length
-  ) {
-    return false
-  }
-
-  // Deep check: compare item properties that affect rendering
-  for (let i = 0; i < prevProps.group.items.length; i++) {
-    const prevItem = prevProps.group.items[i]!
-    const nextItem = nextProps.group.items[i]!
-    if (
-      prevItem.id !== nextItem.id ||
-      prevItem.speed !== nextItem.speed ||
-      prevItem.sourceStart !== nextItem.sourceStart ||
-      prevItem.sourceEnd !== nextItem.sourceEnd ||
-      prevItem.from !== nextItem.from ||
-      prevItem.durationInFrames !== nextItem.durationInFrames ||
-      prevItem.trackVisible !== nextItem.trackVisible ||
-      prevItem.muted !== nextItem.muted ||
-      (prevItem.crop?.left ?? 0) !== (nextItem.crop?.left ?? 0) ||
-      (prevItem.crop?.right ?? 0) !== (nextItem.crop?.right ?? 0) ||
-      (prevItem.crop?.top ?? 0) !== (nextItem.crop?.top ?? 0) ||
-      (prevItem.crop?.bottom ?? 0) !== (nextItem.crop?.bottom ?? 0) ||
-      (prevItem.crop?.softness ?? 0) !== (nextItem.crop?.softness ?? 0) ||
-      prevItem.cornerPin !== nextItem.cornerPin ||
-      prevItem.blendMode !== nextItem.blendMode ||
-      prevItem.src !== nextItem.src ||
-      prevItem.audioSrc !== nextItem.audioSrc ||
-      prevItem.reverseConformSrc !== nextItem.reverseConformSrc ||
-      prevItem.reverseConformPreviewSrc !== nextItem.reverseConformPreviewSrc ||
-      prevItem.reverseConformStatus !== nextItem.reverseConformStatus ||
-      (prevItem.audioPitchSemitones ?? 0) !== (nextItem.audioPitchSemitones ?? 0) ||
-      (prevItem.audioPitchCents ?? 0) !== (nextItem.audioPitchCents ?? 0) ||
-      !areAudioEqStagesEqual(
-        appendResolvedAudioEqSources(
-          undefined,
-          prevItem.trackAudioEq,
-          getAudioEqSettings(prevItem),
-        ),
-        appendResolvedAudioEqSources(
-          undefined,
-          nextItem.trackAudioEq,
-          getAudioEqSettings(nextItem),
-        ),
-      )
-    ) {
-      return false
-    }
-  }
-
-  return true
-}
-
 const SHADOW_STYLE: React.CSSProperties = {
   position: 'absolute',
   top: 0,
@@ -266,19 +177,16 @@ const GroupRenderer: React.FC<{
   // seek to a different source position and the shadow to remount — both
   // stalling frame delivery for 200-500ms. Keep the LEFT clip as active
   // throughout the transition so pool lanes and shadows stay stable.
-  const activeItemIndex = useMemo(() => {
-    if (rawActiveItemIndex < 0 || group.items.length <= 1) return rawActiveItemIndex
-    for (const tw of transitionWindows) {
-      if (globalFrame >= tw.startFrame && globalFrame < tw.endFrame) {
-        const leftIdx = group.items.findIndex((i) => i.id === tw.leftClip.id)
-        const rightIdx = group.items.findIndex((i) => i.id === tw.rightClip.id)
-        if (leftIdx >= 0 && rightIdx >= 0 && rawActiveItemIndex === rightIdx) {
-          return leftIdx
-        }
-      }
-    }
-    return rawActiveItemIndex
-  }, [rawActiveItemIndex, globalFrame, group.items, transitionWindows])
+  const activeItemIndex = useMemo(
+    () =>
+      resolveSameOriginTransitionActiveIndex({
+        rawActiveItemIndex,
+        items: group.items,
+        transitionWindows,
+        frame: globalFrame,
+      }),
+    [rawActiveItemIndex, globalFrame, group.items, transitionWindows],
+  )
 
   const activeItem = activeItemIndex >= 0 ? group.items[activeItemIndex] : null
 
@@ -292,11 +200,11 @@ const GroupRenderer: React.FC<{
       frame: globalFrame,
       lookaheadFrames: Math.round(fps * TRANSITION_WARMUP_LOOKAHEAD_SECONDS),
     })
-    return group.items
-      .map((item, index) => ({ item, index }))
-      .filter(({ item, index }) => index !== activeItemIndex && transitionClipIds.has(item.id))
-      .map(({ index }) => index)
-      .join(',')
+    return resolveTransitionParticipantIndexKey({
+      items: group.items,
+      activeItemIndex,
+      transitionClipIds,
+    })
   }, [activeItemIndex, fps, globalFrame, group.items, isPremounted, transitionWindows])
 
   // Mount hidden transition shadows only a few frames before the overlap.
@@ -311,11 +219,11 @@ const GroupRenderer: React.FC<{
       lookaheadFrames: shadowMountLookaheadFrames,
       lookbehindFrames: SHADOW_UNMOUNT_COOLDOWN_FRAMES,
     })
-    return group.items
-      .map((item, index) => ({ item, index }))
-      .filter(({ item, index }) => index !== activeItemIndex && transitionClipIds.has(item.id))
-      .map(({ index }) => index)
-      .join(',')
+    return resolveTransitionParticipantIndexKey({
+      items: group.items,
+      activeItemIndex,
+      transitionClipIds,
+    })
   }, [isPremounted, activeItemIndex, group.items, transitionWindows, globalFrame])
 
   // Build adjusted shadow items — only recalculated when overlap composition changes.
@@ -331,28 +239,22 @@ const GroupRenderer: React.FC<{
     [globalFrame, transitionWindows],
   )
 
-  const warmupShadows = useMemo(() => {
-    if (!transitionWarmupClipIds) return []
-    const indices = transitionWarmupClipIds.split(',').map(Number)
-    return indices.map((idx) => group.items[idx]!)
-  }, [group.items, transitionWarmupClipIds])
+  const warmupShadows = useMemo(
+    () =>
+      resolveTransitionParticipantItems({ items: group.items, indexKey: transitionWarmupClipIds }),
+    [group.items, transitionWarmupClipIds],
+  )
 
-  const adjustedShadows = useMemo(() => {
-    if (!overlapKey) return []
-    const indices = overlapKey.split(',').map(Number)
-    return indices.map((idx) => {
-      const item = group.items[idx]!
-      return {
-        ...item,
-        _sequenceFrameOffset: item.from - group.minFrom,
-        // Separate pool ID so shadow gets its own video element (not shared with primary)
-        _poolClipId: `shadow-${item.id}`,
-        _sharedTransitionSync: activeTransitionClipIds.has(item.id),
-      }
-    })
-    // overlapKey is a string — React compares by value, so this only re-runs
-    // when the set of overlapping items actually changes (transition boundaries)
-  }, [activeTransitionClipIds, group.items, group.minFrom, overlapKey])
+  const adjustedShadows = useMemo(
+    () =>
+      buildTransitionShadowItems({
+        items: group.items,
+        indexKey: overlapKey,
+        groupMinFrom: group.minFrom,
+        activeTransitionClipIds,
+      }),
+    [activeTransitionClipIds, group.items, group.minFrom, overlapKey],
+  )
 
   // Memoize the adjusted item based on active item identity.
   // Only recalculates when crossing split boundaries or when item/group properties change.

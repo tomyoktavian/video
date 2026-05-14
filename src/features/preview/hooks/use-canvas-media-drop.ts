@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { i18n } from '@/i18n'
 import { useSelectionStore } from '@/shared/state/selection'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useTimelineStore } from '@/features/preview/deps/timeline-store'
@@ -117,14 +118,15 @@ function clampDropPosition(
 }
 
 function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null {
+  const t = i18n.t.bind(i18n)
   const dragData = getMediaDragData()
   if (dragData) {
     if (dragData.type === 'composition') {
       return {
         allowed: false,
         source: 'library',
-        title: 'Drop On Timeline',
-        description: 'Compound clips still place best on the timeline.',
+        title: t('preview.canvasDrop.dropOnTimeline'),
+        description: t('preview.canvasDrop.compoundClipsTimeline'),
       }
     }
 
@@ -132,8 +134,8 @@ function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null 
       return {
         allowed: false,
         source: 'library',
-        title: 'Drop On Timeline',
-        description: 'Text and shape presets still place best on the timeline.',
+        title: t('preview.canvasDrop.dropOnTimeline'),
+        description: t('preview.canvasDrop.presetsTimeline'),
       }
     }
 
@@ -143,8 +145,8 @@ function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null 
         return {
           allowed: false,
           source: 'library',
-          title: 'Drop One Item',
-          description: 'Place one media item at a time on the canvas.',
+          title: t('preview.canvasDrop.dropOneItem'),
+          description: t('preview.canvasDrop.oneMediaAtATime'),
         }
       }
 
@@ -153,8 +155,8 @@ function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null 
         return {
           allowed: false,
           source: 'library',
-          title: 'Audio Goes On Timeline',
-          description: 'Canvas drop places visual layers only.',
+          title: t('preview.canvasDrop.audioGoesOnTimeline'),
+          description: t('preview.canvasDrop.visualLayersOnly'),
         }
       }
     }
@@ -163,16 +165,16 @@ function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null 
       return {
         allowed: false,
         source: 'library',
-        title: 'Audio Goes On Timeline',
-        description: 'Canvas drop places visual layers only.',
+        title: t('preview.canvasDrop.audioGoesOnTimeline'),
+        description: t('preview.canvasDrop.visualLayersOnly'),
       }
     }
 
     return {
       allowed: true,
       source: 'library',
-      title: 'Drop To Place',
-      description: 'Add this media at the playhead and drop position.',
+      title: t('preview.canvasDrop.dropToPlace'),
+      description: t('preview.canvasDrop.addAtPlayhead'),
     }
   }
 
@@ -185,16 +187,16 @@ function evaluateCanvasDrop(dataTransfer: DataTransfer): CanvasDropState | null 
     return {
       allowed: false,
       source: 'external-file',
-      title: 'Drop One File',
-      description: 'Canvas drop imports one visual file at a time.',
+      title: t('preview.canvasDrop.dropOneFile'),
+      description: t('preview.canvasDrop.oneVisualFileAtATime'),
     }
   }
 
   return {
     allowed: true,
     source: 'external-file',
-    title: 'Import And Place',
-    description: 'Import this file and place it on the canvas.',
+    title: t('preview.canvasDrop.importAndPlace'),
+    description: t('preview.canvasDrop.importAndPlaceDescription'),
   }
 }
 
@@ -236,13 +238,13 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
       })
 
       if (!placement) {
-        toast.warning('No unlocked compatible track is available for this drop.')
+        toast.warning(i18n.t('preview.canvasDrop.noCompatibleTrack'))
         return
       }
 
       const blobUrl = await resolveMediaUrl(media.id)
       if (!blobUrl) {
-        toast.error('Unable to load dropped media.')
+        toast.error(i18n.t('preview.canvasDrop.unableToLoadMedia'))
         return
       }
 
@@ -302,7 +304,7 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
         dragData.fileName
       ) {
         if (!isVisualMediaType(dragData.mediaType)) {
-          toast.warning('Canvas drop places visual layers only.')
+          toast.warning(i18n.t('preview.canvasDrop.visualLayersOnly'))
           return
         }
         mediaId = dragData.mediaId
@@ -311,7 +313,7 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
       } else if (dragData.type === 'media-items' && dragData.items?.length === 1) {
         const item = dragData.items[0]
         if (!item || !isVisualMediaType(item.mediaType)) {
-          toast.warning('Canvas drop places visual layers only.')
+          toast.warning(i18n.t('preview.canvasDrop.visualLayersOnly'))
           return
         }
         mediaId = item.mediaId
@@ -327,7 +329,7 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
         useMediaLibraryStore.getState().mediaById[mediaId] ??
         useMediaLibraryStore.getState().mediaItems.find((item) => item.id === mediaId)
       if (!media) {
-        toast.error('Dropped media is no longer available.')
+        toast.error(i18n.t('preview.canvasDrop.mediaNoLongerAvailable'))
         return
       }
 
@@ -353,12 +355,12 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
         event.dataTransfer,
       )
       if (!supported) {
-        toast.warning('Drag-drop not supported in this browser. Use Chrome or Edge.')
+        toast.warning(i18n.t('preview.canvasDrop.dragDropUnsupported'))
         return
       }
 
       if (errors.length > 0) {
-        toast.error(`Some files were rejected: ${errors.join(', ')}`)
+        toast.error(i18n.t('preview.canvasDrop.filesRejected', { errors: errors.join(', ') }))
       }
 
       const entry = entries[0]
@@ -367,7 +369,7 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
       }
 
       if (!isVisualMediaType(entry.mediaType)) {
-        toast.warning('Drop audio on the timeline instead.')
+        toast.warning(i18n.t('preview.canvasDrop.dropAudioOnTimeline'))
         return
       }
 
@@ -392,14 +394,14 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
           })
 
           if (metadata.type !== 'video') {
-            toast.error('Unable to inspect dropped video.')
+            toast.error(i18n.t('preview.canvasDrop.unableToInspectVideo'))
             return
           }
 
           preInspectedMetadata = metadata
         } catch (error) {
-          toast.error('Unable to inspect dropped file.', {
-            description: error instanceof Error ? error.message : 'Please try again.',
+          toast.error(i18n.t('preview.canvasDrop.unableToInspectFile'), {
+            description: error instanceof Error ? error.message : i18n.t('projects.tryAgain'),
           })
           return
         }
@@ -410,13 +412,13 @@ export function useCanvasMediaDrop({ coordParams, projectSize }: UseCanvasMediaD
         .importHandlesForPlacement([entry.handle])
       const imported = importedMedia[0]
       if (!imported) {
-        toast.error('Unable to import dropped file.')
+        toast.error(i18n.t('preview.canvasDrop.unableToImportFile'))
         return
       }
 
       const importedType = getMediaType(imported.mimeType)
       if (!isVisualMediaType(importedType)) {
-        toast.warning('Drop audio on the timeline instead.')
+        toast.warning(i18n.t('preview.canvasDrop.dropAudioOnTimeline'))
         return
       }
 

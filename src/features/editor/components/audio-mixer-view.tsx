@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
 import {
   linearLevelToPercent,
@@ -1179,6 +1180,7 @@ export const AudioMixerView = memo(function AudioMixerView({
   headerExtra,
   expanded,
 }: AudioMixerViewProps) {
+  const { t } = useTranslation()
   const outerClassName = expanded
     ? 'panel-bg flex h-full flex-col overflow-hidden w-fit'
     : 'panel-bg border-l border-border flex h-full flex-col overflow-hidden w-fit'
@@ -1186,7 +1188,7 @@ export const AudioMixerView = memo(function AudioMixerView({
   const allItemIds = useMemo(() => tracks.flatMap((track) => track.itemIds), [tracks])
 
   return (
-    <aside className={outerClassName} aria-label="Audio mixer">
+    <aside className={outerClassName} aria-label={t('editor.audioMeters.audioMixer')}>
       {/* Header — only shown when docked (floating panel has its own title bar) */}
       {!expanded && (
         <div
@@ -1194,7 +1196,7 @@ export const AudioMixerView = memo(function AudioMixerView({
           style={{ height: EDITOR_LAYOUT_CSS_VALUES.timelineTracksHeaderHeight }}
         >
           <span className="min-w-0 text-xs text-muted-foreground font-mono uppercase tracking-[0.18em]">
-            Mixer
+            {t('editor.audioMeters.mixer')}
           </span>
           {headerExtra ?? (
             <span

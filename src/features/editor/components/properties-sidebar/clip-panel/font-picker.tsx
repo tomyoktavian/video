@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Loader2, Search, Type } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,16 +17,12 @@ interface FontPickerProps {
   onValueChange: (fontFamily: string) => void
 }
 
-const DEFAULT_PREVIEW_TEXT = 'The quick brown fox jumps over the lazy dog'
 const PREVIEW_PREFETCH_LIMIT = 4
 const PREVIEW_PREFETCH_DEBOUNCE_MS = 120
 
-export function FontPicker({
-  value,
-  placeholder = 'Select font',
-  previewText,
-  onValueChange,
-}: FontPickerProps) {
+export function FontPicker({ value, placeholder, previewText, onValueChange }: FontPickerProps) {
+  const { t } = useTranslation()
+  const resolvedPlaceholder = placeholder ?? t('editor.fontPicker.selectFont')
   const rootRef = useRef<HTMLDivElement | null>(null)
   const fontOptionRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const [open, setOpen] = useState(false)
@@ -88,9 +85,9 @@ export function FontPicker({
   }, [fonts, searchQuery])
 
   const normalizedPreviewText = useMemo(() => {
-    const source = previewText?.trim() ? previewText : DEFAULT_PREVIEW_TEXT
+    const source = previewText?.trim() ? previewText : t('editor.fontPicker.previewPangram')
     return source.replace(/\s+/g, ' ').slice(0, 72)
-  }, [previewText])
+  }, [previewText, t])
 
   const activePreviewFont = useMemo(() => {
     const activeValue = hoveredFontValue ?? value ?? filteredFonts[0]?.value
@@ -230,7 +227,7 @@ export function FontPicker({
     [closePicker, filteredFonts, focusFontByIndex, handleSelect],
   )
 
-  const triggerLabel = value ?? placeholder
+  const triggerLabel = value ?? resolvedPlaceholder
 
   return (
     <div ref={rootRef} className="w-full">
@@ -258,7 +255,7 @@ export function FontPicker({
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search fonts..."
+              placeholder={t('editor.fontPicker.searchFonts')}
               className="h-8 pl-9 text-xs"
               autoFocus
             />
@@ -266,7 +263,7 @@ export function FontPicker({
 
           <div className="rounded-md border bg-muted/20 p-3">
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-              {activePreviewFont?.label ?? 'Live Preview'}
+              {activePreviewFont?.label ?? t('editor.fontPicker.livePreview')}
             </p>
             <p
               className="mt-1 truncate text-lg"
@@ -281,14 +278,14 @@ export function FontPicker({
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>All Fonts</span>
+            <span>{t('editor.fontPicker.allFonts')}</span>
             <span>{filteredFonts.length}</span>
           </div>
 
           <div
             className="max-h-52 space-y-1 overflow-y-auto pr-1 [scrollbar-gutter:stable]"
             role="listbox"
-            aria-label="Font options"
+            aria-label={t('editor.fontPicker.fontOptions')}
           >
             {isLoading ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -296,7 +293,7 @@ export function FontPicker({
               </div>
             ) : filteredFonts.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                No fonts match your search.
+                {t('editor.fontPicker.noMatch')}
               </div>
             ) : (
               filteredFonts.map((font) => {
