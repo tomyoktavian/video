@@ -9,7 +9,11 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { useSettingsStore } from '@/features/editor/deps/settings'
-import { EDITOR_DENSITY_OPTIONS } from '@/app/editor-layout'
+import { EDITOR_DENSITY_PRESETS, type EditorDensityPresetName } from '@/app/editor-layout'
+
+const EDITOR_DENSITY_OPTIONS: ReadonlyArray<{ value: EditorDensityPresetName; label: string }> = (
+  Object.keys(EDITOR_DENSITY_PRESETS) as EditorDensityPresetName[]
+).map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))
 
 export function GeneralSection() {
   const editorDensity = useSettingsStore((s) => s.editorDensity)

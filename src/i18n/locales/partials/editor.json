@@ -140,6 +140,9 @@
       "clipPanel": {
         "tabVideo": "Video",
         "tabAudio": "Audio",
+        "tabText": "Text",
+        "tabShape": "Shape",
+        "tabImage": "Image",
         "tabEffects": "Effects",
         "adjustmentLayerHint": "Effects on adjustment layers apply to all items on tracks above."
       },
@@ -230,7 +233,13 @@
         "maskTypeAlpha": "Alpha (Soft edges)",
         "feather": "Feather",
         "resetFeather": "Reset to 10px",
-        "invert": "Invert"
+        "invert": "Invert",
+        "effects": "Effects",
+        "effectsHint": "Use the Effects tab for GPU shader effects (blur, color grade, etc.)",
+        "animation": "Animation",
+        "intro": "Intro",
+        "outro": "Outro",
+        "animationHint": "Applies short ease-out motion at the start or end of each selected clip."
       },
       "subtitleSection": {
         "title": "Subtitle",
@@ -466,6 +475,9 @@
       "clipPanel": {
         "tabVideo": "Vídeo",
         "tabAudio": "Audio",
+        "tabText": "Texto",
+        "tabShape": "Forma",
+        "tabImage": "Imagen",
         "tabEffects": "Efectos",
         "adjustmentLayerHint": "Los efectos en capas de ajuste se aplican a todos los elementos de las pistas superiores."
       },
@@ -556,7 +568,13 @@
         "maskTypeAlpha": "Alfa (bordes suaves)",
         "feather": "Difuminado",
         "resetFeather": "Restablecer a 10px",
-        "invert": "Invertir"
+        "invert": "Invertir",
+        "effects": "Efectos",
+        "effectsHint": "Usa la pestaña Efectos para los efectos de shader GPU (desenfoque, gradación de color, etc.)",
+        "animation": "Animación",
+        "intro": "Intro",
+        "outro": "Outro",
+        "animationHint": "Aplica un breve movimiento ease-out al inicio o al final de cada clip seleccionado."
       },
       "subtitleSection": {
         "title": "Subtítulo",
@@ -792,6 +810,9 @@
       "clipPanel": {
         "tabVideo": "Vidéo",
         "tabAudio": "Audio",
+        "tabText": "Texte",
+        "tabShape": "Forme",
+        "tabImage": "Image",
         "tabEffects": "Effets",
         "adjustmentLayerHint": "Les effets sur les calques de réglage s'appliquent à tous les éléments des pistes situées au-dessus."
       },
@@ -882,7 +903,13 @@
         "maskTypeAlpha": "Alpha (bords doux)",
         "feather": "Contour progressif",
         "resetFeather": "Réinitialiser à 10px",
-        "invert": "Inverser"
+        "invert": "Inverser",
+        "effects": "Effets",
+        "effectsHint": "Utilisez l'onglet Effets pour les effets shader GPU (flou, étalonnage colorimétrique, etc.)",
+        "animation": "Animation",
+        "intro": "Intro",
+        "outro": "Outro",
+        "animationHint": "Applique un léger mouvement ease-out au début ou à la fin de chaque clip sélectionné."
       },
       "subtitleSection": {
         "title": "Sous-titre",
@@ -1118,6 +1145,9 @@
       "clipPanel": {
         "tabVideo": "Video",
         "tabAudio": "Audio",
+        "tabText": "Text",
+        "tabShape": "Form",
+        "tabImage": "Bild",
         "tabEffects": "Effekte",
         "adjustmentLayerHint": "Effekte auf Einstellungsebenen gelten für alle Elemente auf Spuren darüber."
       },
@@ -1208,7 +1238,13 @@
         "maskTypeAlpha": "Alpha (weiche Kanten)",
         "feather": "Weiche Kante",
         "resetFeather": "Auf 10px zurücksetzen",
-        "invert": "Umkehren"
+        "invert": "Umkehren",
+        "effects": "Effekte",
+        "effectsHint": "Verwende den Effekte-Tab für GPU-Shader-Effekte (Unschärfe, Farbkorrektur usw.)",
+        "animation": "Animation",
+        "intro": "Intro",
+        "outro": "Outro",
+        "animationHint": "Wendet eine kurze Ease-Out-Bewegung am Anfang oder Ende jedes ausgewählten Clips an."
       },
       "subtitleSection": {
         "title": "Untertitel",
@@ -1444,6 +1480,9 @@
       "clipPanel": {
         "tabVideo": "Vídeo",
         "tabAudio": "Áudio",
+        "tabText": "Texto",
+        "tabShape": "Forma",
+        "tabImage": "Imagem",
         "tabEffects": "Efeitos",
         "adjustmentLayerHint": "Os efeitos em camadas de ajuste se aplicam a todos os itens das faixas acima."
       },
@@ -1534,7 +1573,13 @@
         "maskTypeAlpha": "Alfa (bordas suaves)",
         "feather": "Difusão",
         "resetFeather": "Redefinir para 10px",
-        "invert": "Inverter"
+        "invert": "Inverter",
+        "effects": "Efeitos",
+        "effectsHint": "Use a aba Efeitos para efeitos de shader GPU (desfoque, gradação de cor, etc.)",
+        "animation": "Animação",
+        "intro": "Intro",
+        "outro": "Outro",
+        "animationHint": "Aplica um breve movimento ease-out no início ou no fim de cada clipe selecionado."
       },
       "subtitleSection": {
         "title": "Legenda",
@@ -1770,6 +1815,9 @@
       "clipPanel": {
         "tabVideo": "ビデオ",
         "tabAudio": "オーディオ",
+        "tabText": "テキスト",
+        "tabShape": "シェイプ",
+        "tabImage": "画像",
         "tabEffects": "エフェクト",
         "adjustmentLayerHint": "調整レイヤーのエフェクトは、上のトラックのすべてのアイテムに適用されます。"
       },
@@ -1860,7 +1908,13 @@
         "maskTypeAlpha": "アルファ（やわらかい端）",
         "feather": "ぼかし",
         "resetFeather": "10pxにリセット",
-        "invert": "反転"
+        "invert": "反転",
+        "effects": "エフェクト",
+        "effectsHint": "GPUシェーダーエフェクト（ブラー、カラーグレードなど）には「エフェクト」タブを使用してください。",
+        "animation": "アニメーション",
+        "intro": "イントロ",
+        "outro": "アウトロ",
+        "animationHint": "選択した各クリップの最初または最後に短いイーズアウトモーションを適用します。"
       },
       "subtitleSection": {
         "title": "字幕",
@@ -2096,6 +2150,9 @@
       "clipPanel": {
         "tabVideo": "비디오",
         "tabAudio": "오디오",
+        "tabText": "텍스트",
+        "tabShape": "도형",
+        "tabImage": "이미지",
         "tabEffects": "효과",
         "adjustmentLayerHint": "조정 레이어의 효과는 위쪽 트랙의 모든 항목에 적용됩니다."
       },
@@ -2186,7 +2243,13 @@
         "maskTypeAlpha": "알파(부드러운 가장자리)",
         "feather": "페더",
         "resetFeather": "10px로 재설정",
-        "invert": "반전"
+        "invert": "반전",
+        "effects": "효과",
+        "effectsHint": "GPU 셰이더 효과(블러, 컬러 그레이딩 등)는 효과 탭을 사용하세요.",
+        "animation": "애니메이션",
+        "intro": "인트로",
+        "outro": "아웃트로",
+        "animationHint": "선택한 각 클립의 시작 또는 끝에 짧은 이즈아웃 모션을 적용합니다."
       },
       "subtitleSection": {
         "title": "자막",
@@ -2422,6 +2485,9 @@
       "clipPanel": {
         "tabVideo": "视频",
         "tabAudio": "音频",
+        "tabText": "文本",
+        "tabShape": "形状",
+        "tabImage": "图像",
         "tabEffects": "效果",
         "adjustmentLayerHint": "调整图层上的效果会应用到上方所有轨道的项目。"
       },
@@ -2512,7 +2578,13 @@
         "maskTypeAlpha": "Alpha（柔边）",
         "feather": "羽化",
         "resetFeather": "重置为 10px",
-        "invert": "反转"
+        "invert": "反转",
+        "effects": "效果",
+        "effectsHint": "请使用效果选项卡来添加 GPU 着色器效果（模糊、调色等）。",
+        "animation": "动画",
+        "intro": "入场",
+        "outro": "出场",
+        "animationHint": "在每个选定剪辑的开始或结束处应用短暂的缓出动画。"
       },
       "subtitleSection": {
         "title": "字幕",
@@ -2748,6 +2820,9 @@
       "clipPanel": {
         "tabVideo": "Video",
         "tabAudio": "Ses",
+        "tabText": "Metin",
+        "tabShape": "Şekil",
+        "tabImage": "Görsel",
         "tabEffects": "Efektler",
         "adjustmentLayerHint": "Ayar katmanlarındaki efektler, üst izlerdeki tüm öğelere uygulanır."
       },
@@ -2838,7 +2913,13 @@
         "maskTypeAlpha": "Alfa (Yumuşak kenarlar)",
         "feather": "Yumuşatma",
         "resetFeather": "10px'e sıfırla",
-        "invert": "Ters çevir"
+        "invert": "Ters çevir",
+        "effects": "Efektler",
+        "effectsHint": "GPU shader efektleri (bulanıklık, renk düzenleme vb.) için Efektler sekmesini kullanın.",
+        "animation": "Animasyon",
+        "intro": "Giriş",
+        "outro": "Çıkış",
+        "animationHint": "Seçili her klibin başında veya sonunda kısa bir ease-out hareketi uygular."
       },
       "subtitleSection": {
         "title": "Altyazı",

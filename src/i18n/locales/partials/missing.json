@@ -337,6 +337,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -1030,6 +1037,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -1723,6 +1737,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -2416,6 +2437,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -3109,6 +3137,13 @@
         "titleScanning": "Escaneando"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Detectar automaticamente",
         "generateTitle": "Gerar titulo",
         "language": "Idioma",
@@ -3802,6 +3837,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -4495,6 +4537,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -5188,6 +5237,13 @@
         "titleScanning": "Title Scanning"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Auto Detect",
         "generateTitle": "Generate Title",
         "language": "Language",
@@ -5881,6 +5937,13 @@
         "titleScanning": "Altyazılar taranıyor"
       },
       "transcribe": {
+        "providerLocal": "Local AI",
+        "providerCustom": "Custom AI",
+        "wordsPerCaption": "Words per caption",
+        "wordsPerCaptionHint": "{{count}} words per text clip. 5+ ≈ traditional caption.",
+        "wordsPerCaptionHintKaraoke": "Karaoke style — one word per text clip, advances with the speaker.",
+        "customUsingModel": "Using model {{model}} via {{baseUrl}}.",
+        "customConfigureHint": "Configure base URL, API key, and model in Settings → AI → Custom AI before running.",
         "autoDetect": "Otomatik algıla",
         "generateTitle": "Transkript oluştur",
         "language": "Dil",
