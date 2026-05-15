@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Sparkles, Square } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -49,6 +50,7 @@ interface SelectedClipSummary {
 }
 
 export function HighlightFinderDialog() {
+  const { t } = useTranslation()
   const isOpen = useHighlightFinderDialogStore((s) => s.isOpen)
   const selectedItemIds = useHighlightFinderDialogStore((s) => s.selectedItemIds)
   const close = useHighlightFinderDialogStore((s) => s.close)
@@ -162,7 +164,7 @@ export function HighlightFinderDialog() {
     if (!canRun) return
     setErrorMessage(null)
     setIsRunning(true)
-    setProgressLabel('Asking the model for highlights…')
+    setProgressLabel(t('highlightFinder.dialog.progressAsking'))
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -181,10 +183,10 @@ export function HighlightFinderDialog() {
       if (prepared.plans.length === 0) {
         const reason =
           prepared.skippedComps > 0
-            ? `${prepared.skippedComps} composition clip${prepared.skippedComps === 1 ? '' : 's'} skipped (not yet supported).`
+            ? `${prepared.skippedComps} ${prepared.skippedComps === 1 ? t('highlightFinder.dialog.compositionClipSkipped') : t('highlightFinder.dialog.compositionClipsSkipped')}`
             : prepared.returnedHighlights === 0
-              ? 'The model returned no highlights. Try a different prompt or check your Custom AI settings.'
-              : `The model returned ${prepared.returnedHighlights} highlight${prepared.returnedHighlights === 1 ? '' : 's'} but none could be mapped to the selected clips. Check the browser console for details.`
+              ? t('highlightFinder.dialog.noHighlightsReturned')
+              : `${t('highlightFinder.dialog.modelReturnedPrefix')} ${prepared.returnedHighlights} ${prepared.returnedHighlights === 1 ? t('highlightFinder.dialog.highlightSuffix') : t('highlightFinder.dialog.highlightsSuffix')} ${t('highlightFinder.dialog.noneMappedSuffix')}`
         setErrorMessage(reason)
         setIsRunning(false)
         return
@@ -219,17 +221,17 @@ export function HighlightFinderDialog() {
             textItems.map((item) => item.id),
           )
           allTextItems.push(...textItems)
-          for (const t of tracksToAdd) {
-            if (!workingTracks.some((wt) => wt.id === t.id)) {
-              allTracksToAdd.push(t)
-              workingTracks.push(t)
+          for (const track of tracksToAdd) {
+            if (!workingTracks.some((wt) => wt.id === track.id)) {
+              allTracksToAdd.push(track)
+              workingTracks.push(track)
             }
           }
           workingItems.push(...textItems)
         }
       }
 
-      const textTrackIds = new Set(allTracksToAdd.map((t) => t.id))
+      const textTrackIds = new Set(allTracksToAdd.map((track) => track.id))
       if (allTracksToAdd.length > 0) {
         useTimelineStore
           .getState()
@@ -239,7 +241,7 @@ export function HighlightFinderDialog() {
         useTimelineStore.getState().addItems(allTextItems)
       }
 
-      setProgressLabel('Splitting clips and creating compound clips…')
+      setProgressLabel(t('highlightFinder.dialog.progressSplitting'))
       const result = applyHighlightPlans(prepared.plans, companionItemIdsByPlanIndex)
 
       if (textTrackIds.size > 0) {
@@ -250,22 +252,28 @@ export function HighlightFinderDialog() {
           .setTracks(
             useTimelineStore
               .getState()
-              .tracks.filter((t) => !textTrackIds.has(t.id) || tracksWithItems.has(t.id)),
+              .tracks.filter(
+                (track) => !textTrackIds.has(track.id) || tracksWithItems.has(track.id),
+              ),
           )
       }
 
       const summaryParts: string[] = []
       summaryParts.push(
-        `Created ${result.compIds.length} highlight${result.compIds.length === 1 ? '' : 's'}.`,
+        `${t('highlightFinder.dialog.createdPrefix')} ${result.compIds.length} ${result.compIds.length === 1 ? t('highlightFinder.dialog.highlightSuffix') : t('highlightFinder.dialog.highlightsSuffix')}.`,
       )
       if (prepared.skippedHighlights > 0) {
-        summaryParts.push(`${prepared.skippedHighlights} skipped (out of bounds or too short).`)
+        summaryParts.push(
+          `${prepared.skippedHighlights} ${t('highlightFinder.dialog.skippedOutOfBounds')}`,
+        )
       }
       if (prepared.skippedComps > 0) {
-        summaryParts.push(`${prepared.skippedComps} composition clips skipped.`)
+        summaryParts.push(
+          `${prepared.skippedComps} ${t('highlightFinder.dialog.compositionClipsSkippedShort')}`,
+        )
       }
       if (result.failed > 0) {
-        summaryParts.push(`${result.failed} could not be wrapped.`)
+        summaryParts.push(`${result.failed} ${t('highlightFinder.dialog.couldNotWrap')}`)
       }
 
       showNotification({
@@ -276,9 +284,11 @@ export function HighlightFinderDialog() {
       close()
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        setErrorMessage('Cancelled.')
+        setErrorMessage(t('highlightFinder.dialog.cancelled'))
       } else {
-        setErrorMessage(error instanceof Error ? error.message : 'Failed to find highlights')
+        setErrorMessage(
+          error instanceof Error ? error.message : t('highlightFinder.dialog.failedToFind'),
+        )
       }
     } finally {
       abortRef.current = null
@@ -294,6 +304,7 @@ export function HighlightFinderDialog() {
     titleLanguage,
     showNotification,
     close,
+    t,
   ])
 
   const handleCancel = useCallback(() => {
@@ -320,10 +331,8 @@ export function HighlightFinderDialog() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>Find Highlights</DialogTitle>
-          <DialogDescription>
-            Pick the most engaging moments from the selected clips and wrap each as a compound clip.
-          </DialogDescription>
+          <DialogTitle>{t('highlightFinder.dialog.title')}</DialogTitle>
+          <DialogDescription>{t('highlightFinder.dialog.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -332,14 +341,13 @@ export function HighlightFinderDialog() {
               role="alert"
               className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
             >
-              Configure base URL, API key, and model in Settings → AI → Custom AI → Vision Analyzer
-              before running.
+              {t('highlightFinder.dialog.configureCustomAi')}
             </p>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-sm">Clip duration (s)</Label>
+              <Label className="text-sm">{t('highlightFinder.dialog.clipDurationLabel')}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -356,9 +364,11 @@ export function HighlightFinderDialog() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm">
-                Number of highlights{' '}
+                {t('highlightFinder.dialog.numberOfHighlightsLabel')}{' '}
                 {maxAllowedCount > 0 ? (
-                  <span className="text-muted-foreground">(max {maxAllowedCount})</span>
+                  <span className="text-muted-foreground">
+                    ({t('highlightFinder.dialog.maxPrefix')} {maxAllowedCount})
+                  </span>
                 ) : null}
               </Label>
               <Input
@@ -389,22 +399,30 @@ export function HighlightFinderDialog() {
 
           {clipDurationValid && maxAllowedCount > 0 && targetCountValid ? (
             <p className="text-xs text-muted-foreground">
-              From {totalSelectedDurationSec.toFixed(0)}s of source you can fit up to{' '}
-              <span className="text-foreground">{maxAllowedCount}</span> clip
-              {maxAllowedCount === 1 ? '' : 's'} of {clipDuration.toFixed(0)}s each. Picking{' '}
+              {t('highlightFinder.dialog.fromSourcePrefix')} {totalSelectedDurationSec.toFixed(0)}
+              {t('highlightFinder.dialog.sourceCanFit')}{' '}
+              <span className="text-foreground">{maxAllowedCount}</span>{' '}
+              {maxAllowedCount === 1
+                ? t('highlightFinder.dialog.clipSingular')
+                : t('highlightFinder.dialog.clipPlural')}{' '}
+              {t('highlightFinder.dialog.ofDuration')} {clipDuration.toFixed(0)}
+              {t('highlightFinder.dialog.eachPicking')}{' '}
               <span className="text-foreground">{targetCount}</span> (~
-              {projectedTotalSec.toFixed(0)}s total).
+              {projectedTotalSec.toFixed(0)}
+              {t('highlightFinder.dialog.totalSuffix')}).
             </p>
           ) : clipDurationValid && totalSelectedDurationSec > 0 && maxAllowedCount === 0 ? (
             <p className="text-xs text-amber-600 dark:text-amber-400">
-              Selected clips total {totalSelectedDurationSec.toFixed(0)}s — too short for even one{' '}
-              {clipDuration.toFixed(0)}s clip. Reduce <strong>Clip duration</strong>.
+              {t('highlightFinder.dialog.selectedClipsTotal')} {totalSelectedDurationSec.toFixed(0)}
+              {t('highlightFinder.dialog.tooShortFor')} {clipDuration.toFixed(0)}
+              {t('highlightFinder.dialog.clipReduce')}{' '}
+              <strong>{t('highlightFinder.dialog.clipDurationStrong')}</strong>.
             </p>
           ) : null}
 
           <div className="flex items-center justify-between py-0.5">
             <Label htmlFor="add-subtitles-switch" className="text-sm cursor-pointer">
-              Add subtitles
+              {t('highlightFinder.dialog.addSubtitles')}
             </Label>
             <Switch
               id="add-subtitles-switch"
@@ -416,29 +434,33 @@ export function HighlightFinderDialog() {
 
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Compound clip name language
+              {t('highlightFinder.dialog.compoundClipLanguageLabel')}
             </Label>
             <Combobox
               value={titleLanguage}
               onValueChange={setTitleLanguage}
               options={WHISPER_LANGUAGE_OPTIONS}
-              placeholder="Auto-detect from source"
-              searchPlaceholder="Search languages..."
-              emptyMessage="No languages match that search."
+              placeholder={t('highlightFinder.dialog.autoDetectPlaceholder')}
+              searchPlaceholder={t('highlightFinder.dialog.searchLanguagesPlaceholder')}
+              emptyMessage={t('highlightFinder.dialog.noLanguagesMatch')}
               disabled={isRunning}
             />
             <p className="text-xs text-muted-foreground">
-              AI writes the compound clip name (used as its title) in this language regardless of
-              the source. Subtitles always stay in the source language.
+              {t('highlightFinder.dialog.compoundClipLanguageHint')}
             </p>
           </div>
 
           {summary.length > 0 ? (
             <div className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs space-y-1">
               <p className="text-muted-foreground">
-                {summary.length} clip{summary.length === 1 ? '' : 's'} selected ·{' '}
-                {totalSelectedDurationSec.toFixed(1)}s total · {clipsWithContext} of{' '}
-                {summary.length} have captions and transcript
+                {summary.length}{' '}
+                {summary.length === 1
+                  ? t('highlightFinder.dialog.clipSingular')
+                  : t('highlightFinder.dialog.clipPlural')}{' '}
+                {t('highlightFinder.dialog.selectedDot')} {totalSelectedDurationSec.toFixed(1)}
+                {t('highlightFinder.dialog.totalDot')} {clipsWithContext}{' '}
+                {t('highlightFinder.dialog.ofPrefix')} {summary.length}{' '}
+                {t('highlightFinder.dialog.haveCaptionsAndTranscript')}
               </p>
               <ul className="space-y-0.5 max-h-24 overflow-y-auto">
                 {summary.map((entry) => (
@@ -446,7 +468,10 @@ export function HighlightFinderDialog() {
                     <span className="truncate text-foreground">{entry.fileName}</span>
                     <span className="shrink-0 text-muted-foreground">
                       ({entry.durationSec.toFixed(1)}s
-                      {entry.hasContext ? '' : ', missing captions or transcript'})
+                      {entry.hasContext
+                        ? ''
+                        : t('highlightFinder.dialog.missingCaptionsOrTranscript')}
+                      )
                     </span>
                   </li>
                 ))}
@@ -457,15 +482,17 @@ export function HighlightFinderDialog() {
               role="alert"
               className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
             >
-              No eligible clips selected. Highlight Finder works on video or audio clips that have
-              both AI captions and a transcript.
+              {t('highlightFinder.dialog.noEligibleClips')}
             </p>
           )}
 
           {summary.length > 0 && clipsWithContext === 0 && (
             <p className="text-xs text-muted-foreground">
-              None of the selected clips have both captions and a transcript. Run{' '}
-              <strong>Analyze with AI</strong> and <strong>Generate Transcript</strong> first.
+              {t('highlightFinder.dialog.noneHaveBothPrefix')}{' '}
+              <strong>{t('highlightFinder.dialog.analyzeWithAi')}</strong>{' '}
+              {t('highlightFinder.dialog.and')}{' '}
+              <strong>{t('highlightFinder.dialog.generateTranscript')}</strong>{' '}
+              {t('highlightFinder.dialog.firstSuffix')}.
             </p>
           )}
 
@@ -492,16 +519,16 @@ export function HighlightFinderDialog() {
           {isRunning ? (
             <Button variant="destructive" onClick={handleCancel}>
               <Square className="mr-1.5 h-3.5 w-3.5" />
-              Cancel
+              {t('highlightFinder.dialog.cancel')}
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                Close
+                {t('highlightFinder.dialog.close')}
               </Button>
               <Button onClick={() => void handleStart()} disabled={!canRun}>
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Find Highlights
+                {t('highlightFinder.dialog.findHighlights')}
               </Button>
             </>
           )}

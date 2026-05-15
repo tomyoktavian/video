@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ImageIcon, Loader2, Sparkles, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ImageLightbox } from '@/components/ui/image-lightbox'
@@ -177,6 +178,7 @@ const DEFAULT_DURATION_BOUNDS = {
 }
 
 export function AiImagePanel(props: AiImagePanelProps) {
+  const { t } = useTranslation()
   const {
     width,
     height,
@@ -194,7 +196,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
     variant = 'dialog',
     disabled = false,
     showCancelButton = true,
-    generateLabel = 'Generate image',
+    generateLabel: generateLabelProp,
     hideCurrentPreview = false,
     historySlot,
     onImageGenerated,
@@ -203,6 +205,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
     downloadFilenamePrefix = 'ai-image',
     generateRowExtras,
   } = props
+  const generateLabel = generateLabelProp ?? t('compoundCover.aiImagePanel.generateImage')
 
   const compact = variant === 'sidebar'
 
@@ -258,11 +261,11 @@ export function AiImagePanel(props: AiImagePanelProps) {
 
   const handleSummarise = useCallback(async () => {
     if (effectiveTranscript.trim().length === 0) {
-      setErrorMessage('There is no transcript to summarise yet.')
+      setErrorMessage(t('compoundCover.aiImagePanel.noTranscriptError'))
       return
     }
     if (!visionAnalyzerConfigured) {
-      setErrorMessage('Configure Vision Analyzer in Settings → AI → Custom AI before summarising.')
+      setErrorMessage(t('compoundCover.aiImagePanel.configureVisionAnalyzerError'))
       return
     }
     setErrorMessage(null)
@@ -278,18 +281,18 @@ export function AiImagePanel(props: AiImagePanelProps) {
       onTranscriptChange(summary)
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to summarise transcript.')
+      setErrorMessage(
+        error instanceof Error ? error.message : t('compoundCover.aiImagePanel.summariseFailed'),
+      )
     } finally {
       if (summaryAbortRef.current === controller) summaryAbortRef.current = null
       setIsSummarising(false)
     }
-  }, [effectiveTranscript, visionAnalyzerConfigured, onTranscriptChange])
+  }, [effectiveTranscript, visionAnalyzerConfigured, onTranscriptChange, t])
 
   const handleGenerate = useCallback(async () => {
     if (!imageGeneratorConfigured) {
-      setErrorMessage(
-        'Configure the Image Generator in Settings → AI → Custom AI before generating.',
-      )
+      setErrorMessage(t('compoundCover.aiImagePanel.configureImageGeneratorError'))
       return
     }
     let resolvedPrompt: string
@@ -316,7 +319,9 @@ export function AiImagePanel(props: AiImagePanelProps) {
         })
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Cannot build prompt.')
+      setErrorMessage(
+        error instanceof Error ? error.message : t('compoundCover.aiImagePanel.cannotBuildPrompt'),
+      )
       return
     }
 
@@ -370,7 +375,11 @@ export function AiImagePanel(props: AiImagePanelProps) {
         onCancelled?.()
         return
       }
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to generate image.')
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : t('compoundCover.aiImagePanel.generateImageFailed'),
+      )
     } finally {
       if (generateAbortRef.current === controller) generateAbortRef.current = null
       setIsGenerating(false)
@@ -391,6 +400,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
     quality,
     onImageGenerated,
     onCancelled,
+    t,
   ])
 
   const handleCancel = useCallback(() => {
@@ -410,8 +420,11 @@ export function AiImagePanel(props: AiImagePanelProps) {
       {imageGeneratorConfigured ? (
         imageGeneratorModel ? (
           <p className="text-[11px] text-muted-foreground">
-            Using model <span className="font-medium text-foreground">{imageGeneratorModel}</span>
-            {imageGeneratorBaseUrl ? <> via {imageGeneratorBaseUrl}.</> : null}
+            {t('compoundCover.aiImagePanel.usingModelPrefix')}{' '}
+            <span className="font-medium text-foreground">{imageGeneratorModel}</span>
+            {imageGeneratorBaseUrl ? (
+              <> {t('compoundCover.aiImagePanel.viaBaseUrl', { baseUrl: imageGeneratorBaseUrl })}</>
+            ) : null}
           </p>
         ) : null
       ) : (
@@ -419,26 +432,27 @@ export function AiImagePanel(props: AiImagePanelProps) {
           role="alert"
           className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
         >
-          Configure base URL, API key, and model in Settings → AI → Custom AI → Image Generator
-          before generating.
+          {t('compoundCover.aiImagePanel.configureImageGeneratorHint')}
         </p>
       )}
 
       {promptMode === 'split' ? (
         <>
           <div className="space-y-1.5">
-            <Label className={labelTextClass}>Title</Label>
+            <Label className={labelTextClass}>{t('compoundCover.aiImagePanel.titleLabel')}</Label>
             <Input
               value={effectiveTitle}
               onChange={(event) => onTitleChange(event.target.value)}
-              placeholder="Compound clip title — used as the poster headline."
+              placeholder={t('compoundCover.aiImagePanel.titlePlaceholder')}
               disabled={disabled || isGenerating}
             />
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <Label className={labelTextClass}>Transcript</Label>
+              <Label className={labelTextClass}>
+                {t('compoundCover.aiImagePanel.transcriptLabel')}
+              </Label>
               {enableTranscriptSummarise && (
                 <Button
                   type="button"
@@ -459,14 +473,16 @@ export function AiImagePanel(props: AiImagePanelProps) {
                   ) : (
                     <Sparkles className="h-3 w-3" />
                   )}
-                  {isSummarising ? 'Summarising…' : 'Generate summary'}
+                  {isSummarising
+                    ? t('compoundCover.aiImagePanel.summarising')
+                    : t('compoundCover.aiImagePanel.generateSummary')}
                 </Button>
               )}
             </div>
             <Textarea
               value={effectiveTranscript}
               onChange={(event) => onTranscriptChange(event.target.value)}
-              placeholder="Concatenated transcript for this compound."
+              placeholder={t('compoundCover.aiImagePanel.transcriptPlaceholder')}
               rows={compact ? 4 : 6}
               spellCheck={false}
               className="resize-y text-sm"
@@ -474,18 +490,18 @@ export function AiImagePanel(props: AiImagePanelProps) {
             />
             {enableTranscriptSummarise && !visionAnalyzerConfigured && (
               <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                Configure Vision Analyzer in Settings to enable summarisation.
+                {t('compoundCover.aiImagePanel.configureVisionAnalyzerHint')}
               </p>
             )}
           </div>
         </>
       ) : (
         <div className="space-y-1.5">
-          <Label className={labelTextClass}>Prompt</Label>
+          <Label className={labelTextClass}>{t('compoundCover.aiImagePanel.promptLabel')}</Label>
           <Textarea
             value={effectivePrompt}
             onChange={(event) => onPromptChange(event.target.value)}
-            placeholder="Describe the image you want to generate..."
+            placeholder={t('compoundCover.aiImagePanel.promptPlaceholder')}
             rows={compact ? 4 : 6}
             spellCheck={false}
             className={cn('resize-y text-sm', compact && 'min-h-24 bg-secondary/30')}
@@ -496,7 +512,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
-          <Label className="text-xs">Aspect ratio</Label>
+          <Label className="text-xs">{t('compoundCover.aiImagePanel.aspectRatioLabel')}</Label>
           <Select value={aspect} onValueChange={setAspect} disabled={disabled || isGenerating}>
             <SelectTrigger className={compact ? 'h-8 text-xs' : 'h-9 text-sm'}>
               <SelectValue />
@@ -518,7 +534,9 @@ export function AiImagePanel(props: AiImagePanelProps) {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Target country / cast</Label>
+          <Label className="text-xs">
+            {t('compoundCover.aiImagePanel.targetCountryCastLabel')}
+          </Label>
           <Select
             value={cast}
             onValueChange={(value) => setCast(value as PosterCastValue)}
@@ -544,7 +562,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
-          <Label className="text-xs">Visual style</Label>
+          <Label className="text-xs">{t('compoundCover.aiImagePanel.visualStyleLabel')}</Label>
           <Select
             value={style}
             onValueChange={(value) => setStyle(value as PosterStyleValue)}
@@ -567,7 +585,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Mood / genre</Label>
+          <Label className="text-xs">{t('compoundCover.aiImagePanel.moodGenreLabel')}</Label>
           <Select
             value={mood}
             onValueChange={(value) => setMood(value as PosterMoodValue)}
@@ -592,7 +610,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">Image quality</Label>
+        <Label className="text-xs">{t('compoundCover.aiImagePanel.imageQualityLabel')}</Label>
         <Select
           value={quality}
           onValueChange={(value) => setQuality(value as PosterQualityValue)}
@@ -614,18 +632,19 @@ export function AiImagePanel(props: AiImagePanelProps) {
           </SelectContent>
         </Select>
         <p className="text-[11px] text-muted-foreground">
-          Honoured by OpenAI <code className="text-foreground">gpt-image-1</code>. Most other
-          providers (Gemini, Grok) silently ignore this field.
+          {t('compoundCover.aiImagePanel.qualityHintPrefix')}{' '}
+          <code className="text-foreground">gpt-image-1</code>
+          {t('compoundCover.aiImagePanel.qualityHintSuffix')}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">Custom notes (optional)</Label>
+        <Label className="text-xs">{t('compoundCover.aiImagePanel.customNotesLabel')}</Label>
         {compact ? (
           <Input
             value={customNotes}
             onChange={(event) => setCustomNotes(event.target.value)}
-            placeholder='e.g. "1990s Jakarta", "rain-soaked alley"'
+            placeholder={t('compoundCover.aiImagePanel.customNotesPlaceholderCompact')}
             className="h-8 text-xs"
             disabled={disabled || isGenerating}
           />
@@ -633,7 +652,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
           <Textarea
             value={customNotes}
             onChange={(event) => setCustomNotes(event.target.value)}
-            placeholder="Any extra art-direction notes — e.g. 'set in 1990s Jakarta', 'rain-soaked alley'."
+            placeholder={t('compoundCover.aiImagePanel.customNotesPlaceholder')}
             rows={2}
             spellCheck={false}
             className="resize-y text-sm"
@@ -644,7 +663,9 @@ export function AiImagePanel(props: AiImagePanelProps) {
 
       {durationField && (
         <div className="space-y-1.5">
-          <Label className="text-xs">{durationField.label ?? 'Cover duration (s)'}</Label>
+          <Label className="text-xs">
+            {durationField.label ?? t('compoundCover.aiImagePanel.coverDurationLabel')}
+          </Label>
           <Input
             type="number"
             min={minDur}
@@ -676,7 +697,7 @@ export function AiImagePanel(props: AiImagePanelProps) {
             className="h-7 shrink-0 gap-1.5 text-muted-foreground"
           >
             <X className="h-3.5 w-3.5" />
-            Cancel
+            {t('compoundCover.aiImagePanel.cancel')}
           </Button>
         )}
         <Button
@@ -694,9 +715,11 @@ export function AiImagePanel(props: AiImagePanelProps) {
             <ImageIcon className="h-3.5 w-3.5" />
           )}
           {isGenerating
-            ? 'Generating…'
+            ? t('compoundCover.aiImagePanel.generating')
             : imageBlob
-              ? `Regenerate ${generateLabel.toLowerCase()}`
+              ? t('compoundCover.aiImagePanel.regenerateLabel', {
+                  label: generateLabel.toLowerCase(),
+                })
               : generateLabel}
         </Button>
       </div>
@@ -713,17 +736,17 @@ export function AiImagePanel(props: AiImagePanelProps) {
       {!hideCurrentPreview && imageUrl && (
         <ImageLightbox
           src={imageUrl}
-          alt="Generated image preview"
+          alt={t('compoundCover.aiImagePanel.generatedPreviewAlt')}
           downloadFilename={`${downloadFilenamePrefix}-${Date.now()}.png`}
         >
           <button
             type="button"
             className="flex w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border border-border bg-secondary/40"
-            aria-label="Open generated image preview"
+            aria-label={t('compoundCover.aiImagePanel.openGeneratedPreviewAriaLabel')}
           >
             <img
               src={imageUrl}
-              alt="Generated image preview"
+              alt={t('compoundCover.aiImagePanel.generatedPreviewAlt')}
               className={cn('block max-w-full', previewMaxHeight)}
               style={{ aspectRatio: width > 0 && height > 0 ? `${width} / ${height}` : undefined }}
             />
@@ -732,7 +755,11 @@ export function AiImagePanel(props: AiImagePanelProps) {
       )}
       {!hideCurrentPreview && !imageUrl && (
         <p className="text-xs text-muted-foreground">
-          Renders at {width}×{height}. Tweak the form above and click {generateLabel.toLowerCase()}.
+          {t('compoundCover.aiImagePanel.rendersAtHint', {
+            width,
+            height,
+            label: generateLabel.toLowerCase(),
+          })}
         </p>
       )}
 

@@ -437,7 +437,7 @@ export function useTimelineItemActions({
     if (captionItems.length === 0) {
       store.showNotification({
         type: 'info',
-        message: 'No captions found on this segment',
+        message: i18n.t('timeline.captions.noCaptionsFound'),
       })
       return
     }
@@ -489,7 +489,7 @@ export function useTimelineItemActions({
 
     store.showNotification({
       type: 'success',
-      message: 'Removed captions from this segment',
+      message: i18n.t('timeline.captions.removedFromSegment'),
     })
   }, [isBroken, item.id, item.mediaId, item.type])
 
@@ -773,7 +773,7 @@ export function useTimelineItemActions({
       )
 
     if (targetItems.length === 0) {
-      toast.info('Select an audio or video clip first')
+      toast.info(i18n.t('timeline.fillerRemoval.selectAudioOrVideoFirst'))
       return
     }
 

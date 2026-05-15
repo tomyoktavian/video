@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Pause, Play } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
@@ -17,6 +18,7 @@ const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 const PREVIEW_TEXT = 'Hello, this is a preview of my voice.'
 
 export function TextToSpeechSection() {
+  const { t } = useTranslation()
   const textToSpeech = useCustomAiStore((s) => s.textToSpeech)
   const setTextToSpeech = useCustomAiStore((s) => s.setTextToSpeech)
   const resetTextToSpeech = useCustomAiStore((s) => s.resetTextToSpeech)
@@ -106,7 +108,7 @@ export function TextToSpeechSection() {
       })
       if (!voicesResult.ok) setVoicesLoadFailed(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load models')
+      setError(err instanceof Error ? err.message : t('settings.textToSpeech.failedToLoadModels'))
     } finally {
       setLoading(false)
     }
@@ -117,6 +119,7 @@ export function TextToSpeechSection() {
     textToSpeech.model,
     textToSpeech.voice,
     setTextToSpeech,
+    t,
   ])
 
   const stopPreview = useCallback(() => {
@@ -129,26 +132,33 @@ export function TextToSpeechSection() {
     setPreviewVoice(null)
   }, [])
 
-  const playFromUrl = useCallback((voiceId: string, url: string) => {
-    let audio = audioRef.current
-    if (!audio) {
-      audio = new Audio()
-      audio.preload = 'auto'
-      audio.addEventListener('ended', () => {
+  const playFromUrl = useCallback(
+    (voiceId: string, url: string) => {
+      let audio = audioRef.current
+      if (!audio) {
+        audio = new Audio()
+        audio.preload = 'auto'
+        audio.addEventListener('ended', () => {
+          setPreviewPlaying(false)
+          setPreviewVoice(null)
+        })
+        audioRef.current = audio
+      }
+      audio.src = url
+      setPreviewVoice(voiceId)
+      setPreviewPlaying(true)
+      void audio.play().catch((playError: unknown) => {
+        setPreviewError(
+          playError instanceof Error
+            ? playError.message
+            : t('settings.textToSpeech.audioPlaybackFailed'),
+        )
         setPreviewPlaying(false)
         setPreviewVoice(null)
       })
-      audioRef.current = audio
-    }
-    audio.src = url
-    setPreviewVoice(voiceId)
-    setPreviewPlaying(true)
-    void audio.play().catch((playError: unknown) => {
-      setPreviewError(playError instanceof Error ? playError.message : 'Audio playback failed')
-      setPreviewPlaying(false)
-      setPreviewVoice(null)
-    })
-  }, [])
+    },
+    [t],
+  )
 
   const handlePreview = useCallback(async () => {
     const voice = textToSpeech.voice.trim()
@@ -178,10 +188,12 @@ export function TextToSpeechSection() {
       previewCacheRef.current.set(voice, url)
       playFromUrl(voice, url)
     } catch (err) {
-      setPreviewError(err instanceof Error ? err.message : 'Failed to generate preview')
+      setPreviewError(
+        err instanceof Error ? err.message : t('settings.textToSpeech.failedToGeneratePreview'),
+      )
       setPreviewVoice(null)
     }
-  }, [textToSpeech.voice, previewPlaying, previewVoice, playFromUrl, stopPreview])
+  }, [textToSpeech.voice, previewPlaying, previewVoice, playFromUrl, stopPreview, t])
 
   const handleReset = useCallback(() => {
     setError(null)
@@ -196,7 +208,9 @@ export function TextToSpeechSection() {
   const previewLoading = previewVoice !== null && !previewPlaying
   const isPreviewingCurrentVoice =
     previewPlaying && previewVoice !== null && previewVoice === selectedVoice
-  const previewLabel = isPreviewingCurrentVoice ? 'Stop preview' : 'Play preview'
+  const previewLabel = isPreviewingCurrentVoice
+    ? t('settings.textToSpeech.stopPreview')
+    : t('settings.textToSpeech.playPreview')
 
   const isPristine =
     !textToSpeech.baseUrl &&
@@ -210,7 +224,7 @@ export function TextToSpeechSection() {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label className="text-sm">Base URL</Label>
+        <Label className="text-sm">{t('settings.textToSpeech.baseUrl')}</Label>
         <Input
           type="url"
           autoComplete="off"
@@ -222,7 +236,7 @@ export function TextToSpeechSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">API Key</Label>
+        <Label className="text-sm">{t('settings.textToSpeech.apiKey')}</Label>
         <div className="flex items-center gap-2">
           <Input
             type="password"
@@ -240,7 +254,7 @@ export function TextToSpeechSection() {
             className="shrink-0"
           >
             {loading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            {loading ? 'Loading' : 'Load'}
+            {loading ? t('settings.textToSpeech.loading') : t('settings.textToSpeech.load')}
           </Button>
         </div>
         {error ? (
@@ -254,21 +268,25 @@ export function TextToSpeechSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">Model</Label>
+        <Label className="text-sm">{t('settings.textToSpeech.model')}</Label>
         <Combobox
           value={textToSpeech.model}
           options={modelOptions}
           onValueChange={(value) => setTextToSpeech({ model: value })}
-          placeholder={modelOptions.length === 0 ? 'Load models to choose…' : 'Select a model'}
-          searchPlaceholder="Search models..."
-          emptyMessage="No models loaded yet."
+          placeholder={
+            modelOptions.length === 0
+              ? t('settings.textToSpeech.loadModelsToChoose')
+              : t('settings.textToSpeech.selectAModel')
+          }
+          searchPlaceholder={t('settings.textToSpeech.searchModels')}
+          emptyMessage={t('settings.textToSpeech.noModelsLoaded')}
           disabled={modelOptions.length === 0}
         />
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Voice</Label>
+          <Label className="text-sm">{t('settings.textToSpeech.voice')}</Label>
           <Button
             type="button"
             variant="ghost"
@@ -278,7 +296,11 @@ export function TextToSpeechSection() {
               void handlePreview()
             }}
             disabled={!canPreview || previewLoading}
-            aria-label={isPreviewingCurrentVoice ? 'Stop voice preview' : 'Play voice preview'}
+            aria-label={
+              isPreviewingCurrentVoice
+                ? t('settings.textToSpeech.stopVoicePreviewAria')
+                : t('settings.textToSpeech.playVoicePreviewAria')
+            }
           >
             {previewLoading ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -287,7 +309,7 @@ export function TextToSpeechSection() {
             ) : (
               <Play className="h-3 w-3" />
             )}
-            {previewLoading ? 'Generating…' : previewLabel}
+            {previewLoading ? t('settings.textToSpeech.generating') : previewLabel}
           </Button>
         </div>
         {hasDiscoveredVoices ? (
@@ -298,9 +320,9 @@ export function TextToSpeechSection() {
               stopPreview()
               setTextToSpeech({ voice: value })
             }}
-            placeholder="Select a voice"
-            searchPlaceholder="Search voices..."
-            emptyMessage="No voices match that search."
+            placeholder={t('settings.textToSpeech.selectAVoice')}
+            searchPlaceholder={t('settings.textToSpeech.searchVoices')}
+            emptyMessage={t('settings.textToSpeech.noVoicesMatch')}
           />
         ) : (
           <Input
@@ -317,21 +339,24 @@ export function TextToSpeechSection() {
         )}
         {hasDiscoveredVoices ? (
           <p className="text-xs text-muted-foreground">
-            Voices loaded from your provider&apos;s{' '}
-            <code className="text-foreground">/audio/voices</code> endpoint. Use{' '}
-            <strong>Play preview</strong> to hear the selected voice.
+            <Trans
+              i18nKey="settings.textToSpeech.voicesLoadedHint"
+              components={{ s: <strong />, c: <code className="text-foreground" /> }}
+            />
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            {voicesLoadFailed
-              ? 'Your provider doesn’t expose a voice list. Type a voice name supported by your endpoint — for OpenAI, try '
-              : 'Load models to discover voices, or type one manually. For OpenAI, try '}
-            <code className="text-foreground">alloy</code>,{' '}
-            <code className="text-foreground">echo</code>,{' '}
-            <code className="text-foreground">fable</code>,{' '}
-            <code className="text-foreground">onyx</code>,{' '}
-            <code className="text-foreground">nova</code>, or{' '}
-            <code className="text-foreground">shimmer</code>.
+            {voicesLoadFailed ? (
+              <Trans
+                i18nKey="settings.textToSpeech.voicesUnavailableHint"
+                components={{ c: <code className="text-foreground" /> }}
+              />
+            ) : (
+              <Trans
+                i18nKey="settings.textToSpeech.voicesTypeManuallyHint"
+                components={{ c: <code className="text-foreground" /> }}
+              />
+            )}
           </p>
         )}
         {previewError ? (
@@ -345,25 +370,28 @@ export function TextToSpeechSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">Language</Label>
+        <Label className="text-sm">{t('settings.textToSpeech.language')}</Label>
         <Combobox
           value={textToSpeech.language || 'auto'}
           options={WHISPER_LANGUAGE_OPTIONS}
           onValueChange={(value) => setTextToSpeech({ language: value === 'auto' ? '' : value })}
-          placeholder="Auto-detect"
-          searchPlaceholder="Search languages..."
-          emptyMessage="No languages match that search."
+          placeholder={t('settings.textToSpeech.autoDetect')}
+          searchPlaceholder={t('settings.textToSpeech.searchLanguages')}
+          emptyMessage={t('settings.textToSpeech.noLanguagesMatch')}
         />
         <p className="text-xs text-muted-foreground">
-          Sent to the server as a language hint. <strong>No translation</strong> — text is spoken
-          as-is. Pick <strong>Auto-detect</strong> for mixed-language input (handled natively by
-          modern TTS like OpenAI <code className="text-foreground">tts-1</code>).
+          <Trans
+            i18nKey="settings.textToSpeech.languageHint"
+            components={{ s: <strong />, c: <code className="text-foreground" /> }}
+          />
         </p>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Generates speech via an OpenAI-compatible TTS endpoint (POST /audio/speech). Empty voice
-        defaults to <code className="text-foreground">alloy</code>.
+        <Trans
+          i18nKey="settings.textToSpeech.summaryHint"
+          components={{ c: <code className="text-foreground" /> }}
+        />
       </p>
 
       <div className="flex justify-end">
@@ -374,7 +402,7 @@ export function TextToSpeechSection() {
           onClick={handleReset}
           disabled={isPristine}
         >
-          Reset
+          {t('settings.textToSpeech.reset')}
         </Button>
       </div>
     </div>

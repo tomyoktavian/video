@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Loader2, Sparkles, Square } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import {
   AlertDialog,
@@ -60,29 +61,6 @@ import type { SpoilerProgress, SpoilerStage } from '../types'
 import type { SpoilerTtsEngine, SpoilerTtsEngineConfig } from '../tts-engine-adapter'
 import { SpoilerProgressStepper } from './spoiler-progress-stepper'
 
-const TARGET_DURATION_OPTIONS: ComboboxOption[] = [
-  { value: '300', label: '5 minutes (fast)' },
-  { value: '600', label: '10 minutes' },
-  { value: '900', label: '15 minutes (recommended)' },
-  { value: '1200', label: '20 minutes' },
-]
-
-const NARRATION_LANGUAGE_OPTIONS: ComboboxOption[] = [
-  { value: 'id', label: 'Indonesian (default)' },
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'ja', label: 'Japanese' },
-  { value: 'ko', label: 'Korean' },
-  { value: 'zh', label: 'Chinese (Mandarin)' },
-]
-
-const TTS_ENGINE_OPTIONS: ComboboxOption[] = [
-  { value: 'custom', label: 'Custom AI (OpenAI-compatible)' },
-  { value: 'kokoro', label: 'Kokoro (English, WebGPU)' },
-  { value: 'supertonic', label: 'Supertonic 3 (31 languages, WebGPU/WASM)' },
-  { value: 'moss', label: 'MOSS Nano (20 languages, CPU)' },
-]
-
 const CLIP_DURATION_BOUNDS = { min: 5, max: 90 }
 const TTS_SPEED_BOUNDS = { min: 0.5, max: 4.0 }
 const BOUNDARY_NARRATION_SPEED_BOUNDS = { min: 0.5, max: 4.0 }
@@ -104,9 +82,42 @@ interface PersistedCover {
 }
 
 export function SpoilerGeneratorDialog() {
+  const { t } = useTranslation()
   const isOpen = useSpoilerGeneratorDialogStore((s) => s.isOpen)
   const mediaId = useSpoilerGeneratorDialogStore((s) => s.mediaId)
   const close = useSpoilerGeneratorDialogStore((s) => s.close)
+
+  const targetDurationOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: '300', label: t('spoiler.dialog.duration5min') },
+      { value: '600', label: t('spoiler.dialog.duration10min') },
+      { value: '900', label: t('spoiler.dialog.duration15min') },
+      { value: '1200', label: t('spoiler.dialog.duration20min') },
+    ],
+    [t],
+  )
+
+  const narrationLanguageOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: 'id', label: t('spoiler.dialog.langIndonesianDefault') },
+      { value: 'en', label: t('spoiler.dialog.langEnglish') },
+      { value: 'es', label: t('spoiler.dialog.langSpanish') },
+      { value: 'ja', label: t('spoiler.dialog.langJapanese') },
+      { value: 'ko', label: t('spoiler.dialog.langKorean') },
+      { value: 'zh', label: t('spoiler.dialog.langChinese') },
+    ],
+    [t],
+  )
+
+  const ttsEngineOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: 'custom', label: t('spoiler.dialog.ttsEngineCustom') },
+      { value: 'kokoro', label: t('spoiler.dialog.ttsEngineKokoro') },
+      { value: 'supertonic', label: t('spoiler.dialog.ttsEngineSupertonic') },
+      { value: 'moss', label: t('spoiler.dialog.ttsEngineMoss') },
+    ],
+    [t],
+  )
 
   const captionMaker = useCustomAiStore((s) => s.captionMaker)
   const visionAnalyzer = useCustomAiStore((s) => s.visionAnalyzer)
@@ -354,10 +365,12 @@ export function SpoilerGeneratorDialog() {
           height: canvasHeight,
         })
       } catch (error) {
-        setPersistError(error instanceof Error ? error.message : 'Failed to save AI cover.')
+        setPersistError(
+          error instanceof Error ? error.message : t('spoiler.dialog.failedToSaveCover'),
+        )
       }
     },
-    [canvasHeight, canvasWidth, mediaId],
+    [canvasHeight, canvasWidth, mediaId, t],
   )
 
   const startPipeline = useCallback(
@@ -370,7 +383,7 @@ export function SpoilerGeneratorDialog() {
       const controller = new AbortController()
       abortRef.current = controller
       setStep('progress')
-      setProgress({ stage: 'idle', message: 'Starting...' })
+      setProgress({ stage: 'idle', message: t('spoiler.dialog.starting') })
       setErrorMessage(null)
       setIsRunning(true)
       try {
@@ -409,7 +422,7 @@ export function SpoilerGeneratorDialog() {
         )
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
-          setProgress({ stage: 'idle', message: 'Cancelled.' })
+          setProgress({ stage: 'idle', message: t('spoiler.dialog.cancelled') })
         } else {
           setErrorMessage(err instanceof Error ? err.message : String(err))
         }
@@ -434,6 +447,7 @@ export function SpoilerGeneratorDialog() {
       mediaId,
       narrationLanguage,
       setSetting,
+      t,
       targetDurationSec,
       ttsEngine,
       ttsSpeed,
@@ -484,11 +498,14 @@ export function SpoilerGeneratorDialog() {
   }, [])
 
   const primaryButtonLabel = useMemo(() => {
-    if (step === 'settings') return generateCoverWithAi ? 'Next: Cover Settings' : 'Next: Review'
-    if (step === 'ai-cover') return 'Next: Review'
-    if (step === 'confirm') return 'Confirm & Generate'
-    return 'Generate Spoiler'
-  }, [generateCoverWithAi, step])
+    if (step === 'settings')
+      return generateCoverWithAi
+        ? t('spoiler.dialog.primaryNextCover')
+        : t('spoiler.dialog.primaryNextReview')
+    if (step === 'ai-cover') return t('spoiler.dialog.primaryNextReview')
+    if (step === 'confirm') return t('spoiler.dialog.primaryConfirm')
+    return t('spoiler.dialog.primaryGenerate')
+  }, [generateCoverWithAi, step, t])
 
   return (
     <AlertDialog
@@ -508,105 +525,91 @@ export function SpoilerGeneratorDialog() {
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Auto Spoiler Generator
+            {t('spoiler.dialog.title')}
           </AlertDialogTitle>
-          <AlertDialogDescription>
-            AI writes the script, picks clips, generates narration, and wraps everything into a
-            single compound clip ready to export.
-          </AlertDialogDescription>
+          <AlertDialogDescription>{t('spoiler.dialog.description')}</AlertDialogDescription>
         </AlertDialogHeader>
 
         {step === 'settings' && (
           <div className="-mr-2 max-h-[calc(85vh-180px)] space-y-3 overflow-y-auto pr-2">
-            {!media && (
-              <Alert variant="error">
-                Media file not found in the library. Close this dialog and pick a valid media.
-              </Alert>
-            )}
+            {!media && <Alert variant="error">{t('spoiler.dialog.mediaNotFound')}</Alert>}
 
             {media && !captionConfigured && (
               <Alert variant="error">
-                Caption Maker (for film transcription) is not configured. Open{' '}
-                <strong>Settings → AI → Custom AI → Caption Maker</strong>.
+                <Trans
+                  i18nKey="spoiler.dialog.captionNotConfigured"
+                  components={{ strong: <strong /> }}
+                />
               </Alert>
             )}
 
             {media && !visionConfigured && (
               <Alert variant="error">
-                Vision Analyzer (for the Script Writer) is not configured. Open{' '}
-                <strong>Settings → AI → Custom AI → Vision Analyzer</strong>.
+                <Trans
+                  i18nKey="spoiler.dialog.visionNotConfigured"
+                  components={{ strong: <strong /> }}
+                />
               </Alert>
             )}
 
             {media && ttsEngine === 'custom' && !ttsConfigured && (
               <Alert variant="error">
-                Text to Speech (for narration) is not configured. Open{' '}
-                <strong>Settings → AI → Custom AI → Text to Speech</strong>.
+                <Trans
+                  i18nKey="spoiler.dialog.ttsNotConfigured"
+                  components={{ strong: <strong /> }}
+                />
               </Alert>
             )}
 
             {media && ttsEngine === 'kokoro' && !isKokoroSupported && (
-              <Alert variant="error">
-                Kokoro TTS needs WebGPU. Try Chrome 113+, Edge 113+, or Safari 26+, or pick another
-                engine.
-              </Alert>
+              <Alert variant="error">{t('spoiler.dialog.kokoroUnsupported')}</Alert>
             )}
 
             {media && ttsEngine === 'supertonic' && !isSupertonicSupported && (
-              <Alert variant="error">
-                Supertonic 3 needs a browser with Web Worker + Cache Storage. Try a recent Chromium
-                browser, Firefox, or Safari.
-              </Alert>
+              <Alert variant="error">{t('spoiler.dialog.supertonicUnsupported')}</Alert>
             )}
 
             {media && ttsEngine === 'moss' && !isMossSupported && (
-              <Alert variant="error">
-                MOSS multilingual TTS needs browser-managed storage. Try a recent Chromium browser.
-              </Alert>
+              <Alert variant="error">{t('spoiler.dialog.mossUnsupported')}</Alert>
             )}
 
             {media && !transcriptReady && (
-              <Alert variant="warning">
-                Film transcript not ready yet. Right-click the media → "Transcribe" first.
-              </Alert>
+              <Alert variant="warning">{t('spoiler.dialog.transcriptNotReady')}</Alert>
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Spoiler Duration</Label>
+              <Label className="text-sm">{t('spoiler.dialog.spoilerDuration')}</Label>
               <Combobox
                 value={String(targetDurationSec)}
-                options={TARGET_DURATION_OPTIONS}
+                options={targetDurationOptions}
                 onValueChange={(value) => setTargetDurationSec(Number(value))}
-                placeholder="Select duration"
+                placeholder={t('spoiler.dialog.selectDuration')}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Narration Language</Label>
+              <Label className="text-sm">{t('spoiler.dialog.narrationLanguage')}</Label>
               <Combobox
                 value={narrationLanguage}
-                options={NARRATION_LANGUAGE_OPTIONS}
+                options={narrationLanguageOptions}
                 onValueChange={setNarrationLanguage}
-                placeholder="Select language"
+                placeholder={t('spoiler.dialog.selectLanguage')}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">TTS Engine</Label>
+              <Label className="text-sm">{t('spoiler.dialog.ttsEngine')}</Label>
               <Combobox
                 value={ttsEngine}
-                options={TTS_ENGINE_OPTIONS}
+                options={ttsEngineOptions}
                 onValueChange={(value) => setTtsEngine(value as SpoilerTtsEngine)}
-                placeholder="Select engine"
+                placeholder={t('spoiler.dialog.selectEngine')}
               />
-              <p className="text-xs text-muted-foreground">
-                Custom AI runs in the cloud. Kokoro, Supertonic 3, and MOSS run locally in the
-                browser.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('spoiler.dialog.engineHelp')}</p>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Average clip duration per segment (seconds)</Label>
+              <Label className="text-sm">{t('spoiler.dialog.clipDuration')}</Label>
               <Input
                 type="number"
                 min={CLIP_DURATION_BOUNDS.min}
@@ -622,27 +625,27 @@ export function SpoilerGeneratorDialog() {
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                Clips taken from the film are auto-adjusted to match the narration duration.
+                {t('spoiler.dialog.clipDurationHelp')}
               </p>
             </div>
 
             {ttsEngine === 'custom' && voiceOptions.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-sm">Narration Voice</Label>
+                <Label className="text-sm">{t('spoiler.dialog.narrationVoice')}</Label>
                 <Combobox
                   value={voicePreset}
                   options={voiceOptions}
                   onValueChange={setVoicePreset}
-                  placeholder="Use the default voice from Settings"
-                  searchPlaceholder="Search voices..."
-                  emptyMessage="No voices yet — load them in Settings."
+                  placeholder={t('spoiler.dialog.voicePlaceholderCustom')}
+                  searchPlaceholder={t('spoiler.dialog.searchVoices')}
+                  emptyMessage={t('spoiler.dialog.emptyVoices')}
                 />
               </div>
             )}
 
             {ttsEngine === 'kokoro' && (
               <div className="space-y-1.5">
-                <Label className="text-sm">Narration Voice</Label>
+                <Label className="text-sm">{t('spoiler.dialog.narrationVoice')}</Label>
                 <Combobox
                   value={kokoroVoice}
                   options={KOKORO_TTS_VOICE_OPTIONS.map((option) => ({
@@ -650,8 +653,8 @@ export function SpoilerGeneratorDialog() {
                     label: option.label,
                   }))}
                   onValueChange={(value) => setKokoroVoice(value as KokoroTtsVoice)}
-                  placeholder="Select Kokoro voice"
-                  searchPlaceholder="Search voices..."
+                  placeholder={t('spoiler.dialog.voicePlaceholderKokoro')}
+                  searchPlaceholder={t('spoiler.dialog.searchVoices')}
                 />
               </div>
             )}
@@ -659,7 +662,7 @@ export function SpoilerGeneratorDialog() {
             {ttsEngine === 'supertonic' && (
               <>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Narration Voice</Label>
+                  <Label className="text-sm">{t('spoiler.dialog.narrationVoice')}</Label>
                   <Combobox
                     value={supertonicVoice}
                     options={SUPERTONIC_TTS_VOICE_OPTIONS.map((option) => ({
@@ -667,12 +670,12 @@ export function SpoilerGeneratorDialog() {
                       label: option.label,
                     }))}
                     onValueChange={(value) => setSupertonicVoice(value as SupertonicTtsVoice)}
-                    placeholder="Select Supertonic voice"
-                    searchPlaceholder="Search voices..."
+                    placeholder={t('spoiler.dialog.voicePlaceholderSupertonic')}
+                    searchPlaceholder={t('spoiler.dialog.searchVoices')}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Supertonic Language</Label>
+                  <Label className="text-sm">{t('spoiler.dialog.supertonicLanguage')}</Label>
                   <Combobox
                     value={supertonicLanguage}
                     options={SUPERTONIC_TTS_LANGUAGES.map((option) => ({
@@ -680,12 +683,11 @@ export function SpoilerGeneratorDialog() {
                       label: option.label,
                     }))}
                     onValueChange={(value) => setSupertonicLanguage(value as SupertonicTtsLanguage)}
-                    placeholder="Select language"
-                    searchPlaceholder="Search languages..."
+                    placeholder={t('spoiler.dialog.selectLanguage')}
+                    searchPlaceholder={t('spoiler.dialog.searchLanguages')}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Auto-detect inspects each narration line and picks the closest of 31 supported
-                    languages.
+                    {t('spoiler.dialog.supertonicLanguageHelp')}
                   </p>
                 </div>
               </>
@@ -693,7 +695,7 @@ export function SpoilerGeneratorDialog() {
 
             {ttsEngine === 'moss' && (
               <div className="space-y-1.5">
-                <Label className="text-sm">Narration Voice</Label>
+                <Label className="text-sm">{t('spoiler.dialog.narrationVoice')}</Label>
                 <Combobox
                   value={mossVoice}
                   options={MOSS_TTS_VOICE_OPTIONS.map((option) => ({
@@ -701,8 +703,8 @@ export function SpoilerGeneratorDialog() {
                     label: option.label,
                   }))}
                   onValueChange={(value) => setMossVoice(value as MossTtsVoice)}
-                  placeholder="Select MOSS voice"
-                  searchPlaceholder="Search voices..."
+                  placeholder={t('spoiler.dialog.voicePlaceholderMoss')}
+                  searchPlaceholder={t('spoiler.dialog.searchVoices')}
                 />
               </div>
             )}
@@ -710,7 +712,7 @@ export function SpoilerGeneratorDialog() {
             {ttsEngine === 'custom' && (
               <div className="space-y-1.5">
                 <SliderInput
-                  label="Narration Speed"
+                  label={t('spoiler.dialog.narrationSpeed')}
                   value={ttsSpeed}
                   onChange={(value) => {
                     if (Number.isFinite(value)) {
@@ -725,9 +727,7 @@ export function SpoilerGeneratorDialog() {
                   unit="x"
                   disabled={isRunning}
                 />
-                <p className="text-xs text-muted-foreground">
-                  1.0 = normal. Higher = faster. Provider-dependent.
-                </p>
+                <p className="text-xs text-muted-foreground">{t('spoiler.dialog.speedHelp')}</p>
               </div>
             )}
 
@@ -735,11 +735,10 @@ export function SpoilerGeneratorDialog() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="spoiler-episode-mode" className="text-sm">
-                    Episode mode
+                    {t('spoiler.dialog.episodeMode')}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Split into multiple compound clips with TTS opening/closing per episode. A full
-                    spoiler compound is also produced.
+                    {t('spoiler.dialog.episodeModeHelp')}
                   </p>
                 </div>
                 <Switch
@@ -757,7 +756,7 @@ export function SpoilerGeneratorDialog() {
                         htmlFor="spoiler-episode-min"
                         className="text-xs text-muted-foreground"
                       >
-                        Min duration (s)
+                        {t('spoiler.dialog.minDuration')}
                       </Label>
                       <Input
                         id="spoiler-episode-min"
@@ -785,7 +784,7 @@ export function SpoilerGeneratorDialog() {
                         htmlFor="spoiler-episode-max"
                         className="text-xs text-muted-foreground"
                       >
-                        Max duration (s)
+                        {t('spoiler.dialog.maxDuration')}
                       </Label>
                       <Input
                         id="spoiler-episode-max"
@@ -815,7 +814,7 @@ export function SpoilerGeneratorDialog() {
                       htmlFor="spoiler-episode-count"
                       className="text-xs text-muted-foreground"
                     >
-                      Number of episodes
+                      {t('spoiler.dialog.episodeCount')}
                     </Label>
                     <Input
                       id="spoiler-episode-count"
@@ -827,8 +826,7 @@ export function SpoilerGeneratorDialog() {
                       onChange={(event) => handleEpisodeCountChange(Number(event.target.value))}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Default {autoEpisodeCount} (spoiler duration ÷ max episode duration). Total
-                      runtime ≥ spoiler duration is guaranteed when default is used.
+                      {t('spoiler.dialog.episodeCountHelp', { count: autoEpisodeCount })}
                     </p>
                   </div>
 
@@ -837,7 +835,7 @@ export function SpoilerGeneratorDialog() {
                       htmlFor="spoiler-episode-opening"
                       className="text-xs text-muted-foreground"
                     >
-                      Opening template (episodes 2..N)
+                      {t('spoiler.dialog.openingTemplate')}
                     </Label>
                     <Textarea
                       id="spoiler-episode-opening"
@@ -847,13 +845,17 @@ export function SpoilerGeneratorDialog() {
                       onChange={(event) => setEpisodeOpeningTemplate(event.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Use <code>{'{n}'}</code> for current episode and <code>{'{next}'}</code> for
-                      next.
+                      <Trans
+                        i18nKey="spoiler.dialog.openingTemplateHelp"
+                        values={{ nToken: '{n}', nextToken: '{next}' }}
+                        components={{ 1: <code />, 2: <code /> }}
+                      />
                     </p>
                     {episodeOpeningTemplate.trim() && (
                       <p className="text-xs italic text-muted-foreground">
-                        Episode 2 opening: “
-                        {substituteTemplate(episodeOpeningTemplate, { n: 2, next: 3 })}”
+                        {t('spoiler.dialog.openingPreview', {
+                          text: substituteTemplate(episodeOpeningTemplate, { n: 2, next: 3 }),
+                        })}
                       </p>
                     )}
                   </div>
@@ -863,7 +865,7 @@ export function SpoilerGeneratorDialog() {
                       htmlFor="spoiler-episode-closing"
                       className="text-xs text-muted-foreground"
                     >
-                      Closing template (episodes 1..N-1)
+                      {t('spoiler.dialog.closingTemplate')}
                     </Label>
                     <Textarea
                       id="spoiler-episode-closing"
@@ -874,8 +876,9 @@ export function SpoilerGeneratorDialog() {
                     />
                     {episodeClosingTemplate.trim() && (
                       <p className="text-xs italic text-muted-foreground">
-                        Episode 1 closing: “
-                        {substituteTemplate(episodeClosingTemplate, { n: 1, next: 2 })}”
+                        {t('spoiler.dialog.closingPreview', {
+                          text: substituteTemplate(episodeClosingTemplate, { n: 1, next: 2 }),
+                        })}
                       </p>
                     )}
                   </div>
@@ -885,7 +888,7 @@ export function SpoilerGeneratorDialog() {
                       htmlFor="spoiler-boundary-speed"
                       className="text-xs text-muted-foreground"
                     >
-                      Opening / closing speed (×)
+                      {t('spoiler.dialog.boundarySpeed')}
                     </Label>
                     <Input
                       id="spoiler-boundary-speed"
@@ -908,14 +911,12 @@ export function SpoilerGeneratorDialog() {
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Client-side playback rate for the opening/closing audio. Use this if the TTS
-                      provider returns slow boundary narration. 1 = no change, 2 = twice as fast.
+                      {t('spoiler.dialog.boundarySpeedHelp')}
                     </p>
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Episode 1 has no opening; the last episode has no closing. The closing window
-                    keeps a B-roll continuation video playing under the CTA text.
+                    {t('spoiler.dialog.episodeBoundaryNote')}
                   </p>
                 </div>
               )}
@@ -925,10 +926,10 @@ export function SpoilerGeneratorDialog() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="spoiler-add-subtitles" className="text-sm">
-                    Subtitles
+                    {t('spoiler.dialog.subtitles')}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Built from the narration text + per-word timing.
+                    {t('spoiler.dialog.subtitlesHelp')}
                   </p>
                 </div>
                 <Switch
@@ -944,7 +945,7 @@ export function SpoilerGeneratorDialog() {
                     htmlFor="spoiler-words-per-caption"
                     className="text-xs text-muted-foreground"
                   >
-                    Words per caption
+                    {t('spoiler.dialog.wordsPerCaption')}
                   </Label>
                   <Input
                     id="spoiler-words-per-caption"
@@ -963,8 +964,8 @@ export function SpoilerGeneratorDialog() {
                   />
                   <p className="text-xs text-muted-foreground">
                     {wordsPerCaption === 1
-                      ? '1 = karaoke (one word per clip).'
-                      : `${wordsPerCaption} words per text clip. 5+ ≈ traditional caption.`}
+                      ? t('spoiler.dialog.wordsPerCaptionKaraoke')
+                      : t('spoiler.dialog.wordsPerCaptionDescription', { count: wordsPerCaption })}
                   </p>
                 </div>
               )}
@@ -974,11 +975,10 @@ export function SpoilerGeneratorDialog() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="spoiler-generate-cover-ai" className="text-sm">
-                    Generate cover with AI
+                    {t('spoiler.dialog.generateCoverAi')}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Design a poster image first; it will be used as the cover for every produced
-                    compound clip.
+                    {t('spoiler.dialog.generateCoverAiHelp')}
                   </p>
                 </div>
                 <Switch
@@ -989,7 +989,7 @@ export function SpoilerGeneratorDialog() {
               </div>
               {generateCoverWithAi && !imageGeneratorConfigured && (
                 <p className="pl-1 text-xs text-amber-600 dark:text-amber-400">
-                  Image Generator not configured. Open Settings → AI → Custom AI → Image Generator.
+                  {t('spoiler.dialog.imageGeneratorWarning')}
                 </p>
               )}
             </div>
@@ -1018,59 +1018,56 @@ export function SpoilerGeneratorDialog() {
                 minSec: COVER_DURATION_BOUNDS.min,
                 maxSec: COVER_DURATION_BOUNDS.max,
                 step: 0.5,
-                label: 'Cover duration (s)',
-                helpText:
-                  'How long the cover image plays at the start of every compound (and as a preroll before the opening narration in episode mode).',
+                label: t('spoiler.dialog.coverDurationLabel'),
+                helpText: t('spoiler.dialog.coverDurationHelp'),
               }}
               downloadFilenamePrefix={`spoiler-cover-${(mediaId ?? 'preview').slice(0, 8)}`}
               onImageGenerated={handleAiImageGenerated}
             />
 
             {aiPrefillLoading && (
-              <p className="text-[11px] text-muted-foreground">Loading transcript from media…</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t('spoiler.dialog.loadingTranscript')}
+              </p>
             )}
             {!aiPrefillLoading && !aiTranscriptLoaded && aiTranscript.trim().length === 0 && (
               <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-600 dark:text-amber-400">
-                Source media has no transcript yet. Right-click the media → "Transcribe" first, then
-                re-open this dialog.
+                {t('spoiler.dialog.noTranscriptWarning')}
               </p>
             )}
 
             {persistError && <Alert variant="error">{persistError}</Alert>}
-            {persistedCover && (
-              <Alert variant="success">
-                Cover saved. Click "Generate Spoiler" to start the pipeline.
-              </Alert>
-            )}
+            {persistedCover && <Alert variant="success">{t('spoiler.dialog.coverSaved')}</Alert>}
           </div>
         )}
 
         {step === 'confirm' && (
           <div className="-mr-2 max-h-[calc(85vh-180px)] space-y-3 overflow-y-auto pr-2">
-            <p className="text-xs text-muted-foreground">
-              Review the configuration below. Once you confirm, the AI pipeline runs through
-              transcription, scripting, narration, and assembly — typically 3-10 minutes depending
-              on the source film length and provider speed.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('spoiler.dialog.confirmIntro')}</p>
 
             <div className="rounded-md border px-3 py-3 space-y-3">
-              <SummaryRow label="Source media" value={media?.fileName ?? '—'} />
               <SummaryRow
-                label="Spoiler duration"
+                label={t('spoiler.dialog.summarySourceMedia')}
+                value={media?.fileName ?? '—'}
+              />
+              <SummaryRow
+                label={t('spoiler.dialog.summarySpoilerDuration')}
                 value={
-                  TARGET_DURATION_OPTIONS.find((o) => o.value === String(targetDurationSec))
-                    ?.label ?? `${Math.round(targetDurationSec / 60)} minutes`
+                  targetDurationOptions.find((o) => o.value === String(targetDurationSec))?.label ??
+                  t('spoiler.dialog.minutesFallback', {
+                    count: Math.round(targetDurationSec / 60),
+                  })
                 }
               />
               <SummaryRow
-                label="Narration"
+                label={t('spoiler.dialog.summaryNarration')}
                 value={`${
-                  NARRATION_LANGUAGE_OPTIONS.find((o) => o.value === narrationLanguage)?.label ??
+                  narrationLanguageOptions.find((o) => o.value === narrationLanguage)?.label ??
                   narrationLanguage
                 }${ttsEngine === 'custom' ? ` @ ${ttsSpeed.toFixed(1)}×` : ''}`}
               />
               <SummaryRow
-                label="TTS engine"
+                label={t('spoiler.dialog.summaryTtsEngine')}
                 value={
                   ttsEngine === 'kokoro'
                     ? `Kokoro · ${kokoroVoice}`
@@ -1081,84 +1078,106 @@ export function SpoilerGeneratorDialog() {
                         : `Custom AI${voicePreset ? ` · ${voicePreset}` : ''}`
                 }
               />
-              <SummaryRow label="Avg clip per segment" value={`${clipDurationSec}s (LLM hint)`} />
               <SummaryRow
-                label="Subtitles"
+                label={t('spoiler.dialog.summaryAvgClip')}
+                value={t('spoiler.dialog.summaryAvgClipValue', { seconds: clipDurationSec })}
+              />
+              <SummaryRow
+                label={t('spoiler.dialog.summarySubtitles')}
                 value={
                   addSubtitles
-                    ? `On · ${clampWordsPerCaption(wordsPerCaption)} word(s) per caption`
-                    : 'Off'
+                    ? t('spoiler.dialog.summarySubtitlesOn', {
+                        count: clampWordsPerCaption(wordsPerCaption),
+                      })
+                    : t('spoiler.dialog.summarySubtitlesOff')
                 }
               />
 
               <div className="border-t pt-3">
                 <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Episode mode
+                  {t('spoiler.dialog.summaryEpisodeMode')}
                 </p>
                 {episodeMode ? (
                   <div className="space-y-2">
                     <SummaryRow
-                      label="Episode count"
-                      value={`${effectiveEpisodeCount} (per-episode + 1 full = ${effectiveEpisodeCount + 1} compounds)`}
+                      label={t('spoiler.dialog.summaryEpisodeCount')}
+                      value={t('spoiler.dialog.summaryEpisodeCountValue', {
+                        count: effectiveEpisodeCount,
+                        total: effectiveEpisodeCount + 1,
+                      })}
                     />
                     <SummaryRow
-                      label="Per-episode bounds"
-                      value={`${episodeMinDurationSec}s – ${episodeMaxDurationSec}s body`}
+                      label={t('spoiler.dialog.summaryPerEpisodeBounds')}
+                      value={t('spoiler.dialog.summaryPerEpisodeBoundsValue', {
+                        min: episodeMinDurationSec,
+                        max: episodeMaxDurationSec,
+                      })}
                     />
                     <SummaryRow
-                      label="Boundary speed"
-                      value={`${boundaryNarrationSpeed.toFixed(1)}× (opening/closing TTS)`}
+                      label={t('spoiler.dialog.summaryBoundarySpeed')}
+                      value={t('spoiler.dialog.summaryBoundarySpeedValue', {
+                        speed: boundaryNarrationSpeed.toFixed(1),
+                      })}
                     />
                     <SummaryRow
-                      label="Opening template"
-                      value={episodeOpeningTemplate.trim() || '(none)'}
+                      label={t('spoiler.dialog.summaryOpeningTemplate')}
+                      value={
+                        episodeOpeningTemplate.trim() || t('spoiler.dialog.summaryTemplateNone')
+                      }
                       mono
                     />
                     <SummaryRow
-                      label="Closing template"
-                      value={episodeClosingTemplate.trim() || '(none)'}
+                      label={t('spoiler.dialog.summaryClosingTemplate')}
+                      value={
+                        episodeClosingTemplate.trim() || t('spoiler.dialog.summaryTemplateNone')
+                      }
                       mono
                     />
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Off · 1 full-duration compound only.
+                    {t('spoiler.dialog.summaryEpisodeOff')}
                   </p>
                 )}
               </div>
 
               <div className="border-t pt-3">
                 <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Cover
+                  {t('spoiler.dialog.summaryCover')}
                 </p>
                 {generateCoverWithAi ? (
                   persistedCover ? (
                     <div className="space-y-2">
                       <SummaryRow
-                        label="Mode"
-                        value={`AI-generated (${canvasWidth}×${canvasHeight})`}
+                        label={t('spoiler.dialog.summaryCoverMode')}
+                        value={t('spoiler.dialog.summaryCoverModeAi', {
+                          width: canvasWidth,
+                          height: canvasHeight,
+                        })}
                       />
                       <SummaryRow
-                        label="Preroll duration"
-                        value={`${coverDurationSec.toFixed(1)}s before opening narration`}
+                        label={t('spoiler.dialog.summaryPrerollDuration')}
+                        value={t('spoiler.dialog.summaryPrerollDurationValue', {
+                          seconds: coverDurationSec.toFixed(1),
+                        })}
                       />
                     </div>
                   ) : (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      AI cover not generated yet. Go back and click "Generate image".
+                      {t('spoiler.dialog.summaryCoverNotGenerated')}
                     </p>
                   )
                 ) : (
-                  <p className="text-xs text-muted-foreground">No cover.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('spoiler.dialog.summaryNoCover')}
+                  </p>
                 )}
               </div>
             </div>
 
             {episodeMode && (
               <Alert variant="warning">
-                The script writer must produce at least {effectiveEpisodeCount} segments to honor
-                your episode count. If it returns fewer, the pipeline will stop with a clear error —
-                you'll be able to lower the count and rerun without losing your settings.
+                {t('spoiler.dialog.episodeCountWarning', { count: effectiveEpisodeCount })}
               </Alert>
             )}
           </div>
@@ -1179,17 +1198,17 @@ export function SpoilerGeneratorDialog() {
                   progress.segmentIndex !== undefined &&
                   progress.segmentTotal > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Segment {progress.segmentIndex} / {progress.segmentTotal}
+                      {t('spoiler.dialog.segmentProgress', {
+                        current: progress.segmentIndex,
+                        total: progress.segmentTotal,
+                      })}
                     </p>
                   )}
               </div>
             )}
             {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
             {progress?.stage === 'done' && !errorMessage && (
-              <Alert variant="success">
-                Spoiler is ready. Open the compound clip in the timeline to preview, or export to
-                MP4.
-              </Alert>
+              <Alert variant="success">{t('spoiler.dialog.spoilerReady')}</Alert>
             )}
           </div>
         )}
@@ -1198,7 +1217,7 @@ export function SpoilerGeneratorDialog() {
           {step === 'settings' && (
             <>
               <Button variant="ghost" onClick={handleClose}>
-                Cancel
+                {t('spoiler.dialog.cancel')}
               </Button>
               <Button
                 onClick={handlePrimary}
@@ -1217,10 +1236,10 @@ export function SpoilerGeneratorDialog() {
             <>
               <Button variant="ghost" onClick={() => setStep('settings')}>
                 <ArrowLeft className="mr-1.5 h-4 w-4" />
-                Back
+                {t('spoiler.dialog.back')}
               </Button>
               <Button onClick={handlePrimary} disabled={!canRunWithAiCover}>
-                Next: Review
+                {t('spoiler.dialog.primaryNextReview')}
               </Button>
             </>
           )}
@@ -1228,14 +1247,14 @@ export function SpoilerGeneratorDialog() {
             <>
               <Button variant="ghost" onClick={handleConfirmBack}>
                 <ArrowLeft className="mr-1.5 h-4 w-4" />
-                Back
+                {t('spoiler.dialog.back')}
               </Button>
               <Button
                 onClick={handlePrimary}
                 disabled={generateCoverWithAi ? !canRunWithAiCover : !canRunWithoutAiCover}
               >
                 <Sparkles className="mr-1.5 h-4 w-4" />
-                Confirm &amp; Generate
+                {t('spoiler.dialog.primaryConfirm')}
               </Button>
             </>
           )}
@@ -1244,15 +1263,15 @@ export function SpoilerGeneratorDialog() {
               {isRunning && (
                 <Button variant="ghost" onClick={handleCancelRun}>
                   <Square className="mr-1.5 h-4 w-4" />
-                  Cancel
+                  {t('spoiler.dialog.cancel')}
                 </Button>
               )}
               {!isRunning && (
                 <>
                   <Button variant="ghost" onClick={() => setStep('settings')}>
-                    Back
+                    {t('spoiler.dialog.back')}
                   </Button>
-                  <Button onClick={handleClose}>Close</Button>
+                  <Button onClick={handleClose}>{t('spoiler.dialog.close')}</Button>
                 </>
               )}
               {isRunning && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}

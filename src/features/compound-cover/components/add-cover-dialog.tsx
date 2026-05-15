@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -33,6 +34,7 @@ type TextMode = 'transcript' | 'manual-prompt' | 'manual-text'
 type FrameSource = 'frame' | 'ai'
 
 export function AddCoverDialog() {
+  const { t } = useTranslation()
   const isOpen = useAddCoverDialogStore((s) => s.isOpen)
   const compositionId = useAddCoverDialogStore((s) => s.compositionId)
   const close = useAddCoverDialogStore((s) => s.close)
@@ -141,9 +143,7 @@ export function AddCoverDialog() {
     if (!compositionId) return
     if (textMode === 'manual-text') return
     if (!customConfigured) {
-      setErrorMessage(
-        'Configure base URL, API key, and model in Settings → AI → Custom AI → Vision Analyzer first.',
-      )
+      setErrorMessage(t('compoundCover.addCover.configureVisionAnalyzerError'))
       return
     }
 
@@ -169,18 +169,18 @@ export function AddCoverDialog() {
         setAccent(top.accent ?? '')
         setSecondary(top.secondary ?? '')
       } else {
-        setErrorMessage(
-          'The model did not return any usable suggestions. Try again or edit text manually.',
-        )
+        setErrorMessage(t('compoundCover.addCover.noSuggestionsError'))
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to generate cover text.')
+      setErrorMessage(
+        error instanceof Error ? error.message : t('compoundCover.addCover.generateTextFailed'),
+      )
     } finally {
       if (generateAbortRef.current === controller) generateAbortRef.current = null
       setGenerating(false)
     }
-  }, [compositionId, customConfigured, manualPrompt, textMode])
+  }, [compositionId, customConfigured, manualPrompt, textMode, t])
 
   const handleSuggestionClick = useCallback((suggestion: CoverTextSuggestion) => {
     setPrimary(suggestion.primary)
@@ -246,11 +246,15 @@ export function AddCoverDialog() {
 
       showNotification({
         type: 'success',
-        message: `Cover added (${result.coverDurationFrames} frames)`,
+        message: t('compoundCover.addCover.coverAddedNotification', {
+          frames: result.coverDurationFrames,
+        }),
       })
       close()
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to insert cover.')
+      setErrorMessage(
+        error instanceof Error ? error.message : t('compoundCover.addCover.insertCoverFailed'),
+      )
     } finally {
       setInserting(false)
     }
@@ -266,6 +270,7 @@ export function AddCoverDialog() {
     secondary,
     selectedFrame,
     showNotification,
+    t,
   ])
 
   const handleOpenChange = useCallback(
@@ -291,25 +296,24 @@ export function AddCoverDialog() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>Add Cover</DialogTitle>
-          <DialogDescription>
-            Insert a Vlog-style intro card at the start of this compound clip. Pick a frame, write
-            (or generate) the title, and choose the duration.
-          </DialogDescription>
+          <DialogTitle>{t('compoundCover.addCover.title')}</DialogTitle>
+          <DialogDescription>{t('compoundCover.addCover.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Cover image
+              {t('compoundCover.addCover.coverImageLabel')}
             </Label>
             <Tabs
               value={frameSource}
               onValueChange={(value) => setFrameSource(value as FrameSource)}
             >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="frame">Find frame</TabsTrigger>
-                <TabsTrigger value="ai">Generate with AI</TabsTrigger>
+                <TabsTrigger value="frame">{t('compoundCover.addCover.findFrameTab')}</TabsTrigger>
+                <TabsTrigger value="ai">
+                  {t('compoundCover.addCover.generateWithAiTab')}
+                </TabsTrigger>
               </TabsList>
               <TabsContent
                 value="frame"
@@ -324,28 +328,33 @@ export function AddCoverDialog() {
 
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Text
+                      {t('compoundCover.addCover.textLabel')}
                     </Label>
                     <Tabs
                       value={textMode}
                       onValueChange={(value) => setTextMode(value as TextMode)}
                     >
                       <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="transcript">From transcript</TabsTrigger>
-                        <TabsTrigger value="manual-prompt">Manual prompt</TabsTrigger>
-                        <TabsTrigger value="manual-text">Type myself</TabsTrigger>
+                        <TabsTrigger value="transcript">
+                          {t('compoundCover.addCover.fromTranscriptTab')}
+                        </TabsTrigger>
+                        <TabsTrigger value="manual-prompt">
+                          {t('compoundCover.addCover.manualPromptTab')}
+                        </TabsTrigger>
+                        <TabsTrigger value="manual-text">
+                          {t('compoundCover.addCover.typeMyselfTab')}
+                        </TabsTrigger>
                       </TabsList>
                       <TabsContent value="transcript" className="space-y-2">
                         <p className="text-xs text-muted-foreground">
-                          AI reads the transcript of every video/audio clip inside the compound clip
-                          and proposes 3 hook variations.
+                          {t('compoundCover.addCover.transcriptHint')}
                         </p>
                       </TabsContent>
                       <TabsContent value="manual-prompt" className="space-y-2">
                         <Textarea
                           value={manualPrompt}
                           onChange={(event) => setManualPrompt(event.target.value)}
-                          placeholder='e.g. "video wedding Sari & Andi" or "podcast tentang produktivitas"'
+                          placeholder={t('compoundCover.addCover.manualPromptPlaceholder')}
                           rows={2}
                           spellCheck={false}
                           className="resize-none text-sm"
@@ -353,7 +362,7 @@ export function AddCoverDialog() {
                       </TabsContent>
                       <TabsContent value="manual-text" className="space-y-2">
                         <p className="text-xs text-muted-foreground">
-                          AI is off — type the title directly into the fields below.
+                          {t('compoundCover.addCover.manualTextHint')}
                         </p>
                       </TabsContent>
                     </Tabs>
@@ -372,11 +381,13 @@ export function AddCoverDialog() {
                           ) : (
                             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                           )}
-                          {generating ? 'Generating…' : 'Generate'}
+                          {generating
+                            ? t('compoundCover.addCover.generating')
+                            : t('compoundCover.addCover.generate')}
                         </Button>
                         {!customConfigured ? (
                           <p className="text-xs text-amber-600 dark:text-amber-400">
-                            Configure Custom AI in Settings to enable AI text.
+                            {t('compoundCover.addCover.configureCustomAiHint')}
                           </p>
                         ) : null}
                       </div>
@@ -401,27 +412,31 @@ export function AddCoverDialog() {
 
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       <div className="space-y-1">
-                        <Label className="text-xs">Primary</Label>
+                        <Label className="text-xs">
+                          {t('compoundCover.addCover.primaryLabel')}
+                        </Label>
                         <Input
                           value={primary}
                           onChange={(event) => setPrimary(event.target.value)}
-                          placeholder="TEKNIK"
+                          placeholder={t('compoundCover.addCover.primaryPlaceholder')}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Accent</Label>
+                        <Label className="text-xs">{t('compoundCover.addCover.accentLabel')}</Label>
                         <Input
                           value={accent}
                           onChange={(event) => setAccent(event.target.value)}
-                          placeholder="JAGO NGOMONG"
+                          placeholder={t('compoundCover.addCover.accentPlaceholder')}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Secondary</Label>
+                        <Label className="text-xs">
+                          {t('compoundCover.addCover.secondaryLabel')}
+                        </Label>
                         <Input
                           value={secondary}
                           onChange={(event) => setSecondary(event.target.value)}
-                          placeholder="YANG MENGUBAH HIDUP"
+                          placeholder={t('compoundCover.addCover.secondaryPlaceholder')}
                         />
                       </div>
                     </div>
@@ -456,7 +471,7 @@ export function AddCoverDialog() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Duration
+                {t('compoundCover.addCover.durationLabel')}
               </Label>
               <span className="text-xs text-muted-foreground">{durationSec.toFixed(1)} s</span>
             </div>
@@ -471,7 +486,7 @@ export function AddCoverDialog() {
                   setDurationSec(Math.round(next * 10) / 10)
                 }
               }}
-              aria-label="Cover duration"
+              aria-label={t('compoundCover.addCover.coverDurationAriaLabel')}
             />
           </div>
 
@@ -487,11 +502,13 @@ export function AddCoverDialog() {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={inserting}>
-            Cancel
+            {t('compoundCover.addCover.cancel')}
           </Button>
           <Button onClick={() => void handleInsert()} disabled={!canInsert}>
             {inserting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            {inserting ? 'Inserting…' : 'Insert Cover'}
+            {inserting
+              ? t('compoundCover.addCover.inserting')
+              : t('compoundCover.addCover.insertCover')}
           </Button>
         </DialogFooter>
       </DialogContent>

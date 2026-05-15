@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Loader2, RotateCcw } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
@@ -18,6 +19,7 @@ import { DEFAULT_SCRIPT_WRITER_SYSTEM_PROMPT } from '@/features/editor/deps/spoi
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 
 export function VisionAnalyzerSection() {
+  const { t } = useTranslation()
   const visionAnalyzer = useCustomAiStore((s) => s.visionAnalyzer)
   const setVisionAnalyzer = useCustomAiStore((s) => s.setVisionAnalyzer)
   const resetVisionAnalyzer = useCustomAiStore((s) => s.resetVisionAnalyzer)
@@ -50,7 +52,7 @@ export function VisionAnalyzerSection() {
         model: stillSelected ? visionAnalyzer.model : (models[0]?.id ?? ''),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load models')
+      setError(err instanceof Error ? err.message : t('settings.visionAnalyzer.failedToLoadModels'))
     } finally {
       setLoading(false)
     }
@@ -60,6 +62,7 @@ export function VisionAnalyzerSection() {
     visionAnalyzer.baseUrl,
     visionAnalyzer.model,
     setVisionAnalyzer,
+    t,
   ])
 
   const isPristine =
@@ -80,7 +83,7 @@ export function VisionAnalyzerSection() {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label className="text-sm">Base URL</Label>
+        <Label className="text-sm">{t('settings.visionAnalyzer.baseUrl')}</Label>
         <Input
           type="url"
           autoComplete="off"
@@ -92,7 +95,7 @@ export function VisionAnalyzerSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">API Key</Label>
+        <Label className="text-sm">{t('settings.visionAnalyzer.apiKey')}</Label>
         <div className="flex items-center gap-2">
           <Input
             type="password"
@@ -110,7 +113,7 @@ export function VisionAnalyzerSection() {
             className="shrink-0"
           >
             {loading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            {loading ? 'Loading' : 'Load'}
+            {loading ? t('settings.visionAnalyzer.loading') : t('settings.visionAnalyzer.load')}
           </Button>
         </div>
         {error ? (
@@ -124,27 +127,31 @@ export function VisionAnalyzerSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">Model</Label>
+        <Label className="text-sm">{t('settings.visionAnalyzer.model')}</Label>
         <Combobox
           value={visionAnalyzer.model}
           options={modelOptions}
           onValueChange={(value) => setVisionAnalyzer({ model: value })}
-          placeholder={modelOptions.length === 0 ? 'Load models to choose…' : 'Select a model'}
-          searchPlaceholder="Search models..."
-          emptyMessage="No models loaded yet."
+          placeholder={
+            modelOptions.length === 0
+              ? t('settings.visionAnalyzer.loadModelsToChoose')
+              : t('settings.visionAnalyzer.selectAModel')
+          }
+          searchPlaceholder={t('settings.visionAnalyzer.searchModels')}
+          emptyMessage={t('settings.visionAnalyzer.noModelsLoaded')}
           disabled={modelOptions.length === 0}
         />
         <p className="text-xs text-muted-foreground">
-          Vision-capable model required for <strong>Analyze with AI → Custom AI</strong> (e.g.{' '}
-          <code className="text-foreground">gpt-4o-mini</code>,{' '}
-          <code className="text-foreground">gemini-2.5-flash</code>). Same model is also used by{' '}
-          <strong>Highlight Finder</strong> for text reasoning.
+          <Trans
+            i18nKey="settings.visionAnalyzer.modelHint"
+            components={{ s: <strong />, c: <code className="text-foreground" /> }}
+          />
         </p>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Highlight Finder Prompt</Label>
+          <Label className="text-sm">{t('settings.visionAnalyzer.highlightFinderPrompt')}</Label>
           <Button
             type="button"
             variant="ghost"
@@ -152,10 +159,10 @@ export function VisionAnalyzerSection() {
             className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
             onClick={() => setVisionAnalyzer({ highlightFinderPrompt: '' })}
             disabled={!promptIsCustom}
-            aria-label="Reset Highlight Finder prompt to default"
+            aria-label={t('settings.visionAnalyzer.resetHighlightFinderPromptAria')}
           >
             <RotateCcw className="h-3 w-3" />
-            Reset prompt
+            {t('settings.visionAnalyzer.resetPrompt')}
           </Button>
         </div>
         <Textarea
@@ -167,15 +174,16 @@ export function VisionAnalyzerSection() {
           className="min-h-32 resize-y font-mono text-[11px]"
         />
         <p className="text-xs text-muted-foreground">
-          Customize the system prompt sent to the chat model for <strong>Highlight Finder</strong>.
-          Leave empty to use the default (shown as placeholder). The user message (clips + targets)
-          is always appended automatically.
+          <Trans
+            i18nKey="settings.visionAnalyzer.highlightFinderPromptHint"
+            components={{ s: <strong /> }}
+          />
         </p>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Cover Text Prompt</Label>
+          <Label className="text-sm">{t('settings.visionAnalyzer.coverTextPrompt')}</Label>
           <Button
             type="button"
             variant="ghost"
@@ -183,10 +191,10 @@ export function VisionAnalyzerSection() {
             className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
             onClick={() => setVisionAnalyzer({ coverFinderPrompt: '' })}
             disabled={!coverPromptIsCustom}
-            aria-label="Reset Cover Text prompt to default"
+            aria-label={t('settings.visionAnalyzer.resetCoverTextPromptAria')}
           >
             <RotateCcw className="h-3 w-3" />
-            Reset prompt
+            {t('settings.visionAnalyzer.resetPrompt')}
           </Button>
         </div>
         <Textarea
@@ -198,15 +206,16 @@ export function VisionAnalyzerSection() {
           className="min-h-32 resize-y font-mono text-[11px]"
         />
         <p className="text-xs text-muted-foreground">
-          Customize the system prompt sent to the chat model for <strong>Add Cover</strong> on
-          compound clips. Leave empty to use the default. The user message (transcript or manual
-          context) is appended automatically.
+          <Trans
+            i18nKey="settings.visionAnalyzer.coverTextPromptHint"
+            components={{ s: <strong /> }}
+          />
         </p>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Script Writer Prompt</Label>
+          <Label className="text-sm">{t('settings.visionAnalyzer.scriptWriterPrompt')}</Label>
           <Button
             type="button"
             variant="ghost"
@@ -214,10 +223,10 @@ export function VisionAnalyzerSection() {
             className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
             onClick={() => setVisionAnalyzer({ scriptWriterPrompt: '' })}
             disabled={!scriptPromptIsCustom}
-            aria-label="Reset Script Writer prompt to default"
+            aria-label={t('settings.visionAnalyzer.resetScriptWriterPromptAria')}
           >
             <RotateCcw className="h-3 w-3" />
-            Reset prompt
+            {t('settings.visionAnalyzer.resetPrompt')}
           </Button>
         </div>
         <Textarea
@@ -229,17 +238,16 @@ export function VisionAnalyzerSection() {
           className="min-h-32 resize-y font-mono text-[11px]"
         />
         <p className="text-xs text-muted-foreground">
-          Customize the system prompt sent to the chat model for{' '}
-          <strong>Auto Spoiler Generator</strong> (full-transcript narrative scriptwriting). Leave
-          empty to use the default. The user message (transcript + duration target + language) is
-          appended automatically. Use a long-context model (e.g. Claude Sonnet 4.6, GPT-4o, Gemini
-          2.5 Pro) for 1–2 hour films.
+          <Trans
+            i18nKey="settings.visionAnalyzer.scriptWriterPromptHint"
+            components={{ s: <strong /> }}
+          />
         </p>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Poster Prompt</Label>
+          <Label className="text-sm">{t('settings.visionAnalyzer.posterPrompt')}</Label>
           <Button
             type="button"
             variant="ghost"
@@ -247,10 +255,10 @@ export function VisionAnalyzerSection() {
             className="h-7 gap-1 px-2 text-[11px] text-muted-foreground"
             onClick={() => setVisionAnalyzer({ posterPromptSystemPrompt: '' })}
             disabled={!posterPromptIsCustom}
-            aria-label="Reset Poster prompt to default"
+            aria-label={t('settings.visionAnalyzer.resetPosterPromptAria')}
           >
             <RotateCcw className="h-3 w-3" />
-            Reset prompt
+            {t('settings.visionAnalyzer.resetPrompt')}
           </Button>
         </div>
         <Textarea
@@ -262,19 +270,15 @@ export function VisionAnalyzerSection() {
           className="min-h-32 resize-y font-mono text-[11px]"
         />
         <p className="text-xs text-muted-foreground">
-          Customize the system prompt sent to the chat model when{' '}
-          <strong>Add Cover → Generate with AI</strong> drafts the poster prompt from the compound
-          title + transcript. The Image Generator (configured separately) renders the result. Leave
-          empty to use the default.
+          <Trans
+            i18nKey="settings.visionAnalyzer.posterPromptHint"
+            components={{ s: <strong /> }}
+          />
         </p>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Used by <strong>Analyze with AI → Custom AI</strong> (per-frame vision captioning),{' '}
-        <strong>Highlight Finder</strong> (text reasoning over captions + transcripts),{' '}
-        <strong>Add Cover</strong> (Vlog-style title generation + AI poster prompt drafting for
-        compound clips), and <strong>Auto Spoiler Generator</strong> (full-transcript script
-        writing).
+        <Trans i18nKey="settings.visionAnalyzer.usedByHint" components={{ s: <strong /> }} />
       </p>
 
       <div className="flex justify-end">
@@ -288,7 +292,7 @@ export function VisionAnalyzerSection() {
           }}
           disabled={isPristine}
         >
-          Reset
+          {t('settings.visionAnalyzer.reset')}
         </Button>
       </div>
     </div>

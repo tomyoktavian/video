@@ -327,8 +327,16 @@ export const TrackHeader = memo(function TrackHeader({
                   type="button"
                   className="flex items-center justify-center w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={handleToggleMute}
-                  aria-label={isMuted ? 'Unmute track' : 'Mute track'}
-                  data-tooltip={isMuted ? 'Unmute track' : 'Mute track'}
+                  aria-label={
+                    isMuted
+                      ? t('timeline.trackHeader.unmuteTrack')
+                      : t('timeline.trackHeader.muteTrack')
+                  }
+                  data-tooltip={
+                    isMuted
+                      ? t('timeline.trackHeader.unmuteTrack')
+                      : t('timeline.trackHeader.muteTrack')
+                  }
                 >
                   {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
                 </button>
@@ -339,7 +347,7 @@ export const TrackHeader = memo(function TrackHeader({
                   value={[localVolume]}
                   onValueChange={handleVolumeChange}
                   className="w-14"
-                  aria-label="Track volume"
+                  aria-label={t('timeline.trackHeader.trackVolume')}
                 />
                 <span className="text-[9px] w-7 text-right text-muted-foreground tabular-nums">
                   {localVolume > -60 ? `${localVolume > 0 ? '+' : ''}${localVolume}` : '-∞'}

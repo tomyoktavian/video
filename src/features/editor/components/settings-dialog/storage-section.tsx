@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ import {
 const log = createLogger('SettingsDialog')
 
 export function StorageSection() {
+  const { t } = useTranslation()
   const mediaItems = useMediaLibraryStore((s) => s.mediaItems)
   const proxyStatus = useMediaLibraryStore((s) => s.proxyStatus)
 
@@ -60,9 +62,9 @@ export function StorageSection() {
       setClearFeedback(feedback)
       setClearState(result.failed === 0 ? 'done' : 'partial')
       showBatchOutcomeToast(
-        'Project cache cleared',
-        'Project cache partially cleared',
-        'Project cache not cleared',
+        t('settings.toasts.projectCacheCleared'),
+        t('settings.toasts.projectCachePartiallyCleared'),
+        t('settings.toasts.projectCacheNotCleared'),
         result,
       )
       setTimeout(() => setClearState('idle'), 2000)
@@ -70,12 +72,12 @@ export function StorageSection() {
       log.error('Failed to clear caches', err)
       setClearFeedback({
         tone: 'error',
-        message: "Couldn't clear project cache.",
+        message: t('settings.feedback.couldntClearCache'),
       })
-      toast.error('Failed to clear project cache')
+      toast.error(t('settings.toasts.failedToClearCache'))
       setClearState('idle')
     }
-  }, [mediaItems])
+  }, [mediaItems, t])
 
   const handleRegenThumbnails = useCallback(async () => {
     setRegenState('working')
@@ -93,9 +95,9 @@ export function StorageSection() {
       setRegenFeedback(feedback)
       setRegenState(result.failed === 0 ? 'done' : 'partial')
       showBatchOutcomeToast(
-        'Thumbnails regenerated',
-        'Thumbnails partially regenerated',
-        'Thumbnails not regenerated',
+        t('settings.toasts.thumbnailsRegenerated'),
+        t('settings.toasts.thumbnailsPartiallyRegenerated'),
+        t('settings.toasts.thumbnailsNotRegenerated'),
         result,
       )
       setTimeout(() => {
@@ -106,13 +108,13 @@ export function StorageSection() {
       log.error('Failed to regenerate thumbnails', err)
       setRegenFeedback({
         tone: 'error',
-        message: "Couldn't regenerate thumbnails.",
+        message: t('settings.feedback.couldntRegenerateThumbnails'),
       })
-      toast.error('Failed to regenerate thumbnails')
+      toast.error(t('settings.toasts.failedToRegenerateThumbnails'))
       setRegenState('idle')
       setRegenProgress('')
     }
-  }, [mediaItems])
+  }, [mediaItems, t])
 
   const handleClearProxies = useCallback(async () => {
     setProxyState('clearing')
@@ -122,9 +124,9 @@ export function StorageSection() {
       setProxyFeedback(feedback)
       setProxyState(result.failed === 0 ? 'done' : 'partial')
       showBatchOutcomeToast(
-        'Proxies deleted',
-        'Proxies partially deleted',
-        'Proxies not deleted',
+        t('settings.toasts.proxiesDeleted'),
+        t('settings.toasts.proxiesPartiallyDeleted'),
+        t('settings.toasts.proxiesNotDeleted'),
         result,
       )
       setTimeout(() => setProxyState('idle'), 2000)
@@ -132,12 +134,12 @@ export function StorageSection() {
       log.error('Failed to clear proxies', err)
       setProxyFeedback({
         tone: 'error',
-        message: "Couldn't delete proxies.",
+        message: t('settings.feedback.couldntDeleteProxies'),
       })
-      toast.error('Failed to delete proxies')
+      toast.error(t('settings.toasts.failedToDeleteProxies'))
       setProxyState('idle')
     }
-  }, [mediaItems])
+  }, [mediaItems, t])
 
   const handleGenerateMissingProxies = useCallback(async () => {
     setProxyGenerateState('queueing')
@@ -197,9 +199,9 @@ export function StorageSection() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-sm">Generate Missing Proxies</Label>
+            <Label className="text-sm">{t('settings.storage.generateMissingProxies')}</Label>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Queue proxy generation for video in this project that does not have one yet
+              {t('settings.storage.generateMissingProxiesDescription')}
             </p>
           </div>
           <Button
@@ -213,20 +215,20 @@ export function StorageSection() {
             {proxyGenerateState === 'done' && <Check className="w-3.5 h-3.5" />}
             {proxyGenerateState === 'idle' && <Film className="w-3.5 h-3.5" />}
             {proxyGenerateState === 'queueing'
-              ? 'Queueing...'
+              ? t('settings.storage.queueing')
               : proxyGenerateState === 'done'
-                ? 'Queued'
+                ? t('settings.storage.queued')
                 : missingProjectProxyCount > 0
-                  ? `Generate (${missingProjectProxyCount})`
-                  : 'Up to date'}
+                  ? t('settings.storage.generateWithCount', { count: missingProjectProxyCount })
+                  : t('settings.storage.upToDate')}
           </Button>
         </div>
         <Separator className="bg-white/8" />
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-sm">Clear Project Cache</Label>
+            <Label className="text-sm">{t('settings.storage.clearProjectCache')}</Label>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Waveforms, filmstrips, GIF frames, decoded audio
+              {t('settings.storage.clearProjectCacheDescription')}
             </p>
             {clearFeedback && (
               <p
@@ -251,19 +253,19 @@ export function StorageSection() {
             {clearState === 'partial' && <TriangleAlert className="w-3.5 h-3.5" />}
             {clearState === 'idle' && <Trash2 className="w-3.5 h-3.5" />}
             {clearState === 'clearing'
-              ? 'Clearing...'
+              ? t('settings.storage.clearing')
               : clearState === 'done'
-                ? 'Cleared'
+                ? t('settings.storage.cleared')
                 : clearState === 'partial'
-                  ? 'Partial'
-                  : 'Clear'}
+                  ? t('settings.storage.partial')
+                  : t('settings.storage.clear')}
           </Button>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-sm">Regenerate Thumbnails</Label>
+            <Label className="text-sm">{t('settings.storage.regenerateThumbnails')}</Label>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Re-create media library thumbnails for this project
+              {t('settings.storage.regenerateThumbnailsDescription')}
             </p>
             {regenFeedback && (
               <p
@@ -290,17 +292,17 @@ export function StorageSection() {
             {regenState === 'working'
               ? regenProgress
               : regenState === 'done'
-                ? 'Done'
+                ? t('settings.storage.done')
                 : regenState === 'partial'
-                  ? 'Partial'
-                  : 'Regenerate'}
+                  ? t('settings.storage.partial')
+                  : t('settings.storage.regenerate')}
           </Button>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-sm">Delete Proxies</Label>
+            <Label className="text-sm">{t('settings.storage.deleteProxies')}</Label>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Remove generated proxy videos for this project
+              {t('settings.storage.deleteProxiesDescription')}
             </p>
             {proxyFeedback && (
               <p
@@ -325,20 +327,20 @@ export function StorageSection() {
             {proxyState === 'partial' && <TriangleAlert className="w-3.5 h-3.5" />}
             {proxyState === 'idle' && <Film className="w-3.5 h-3.5" />}
             {proxyState === 'clearing'
-              ? 'Deleting...'
+              ? t('settings.storage.deleting')
               : proxyState === 'done'
-                ? 'Deleted'
+                ? t('settings.storage.deleted')
                 : proxyState === 'partial'
-                  ? 'Partial'
-                  : 'Delete'}
+                  ? t('settings.storage.partial')
+                  : t('settings.storage.delete')}
           </Button>
         </div>
         <Separator className="bg-white/8" />
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-sm">Local AI</Label>
+            <Label className="text-sm">{t('settings.storage.localAi')}</Label>
             <p className="text-xs text-muted-foreground">
-              Unload resident runtimes or clear cached model downloads.
+              {t('settings.storage.localAiDescription')}
             </p>
           </div>
           <LocalInferenceUnloadControl />
@@ -349,22 +351,19 @@ export function StorageSection() {
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Clear project cache?</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.storage.clearCacheConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete cached waveforms, filmstrips, GIF frames, and decoded audio for the
-              current project ({mediaItems.length} media items). These will be regenerated
-              automatically when needed. Your project data, media files, thumbnails, and proxies
-              will not be affected.
+              {t('settings.storage.clearCacheConfirmDescription', { count: mediaItems.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('settings.storage.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 void handleClearCache()
               }}
             >
-              Clear Cache
+              {t('settings.storage.clearCache')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

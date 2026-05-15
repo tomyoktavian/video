@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -25,32 +26,43 @@ import { VisionAnalyzerSection } from './vision-analyzer-section'
 const ESTIMATE_REFERENCE_DURATION_SEC = 60
 const ESTIMATE_REFERENCE_FPS = 30
 
-function formatCaptionEstimate(unit: CaptioningIntervalUnit, value: number): string {
-  const intervalSec = resolveCaptioningIntervalSec(unit, value, ESTIMATE_REFERENCE_FPS)
-  if (intervalSec <= 0) {
-    return 'Enter an interval above zero.'
+function useCaptionEstimate() {
+  const { t } = useTranslation()
+  return (unit: CaptioningIntervalUnit, value: number): string => {
+    const intervalSec = resolveCaptioningIntervalSec(unit, value, ESTIMATE_REFERENCE_FPS)
+    if (intervalSec <= 0) {
+      return t('settings.ai.enterIntervalAboveZero')
+    }
+    const sceneCount = Math.max(1, Math.round(ESTIMATE_REFERENCE_DURATION_SEC / intervalSec))
+    const scenes = t(sceneCount === 1 ? 'settings.ai.scene_one' : 'settings.ai.scene_other')
+    return t('settings.ai.captionEstimate', {
+      sceneCount,
+      scenes,
+      fps: ESTIMATE_REFERENCE_FPS,
+    })
   }
-  const sceneCount = Math.max(1, Math.round(ESTIMATE_REFERENCE_DURATION_SEC / intervalSec))
-  return `~${sceneCount} ${sceneCount === 1 ? 'scene' : 'scenes'} per 1-min clip at ${ESTIMATE_REFERENCE_FPS}fps`
 }
 
 function LocalAiTab() {
+  const { t } = useTranslation()
+  const formatCaptionEstimate = useCaptionEstimate()
   const captioningIntervalUnit = useSettingsStore((s) => s.captioningIntervalUnit)
   const captioningIntervalValue = useSettingsStore((s) => s.captioningIntervalValue)
   const setSetting = useSettingsStore((s) => s.setSetting)
 
   const intervalBounds = CAPTIONING_INTERVAL_BOUNDS[captioningIntervalUnit]
   const intervalInputStep = captioningIntervalUnit === 'seconds' ? 0.5 : 1
-  const intervalUnitLabel = captioningIntervalUnit === 'seconds' ? 'sec' : 'frames'
+  const intervalUnitLabel =
+    captioningIntervalUnit === 'seconds' ? t('settings.ai.unitSec') : t('settings.ai.unitFrames')
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-sm">Caption sample interval</Label>
+            <Label className="text-sm">{t('settings.ai.captionSampleInterval')}</Label>
             <p className="text-xs text-muted-foreground">
-              How often Analyze with AI samples a frame for captioning.
+              {t('settings.ai.captionSampleIntervalDescription')}
             </p>
           </div>
         </div>
@@ -68,7 +80,7 @@ function LocalAiTab() {
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {unit === 'seconds' ? 'Seconds' : 'Frames'}
+                {unit === 'seconds' ? t('settings.ai.seconds') : t('settings.ai.frames')}
               </button>
             ))}
           </div>
@@ -101,12 +113,13 @@ function LocalAiTab() {
               captioningIntervalValue === DEFAULT_CAPTIONING_INTERVAL_SECONDS
             }
           >
-            Reset
+            {t('settings.ai.reset')}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {formatCaptionEstimate(captioningIntervalUnit, captioningIntervalValue)}. Smaller
-          intervals produce denser scenes but take longer to generate.
+          {t('settings.ai.captionIntervalHint', {
+            estimate: formatCaptionEstimate(captioningIntervalUnit, captioningIntervalValue),
+          })}
         </p>
       </div>
     </div>
@@ -114,28 +127,29 @@ function LocalAiTab() {
 }
 
 function CustomAiTab() {
+  const { t } = useTranslation()
   return (
     <Accordion type="single" collapsible defaultValue="caption-maker" className="w-full">
       <AccordionItem value="caption-maker">
-        <AccordionTrigger>Caption Maker</AccordionTrigger>
+        <AccordionTrigger>{t('settings.ai.captionMakerHeader')}</AccordionTrigger>
         <AccordionContent>
           <CaptionMakerSection />
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="text-to-speech">
-        <AccordionTrigger>Text to Speech</AccordionTrigger>
+        <AccordionTrigger>{t('settings.ai.textToSpeechHeader')}</AccordionTrigger>
         <AccordionContent>
           <TextToSpeechSection />
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="vision-analyzer">
-        <AccordionTrigger>Vision Analyzer</AccordionTrigger>
+        <AccordionTrigger>{t('settings.ai.visionAnalyzerHeader')}</AccordionTrigger>
         <AccordionContent>
           <VisionAnalyzerSection />
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="image-generator">
-        <AccordionTrigger>Image Generator</AccordionTrigger>
+        <AccordionTrigger>{t('settings.ai.imageGeneratorHeader')}</AccordionTrigger>
         <AccordionContent>
           <ImageGeneratorSection />
         </AccordionContent>
@@ -145,6 +159,7 @@ function CustomAiTab() {
 }
 
 export function AiSection() {
+  const { t } = useTranslation()
   const anyCustomConfigured = useCustomAiStore((s) =>
     isAnyCustomAiConfigured({
       captionMaker: s.captionMaker,
@@ -161,8 +176,8 @@ export function AiSection() {
     <div className="w-full">
       <Tabs key={initialTab} defaultValue={initialTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="local">Local AI</TabsTrigger>
-          <TabsTrigger value="custom">Custom AI</TabsTrigger>
+          <TabsTrigger value="local">{t('settings.ai.localAi')}</TabsTrigger>
+          <TabsTrigger value="custom">{t('settings.ai.customAi')}</TabsTrigger>
         </TabsList>
         <TabsContent value="local">
           <LocalAiTab />

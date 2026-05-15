@@ -144,10 +144,10 @@
       "actionClearCache": "キャッシュをクリア",
       "actionRegenerateThumbnails": "サムネイルを再生成",
       "actionDeleteProxies": "プロキシを削除",
-      "noMediaNeededUpdating": "No project media needed updating.",
-      "couldntProcessItems_one": "{{action}}: couldn't process {{count}} item{{detail}}",
-      "couldntProcessItems_other": "{{action}}: couldn't process {{count}} items{{detail}}",
-      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} done. Needs attention: {{failed}}."
+      "noMediaNeededUpdating": "更新が必要なプロジェクトメディアはありませんでした。",
+      "couldntProcessItems_one": "{{action}}: {{count}} 件のアイテムを処理できませんでした{{detail}}",
+      "couldntProcessItems_other": "{{action}}: {{count}} 件のアイテムを処理できませんでした{{detail}}",
+      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} 件完了。要確認: {{failed}}。"
     }
   }
 }

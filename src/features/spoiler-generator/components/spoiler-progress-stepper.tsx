@@ -1,24 +1,25 @@
 import { Check, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { SpoilerStage } from '../types'
 
 interface StageDef {
   stage: SpoilerStage
-  label: string
+  labelKey: string
 }
 
 const STAGE_ORDER: StageDef[] = [
-  { stage: 'transcribing', label: 'Transcribe' },
-  { stage: 'writing-script', label: 'Write Script' },
-  { stage: 'resolving-highlights', label: 'Pick Clips' },
-  { stage: 'generating-narration', label: 'Generate Narration' },
-  { stage: 'transcribing-narration', label: 'Subtitle Timing' },
-  { stage: 'planning-episodes', label: 'Plan Episodes' },
-  { stage: 'generating-episode-narration', label: 'Episode Openings/Closings' },
-  { stage: 'syncing-durations', label: 'Sync Durations' },
-  { stage: 'applying-highlights', label: 'Build Compound' },
-  { stage: 'inserting-subtitles', label: 'Subtitles' },
-  { stage: 'inserting-cover', label: 'Cover' },
+  { stage: 'transcribing', labelKey: 'spoiler.progress.transcribe' },
+  { stage: 'writing-script', labelKey: 'spoiler.progress.writeScript' },
+  { stage: 'resolving-highlights', labelKey: 'spoiler.progress.pickClips' },
+  { stage: 'generating-narration', labelKey: 'spoiler.progress.generateNarration' },
+  { stage: 'transcribing-narration', labelKey: 'spoiler.progress.subtitleTiming' },
+  { stage: 'planning-episodes', labelKey: 'spoiler.progress.planEpisodes' },
+  { stage: 'generating-episode-narration', labelKey: 'spoiler.progress.episodeBoundaries' },
+  { stage: 'syncing-durations', labelKey: 'spoiler.progress.syncDurations' },
+  { stage: 'applying-highlights', labelKey: 'spoiler.progress.buildCompound' },
+  { stage: 'inserting-subtitles', labelKey: 'spoiler.progress.subtitles' },
+  { stage: 'inserting-cover', labelKey: 'spoiler.progress.cover' },
 ]
 
 export interface SpoilerProgressStepperProps {
@@ -34,6 +35,7 @@ function stageIndex(stage: SpoilerStage): number {
 }
 
 export function SpoilerProgressStepper(props: SpoilerProgressStepperProps) {
+  const { t } = useTranslation()
   const stages = STAGE_ORDER.filter((stage) => {
     if (stage.stage === 'transcribing-narration' && !props.showSubtitles) return false
     if (stage.stage === 'inserting-subtitles' && !props.showSubtitles) return false
@@ -86,7 +88,7 @@ export function SpoilerProgressStepper(props: SpoilerProgressStepperProps) {
                     : 'text-muted-foreground/70'
               }
             >
-              {stage.label}
+              {t(stage.labelKey)}
             </span>
           </li>
         )

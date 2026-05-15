@@ -89,6 +89,7 @@ function ClearTimelineButton({
   btnSize: { width: string; height: string }
   disabled: boolean
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   const handleClear = useCallback(() => {
@@ -112,26 +113,24 @@ function ClearTimelineButton({
         style={btnSize}
         onClick={() => setOpen(true)}
         disabled={disabled}
-        aria-label="Clear timeline"
-        data-tooltip="Clear Timeline"
+        aria-label={t('timeline.clearTimeline.aria')}
+        data-tooltip={t('timeline.clearTimeline.tooltip')}
         className="text-muted-foreground hover:text-destructive"
       >
         <Trash2 className="w-3.5 h-3.5" />
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Clear Timeline</AlertDialogTitle>
-          <AlertDialogDescription>
-            Clear All items and reset tracks to default (V1 + A1). This action cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t('timeline.clearTimeline.title')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('timeline.clearTimeline.description')}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleClear}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Clear All
+            {t('timeline.clearTimeline.clearAll')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -740,8 +739,8 @@ export const TimelineHeader = memo(function TimelineHeader({
           size="icon"
           style={btnSize}
           onClick={handleFitTracks}
-          aria-label="Fit tracks to minimum height"
-          data-tooltip={`Fit Tracks (${formatHotkeyBinding(hotkeys.FIT_TRACKS)})`}
+          aria-label={t('timeline.fitTracks.aria')}
+          data-tooltip={`${t('timeline.fitTracks.tooltip')} (${formatHotkeyBinding(hotkeys.FIT_TRACKS)})`}
         >
           <ChevronsDownUp className="w-3.5 h-3.5" />
         </Button>

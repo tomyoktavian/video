@@ -144,10 +144,10 @@
       "actionClearCache": "清除缓存",
       "actionRegenerateThumbnails": "重新生成缩略图",
       "actionDeleteProxies": "删除代理",
-      "noMediaNeededUpdating": "No project media needed updating.",
-      "couldntProcessItems_one": "{{action}}: couldn't process {{count}} item{{detail}}",
-      "couldntProcessItems_other": "{{action}}: couldn't process {{count}} items{{detail}}",
-      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} done. Needs attention: {{failed}}."
+      "noMediaNeededUpdating": "没有项目媒体需要更新。",
+      "couldntProcessItems_one": "{{action}}：无法处理 {{count}} 个项目{{detail}}",
+      "couldntProcessItems_other": "{{action}}：无法处理 {{count}} 个项目{{detail}}",
+      "partialOutcome": "{{action}}：{{succeeded}}/{{total}} 已完成。需要处理：{{failed}}。"
     }
   }
 }

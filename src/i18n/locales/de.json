@@ -144,10 +144,10 @@
       "actionClearCache": "Cache leeren",
       "actionRegenerateThumbnails": "Vorschaubilder neu generieren",
       "actionDeleteProxies": "Proxys löschen",
-      "noMediaNeededUpdating": "No project media needed updating.",
-      "couldntProcessItems_one": "{{action}}: couldn't process {{count}} item{{detail}}",
-      "couldntProcessItems_other": "{{action}}: couldn't process {{count}} items{{detail}}",
-      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} done. Needs attention: {{failed}}."
+      "noMediaNeededUpdating": "Keine Projektmedien mussten aktualisiert werden.",
+      "couldntProcessItems_one": "{{action}}: {{count}} Element konnte nicht verarbeitet werden{{detail}}",
+      "couldntProcessItems_other": "{{action}}: {{count}} Elemente konnten nicht verarbeitet werden{{detail}}",
+      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} fertig. Benötigt Aufmerksamkeit: {{failed}}."
     }
   }
 }

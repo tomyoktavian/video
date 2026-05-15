@@ -984,7 +984,9 @@ export const MediaCard = memo(function MediaCard({
           }
           setAnalyzeDialogOpen(false)
         } catch (error) {
-          setAnalyzeErrorMessage(error instanceof Error ? error.message : 'Failed to analyze media')
+          setAnalyzeErrorMessage(
+            error instanceof Error ? error.message : i18n.t('media.card.analyzeFailed'),
+          )
         }
       })()
     },
@@ -1019,7 +1021,7 @@ export const MediaCard = memo(function MediaCard({
         if (!blobUrl) {
           showNotification({
             type: 'error',
-            message: 'Failed to resolve media file',
+            message: i18n.t('media.card.failedToResolveMediaFile'),
           })
           return
         }
@@ -1061,7 +1063,7 @@ export const MediaCard = memo(function MediaCard({
         if (!targetTrack) {
           showNotification({
             type: 'warning',
-            message: 'No tracks available in the timeline',
+            message: i18n.t('media.card.noTracksAvailable'),
           })
           return
         }
@@ -1127,7 +1129,7 @@ export const MediaCard = memo(function MediaCard({
       } catch {
         useMediaLibraryStore.getState().showNotification({
           type: 'error',
-          message: 'Failed to add media to timeline',
+          message: i18n.t('media.card.failedToAddToTimeline'),
         })
       }
     },

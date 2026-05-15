@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
@@ -11,6 +12,7 @@ import { fetchCustomAiModels } from '@/features/editor/deps/media-library-contra
 const PLACEHOLDER_BASE_URL = 'https://api.openai.com/v1'
 
 export function ImageGeneratorSection() {
+  const { t } = useTranslation()
   const imageGenerator = useCustomAiStore((s) => s.imageGenerator)
   const setImageGenerator = useCustomAiStore((s) => s.setImageGenerator)
   const resetImageGenerator = useCustomAiStore((s) => s.resetImageGenerator)
@@ -43,7 +45,7 @@ export function ImageGeneratorSection() {
         model: stillSelected ? imageGenerator.model : (models[0]?.id ?? ''),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load models')
+      setError(err instanceof Error ? err.message : t('settings.imageGenerator.failedToLoadModels'))
     } finally {
       setLoading(false)
     }
@@ -53,6 +55,7 @@ export function ImageGeneratorSection() {
     imageGenerator.baseUrl,
     imageGenerator.model,
     setImageGenerator,
+    t,
   ])
 
   const isPristine =
@@ -64,7 +67,7 @@ export function ImageGeneratorSection() {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label className="text-sm">Base URL</Label>
+        <Label className="text-sm">{t('settings.imageGenerator.baseUrl')}</Label>
         <Input
           type="url"
           autoComplete="off"
@@ -76,7 +79,7 @@ export function ImageGeneratorSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">API Key</Label>
+        <Label className="text-sm">{t('settings.imageGenerator.apiKey')}</Label>
         <div className="flex items-center gap-2">
           <Input
             type="password"
@@ -94,7 +97,7 @@ export function ImageGeneratorSection() {
             className="shrink-0"
           >
             {loading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            {loading ? 'Loading' : 'Load'}
+            {loading ? t('settings.imageGenerator.loading') : t('settings.imageGenerator.load')}
           </Button>
         </div>
         {error ? (
@@ -108,46 +111,51 @@ export function ImageGeneratorSection() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm">Model</Label>
+        <Label className="text-sm">{t('settings.imageGenerator.model')}</Label>
         <Combobox
           value={imageGenerator.model}
           options={modelOptions}
           onValueChange={(value) => setImageGenerator({ model: value })}
-          placeholder={modelOptions.length === 0 ? 'Load models to choose…' : 'Select a model'}
-          searchPlaceholder="Search models..."
-          emptyMessage="No models loaded yet."
+          placeholder={
+            modelOptions.length === 0
+              ? t('settings.imageGenerator.loadModelsToChoose')
+              : t('settings.imageGenerator.selectAModel')
+          }
+          searchPlaceholder={t('settings.imageGenerator.searchModels')}
+          emptyMessage={t('settings.imageGenerator.noModelsLoaded')}
           disabled={modelOptions.length === 0}
         />
         <div className="space-y-2 rounded-md border border-border/60 bg-secondary/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
           <p>
-            Image-generation model used by <strong>Add Cover → Generate with AI</strong> and the{' '}
-            <strong>AI sidebar → Image Generation</strong> section. The endpoint is
-            OpenAI-compatible <code className="text-foreground">/images/generations</code>.
+            <Trans
+              i18nKey="settings.imageGenerator.modelHint"
+              components={{ s: <strong />, c: <code className="text-foreground" /> }}
+            />
           </p>
           <p className="text-foreground">
-            Recommended: <code className="text-foreground">gemini-2.5-flash-image-preview</code>{' '}
-            (Gemini <strong>nano-banana-2</strong>) — fastest, cheapest, and most permissive about
-            prompt content + aspect ratios.
+            <Trans
+              i18nKey="settings.imageGenerator.recommendedHint"
+              components={{ s: <strong />, c: <code className="text-foreground" /> }}
+            />
           </p>
           <ul className="list-disc space-y-1 pl-4">
             <li>
-              <strong>Google Gemini (nano-banana-2):</strong> set Base URL to{' '}
-              <code className="text-foreground">
-                https://generativelanguage.googleapis.com/v1beta/openai/
-              </code>{' '}
-              and pick <code className="text-foreground">gemini-2.5-flash-image-preview</code>.
-              Honours both <code className="text-foreground">size</code> and{' '}
-              <code className="text-foreground">aspect_ratio</code>, no quality tier needed.
+              <Trans
+                i18nKey="settings.imageGenerator.geminiHint"
+                components={{ s: <strong />, c: <code className="text-foreground" /> }}
+              />
             </li>
             <li>
-              <strong>OpenAI gpt-image-1:</strong> only accepts the sizes{' '}
-              <code className="text-foreground">1024x1024 / 1024x1536 / 1536x1024</code> and ignores{' '}
-              <code className="text-foreground">aspect_ratio</code>. The adapter auto-adjusts when
-              the model name contains <code className="text-foreground">gpt-image</code>.
+              <Trans
+                i18nKey="settings.imageGenerator.openaiHint"
+                components={{ s: <strong />, c: <code className="text-foreground" /> }}
+              />
             </li>
             <li>
-              <strong>xAI Grok / OpenRouter / LiteLLM proxies:</strong> work as long as the upstream
-              model is OpenAI-compatible. Watch out for budget caps on the proxy.
+              <Trans
+                i18nKey="settings.imageGenerator.proxiesHint"
+                components={{ s: <strong />, c: <code className="text-foreground" /> }}
+              />
             </li>
           </ul>
         </div>
@@ -164,7 +172,7 @@ export function ImageGeneratorSection() {
           }}
           disabled={isPristine}
         >
-          Reset
+          {t('settings.imageGenerator.reset')}
         </Button>
       </div>
     </div>

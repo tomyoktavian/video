@@ -1070,7 +1070,7 @@
         "searchPlaceholder": "Rechercher des projets...",
         "allResolutions": "Toutes les résolutions",
         "allFps": "Tous les FPS",
-        "fpsOption": "{{fps}} fps",
+        "fpsOption": "{{fps}} ips",
         "sortBy": "Trier par",
         "sortName": "Nom",
         "sortLastModified": "Dernière modification",

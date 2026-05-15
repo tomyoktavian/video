@@ -144,10 +144,10 @@
       "actionClearCache": "캐시 지우기",
       "actionRegenerateThumbnails": "썸네일 다시 생성",
       "actionDeleteProxies": "프록시 삭제",
-      "noMediaNeededUpdating": "No project media needed updating.",
-      "couldntProcessItems_one": "{{action}}: couldn't process {{count}} item{{detail}}",
-      "couldntProcessItems_other": "{{action}}: couldn't process {{count}} items{{detail}}",
-      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} done. Needs attention: {{failed}}."
+      "noMediaNeededUpdating": "업데이트가 필요한 프로젝트 미디어가 없습니다.",
+      "couldntProcessItems_one": "{{action}}: {{count}}개 항목{{detail}}을 처리할 수 없습니다",
+      "couldntProcessItems_other": "{{action}}: {{count}}개 항목{{detail}}을 처리할 수 없습니다",
+      "partialOutcome": "{{action}}: {{succeeded}}/{{total}} 완료. 확인 필요: {{failed}}."
     }
   }
 }

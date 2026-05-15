@@ -1501,10 +1501,12 @@ export const AiPanel = memo(function AiPanel() {
                 type="button"
                 className="flex w-full items-center justify-between gap-2 text-left"
                 aria-label={
-                  imageSectionOpen ? 'Collapse image generation' : 'Expand image generation'
+                  imageSectionOpen
+                    ? t('editor.aiPanel.collapseImageGeneration')
+                    : t('editor.aiPanel.expandImageGeneration')
                 }
               >
-                <h2 className="text-sm font-medium">Image Generation</h2>
+                <h2 className="text-sm font-medium">{t('editor.aiPanel.imageGeneration')}</h2>
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 text-muted-foreground transition-transform',
@@ -1551,7 +1553,7 @@ export const AiPanel = memo(function AiPanel() {
                     disabled={anyImageSaving}
                   >
                     <Trash2 className="h-3 w-3" />
-                    Clear all
+                    {t('editor.aiPanel.clearAll')}
                   </Button>
                 </div>
 
@@ -1685,6 +1687,7 @@ const ImageGenerationRow = memo(function ImageGenerationRow({
   onSave: (gen: ImageGeneration) => Promise<void>
   onRemove: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const saved = generation.savedMediaId !== null
 
   const handleSetCoverToCompounds = useCallback(() => {
@@ -1746,11 +1749,11 @@ const ImageGenerationRow = memo(function ImageGenerationRow({
               <button
                 type="button"
                 className="flex w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border border-border bg-black"
-                aria-label="Open image preview"
+                aria-label={t('editor.aiPanel.openImagePreview')}
               >
                 <img
                   src={generation.objectUrl}
-                  alt="Generated image"
+                  alt={t('editor.aiPanel.generatedImage')}
                   className="block max-h-[240px] max-w-full"
                   style={{
                     aspectRatio:
@@ -1775,7 +1778,7 @@ const ImageGenerationRow = memo(function ImageGenerationRow({
         {saved ? (
           <span className="flex items-center gap-1 text-[11px] text-emerald-400">
             <CheckCircle2 className="h-3 w-3" />
-            Saved to Media Library
+            {t('editor.aiPanel.savedToMediaLibrary')}
           </span>
         ) : (
           <Button

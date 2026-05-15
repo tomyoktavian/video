@@ -589,7 +589,7 @@ const ItemContextMenuFull = memo(function ItemContextMenuFull({
                         onClick={onDeleteCaptions}
                         className="text-destructive focus:text-destructive"
                       >
-                        Delete Captions
+                        {t('timeline.contextMenu.deleteCaptions')}
                       </ContextMenuItem>
                     </>
                   )}

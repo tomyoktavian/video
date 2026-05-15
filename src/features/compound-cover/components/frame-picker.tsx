@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { ImageLightbox } from '@/components/ui/image-lightbox'
 import { Slider } from '@/components/ui/slider'
@@ -97,6 +98,7 @@ function PreviewCanvas({ bitmap }: { bitmap: ImageBitmap | null }) {
 }
 
 export function FramePicker({ compositionId, selectedFrame, onChange }: FramePickerProps) {
+  const { t } = useTranslation()
   const composition = useCompositionsStore((s) => s.compositionById[compositionId])
 
   const [filmstrip, setFilmstrip] = useState<readonly FilmstripFrame[]>([])
@@ -143,7 +145,9 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
       .catch((error) => {
         if (cancelled) return
         if (error instanceof DOMException && error.name === 'AbortError') return
-        setFilmstripError(error instanceof Error ? error.message : 'Failed to load filmstrip')
+        setFilmstripError(
+          error instanceof Error ? error.message : t('compoundCover.framePicker.filmstripError'),
+        )
         setFilmstripLoading(false)
       })
 
@@ -153,7 +157,7 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
       closeBitmaps(collected)
       setFilmstrip([])
     }
-  }, [compositionId])
+  }, [compositionId, t])
 
   // Preview generation — debounced as the user scrubs.
   useEffect(() => {
@@ -241,10 +245,10 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
           {previewLoading ? (
             <span className="flex items-center gap-1.5">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Rendering frame…
+              {t('compoundCover.framePicker.renderingFrame')}
             </span>
           ) : (
-            'Frame preview unavailable'
+            t('compoundCover.framePicker.framePreviewUnavailable')
           )}
         </div>
       )}
@@ -262,14 +266,14 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
         {previewObjectUrl && previewBitmap ? (
           <ImageLightbox
             src={previewObjectUrl}
-            alt={`Frame ${selectedFrame}`}
+            alt={t('compoundCover.framePicker.frameAlt', { frame: selectedFrame })}
             downloadFilename={`frame-${compositionId.slice(0, 8)}-${selectedFrame}.jpg`}
           >
             <button
               type="button"
               className="cursor-zoom-in"
               style={{ aspectRatio: previewAspectRatio }}
-              aria-label="Open frame preview"
+              aria-label={t('compoundCover.framePicker.openFramePreviewAriaLabel')}
             >
               {previewBox}
             </button>
@@ -288,7 +292,7 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
           const next = values[0]
           if (typeof next === 'number') onChange(Math.max(0, Math.min(maxFrame, Math.round(next))))
         }}
-        aria-label="Cover frame position"
+        aria-label={t('compoundCover.framePicker.coverFramePositionAriaLabel')}
       />
 
       <div className="rounded-md border border-border bg-secondary/30 p-1.5">
@@ -297,7 +301,7 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
         ) : filmstripLoading && filmstrip.length === 0 ? (
           <div className="flex h-12 items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Loading thumbnails…
+            {t('compoundCover.framePicker.loadingThumbnails')}
           </div>
         ) : (
           <div className="flex gap-1 overflow-x-auto">
@@ -312,7 +316,9 @@ export function FramePicker({ compositionId, selectedFrame, onChange }: FramePic
                     'h-12 shrink-0 overflow-hidden rounded border-2 transition',
                     isActive ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100',
                   )}
-                  aria-label={`Use frame ${frame.frame}`}
+                  aria-label={t('compoundCover.framePicker.useFrameAriaLabel', {
+                    frame: frame.frame,
+                  })}
                 >
                   <FilmstripThumbnail bitmap={frame.bitmap} />
                 </button>

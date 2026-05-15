@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -11,11 +12,14 @@ import { Slider } from '@/components/ui/slider'
 import { useSettingsStore } from '@/features/editor/deps/settings'
 import { EDITOR_DENSITY_PRESETS, type EditorDensityPresetName } from '@/app/editor-layout'
 
-const EDITOR_DENSITY_OPTIONS: ReadonlyArray<{ value: EditorDensityPresetName; label: string }> = (
-  Object.keys(EDITOR_DENSITY_PRESETS) as EditorDensityPresetName[]
-).map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))
+const EDITOR_DENSITY_OPTIONS: ReadonlyArray<{ value: EditorDensityPresetName; labelKey: string }> =
+  (Object.keys(EDITOR_DENSITY_PRESETS) as EditorDensityPresetName[]).map((value) => ({
+    value,
+    labelKey: `settings.general.density_${value}`,
+  }))
 
 export function GeneralSection() {
+  const { t } = useTranslation()
   const editorDensity = useSettingsStore((s) => s.editorDensity)
   const autoSaveInterval = useSettingsStore((s) => s.autoSaveInterval)
   const maxUndoHistory = useSettingsStore((s) => s.maxUndoHistory)
@@ -24,7 +28,7 @@ export function GeneralSection() {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label className="text-sm">Editor Density</Label>
+        <Label className="text-sm">{t('settings.general.editorDensity')}</Label>
         <Select
           value={editorDensity}
           onValueChange={(value) => setSetting('editorDensity', value as typeof editorDensity)}
@@ -35,17 +39,19 @@ export function GeneralSection() {
           <SelectContent>
             {EDITOR_DENSITY_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey, {
+                  defaultValue: option.value.charAt(0).toUpperCase() + option.value.slice(1),
+                })}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Compact fits more of the editor into a 1080p screen. Default restores the roomier layout.
+          {t('settings.general.editorDensityDescription')}
         </p>
       </div>
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Auto-save</Label>
+        <Label className="text-sm">{t('settings.general.autoSave')}</Label>
         <Switch
           checked={autoSaveInterval > 0}
           onCheckedChange={(v) => setSetting('autoSaveInterval', v ? 2 : 0)}
@@ -53,7 +59,7 @@ export function GeneralSection() {
       </div>
       {autoSaveInterval > 0 && (
         <div className="flex items-center justify-between">
-          <Label className="text-sm text-muted-foreground">Interval</Label>
+          <Label className="text-sm text-muted-foreground">{t('settings.general.interval')}</Label>
           <div className="w-32 flex items-center gap-2">
             <Slider
               value={[autoSaveInterval]}
@@ -62,12 +68,14 @@ export function GeneralSection() {
               max={30}
               step={1}
             />
-            <span className="text-xs text-muted-foreground w-6">{autoSaveInterval}m</span>
+            <span className="text-xs text-muted-foreground w-6">
+              {t('settings.general.intervalMinutes', { count: autoSaveInterval })}
+            </span>
           </div>
         </div>
       )}
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Undo History Depth</Label>
+        <Label className="text-sm">{t('settings.general.undoHistoryDepth')}</Label>
         <div className="w-32 flex items-center gap-2">
           <Slider
             value={[maxUndoHistory]}

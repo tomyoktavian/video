@@ -1123,7 +1123,7 @@
       "markerPanel": {
         "notFound": "Marker nicht gefunden",
         "title": "Marker",
-        "frame": "Frame",
+        "frame": "Bild",
         "time": "Zeit",
         "label": "Bezeichnung",
         "labelPlaceholder": "Bezeichnung eingeben...",
@@ -1134,7 +1134,7 @@
         "updateFailed": "Canvas-Einstellungen konnten nicht aktualisiert werden",
         "tryAgain": "Bitte erneut versuchen.",
         "noProjectLoaded": "Kein Projekt geladen",
-        "canvas": "Canvas",
+        "canvas": "Leinwand",
         "swap": "Tauschen",
         "background": "Hintergrund",
         "resetToBlack": "Auf Schwarz zurücksetzen",
@@ -1577,8 +1577,8 @@
         "effects": "Efeitos",
         "effectsHint": "Use a aba Efeitos para efeitos de shader GPU (desfoque, gradação de cor, etc.)",
         "animation": "Animação",
-        "intro": "Intro",
-        "outro": "Outro",
+        "intro": "Abertura",
+        "outro": "Encerramento",
         "animationHint": "Aplica um breve movimento ease-out no início ou no fim de cada clipe selecionado."
       },
       "subtitleSection": {

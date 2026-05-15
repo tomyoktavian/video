@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -29,6 +30,7 @@ import { insertCover } from '../insert-cover-action'
 const logger = createLogger('CompoundCover:SetCoverToCompoundsDialog')
 
 export function SetCoverToCompoundsDialog() {
+  const { t } = useTranslation()
   const isOpen = useSetCoverToCompoundsDialogStore((s) => s.isOpen)
   const source = useSetCoverToCompoundsDialogStore((s) => s.source)
   const close = useSetCoverToCompoundsDialogStore((s) => s.close)
@@ -121,7 +123,7 @@ export function SetCoverToCompoundsDialog() {
         frameHeight = source.height
       } else {
         if (!currentProjectId) {
-          throw new Error('No project selected — cannot save the image to the media library.')
+          throw new Error(t('compoundCover.setCoverToCompounds.noProjectError'))
         }
         const subtype =
           (source.file.type || 'image/png').split('/')[1]?.split(';')[0]?.trim() ?? 'png'
@@ -163,18 +165,25 @@ export function SetCoverToCompoundsDialog() {
         }
       }
 
-      const failedSuffix = failed > 0 ? `, ${failed} failed` : ''
+      const failedSuffix =
+        failed > 0 ? t('compoundCover.setCoverToCompounds.failedSuffix', { failed }) : ''
       showNotification({
         type: failed > 0 ? 'warning' : 'success',
-        message: `Cover added to ${ok}/${ids.length} compounds${failedSuffix}`,
+        message: t('compoundCover.setCoverToCompounds.bulkInsertNotification', {
+          ok,
+          total: ids.length,
+          failedSuffix,
+        }),
       })
       close()
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to set cover.')
+      setErrorMessage(
+        err instanceof Error ? err.message : t('compoundCover.setCoverToCompounds.setCoverFailed'),
+      )
     } finally {
       setSubmitting(false)
     }
-  }, [close, currentProjectId, durationSec, selectedIds, showNotification, source, title])
+  }, [close, currentProjectId, durationSec, selectedIds, showNotification, source, t, title])
 
   if (!isOpen || !source) return null
 
@@ -189,10 +198,9 @@ export function SetCoverToCompoundsDialog() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>Set cover to compound</DialogTitle>
+          <DialogTitle>{t('compoundCover.setCoverToCompounds.title')}</DialogTitle>
           <DialogDescription>
-            Use this image as the cover for one or more compound clips. Each selection prepends the
-            cover at frame 0 of that compound.
+            {t('compoundCover.setCoverToCompounds.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,27 +209,27 @@ export function SetCoverToCompoundsDialog() {
             {previewUrl ? (
               <div
                 className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-secondary/40"
-                aria-label="Cover image preview"
+                aria-label={t('compoundCover.setCoverToCompounds.coverImagePreviewAriaLabel')}
               >
                 <img
                   src={previewUrl}
-                  alt="Cover preview"
+                  alt={t('compoundCover.setCoverToCompounds.coverPreviewAlt')}
                   className="block h-full w-full object-cover"
                 />
               </div>
             ) : null}
             <div className="flex-1 space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Title (optional)
+                {t('compoundCover.setCoverToCompounds.titleLabel')}
               </Label>
               <Input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Leave empty for image-only cover"
+                placeholder={t('compoundCover.setCoverToCompounds.titlePlaceholder')}
                 disabled={submitting}
               />
               <p className="text-[11px] text-muted-foreground">
-                If provided, a single bold overlay is rendered on top of the image.
+                {t('compoundCover.setCoverToCompounds.titleHint')}
               </p>
             </div>
           </div>
@@ -229,7 +237,7 @@ export function SetCoverToCompoundsDialog() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Duration
+                {t('compoundCover.setCoverToCompounds.durationLabel')}
               </Label>
               <span className="text-xs text-muted-foreground">{durationSec.toFixed(1)} s</span>
             </div>
@@ -244,7 +252,7 @@ export function SetCoverToCompoundsDialog() {
                   setDurationSec(Math.round(next * 10) / 10)
                 }
               }}
-              aria-label="Cover duration"
+              aria-label={t('compoundCover.setCoverToCompounds.coverDurationAriaLabel')}
               disabled={submitting}
             />
           </div>
@@ -252,9 +260,11 @@ export function SetCoverToCompoundsDialog() {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Target compounds
+                {t('compoundCover.setCoverToCompounds.targetCompoundsLabel')}
               </Label>
-              <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>
+              <span className="text-[11px] text-muted-foreground">
+                {t('compoundCover.setCoverToCompounds.selectedCount', { count: selectedIds.size })}
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -263,14 +273,14 @@ export function SetCoverToCompoundsDialog() {
                 <Input
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
-                  placeholder="Search compounds…"
+                  placeholder={t('compoundCover.setCoverToCompounds.searchPlaceholder')}
                   className="pl-7"
                   disabled={submitting}
                 />
               </div>
               <label
                 className="flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2 py-1.5 text-xs cursor-pointer select-none"
-                aria-label="Select all visible compounds"
+                aria-label={t('compoundCover.setCoverToCompounds.selectAllAriaLabel')}
               >
                 <input
                   type="checkbox"
@@ -282,7 +292,7 @@ export function SetCoverToCompoundsDialog() {
                   onChange={toggleSelectAll}
                   disabled={submitting || filteredIds.length === 0}
                 />
-                Select all
+                {t('compoundCover.setCoverToCompounds.selectAll')}
               </label>
             </div>
 
@@ -290,8 +300,8 @@ export function SetCoverToCompoundsDialog() {
               {filteredCompositions.length === 0 ? (
                 <div className="flex h-56 items-center justify-center px-3 text-center text-xs text-muted-foreground">
                   {compositions.length === 0
-                    ? 'No compound clips yet — create one first to set a cover.'
-                    : 'No compounds match this search.'}
+                    ? t('compoundCover.setCoverToCompounds.noCompoundsYet')
+                    : t('compoundCover.setCoverToCompounds.noCompoundsMatch')}
                 </div>
               ) : (
                 <ul className="divide-y divide-border">
@@ -335,14 +345,18 @@ export function SetCoverToCompoundsDialog() {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={submitting}>
-            Cancel
+            {t('compoundCover.setCoverToCompounds.cancel')}
           </Button>
           <Button
             onClick={() => void handleSubmit()}
             disabled={submitting || selectedIds.size === 0}
           >
             {submitting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            {submitting ? 'Setting…' : `Set cover (${selectedIds.size})`}
+            {submitting
+              ? t('compoundCover.setCoverToCompounds.setting')
+              : t('compoundCover.setCoverToCompounds.setCoverWithCount', {
+                  count: selectedIds.size,
+                })}
           </Button>
         </DialogFooter>
       </DialogContent>
