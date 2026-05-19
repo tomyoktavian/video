@@ -96,33 +96,36 @@ export function usePreviewViewModel({
   const playerSize = useMemo(() => {
     const aspectRatio = project.width / project.height
 
+    // Snap only the dominant dimension to a device pixel and derive the other
+    // from the source aspect ratio. Rounding both independently breaks the
+    // aspect ratio by up to a sub-pixel, which makes the scrub overlay (which
+    // fills the container at 100%/100%) misalign with Remotion's uniformly
+    // scaled composition along whichever edge ends up on the derived side.
     if (zoom === -1) {
       if (containerSize.width > 0 && containerSize.height > 0) {
         const containerAspectRatio = containerSize.width / containerSize.height
 
-        let width: number
-        let height: number
-
         if (containerAspectRatio > aspectRatio) {
-          height = containerSize.height
-          width = height * aspectRatio
-        } else {
-          width = containerSize.width
-          height = width / aspectRatio
+          const { height } = getPreviewPixelSnapSize(
+            { width: containerSize.height * aspectRatio, height: containerSize.height },
+            getDevicePixelRatio(),
+          )
+          return { width: height * aspectRatio, height }
         }
-
-        return getPreviewPixelSnapSize({ width, height }, getDevicePixelRatio())
+        const { width } = getPreviewPixelSnapSize(
+          { width: containerSize.width, height: containerSize.width / aspectRatio },
+          getDevicePixelRatio(),
+        )
+        return { width, height: width / aspectRatio }
       }
       return { width: project.width, height: project.height }
     }
 
-    return getPreviewPixelSnapSize(
-      {
-        width: project.width * zoom,
-        height: project.height * zoom,
-      },
+    const { width } = getPreviewPixelSnapSize(
+      { width: project.width * zoom, height: project.height * zoom },
       getDevicePixelRatio(),
     )
+    return { width, height: width / aspectRatio }
   }, [containerSize.height, containerSize.width, project.height, project.width, zoom])
 
   const needsOverflow = useMemo(() => {

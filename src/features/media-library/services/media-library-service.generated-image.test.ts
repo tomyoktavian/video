@@ -93,6 +93,7 @@ vi.mock('@/infrastructure/storage', () => ({
       lastLoadedAt: null,
     },
   },
+  writeMediaSource: vi.fn(async () => undefined),
 }))
 
 vi.mock('./opfs-service', () => ({

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 const fsMocks = vi.hoisted(() => ({
   readBlob: vi.fn(),
+  readDirectoryFiles: vi.fn(),
   readJson: vi.fn(),
   writeBlob: vi.fn(),
   writeJsonAtomic: vi.fn(),
@@ -73,6 +74,10 @@ describe('filmstripStorage', () => {
       { kind: 'file', name: '1.jpg' },
     ])
     fsMocks.readBlob.mockResolvedValue(new Blob(['frame'], { type: 'image/jpeg' }))
+    fsMocks.readDirectoryFiles.mockResolvedValue([
+      { name: '0.jpg', blob: new Blob(['frame'], { type: 'image/jpeg' }) },
+      { name: '1.jpg', blob: new Blob(['frame'], { type: 'image/jpeg' }) },
+    ])
   })
 
   it('does not revoke unrequested frame URLs during single-frame loads', async () => {

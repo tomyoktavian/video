@@ -3098,13 +3098,17 @@ async function resolveGpuMediaParticipantSource(
   )
   const captured = await extractor.captureFrame(sourceTime)
   if (!captured.success || !captured.frame) return null
+  const sourceWidth =
+    'displayWidth' in captured.frame ? captured.frame.displayWidth : captured.frame.width
+  const sourceHeight =
+    'displayHeight' in captured.frame ? captured.frame.displayHeight : captured.frame.height
 
   return {
     kind: 'media',
     item: participant.item,
     source: captured.frame,
-    sourceWidth: captured.frame.displayWidth,
-    sourceHeight: captured.frame.displayHeight,
+    sourceWidth,
+    sourceHeight,
     close: () => captured.frame?.close(),
   }
 }

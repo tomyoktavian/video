@@ -4,13 +4,24 @@ All notable changes to FreeCut. Weekly CalVer: `YYYY.MM.DD` = the Monday of the 
 
 <!-- Entries below are generated via the `changelog` skill. Newest first. -->
 
-## [Current] — week of 2026-05-11
+## [Current] — week of 2026-05-18
+
+### Fixed
+- Rotated videos display the correct orientation in skim preview and exports
+- Scrub overlay stays aligned and the skim indicator sits flush on clip edges
+
+### Improved
+- Filmstrips and waveforms render smoother while zooming the timeline
+- Faster filmstrip reload from disk cache when reopening projects
+
+## [2026.05.11] — week of 2026-05-11 to 2026-05-17
 
 ### Added
 - Translated UI in 9 languages: English, Spanish, French, German, Portuguese (Brazil), Turkish, Japanese, Korean, and Chinese (Simplified)
 - Language picker in editor settings, with auto-detection from your browser
 - Effect names, timeline labels, and media library all translate alongside the rest of the UI
 - Supertonic voice engine added to AI text-to-speech
+- Install FreeCut as a desktop app, with prompts when new versions ship
 
 ## [2026.05.04] — week of 2026-05-04 to 2026-05-10
 

@@ -10,6 +10,7 @@ const APP_SHELL_URLS = [
 ]
 const CACHEABLE_DESTINATIONS = new Set(['document', 'script', 'style', 'font', 'image'])
 const EXCLUDED_PATH_PREFIXES = ['/moss-tts/']
+const MAX_DYNAMIC_CACHE_ENTRIES = 160
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -92,7 +93,10 @@ async function staleWhileRevalidate(request) {
   const fetchPromise = fetch(request)
     .then((response) => {
       if (response.ok) {
-        cache.put(request, response.clone()).catch(() => {})
+        cache
+          .put(request, response.clone())
+          .then(() => trimRuntimeCache(cache))
+          .catch(() => {})
       }
       return response
     })
@@ -104,4 +108,18 @@ async function staleWhileRevalidate(request) {
     })
 
   return cachedResponse ?? fetchPromise
+}
+
+async function trimRuntimeCache(cache) {
+  const requests = await cache.keys()
+  const dynamicRequests = requests.filter((request) => {
+    const url = new URL(request.url)
+    return !APP_SHELL_URLS.includes(url.pathname)
+  })
+  const deleteCount = dynamicRequests.length - MAX_DYNAMIC_CACHE_ENTRIES
+  if (deleteCount <= 0) {
+    return
+  }
+
+  await Promise.all(dynamicRequests.slice(0, deleteCount).map((request) => cache.delete(request)))
 }

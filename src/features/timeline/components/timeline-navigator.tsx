@@ -21,7 +21,8 @@ export function TimelineNavigator({
   scrollContainerRef,
 }: TimelineNavigatorProps) {
   const trackRef = useRef<HTMLDivElement>(null)
-  const scrollAfterZoomRafRef = useRef<number | null>(null)
+  const dragRafRef = useRef<number | null>(null)
+  const latestDeltaXRef = useRef(0)
   const fps = useTimelineStore((s) => s.fps)
   const setZoomImmediate = useZoomStore((s) => s.setZoomLevelImmediate)
   const scrollLeft = useTimelineViewportStore((s) => s.scrollLeft)
@@ -109,8 +110,8 @@ export function TimelineNavigator({
 
   useEffect(() => {
     return () => {
-      if (scrollAfterZoomRafRef.current !== null) {
-        cancelAnimationFrame(scrollAfterZoomRafRef.current)
+      if (dragRafRef.current !== null) {
+        cancelAnimationFrame(dragRafRef.current)
       }
     }
   }, [])
@@ -118,13 +119,18 @@ export function TimelineNavigator({
   useEffect(() => {
     if (!dragTarget) return
 
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!trackRef.current) return
-
-      const nextTrackWidth = trackRef.current.clientWidth
+    // Coalesce mousemoves into one RAF: high-refresh displays fire mousemove
+    // > 60Hz, and each setZoomImmediate triggers a full timeline re-render
+    // (level/pixelsPerSecond subscribers in timeline-content cascade down to
+    // tracks and items). One zoom-store write per frame is plenty.
+    const flush = () => {
+      dragRafRef.current = null
+      const track = trackRef.current
+      if (!track) return
+      const nextTrackWidth = track.clientWidth
       if (nextTrackWidth <= 0) return
 
-      const deltaX = event.clientX - dragStartX
+      const deltaX = latestDeltaXRef.current
 
       if (dragTarget === 'thumb') {
         if (thumbTravel <= 0 || maxScrollLeft <= 0) return
@@ -147,14 +153,13 @@ export function TimelineNavigator({
       })
 
       setZoomImmediate(nextZoom)
+      setScrollLeftOnContainer(nextScrollLeft)
+    }
 
-      if (scrollAfterZoomRafRef.current !== null) {
-        cancelAnimationFrame(scrollAfterZoomRafRef.current)
-      }
-      scrollAfterZoomRafRef.current = requestAnimationFrame(() => {
-        scrollAfterZoomRafRef.current = null
-        setScrollLeftOnContainer(nextScrollLeft)
-      })
+    const handleMouseMove = (event: MouseEvent) => {
+      latestDeltaXRef.current = event.clientX - dragStartX
+      if (dragRafRef.current !== null) return
+      dragRafRef.current = requestAnimationFrame(flush)
     }
 
     const handleMouseUp = () => {
@@ -167,6 +172,10 @@ export function TimelineNavigator({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
+      if (dragRafRef.current !== null) {
+        cancelAnimationFrame(dragRafRef.current)
+        dragRafRef.current = null
+      }
     }
   }, [
     contentDuration,

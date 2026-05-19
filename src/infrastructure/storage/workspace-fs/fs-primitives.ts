@@ -250,6 +250,51 @@ export async function listDirectory(
   })
 }
 
+/**
+ * List a directory and read all matching files in a single resolved-dir pass.
+ *
+ * Calling readBlob() per file forces resolveDir() to re-walk the segments
+ * (4 getDirectoryHandle calls for typical media paths) on every read. For
+ * directories with many files this dominates wall time. This helper resolves
+ * the parent dir once and reuses its file-handle iterator, then reads all
+ * files concurrently.
+ */
+export async function readDirectoryFiles(
+  root: FileSystemDirectoryHandle,
+  segments: string[],
+  filter?: (entry: DirectoryEntry) => boolean,
+): Promise<Array<{ name: string; blob: Blob }>> {
+  return wrap('readDirectoryFiles', async () => {
+    try {
+      const dir = await resolveDir(root, segments, false)
+      const fileHandles: Array<{ name: string; handle: FileSystemFileHandle }> = []
+      for await (const entry of dir.values()) {
+        if (entry.kind !== 'file') continue
+        if (filter && !filter({ name: entry.name, kind: entry.kind })) continue
+        fileHandles.push({ name: entry.name, handle: entry as FileSystemFileHandle })
+      }
+      const results = await Promise.all(
+        fileHandles.map(async ({ name, handle }) => {
+          try {
+            const file = await handle.getFile()
+            return { name, blob: file as Blob }
+          } catch (error) {
+            // A file can disappear between iterating dir.values() and calling
+            // getFile() (e.g. concurrent delete). Skip it instead of failing
+            // the whole batch.
+            if (isNotFound(error)) return null
+            throw error
+          }
+        }),
+      )
+      return results.filter((r): r is { name: string; blob: Blob } => r !== null)
+    } catch (error) {
+      if (isNotFound(error)) return []
+      throw error
+    }
+  })
+}
+
 export async function exists(
   root: FileSystemDirectoryHandle,
   segments: string[],

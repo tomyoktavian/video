@@ -726,6 +726,35 @@ describe('MediaCard', () => {
     expect(editorStoreState.clearMediaSkimPreview).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the skim indicator inside the right edge', () => {
+    const { container } = render(<MediaCard media={makeMedia()} viewMode="list" />)
+
+    const thumbnail = container.querySelector('.w-12.h-9') as HTMLDivElement
+    expect(thumbnail).toBeTruthy()
+    vi.spyOn(thumbnail, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      bottom: 36,
+      right: 100,
+      width: 100,
+      height: 36,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.pointerEnter(thumbnail, {
+      clientX: 100,
+      pointerType: 'mouse',
+    })
+
+    expect(
+      Array.from(container.querySelectorAll('div')).some((element) =>
+        element.getAttribute('style')?.includes('right: 0px'),
+      ),
+    ).toBe(true)
+  })
+
   it('stores AI analysis on the media item without inserting timeline captions', async () => {
     const media = makeMedia({
       fileName: 'frame.png',

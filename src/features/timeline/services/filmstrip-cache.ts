@@ -27,7 +27,11 @@ import {
 } from '@/features/timeline/constants'
 import { filmstripStorage, type FilmstripFrame } from './filmstrip-storage'
 import { FilmstripMemoryState } from './filmstrip-memory-state'
-import type { ExtractRequest, WorkerResponse } from '../workers/filmstrip-extraction-worker'
+import type {
+  ExtractRequest,
+  WarmRequest,
+  WorkerResponse,
+} from '../workers/filmstrip-extraction-worker'
 
 export { THUMBNAIL_WIDTH }
 export type { FilmstripFrame }
@@ -213,6 +217,52 @@ class FilmstripCacheService {
   }
   private metricsHistory: ExtractionMetricSample[] = []
   private lastMemoryCheckAt = 0
+  private prewarmStarted = false
+  // Generation counters guard against clearMedia/clearAll racing with an
+  // in-flight loadFromDisk: an async hydration captures the token at the
+  // start and discards its writes when the token has moved on.
+  private mediaGeneration = new Map<string, number>()
+  private globalGeneration = 0
+
+  private currentGenerationToken(mediaId: string): string {
+    return `${this.globalGeneration}:${this.mediaGeneration.get(mediaId) ?? 0}`
+  }
+
+  private bumpMediaGeneration(mediaId: string): void {
+    const next = (this.mediaGeneration.get(mediaId) ?? 0) + 1
+    this.mediaGeneration.set(mediaId, next)
+  }
+
+  /**
+   * Eagerly boot one extraction worker and load mediabunny so the first real
+   * extraction skips worker boot + dynamic-import latency (~100-300ms total).
+   * Idempotent and safe to call repeatedly; only the first call does work.
+   *
+   * Fires synchronously and releases the worker immediately so the next
+   * acquireWorker() call gets it back (with the `warm` message still queued).
+   * The worker processes warm → loadMediabunny → ignored 'warmed' response,
+   * then any queued extract message. Net result: mediabunny is loaded once
+   * per worker realm instead of per extraction.
+   */
+  prewarm(): void {
+    if (this.prewarmStarted) return
+    this.prewarmStarted = true
+
+    let worker: Worker
+    try {
+      worker = this.acquireWorker()
+    } catch (error) {
+      logger.warn('Failed to acquire worker for prewarm', error)
+      this.prewarmStarted = false
+      return
+    }
+
+    const requestId = crypto.randomUUID()
+    worker.postMessage({ type: 'warm', requestId } satisfies WarmRequest)
+    // Release immediately so the next acquireWorker() returns this worker
+    // (with the warm message still queued in front of any extract message).
+    this.releaseWorker(worker)
+  }
 
   private get cacheBytes(): number {
     return this.memoryState.sizeBytes
@@ -292,6 +342,42 @@ class FilmstripCacheService {
     this.memoryState.clearEntry(mediaId)
   }
 
+  private closeBitmap(bitmap: ImageBitmap): void {
+    try {
+      bitmap.close()
+    } catch {
+      // Already closed or detached.
+    }
+  }
+
+  private closeBitmapFrames(frames: Iterable<FilmstripFrame>): void {
+    for (const frame of frames) {
+      if (frame.bitmap) {
+        this.closeBitmap(frame.bitmap)
+      }
+    }
+  }
+
+  private closeReplacedBitmapFrames(
+    previous: Filmstrip | null | undefined,
+    next: Filmstrip | null | undefined,
+  ): void {
+    if (!previous?.frames?.length) return
+
+    const retainedBitmaps = new Set<ImageBitmap>()
+    for (const frame of next?.frames ?? []) {
+      if (frame.bitmap) {
+        retainedBitmaps.add(frame.bitmap)
+      }
+    }
+
+    for (const frame of previous.frames) {
+      if (frame.bitmap && !retainedBitmaps.has(frame.bitmap)) {
+        this.closeBitmap(frame.bitmap)
+      }
+    }
+  }
+
   private clearIdleEvictionTimer(mediaId: string): void {
     this.memoryState.clearIdleTimer(mediaId)
   }
@@ -303,7 +389,10 @@ class FilmstripCacheService {
     if (!this.cache.has(mediaId)) return
 
     this.memoryState.scheduleIdleTimer(mediaId, CACHE_EVICT_IDLE_MS, () => {
-      this.tryEvictMedia(mediaId, 'idle-timeout')
+      // Idle eviction: close decoded bitmaps to free GPU/heap memory but keep
+      // the cache entry + object URLs alive. Re-display will hit the cache
+      // (no OPFS read) and render as <img src> instead of bitmap-canvas.
+      this.softEvictMedia(mediaId, 'idle-timeout')
     })
   }
 
@@ -312,12 +401,65 @@ class FilmstripCacheService {
     return !!callbacks && callbacks.size > 0
   }
 
+  /**
+   * Soft eviction: close decoded bitmaps but keep frames + object URLs in the
+   * in-memory cache. Memory cost drops from ~14MB/clip (bitmaps) to ~300KB/clip
+   * (JPEG blobs referenced by object URLs). Re-display reuses the cached URLs
+   * with no OPFS round-trip.
+   */
+  private softEvictMedia(mediaId: string, reason: string): boolean {
+    if (this.pendingExtractions.has(mediaId)) return false
+    const cached = this.cache.get(mediaId)
+    if (!cached) return false
+    if (!cached.frames.some((frame) => frame.bitmap)) {
+      // Nothing to free — entry is already bitmap-less.
+      this.clearIdleEvictionTimer(mediaId)
+      return false
+    }
+
+    // Build a new frames array with bitmaps removed. Frames that have a
+    // bitmap but no URL are unrenderable without the bitmap, so leave those
+    // untouched (extraction is still in flight or never persisted JPEGs).
+    const bitmapsToClose: ImageBitmap[] = []
+    const downgradedFrames = cached.frames.map((frame) => {
+      if (!frame.bitmap) return frame
+      if (!frame.url) return frame
+      bitmapsToClose.push(frame.bitmap)
+      const { bitmap: _bitmap, ...rest } = frame
+      void _bitmap
+      return rest
+    })
+
+    const downgraded: Filmstrip = { ...cached, frames: downgradedFrames }
+    this.cache.set(mediaId, downgraded)
+    this.updateCacheMeta(mediaId, downgraded)
+    for (const bitmap of bitmapsToClose) {
+      this.closeBitmap(bitmap)
+    }
+    this.clearIdleEvictionTimer(mediaId)
+
+    // Notify mounted subscribers so any visible <canvas> tiles re-render as
+    // <img>. In practice idle eviction only fires after subscribers have
+    // dropped, but this is safe either way.
+    const callbacks = this.updateCallbacks.get(mediaId)
+    if (callbacks) {
+      for (const callback of callbacks) {
+        callback(downgraded)
+      }
+    }
+
+    logger.debug(`Soft-evicted in-memory filmstrip bitmaps ${mediaId} (${reason})`)
+    return true
+  }
+
   private tryEvictMedia(mediaId: string, reason: string): boolean {
     if (this.pendingExtractions.has(mediaId)) return false
     if (this.hasSubscribers(mediaId)) return false
-    if (!this.cache.has(mediaId)) return false
+    const cached = this.cache.get(mediaId)
+    if (!cached) return false
 
     this.cache.delete(mediaId)
+    this.closeBitmapFrames(cached.frames)
     this.clearCacheMeta(mediaId)
     filmstripStorage.revokeUrls(mediaId)
     this.clearIdleEvictionTimer(mediaId)
@@ -886,6 +1028,9 @@ class FilmstripCacheService {
    * Subscribe to filmstrip updates
    */
   subscribe(mediaId: string, callback: FilmstripUpdateCallback): () => void {
+    // Active interest in any filmstrip is the cue to prewarm the worker pool.
+    // Idempotent — only the first call does work.
+    this.prewarm()
     this.clearIdleEvictionTimer(mediaId)
     if (!this.updateCallbacks.has(mediaId)) {
       this.updateCallbacks.set(mediaId, new Set())
@@ -913,6 +1058,7 @@ class FilmstripCacheService {
 
   private notifyUpdate(mediaId: string, filmstrip: Filmstrip): void {
     this.clearIdleEvictionTimer(mediaId)
+    this.closeReplacedBitmapFrames(this.cache.get(mediaId), filmstrip)
     this.cache.set(mediaId, filmstrip)
     this.updateCacheMeta(mediaId, filmstrip)
     this.enforceMemoryBudget()
@@ -1092,8 +1238,28 @@ class FilmstripCacheService {
     priorityRange?: PriorityFrameRange,
     options?: FilmstripLoadOptions,
   ): Promise<Filmstrip> {
-    // Try loading from storage
-    const stored = await filmstripStorage.load(mediaId)
+    // If a disk hydration is already in flight or just completed, reuse those
+    // frames instead of re-reading the OPFS directory. The in-memory cache is
+    // populated by loadFromDisk via notifyUpdate.
+    await this.diskHydrationPromises.get(mediaId)?.catch(() => undefined)
+    const cachedAfterHydration = this.cache.get(mediaId)
+    if (cachedAfterHydration?.isComplete && !cachedAfterHydration.isExtracting) {
+      return cachedAfterHydration
+    }
+
+    // Try loading from storage when we haven't already
+    const stored = cachedAfterHydration?.frames.length
+      ? {
+          metadata: {
+            width: FILMSTRIP_EXTRACT_WIDTH,
+            height: FILMSTRIP_EXTRACT_HEIGHT,
+            isComplete: cachedAfterHydration.isComplete,
+            frameCount: cachedAfterHydration.frames.length,
+          },
+          frames: cachedAfterHydration.frames,
+          existingIndices: cachedAfterHydration.frames.map((frame) => frame.index),
+        }
+      : await filmstripStorage.load(mediaId)
 
     if (stored?.metadata.isComplete) {
       // Complete - return immediately
@@ -1505,6 +1671,10 @@ class FilmstripCacheService {
       // Handle worker messages
       worker.onmessage = async (e: MessageEvent<WorkerResponse>) => {
         const response = e.data
+
+        // Stale 'warmed' from an earlier prewarm() can arrive after this
+        // worker was reacquired — ignore it.
+        if (response.type === 'warmed') return
 
         if (response.type === 'progress') {
           workerState.frameCount = response.frameCount
@@ -2319,6 +2489,76 @@ class FilmstripCacheService {
     return cached
   }
 
+  private diskHydrationPromises = new Map<string, Promise<Filmstrip | null>>()
+
+  /**
+   * Hydrate from persisted storage without starting extraction.
+   *
+   * Filmstrip display does not need the source video blob URL — JPEGs on disk
+   * are enough. This lets a clip show its cached frames before useMediaBlobUrl
+   * resolves the source, which otherwise serializes (visibility → blobUrl →
+   * filmstrip) and adds 50-200ms+ to re-display.
+   *
+   * Tracked in its own dedupe map (not loadingPromises) so that a later
+   * getFilmstrip() call still starts extraction when needed instead of just
+   * returning this hydration result.
+   */
+  async loadFromDisk(mediaId: string, duration: number): Promise<Filmstrip | null> {
+    if (duration <= 0) return null
+
+    const cached = this.cache.get(mediaId)
+    if (cached?.isComplete) {
+      this.touchCacheEntry(mediaId)
+      return cached
+    }
+
+    const inflight = this.diskHydrationPromises.get(mediaId)
+    if (inflight) {
+      return inflight
+    }
+
+    const tokenAtStart = this.currentGenerationToken(mediaId)
+    const promise = (async (): Promise<Filmstrip | null> => {
+      const stored = await filmstripStorage.load(mediaId)
+      // If clearMedia/clearAll ran while we were reading from OPFS, abandon —
+      // re-inserting these frames would resurrect just-cleared cache state.
+      if (this.currentGenerationToken(mediaId) !== tokenAtStart) {
+        return this.cache.get(mediaId) ?? null
+      }
+      if (!stored) {
+        return this.cache.get(mediaId) ?? null
+      }
+
+      const totalFrames = Math.ceil(duration * FRAME_RATE)
+      const targetIndices = this.buildTargetIndices(totalFrames, null)
+      const targetSet = new Set(targetIndices)
+      const existingTargetCount = stored.frames.reduce(
+        (count, frame) => (targetSet.has(frame.index) ? count + 1 : count),
+        0,
+      )
+
+      const filmstrip: Filmstrip = {
+        frames: stored.frames,
+        isComplete: stored.metadata.isComplete,
+        isExtracting: false,
+        progress: stored.metadata.isComplete
+          ? 100
+          : targetIndices.length > 0
+            ? Math.round((existingTargetCount / targetIndices.length) * 100)
+            : 0,
+      }
+      this.notifyUpdate(mediaId, filmstrip)
+      return filmstrip
+    })()
+
+    this.diskHydrationPromises.set(mediaId, promise)
+    try {
+      return await promise
+    } finally {
+      this.diskHydrationPromises.delete(mediaId)
+    }
+  }
+
   /**
    * Refresh cached frame URLs from persisted storage when a visible tile reports a stale source.
    */
@@ -2404,8 +2644,10 @@ class FilmstripCacheService {
    * Clear filmstrip for a media item
    */
   async clearMedia(mediaId: string): Promise<void> {
+    this.bumpMediaGeneration(mediaId)
     this.abort(mediaId)
     this.clearIdleEvictionTimer(mediaId)
+    this.closeBitmapFrames(this.cache.get(mediaId)?.frames ?? [])
     this.cache.delete(mediaId)
     this.clearCacheMeta(mediaId)
     filmstripStorage.revokeUrls(mediaId)
@@ -2416,8 +2658,13 @@ class FilmstripCacheService {
    * Clear all
    */
   async clearAll(): Promise<void> {
+    this.globalGeneration += 1
+    this.mediaGeneration.clear()
     for (const mediaId of this.pendingExtractions.keys()) {
       this.abort(mediaId)
+    }
+    for (const filmstrip of this.cache.values()) {
+      this.closeBitmapFrames(filmstrip.frames)
     }
     this.cache.clear()
     this.memoryState.clear()
@@ -2441,6 +2688,9 @@ class FilmstripCacheService {
     // Revoke in-memory object URLs only; keep persisted filmstrip files.
     for (const mediaId of this.cache.keys()) {
       filmstripStorage.revokeUrls(mediaId)
+    }
+    for (const filmstrip of this.cache.values()) {
+      this.closeBitmapFrames(filmstrip.frames)
     }
     this.cache.clear()
     this.memoryState.clear()

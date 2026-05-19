@@ -157,7 +157,7 @@ export const TimelineHeader = memo(function TimelineHeader({
 }: TimelineHeaderProps) {
   const { t } = useTranslation()
   const hotkeys = useResolvedHotkeys()
-  const { zoomLevel, zoomIn, zoomOut, setZoom } = useTimelineZoom()
+  const { zoomLevel, zoomIn, zoomOut, setZoomImmediate } = useTimelineZoom()
   const snapEnabled = useTimelineStore((s) => s.snapEnabled)
   const toggleSnap = useTimelineStore((s) => s.toggleSnap)
   const inPoint = useTimelineStore((s) => s.inPoint)
@@ -196,8 +196,6 @@ export const TimelineHeader = memo(function TimelineHeader({
   const lastZoomValueRef = useRef(zoomLevel)
   const lastZoomTimeRef = useRef(0)
   const momentumIdRef = useRef<number | null>(null)
-  const sliderRafIdRef = useRef<number | null>(null)
-  const queuedSliderZoomRef = useRef<number | null>(null)
   const isDraggingRef = useRef(false)
   const zoomLevelRef = useRef(zoomLevel)
   zoomLevelRef.current = zoomLevel
@@ -209,11 +207,14 @@ export const TimelineHeader = memo(function TimelineHeader({
       if (onZoomChange) {
         onZoomChange(clampedZoom)
       } else {
-        setZoom(clampedZoom)
+        // Fallback when timeline-content's anchored RAF path isn't wired up
+        // (mainly tests). Use immediate so slider drag doesn't sit behind the
+        // 120ms throttle that setZoom imposes.
+        setZoomImmediate(clampedZoom)
       }
       return clampedZoom
     },
-    [onZoomChange, setZoom],
+    [onZoomChange, setZoomImmediate],
   )
 
   // Momentum loop for zoom slider
@@ -275,16 +276,10 @@ export const TimelineHeader = memo(function TimelineHeader({
       lastZoomValueRef.current = newZoom
       lastZoomTimeRef.current = now
       isDraggingRef.current = true
-      queuedSliderZoomRef.current = newZoom
-      if (sliderRafIdRef.current === null) {
-        sliderRafIdRef.current = requestAnimationFrame(() => {
-          sliderRafIdRef.current = null
-          const queuedZoom = queuedSliderZoomRef.current
-          if (queuedZoom !== null) {
-            applyZoom(queuedZoom)
-          }
-        })
-      }
+      // Downstream scheduleZoomApply (timeline-content) already RAF-coalesces
+      // writes to the zoom store, so a second RAF here would only add a frame
+      // of input latency without preventing extra work.
+      applyZoom(newZoom)
     },
     [applyZoom, sliderToZoom],
   )
@@ -292,14 +287,6 @@ export const TimelineHeader = memo(function TimelineHeader({
   // Handle slider release - start momentum
   const handleSliderCommit = useCallback(() => {
     isDraggingRef.current = false
-    if (sliderRafIdRef.current !== null) {
-      cancelAnimationFrame(sliderRafIdRef.current)
-      sliderRafIdRef.current = null
-    }
-    if (queuedSliderZoomRef.current !== null) {
-      applyZoom(queuedSliderZoomRef.current)
-      queuedSliderZoomRef.current = null
-    }
     // Only start momentum if there's meaningful velocity
     if (Math.abs(zoomVelocityRef.current) > ZOOM_MIN_VELOCITY) {
       startZoomMomentum()
@@ -308,16 +295,13 @@ export const TimelineHeader = memo(function TimelineHeader({
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
     }
-  }, [applyZoom, startZoomMomentum])
+  }, [startZoomMomentum])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (momentumIdRef.current !== null) {
         cancelAnimationFrame(momentumIdRef.current)
-      }
-      if (sliderRafIdRef.current !== null) {
-        cancelAnimationFrame(sliderRafIdRef.current)
       }
     }
   }, [])

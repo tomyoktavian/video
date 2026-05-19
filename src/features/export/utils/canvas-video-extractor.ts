@@ -54,13 +54,13 @@ interface MediabunnyVideoTrack {
 
 export interface DrawFrameCaptureResult {
   success: boolean
-  capturedFrame: VideoFrame | null
+  capturedFrame: ImageBitmap | VideoFrame | null
   capturedSourceTime: number | null
 }
 
 export interface CaptureFrameResult {
   success: boolean
-  frame: VideoFrame | null
+  frame: ImageBitmap | VideoFrame | null
   sourceTime: number | null
 }
 
@@ -223,7 +223,7 @@ export class VideoFrameExtractor {
 
     return {
       success: true,
-      capturedFrame: this.cloneCurrentVideoFrame(),
+      capturedFrame: await this.captureCurrentOrientedFrame(),
       capturedSourceTime: this.currentSample?.timestamp ?? null,
     }
   }
@@ -247,7 +247,7 @@ export class VideoFrameExtractor {
 
       return {
         success: true,
-        frame: this.cloneCurrentVideoFrame(),
+        frame: await this.captureCurrentOrientedFrame(),
         sourceTime: this.currentSample.timestamp,
       }
     } catch (error) {
@@ -389,36 +389,14 @@ export class VideoFrameExtractor {
     }
 
     try {
-      // Prefer the VideoFrame path so we can respect visibleRect cropping.
-      // Direct sample.draw() can include padded decode columns that halftone
-      // turns into bright side fringes.
-      const videoFrame = this.getOrCreateCurrentVideoFrame()
-      if (!videoFrame) {
+      // Phone videos commonly store landscape pixels with 90/270 degree
+      // rotation metadata. VideoSample.draw() honors that metadata, while a
+      // raw VideoFrame draw does not.
+      if (typeof sample.draw !== 'function') {
+        this.lastFailureKind = 'decode-error'
         return false
       }
-
-      const visibleRect = videoFrame.visibleRect
-      if (
-        visibleRect &&
-        Number.isFinite(visibleRect.width) &&
-        Number.isFinite(visibleRect.height) &&
-        visibleRect.width > 0 &&
-        visibleRect.height > 0
-      ) {
-        ctx.drawImage(
-          videoFrame,
-          visibleRect.x,
-          visibleRect.y,
-          visibleRect.width,
-          visibleRect.height,
-          x,
-          y,
-          width,
-          height,
-        )
-      } else {
-        ctx.drawImage(videoFrame, x, y, width, height)
-      }
+      sample.draw(ctx, x, y, width, height)
       return true
     } catch (error) {
       // Draw failed — discard the cached frame so next attempt gets a fresh one
@@ -469,6 +447,32 @@ export class VideoFrameExtractor {
     } catch (error) {
       this.sampleLoopError = error
       return null
+    }
+  }
+
+  private async captureCurrentOrientedFrame(): Promise<ImageBitmap | VideoFrame | null> {
+    const sample = this.currentSample
+    if (!sample) {
+      this.lastFailureKind = 'no-sample'
+      return null
+    }
+
+    const width = Math.round(this.videoTrack?.displayWidth ?? 0)
+    const height = Math.round(this.videoTrack?.displayHeight ?? 0)
+    if (width <= 0 || height <= 0) {
+      return this.cloneCurrentVideoFrame()
+    }
+
+    try {
+      const canvas = new OffscreenCanvas(width, height)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return this.cloneCurrentVideoFrame()
+      if (typeof sample.draw !== 'function') return this.cloneCurrentVideoFrame()
+      sample.draw(ctx, 0, 0, width, height)
+      return await createImageBitmap(canvas)
+    } catch (error) {
+      this.sampleLoopError = error
+      return this.cloneCurrentVideoFrame()
     }
   }
 
@@ -590,31 +594,8 @@ export class VideoFrameExtractor {
       for await (const sample of this.sink.samplesAtTimestamps(timestamps)) {
         if (!sample) continue
         try {
-          const videoFrame = sample.toVideoFrame()
-          if (videoFrame) {
-            const visibleRect = videoFrame.visibleRect
-            if (
-              visibleRect &&
-              Number.isFinite(visibleRect.width) &&
-              Number.isFinite(visibleRect.height) &&
-              visibleRect.width > 0 &&
-              visibleRect.height > 0
-            ) {
-              ctx.drawImage(
-                videoFrame,
-                visibleRect.x,
-                visibleRect.y,
-                visibleRect.width,
-                visibleRect.height,
-                x,
-                y,
-                width,
-                height,
-              )
-            } else {
-              ctx.drawImage(videoFrame, x, y, width, height)
-            }
-            videoFrame.close()
+          if (typeof sample.draw === 'function') {
+            sample.draw(ctx, x, y, width, height)
             decoded++
           }
         } finally {

@@ -10,6 +10,7 @@ const SHORT_PREVIEW_DELAY_MS = 120
 const LONG_PREVIEW_DELAY_MS = 220
 const VERY_LONG_PREVIEW_DELAY_MS = 360
 const PREVIEW_IDLE_TIMEOUT_MS = 1200
+const PREVIEW_IDLE_TIMEOUT_IMMEDIATE_MS = 200
 const DEFAULT_AUDIO_STARTUP_HOLD_MIN_MS = 1200
 
 interface PreviewAudioStartupHold {
@@ -216,6 +217,9 @@ export function _resetPreviewWorkBudgetForTest(): void {
   clearPreviewAudioStartupTimer()
 }
 
+/** Tighter idle timeout for cold-start filmstrip work where waiting up to 1.2s for idle is too pessimistic. */
+export const PREVIEW_IMMEDIATE_IDLE_TIMEOUT_MS = PREVIEW_IDLE_TIMEOUT_IMMEDIATE_MS
+
 export function getPreviewStartupDelayMs(durationSec: number): number {
   if (!Number.isFinite(durationSec) || durationSec <= 0) {
     return SHORT_PREVIEW_DELAY_MS
@@ -258,13 +262,17 @@ function scheduleOnIdle(callback: () => void, delayMs: number, idleTimeoutMs: nu
     }, 0)
   }
 
-  timeoutId = setTimeout(
-    () => {
+  // For delayMs=0 the macrotask wrap adds 4-10ms with no benefit — go straight
+  // to requestIdleCallback (or microtask fallback). For non-zero delays keep
+  // the setTimeout so callers can space work out.
+  if (delayMs <= 0) {
+    run()
+  } else {
+    timeoutId = setTimeout(() => {
       timeoutId = null
       run()
-    },
-    Math.max(0, delayMs),
-  )
+    }, delayMs)
+  }
 
   return () => {
     cancelled = true

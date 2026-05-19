@@ -39,6 +39,16 @@ export interface AbortRequest {
   requestId: string
 }
 
+export interface WarmRequest {
+  type: 'warm'
+  requestId: string
+}
+
+export interface WarmedResponse {
+  type: 'warmed'
+  requestId: string
+}
+
 export interface ProgressResponse {
   type: 'progress'
   requestId: string
@@ -69,8 +79,8 @@ export interface ErrorResponse {
   error: string
 }
 
-export type WorkerRequest = ExtractRequest | AbortRequest
-export type WorkerResponse = ProgressResponse | CompleteResponse | ErrorResponse
+export type WorkerRequest = ExtractRequest | AbortRequest | WarmRequest
+export type WorkerResponse = ProgressResponse | CompleteResponse | ErrorResponse | WarmedResponse
 
 // Track active requests for abort support
 const activeRequests = new Map<string, { aborted: boolean }>()
@@ -234,22 +244,19 @@ async function extractAndSave(request: ExtractRequest, state: { aborted: boolean
       const canvas = wrapped.canvas as OffscreenCanvas
       const frameIndex = frame.index
 
-      // Create two bitmaps: one for transfer to main thread, one for JPEG encode.
-      // Both are instant snapshots (<0.1ms) that free the canvas pool slot.
-      const [displayBitmap, encodeBitmap] = await Promise.all([
-        createImageBitmap(canvas),
-        createImageBitmap(canvas),
-      ])
+      // Single bitmap path: copy pool canvas into a fresh OffscreenCanvas,
+      // then use that one canvas as both the source for the display bitmap
+      // and the source for the JPEG encode. The pool canvas slot is free
+      // immediately after drawImage so the next decode can advance.
+      const encodeCanvas = new OffscreenCanvas(canvas.width, canvas.height)
+      const encodeCtx = encodeCanvas.getContext('2d')!
+      encodeCtx.drawImage(canvas, 0, 0)
 
-      // Queue bitmap for immediate transfer to main thread (no JPEG encode needed)
+      // Flush prior encode, then queue display + encode against the new canvas.
+      await flushPendingEncode()
+      const displayBitmap = await createImageBitmap(encodeCanvas)
       bitmapsSinceLastReport.push({ index: frameIndex, bitmap: displayBitmap })
 
-      // Flush prior encode, then start JPEG encode in background for workspace persistence
-      await flushPendingEncode()
-      const encodeCanvas = new OffscreenCanvas(encodeBitmap.width, encodeBitmap.height)
-      const encodeCtx = encodeCanvas.getContext('2d')!
-      encodeCtx.drawImage(encodeBitmap, 0, 0)
-      encodeBitmap.close()
       pendingEncode = encodeCanvas
         .convertToBlob({
           type: IMAGE_FORMAT,
@@ -355,6 +362,16 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         if (state) {
           state.aborted = true
         }
+        break
+      }
+
+      case 'warm': {
+        // Eagerly load mediabunny so the first real extraction skips ~100-300ms
+        // of dynamic-import + parse cost. The module is cached in the worker
+        // realm for subsequent extractAndSave() calls.
+        const { requestId } = event.data as WarmRequest
+        await loadMediabunny()
+        self.postMessage({ type: 'warmed', requestId } as WarmedResponse)
         break
       }
 

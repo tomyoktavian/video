@@ -151,7 +151,7 @@ function VideoSource({
   const [strictDecodeReady, setStrictDecodeReady] = useState(false)
   const [hasDecodedFrame, setHasDecodedFrame] = useState(false)
   const [decodedFrameKey, setDecodedFrameKey] = useState<number | null>(null)
-  const [pausedRenderTargetKey, setPausedRenderTargetKey] = useState<number | null>(null)
+  const shouldUseDecodedScrubFrame = forceFastScrub && strictDecodeReady && !useLegacyPausedSeek
 
   useEffect(() => {
     playingRef.current = playing
@@ -205,7 +205,6 @@ function VideoSource({
     setUseLegacyPausedSeek(false)
     setHasDecodedFrame(false)
     setDecodedFrameKey(null)
-    setPausedRenderTargetKey(null)
     pausedRenderTargetKeyRef.current = null
     prewarmInFlightRef.current = false
     queuedPrewarmTimesRef.current = []
@@ -578,10 +577,13 @@ function VideoSource({
 
       lastFrameRef.current = frame
 
-      if (!playingRef.current && !useLegacyPausedSeek && !isPreviewScrubbing) {
+      if (
+        !playingRef.current &&
+        !useLegacyPausedSeek &&
+        (!isPreviewScrubbing || shouldUseDecodedScrubFrame)
+      ) {
         if (pausedRenderTargetKeyRef.current !== targetCacheKey) {
           pausedRenderTargetKeyRef.current = targetCacheKey
-          setPausedRenderTargetKey(targetCacheKey)
         }
         pendingTimeRef.current = targetTime
         if (decoderReadyRef.current) {
@@ -622,7 +624,7 @@ function VideoSource({
         strictDecodeReady &&
         hasDecodedFrame &&
         !useLegacyPausedSeek &&
-        !isPreviewScrubbing
+        (!isPreviewScrubbing || shouldUseDecodedScrubFrame)
       ) {
         syncAudioTime()
         return
@@ -666,6 +668,7 @@ function VideoSource({
       hasDecodedFrame,
       isPreviewScrubbing,
       pumpLatestDecodedFrame,
+      shouldUseDecodedScrubFrame,
       src,
       strictDecodeReady,
       useLegacyPausedSeek,
@@ -745,12 +748,11 @@ function VideoSource({
 
   const showDecodedCanvas =
     !playing &&
-    !isPreviewScrubbing &&
+    (!isPreviewScrubbing || shouldUseDecodedScrubFrame) &&
     strictDecodeReady &&
     hasDecodedFrame &&
     !useLegacyPausedSeek &&
-    decodedFrameKey !== null &&
-    decodedFrameKey === pausedRenderTargetKey
+    decodedFrameKey !== null
 
   return (
     <AbsoluteFill>

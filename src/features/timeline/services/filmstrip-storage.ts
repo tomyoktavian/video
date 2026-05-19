@@ -15,6 +15,7 @@ import { createLogger } from '@/shared/logging/logger'
 import { getCacheMigration } from '@/infrastructure/storage/cache-version'
 import {
   readBlob,
+  readDirectoryFiles,
   readJson,
   writeBlob,
   writeJsonAtomic,
@@ -257,30 +258,30 @@ class FilmstripStorage {
       const metadata = await this.ensureWorkspaceFilmstrip(mediaId)
       if (!metadata) return null
 
-      const entries = await listDirectory(requireWorkspaceRoot(), filmstripDir(mediaId))
-      const frameFilesByIndex = new Map<number, { blob: Blob; ext: string }>()
+      // Resolve the filmstrip dir once and read all matching files via the
+      // same handle iterator. readBlob-per-path would re-walk the 4-segment
+      // media path for every frame; with N=60 that's 240 wasted lookups.
+      const files = await readDirectoryFiles(
+        requireWorkspaceRoot(),
+        filmstripDir(mediaId),
+        (entry) => parseFrameFileNameParts(entry.name) !== null,
+      )
 
-      for (const entry of entries) {
-        if (entry.kind !== 'file') continue
-        const parsed = parseFrameFileNameParts(entry.name)
+      const fileByIndex = new Map<number, { index: number; ext: string; blob: Blob }>()
+      for (const { name, blob } of files) {
+        const parsed = parseFrameFileNameParts(name)
         if (!parsed) continue
-
-        const blob = await readBlob(
-          requireWorkspaceRoot(),
-          filmstripFramePath(mediaId, parsed.index, parsed.ext),
-        )
         if (!blob || blob.size <= 0) continue
-
-        const existing = frameFilesByIndex.get(parsed.index)
+        const existing = fileByIndex.get(parsed.index)
         const shouldReplace =
           !existing || (parsed.ext === PRIMARY_FRAME_EXT && existing.ext !== PRIMARY_FRAME_EXT)
         if (shouldReplace) {
-          frameFilesByIndex.set(parsed.index, { blob, ext: parsed.ext })
+          fileByIndex.set(parsed.index, { index: parsed.index, ext: parsed.ext, blob })
         }
       }
 
-      const frameFiles = Array.from(frameFilesByIndex.entries())
-        .map(([index, value]) => ({ index, blob: value.blob }))
+      const frameFiles = Array.from(fileByIndex.values())
+        .map(({ index, blob }) => ({ index, blob }))
         .sort((a, b) => a.index - b.index)
 
       const nextUrls: Array<{ index: number; url: string }> = []
@@ -322,22 +323,24 @@ class FilmstripStorage {
     const metadata = await this.ensureWorkspaceFilmstrip(mediaId)
     if (!metadata) return []
 
-    const entries = await listDirectory(requireWorkspaceRoot(), filmstripDir(mediaId))
+    // Resolve the dir once and read matching files concurrently — was a
+    // sequential await loop that re-walked the four-segment path per frame.
+    const files = await readDirectoryFiles(
+      requireWorkspaceRoot(),
+      filmstripDir(mediaId),
+      (entry) => {
+        const index = parseFrameFileName(entry.name)
+        if (index === null) return false
+        if (typeof startIndex === 'number' && index < startIndex) return false
+        if (typeof endIndex === 'number' && index >= endIndex) return false
+        return true
+      },
+    )
+
     const indices = new Set<number>()
-
-    for (const entry of entries) {
-      if (entry.kind !== 'file') continue
-      const index = parseFrameFileName(entry.name)
+    for (const { name, blob } of files) {
+      const index = parseFrameFileName(name)
       if (index === null) continue
-      if (typeof startIndex === 'number' && index < startIndex) continue
-      if (typeof endIndex === 'number' && index >= endIndex) continue
-
-      const parsed = parseFrameFileNameParts(entry.name)
-      if (!parsed) continue
-      const blob = await readBlob(
-        requireWorkspaceRoot(),
-        filmstripFramePath(mediaId, parsed.index, parsed.ext),
-      )
       if (blob && blob.size > 0) {
         indices.add(index)
       }

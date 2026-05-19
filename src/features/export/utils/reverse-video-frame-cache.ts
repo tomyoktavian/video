@@ -9,7 +9,7 @@ const DEFAULT_MAX_WINDOW_FRAMES = 4
 const MIN_WINDOW_FRAMES = 2
 
 interface CachedFrame {
-  frame: VideoFrame
+  frame: ImageBitmap | VideoFrame
 }
 
 interface ItemWindow {
@@ -42,7 +42,7 @@ export class ReverseVideoFrameCache {
 
   constructor(private readonly maxBytes = DEFAULT_MAX_BYTES) {}
 
-  async getFrame(request: ReverseVideoFrameRequest): Promise<VideoFrame | null> {
+  async getFrame(request: ReverseVideoFrameRequest): Promise<ImageBitmap | VideoFrame | null> {
     const existing = this.itemWindows.get(request.item.id)
     const key = this.getSourceFrameKey(request)
     if (

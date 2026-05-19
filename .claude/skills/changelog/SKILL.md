@@ -56,10 +56,14 @@ The user invokes one of these explicitly. Default to asking which mode if unclea
 
 The user asks "draft changelog bullets for this week" or similar. Produce bullets from commits — do **not** write files yet, just show the user the curated list to approve.
 
-1. `git log --first-parent main --pretty=format:"%H|%ad|%s" --date=short <range>` — range usually `<last-rollup>..HEAD` or a date range the user gives.
-2. Apply curation rules (below). Drop noise, rewrite dev-speak into user language, dedupe revisits.
-3. Group into Added / Fixed / Improved.
-4. Show the result. Wait for approval before touching files.
+1. Pick the branch to read from:
+   - For the **current rolling week** (drafting bullets for `current`), query the **active development branch** — typically `develop`, not `main`. PRs target `staging`/`develop` first, so commits from earlier today or this week may not be on `main` yet. Confirm the branch with `git branch --show-current` if unsure, or `git log <branch> --no-merges` to see what's actually there.
+   - For **closed weeks** (rollup, backfill), `main` is usually fine — the week's PRs have merged by then. But if you're rolling up early Monday and the Sunday PRs haven't been promoted yet, fall back to `develop`.
+2. `git log <branch> --no-merges --pretty=format:"%H|%ad|%s" --date=short --since=<week-start> --until=<week-end>` — `--no-merges` filters out PR merge commits, which carry no useful subject. Range is usually `<last-rollup>..HEAD` or explicit `--since`/`--until`.
+3. Sanity-check: if the user just mentioned a specific commit you don't see in the output, you're on the wrong branch. Re-query.
+4. Apply curation rules (below). Drop noise, rewrite dev-speak into user language, dedupe revisits.
+5. Group into Added / Fixed / Improved.
+6. Show the result. Wait for approval before touching files.
 
 ### Append mode
 

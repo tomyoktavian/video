@@ -192,6 +192,7 @@ export const PreviewStage = memo(function PreviewStage({
                     height: '100%',
                     zIndex: 4,
                     visibility: isRenderedOverlayVisible ? 'visible' : 'hidden',
+                    backgroundColor: '#000',
                   }}
                 />
               )}

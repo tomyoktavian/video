@@ -12,7 +12,7 @@ import { usePlaybackStore } from '@/shared/state/playback'
 import { useMediaLibraryStore } from '@/features/timeline/deps/media-library-store'
 import { useProjectStore } from '@/features/timeline/deps/projects'
 import { mediaLibraryService } from '@/features/timeline/deps/media-library-service'
-import { getMediaType } from '@/features/timeline/deps/media-library-resolver'
+import { getMediaType, resolveMediaUrl } from '@/features/timeline/deps/media-library-resolver'
 import { toast } from 'sonner'
 import { execute, applyTransitionRepairs, getLogger } from './shared'
 import { resolveSourceEditTrackTargets } from '../../utils/source-edit-targeting'
@@ -146,7 +146,7 @@ async function resolveSourceEditContext(): Promise<SourceEditContext | null> {
   }
 
   // Resolve blob URLs before execute (async not allowed inside execute)
-  const blobUrl = await mediaLibraryService.getMediaBlobUrl(sourceMediaId)
+  const blobUrl = await resolveMediaUrl(sourceMediaId)
   if (!blobUrl) {
     toast.error('Failed to load source media')
     return null

@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef, useEffectEvent, useMemo } from 'react'
 import { filmstripCache, type Filmstrip, type FilmstripFrame } from '../services/filmstrip-cache'
-import { getPreviewStartupDelayMs, schedulePreviewWork } from './preview-work-budget'
+import {
+  getPreviewStartupDelayMs,
+  PREVIEW_IMMEDIATE_IDLE_TIMEOUT_MS,
+  schedulePreviewWork,
+} from './preview-work-budget'
 
 export type { FilmstripFrame }
 
@@ -131,9 +135,11 @@ export function useFilmstrip({
     return normalized.length > 0 ? normalized : undefined
   }, [targetFrameIndices])
 
-  // Subscribe to progressive updates
+  // Subscribe to progressive updates. Intentionally does not require blobUrl —
+  // cached filmstrip frames live on disk and can be displayed before the source
+  // video blob URL resolves.
   useEffect(() => {
-    if (!enabled || !blobUrl || !duration || duration <= 0) {
+    if (!enabled || !duration || duration <= 0) {
       return
     }
 
@@ -144,7 +150,21 @@ export function useFilmstrip({
     })
 
     return unsubscribe
-  }, [mediaId, enabled, blobUrl, duration])
+  }, [mediaId, enabled, duration])
+
+  // Hydrate from persisted storage as soon as we know the clip exists — does
+  // not wait for the source blob URL or for visibility. Disk reads are cheap
+  // and parallel, so prefetching off-viewport clips lets them paint instantly
+  // when scrolled into view. The extraction effect below still no-ops when it
+  // finds a complete cache.
+  useEffect(() => {
+    if (!enabled || !duration || duration <= 0) return
+    if (filmstrip?.isComplete) return
+
+    void filmstripCache.loadFromDisk(mediaId, duration).catch(() => {
+      // Swallow: extraction path below is the fallback once blobUrl arrives.
+    })
+  }, [mediaId, enabled, duration, filmstrip?.isComplete])
 
   // Once a clip leaves the active workset, stop spending background decode time on it.
   useEffect(() => {
@@ -232,6 +252,9 @@ export function useFilmstrip({
       },
       {
         delayMs: shouldStartImmediately ? 0 : getPreviewStartupDelayMs(duration),
+        // Cold-start (no frames yet): don't let extraction sit waiting for an
+        // idle slot for over a second. After this window, fire anyway.
+        idleTimeoutMs: shouldStartImmediately ? PREVIEW_IMMEDIATE_IDLE_TIMEOUT_MS : undefined,
         ignoreAudioStartupHold: true,
       },
     )

@@ -7,6 +7,7 @@ const filmstripCacheMocks = vi.hoisted(() => ({
   subscribe: vi.fn(() => vi.fn()),
   needsPriorityRefinement: vi.fn(() => false),
   getFilmstrip: vi.fn(() => new Promise<never>(() => {})),
+  loadFromDisk: vi.fn(() => Promise.resolve(null)),
   abort: vi.fn(),
 }))
 
@@ -16,6 +17,7 @@ vi.mock('../services/filmstrip-cache', () => ({
 
 vi.mock('./preview-work-budget', () => ({
   getPreviewStartupDelayMs: vi.fn(() => 0),
+  PREVIEW_IMMEDIATE_IDLE_TIMEOUT_MS: 200,
   schedulePreviewWork: vi.fn((task: () => void) => {
     task()
     return () => {}
@@ -44,6 +46,7 @@ describe('useFilmstrip', () => {
     filmstripCacheMocks.subscribe.mockReturnValue(vi.fn())
     filmstripCacheMocks.needsPriorityRefinement.mockReturnValue(false)
     filmstripCacheMocks.getFilmstrip.mockReturnValue(new Promise<never>(() => {}))
+    filmstripCacheMocks.loadFromDisk.mockReturnValue(Promise.resolve(null))
   })
 
   it('aborts extraction when the clip leaves the active workset', async () => {

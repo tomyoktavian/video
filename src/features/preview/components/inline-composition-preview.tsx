@@ -10,11 +10,16 @@ import {
 import { resolveMediaUrl, resolveMediaUrls } from '@/features/preview/deps/media-library-contract'
 import { createCompositionRenderer } from '@/features/preview/deps/export'
 import { createLogger } from '@/shared/logging/logger'
+import { getPreviewPixelSnapSize } from '../utils/preview-pixel-snap'
 
 type CompositionRendererInstance = Awaited<ReturnType<typeof createCompositionRenderer>>
 
 function getLogger() {
   return createLogger('InlineCompositionPreview')
+}
+
+function getDevicePixelRatio(): number {
+  return typeof window === 'undefined' ? 1 : window.devicePixelRatio
 }
 
 interface InlineCompositionPreviewProps {
@@ -102,26 +107,36 @@ const InlineCompositionPreviewContent = memo(function InlineCompositionPreviewCo
   const playerSize = useMemo(() => {
     const aspectRatio = compositionWidth / compositionHeight
 
+    // Snap only the dominant dimension and derive the other from the source
+    // aspect ratio — independent rounding breaks the aspect ratio and lets
+    // the scrub overlay misalign with Remotion's uniformly scaled content.
     if (zoom === -1) {
       if (containerSize.width > 0 && containerSize.height > 0) {
         const containerAspectRatio = containerSize.width / containerSize.height
 
         if (containerAspectRatio > aspectRatio) {
-          const height = containerSize.height
+          const { height } = getPreviewPixelSnapSize(
+            { width: containerSize.height * aspectRatio, height: containerSize.height },
+            getDevicePixelRatio(),
+          )
           return { width: height * aspectRatio, height }
         }
 
-        const width = containerSize.width
+        const { width } = getPreviewPixelSnapSize(
+          { width: containerSize.width, height: containerSize.width / aspectRatio },
+          getDevicePixelRatio(),
+        )
         return { width, height: width / aspectRatio }
       }
 
       return { width: compositionWidth, height: compositionHeight }
     }
 
-    return {
-      width: compositionWidth * zoom,
-      height: compositionHeight * zoom,
-    }
+    const { width } = getPreviewPixelSnapSize(
+      { width: compositionWidth * zoom, height: compositionHeight * zoom },
+      getDevicePixelRatio(),
+    )
+    return { width, height: width / aspectRatio }
   }, [compositionHeight, compositionWidth, containerSize.height, containerSize.width, zoom])
 
   const needsOverflow = useMemo(() => {

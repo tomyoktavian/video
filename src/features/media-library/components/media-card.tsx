@@ -1,4 +1,13 @@
-import { Fragment, memo, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import {
+  Fragment,
+  memo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { i18n } from '@/i18n'
 import {
@@ -136,6 +145,16 @@ interface MediaCardActionMenuProps {
 }
 
 const DEFAULT_CAPTION_SELECTION_DURATION_SEC = 3
+
+function getSkimIndicatorStyle(progress: number): CSSProperties {
+  if (progress >= 0.999) {
+    return { right: 0 }
+  }
+
+  return {
+    left: `${progress * 100}%`,
+  }
+}
 
 function canExtractEmbeddedSubtitlesFromMedia(media: MediaMetadata): boolean {
   const fileName = media.fileName.toLowerCase()
@@ -1693,7 +1712,7 @@ export const MediaCard = memo(function MediaCard({
                 {canScrubPreview && skimProgress !== null && (
                   <div
                     className="absolute inset-y-0 w-px bg-white/80 shadow-[0_0_0_1px_rgba(0,0,0,0.25)] pointer-events-none"
-                    style={{ left: `${skimProgress * 100}%` }}
+                    style={getSkimIndicatorStyle(skimProgress)}
                   />
                 )}
                 {!isBroken &&
@@ -1965,7 +1984,7 @@ export const MediaCard = memo(function MediaCard({
               {canScrubPreview && skimProgress !== null && (
                 <div
                   className="absolute inset-y-0 w-px bg-white/85 shadow-[0_0_0_1px_rgba(0,0,0,0.3)] pointer-events-none"
-                  style={{ left: `${skimProgress * 100}%` }}
+                  style={getSkimIndicatorStyle(skimProgress)}
                 />
               )}
               {!isBroken &&

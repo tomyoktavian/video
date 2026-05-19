@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect, memo, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers, RotateCw, Sparkles, Trash2, ChevronRight } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -36,6 +36,16 @@ import { setMediaDragData, clearMediaDragData } from '../utils/drag-data-cache'
 import { GRID_MIN_SIZE_PX, GRID_GAP_BY_SIZE } from './media-grid-constants'
 import { CARD_GRID_BASE, CARD_LIST_BASE, CARD_PERF_STYLE } from './card-styles'
 import { compoundClipThumbnailService } from '../services/compound-clip-thumbnail-service'
+
+function getSkimIndicatorStyle(progress: number): CSSProperties {
+  if (progress >= 0.999) {
+    return { right: 0 }
+  }
+
+  return {
+    left: `${progress * 100}%`,
+  }
+}
 
 /**
  * Compositions section in the media library.
@@ -530,7 +540,7 @@ const CompositionCard = memo(function CompositionCard({
               {skimProgress !== null && (
                 <div
                   className="absolute inset-y-0 w-px bg-white/85 shadow-[0_0_0_1px_rgba(0,0,0,0.3)] pointer-events-none"
-                  style={{ left: `${skimProgress * 100}%` }}
+                  style={getSkimIndicatorStyle(skimProgress)}
                 />
               )}
             </div>
@@ -626,7 +636,7 @@ const CompositionCard = memo(function CompositionCard({
             {skimProgress !== null && (
               <div
                 className="absolute inset-y-0 w-px bg-white/85 shadow-[0_0_0_1px_rgba(0,0,0,0.3)] pointer-events-none"
-                style={{ left: `${skimProgress * 100}%` }}
+                style={getSkimIndicatorStyle(skimProgress)}
               />
             )}
           </div>

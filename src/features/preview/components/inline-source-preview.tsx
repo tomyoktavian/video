@@ -83,35 +83,36 @@ const InlineSourcePreviewContent = memo(function InlineSourcePreviewContent({
   const playerSize = useMemo(() => {
     const aspectRatio = mediaWidth / mediaHeight
 
+    // Snap only the dominant dimension and derive the other from the source
+    // aspect ratio — independent rounding breaks the aspect ratio and lets
+    // the scrub overlay misalign with Remotion's uniformly scaled content.
     if (zoom === -1) {
       if (containerSize.width > 0 && containerSize.height > 0) {
         const containerAspectRatio = containerSize.width / containerSize.height
 
         if (containerAspectRatio > aspectRatio) {
-          const height = containerSize.height
-          return getPreviewPixelSnapSize(
-            { width: height * aspectRatio, height },
+          const { height } = getPreviewPixelSnapSize(
+            { width: containerSize.height * aspectRatio, height: containerSize.height },
             getDevicePixelRatio(),
           )
+          return { width: height * aspectRatio, height }
         }
 
-        const width = containerSize.width
-        return getPreviewPixelSnapSize(
-          { width, height: width / aspectRatio },
+        const { width } = getPreviewPixelSnapSize(
+          { width: containerSize.width, height: containerSize.width / aspectRatio },
           getDevicePixelRatio(),
         )
+        return { width, height: width / aspectRatio }
       }
 
       return { width: mediaWidth, height: mediaHeight }
     }
 
-    return getPreviewPixelSnapSize(
-      {
-        width: mediaWidth * zoom,
-        height: mediaHeight * zoom,
-      },
+    const { width } = getPreviewPixelSnapSize(
+      { width: mediaWidth * zoom, height: mediaHeight * zoom },
       getDevicePixelRatio(),
     )
+    return { width, height: width / aspectRatio }
   }, [containerSize.height, containerSize.width, mediaHeight, mediaWidth, zoom])
 
   const needsOverflow = useMemo(() => {

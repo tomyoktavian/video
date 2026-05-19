@@ -53,7 +53,8 @@ export function TimelinePreviewScrubber({
 
       const leftPosition = Math.round(frameToPixelsRef.current(clampedFrame))
       scrubberRef.current.style.display = ''
-      scrubberRef.current.style.left = `${leftPosition}px`
+      // Use transform (compositor-only) instead of style.left (triggers layout).
+      scrubberRef.current.style.transform = `translate3d(${leftPosition}px, 0, 0)`
 
       // Update tooltip text
       if (tooltipRef.current) {
@@ -79,7 +80,7 @@ export function TimelinePreviewScrubber({
       clampedFrame = Math.min(clampedFrame, maxFrame)
     }
     const leftPosition = Math.round(frameToPixels(clampedFrame))
-    scrubberRef.current.style.left = `${leftPosition}px`
+    scrubberRef.current.style.transform = `translate3d(${leftPosition}px, 0, 0)`
   }, [frameToPixels, maxFrame])
 
   // Change color based on active tool: red for razor, purple for rate-stretch

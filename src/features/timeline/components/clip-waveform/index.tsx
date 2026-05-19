@@ -79,6 +79,11 @@ export const ClipWaveform = memo(function ClipWaveform({
   const containerRef = useRef<HTMLDivElement>(null)
   const pixelsPerSecondRef = useRef(pixelsPerSecond)
   pixelsPerSecondRef.current = pixelsPerSecond
+  // clipWidth is read via ref inside renderTile so zoom (which changes clipWidth
+  // and pps proportionally) doesn't invalidate the callback identity and force
+  // TiledCanvas to redraw all visible tiles on every zoom step.
+  const clipWidthRef = useRef(clipWidth)
+  clipWidthRef.current = clipWidth
   const amplitudesBufferRef = useRef<Float32Array>(new Float32Array(0))
   const [height, setHeight] = useState(0)
   const conformStartedRef = useRef(false)
@@ -218,7 +223,7 @@ export const ClipWaveform = memo(function ClipWaveform({
         sourceDuration,
         Math.max(
           effectiveStart,
-          sourceEnd ?? effectiveStart + (clipWidth / Math.max(1, currentPps)) * speed,
+          sourceEnd ?? effectiveStart + (clipWidthRef.current / Math.max(1, currentPps)) * speed,
         ),
       )
       const centerY = height / 2
@@ -312,7 +317,6 @@ export const ClipWaveform = memo(function ClipWaveform({
       speed,
       isReversed,
       sourceDuration,
-      clipWidth,
       height,
       normalizationPeak,
       stereo,

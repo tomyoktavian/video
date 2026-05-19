@@ -86,7 +86,8 @@ export function TimelinePlayhead({ inRuler = false, maxFrame }: TimelinePlayhead
     const updatePosition = (frame: number) => {
       if (!playheadRef.current) return
       const leftPosition = Math.round(frameToPixelsRef.current(frame))
-      playheadRef.current.style.left = `${leftPosition}px`
+      // Use transform (compositor-only) instead of style.left (triggers layout).
+      playheadRef.current.style.transform = `translate3d(${leftPosition}px, 0, 0)`
     }
 
     // Initial update
@@ -111,7 +112,7 @@ export function TimelinePlayhead({ inRuler = false, maxFrame }: TimelinePlayhead
         ? playbackState.previewFrame
         : playbackState.currentFrame
     const leftPosition = Math.round(frameToPixels(frame))
-    playheadRef.current.style.left = `${leftPosition}px`
+    playheadRef.current.style.transform = `translate3d(${leftPosition}px, 0, 0)`
   }, [frameToPixels, isDragging])
 
   // Track external drag operations to disable pointer events on hit areas
