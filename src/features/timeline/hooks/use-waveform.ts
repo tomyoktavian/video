@@ -44,7 +44,8 @@ interface UseWaveformResult {
 /**
  * Hook for managing waveform data for an audio clip
  *
- * - Only generates when visible and has valid blobUrl
+ * - Loads cached waveforms when visible, even before a blobUrl is available
+ * - Only generates missing waveforms when visible and has valid blobUrl
  * - Subscribes to progressive updates for streaming loading
  * - Caches results in memory and OPFS
  * - Defers startup until interaction/idle budget allows so new clips do not
@@ -94,9 +95,11 @@ export function useWaveform({
     setProgress(nextProgress)
   })
 
-  // Subscribe to progressive updates
+  // Subscribe to progressive updates and storage hydration. This intentionally
+  // does not require blobUrl: persisted waveforms can hydrate before the media
+  // source is resolved.
   useEffect(() => {
-    if (!enabled || !blobUrl) {
+    if (!enabled) {
       return
     }
 
@@ -109,11 +112,11 @@ export function useWaveform({
     })
 
     return unsubscribe
-  }, [mediaId, enabled, blobUrl])
+  }, [mediaId, enabled])
 
   // Load waveform when visible and conditions are met
   useEffect(() => {
-    if (!enabled || !blobUrl) {
+    if (!enabled) {
       return
     }
 
@@ -144,12 +147,33 @@ export function useWaveform({
 
         hasPendingStartRef.current = false
         isGeneratingRef.current = true
-        setProgress(0)
 
         waveformCache
-          .getWaveform(mediaId, blobUrl, onProgress)
+          .getCachedWaveform(mediaId)
           .then((result) => {
             if (cancelled || lastMediaIdRef.current !== requestMediaId) {
+              return null
+            }
+            if (result?.isComplete) {
+              setWaveform(result)
+              setIsLoading(false)
+              setProgress(100)
+              return null
+            }
+            if (result) {
+              setWaveform(result)
+            }
+            if (!blobUrl) {
+              setIsLoading(false)
+              setProgress(0)
+              return null
+            }
+
+            setProgress(0)
+            return waveformCache.getWaveform(mediaId, blobUrl, onProgress)
+          })
+          .then((result) => {
+            if (!result || cancelled || lastMediaIdRef.current !== requestMediaId) {
               return
             }
             setWaveform(result)

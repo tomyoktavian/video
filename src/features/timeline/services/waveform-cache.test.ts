@@ -51,4 +51,20 @@ describe('waveformCache', () => {
     expect(waveform.peaks[2]).toBeCloseTo(1, 6)
     expect(waveform.peaks[3]).toBeCloseTo(0.3, 6)
   })
+
+  it('loads persisted waveform data without requiring a blob URL', async () => {
+    getLevelMock.mockResolvedValue({
+      sampleRate: 1000,
+      peaks: new Float32Array([0.5, 0.25]),
+      channels: 1,
+    })
+
+    const { waveformCache } = await import('./waveform-cache')
+    const waveform = await waveformCache.getCachedWaveform('media-cached')
+
+    expect(waveform).not.toBeNull()
+    expect(waveform?.duration).toBeCloseTo(0.002, 6)
+    expect(waveform?.peaks[0]).toBeCloseTo(0.5, 6)
+    expect(waveform?.peaks[1]).toBeCloseTo(0.25, 6)
+  })
 })

@@ -47,6 +47,30 @@ const STATIC_ITEM = {
   },
 } as unknown as TimelineItem
 
+const WRAPPED_TEXT_ITEM = {
+  ...STATIC_ITEM,
+  id: 'item-3',
+  text: 'line one\nline two\nline three\nline four',
+  fontSize: 48,
+  lineHeight: 1.2,
+  transform: {
+    ...STATIC_ITEM.transform,
+    width: 200,
+    height: 80,
+  },
+} as unknown as TimelineItem
+
+const CORNER_PINNED_WRAPPED_TEXT_ITEM = {
+  ...WRAPPED_TEXT_ITEM,
+  id: 'item-4',
+  cornerPin: {
+    topLeft: [0, 0],
+    topRight: [12, -8],
+    bottomRight: [10, 14],
+    bottomLeft: [-10, 6],
+  },
+} as unknown as TimelineItem
+
 function SingleAnimatedTransformProbe() {
   const { transform, relativeFrame } = useAnimatedTransform(ANIMATED_ITEM, PROJECT_SIZE)
   return (
@@ -80,6 +104,17 @@ function SwitchingItemProbe() {
       <div data-testid="switch-probe" data-x={String(transform.x)} />
     </>
   )
+}
+
+function HeightProbe({ item }: { item: TimelineItem }) {
+  const { transform } = useAnimatedTransform(item, PROJECT_SIZE)
+  return <div data-testid="height-probe" data-height={String(transform.height)} />
+}
+
+function MultiHeightProbe({ item }: { item: TimelineItem }) {
+  const transforms = useAnimatedTransforms([item], PROJECT_SIZE)
+  const resolved = transforms.get(item.id)
+  return <div data-testid="multi-height-probe" data-height={String(resolved?.height)} />
 }
 
 function resetStores() {
@@ -208,6 +243,32 @@ describe('useAnimatedTransform skimming frame resolution', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('switch-probe')).toHaveAttribute('data-x', '480')
+    })
+  })
+
+  it('keeps corner-pinned text at its authored gizmo height', async () => {
+    render(<HeightProbe item={CORNER_PINNED_WRAPPED_TEXT_ITEM} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('height-probe')).toHaveAttribute('data-height', '80')
+    })
+  })
+
+  it('still expands unpinned wrapped text to fit content', async () => {
+    render(<HeightProbe item={WRAPPED_TEXT_ITEM} />)
+
+    await waitFor(() => {
+      expect(
+        Number(screen.getByTestId('height-probe').getAttribute('data-height')),
+      ).toBeGreaterThan(80)
+    })
+  })
+
+  it('keeps batched corner-pinned text at its authored gizmo height', async () => {
+    render(<MultiHeightProbe item={CORNER_PINNED_WRAPPED_TEXT_ITEM} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('multi-height-probe')).toHaveAttribute('data-height', '80')
     })
   })
 })

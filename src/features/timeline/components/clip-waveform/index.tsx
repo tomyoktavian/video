@@ -184,13 +184,14 @@ export const ClipWaveform = memo(function ClipWaveform({
     }
   }, [mediaId, isVisible, blobUrlVersion, hasStartedLoadingRef, setBlobUrl])
 
-  // Use waveform hook - enabled once we have blobUrl (independent of visibility after that)
+  // Use waveform hook. It can hydrate persisted waveforms before blobUrl is
+  // available; blobUrl is only required when the cache has to generate.
   const { peaks, duration, sampleRate, stereo, maxPeak, loadedSamples, isLoading, error } =
     useWaveform({
       mediaId,
       blobUrl,
-      isVisible: true, // Always consider visible once we start - prevents re-triggers
-      enabled: !!blobUrl,
+      isVisible,
+      enabled: audioCodecSupported,
       deferDurationSec: sourceDuration,
     })
   const normalizationPeak = maxPeak > 0 ? maxPeak : 1

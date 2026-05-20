@@ -1509,97 +1509,97 @@
         "name": "ぼかし"
       },
       "gpu-exposure": {
-        "name": "??"
+        "name": "露出"
       },
       "gpu-grayscale": {
-        "name": "???????"
+        "name": "グレースケール"
       },
       "gpu-hue-shift": {
-        "name": "?????"
+        "name": "色相シフト"
       },
       "gpu-invert": {
-        "name": "??"
+        "name": "反転"
       },
       "gpu-levels": {
-        "name": "???"
+        "name": "レベル"
       },
       "gpu-saturation": {
-        "name": "??"
+        "name": "彩度"
       },
       "gpu-sepia": {
-        "name": "???"
+        "name": "セピア"
       },
       "gpu-temperature": {
-        "name": "???"
+        "name": "色温度"
       },
       "gpu-vibrance": {
-        "name": "?????"
+        "name": "バイブランス"
       },
       "gpu-box-blur": {
-        "name": "???????"
+        "name": "ボックスぼかし"
       },
       "gpu-gaussian-blur": {
-        "name": "??????"
+        "name": "ガウスぼかし"
       },
       "gpu-motion-blur": {
-        "name": "????????"
+        "name": "モーションブラー"
       },
       "gpu-radial-blur": {
-        "name": "?????"
+        "name": "放射状ぼかし"
       },
       "gpu-zoom-blur": {
-        "name": "??????"
+        "name": "ズームぼかし"
       },
       "gpu-bulge": {
-        "name": "??/???"
+        "name": "膨張/収縮"
       },
       "gpu-fluted-glass": {
-        "name": "?????"
+        "name": "溝付きガラス"
       },
       "gpu-kaleidoscope": {
-        "name": "???"
+        "name": "万華鏡"
       },
       "gpu-mirror": {
-        "name": "???"
+        "name": "ミラー"
       },
       "gpu-pixelate": {
-        "name": "?????"
+        "name": "ピクセル化"
       },
       "gpu-rgb-split": {
-        "name": "RGB??"
+        "name": "RGB分離"
       },
       "gpu-twirl": {
-        "name": "???"
+        "name": "ねじれ"
       },
       "gpu-wave": {
-        "name": "?"
+        "name": "波"
       },
       "gpu-ascii": {
         "name": "ASCII"
       },
       "gpu-color-glitch": {
-        "name": "???????"
+        "name": "カラーグリッチ"
       },
       "gpu-edge-detect": {
-        "name": "?????"
+        "name": "エッジ検出"
       },
       "gpu-halftone": {
-        "name": "??????"
+        "name": "ハーフトーン"
       },
       "gpu-posterize": {
-        "name": "??????"
+        "name": "ポスタリゼーション"
       },
       "gpu-scanlines": {
-        "name": "???"
+        "name": "走査線"
       },
       "gpu-sharpen": {
-        "name": "????"
+        "name": "シャープ"
       },
       "gpu-vignette": {
-        "name": "????"
+        "name": "ビネット"
       },
       "gpu-chroma-key": {
-        "name": "?????"
+        "name": "クロマキー"
       }
     },
     "params": {
@@ -1798,97 +1798,97 @@
         "name": "필름 그레인"
       },
       "gpu-exposure": {
-        "name": "??"
+        "name": "노출"
       },
       "gpu-grayscale": {
-        "name": "??????"
+        "name": "그레이스케일"
       },
       "gpu-hue-shift": {
-        "name": "?? ??"
+        "name": "색조 이동"
       },
       "gpu-invert": {
-        "name": "??"
+        "name": "반전"
       },
       "gpu-levels": {
-        "name": "??"
+        "name": "레벨"
       },
       "gpu-saturation": {
-        "name": "??"
+        "name": "채도"
       },
       "gpu-sepia": {
-        "name": "???"
+        "name": "세피아"
       },
       "gpu-temperature": {
-        "name": "???"
+        "name": "색온도"
       },
       "gpu-vibrance": {
-        "name": "???"
+        "name": "선명도"
       },
       "gpu-box-blur": {
-        "name": "?? ??"
+        "name": "박스 블러"
       },
       "gpu-gaussian-blur": {
-        "name": "???? ??"
+        "name": "가우시안 블러"
       },
       "gpu-motion-blur": {
-        "name": "?? ??"
+        "name": "모션 블러"
       },
       "gpu-radial-blur": {
-        "name": "??? ??"
+        "name": "방사형 블러"
       },
       "gpu-zoom-blur": {
-        "name": "? ??"
+        "name": "줌 블러"
       },
       "gpu-bulge": {
-        "name": "??/??"
+        "name": "팽창/수축"
       },
       "gpu-fluted-glass": {
-        "name": "? ??"
+        "name": "골판 유리"
       },
       "gpu-kaleidoscope": {
-        "name": "???"
+        "name": "만화경"
       },
       "gpu-mirror": {
-        "name": "??"
+        "name": "거울"
       },
       "gpu-pixelate": {
-        "name": "???"
+        "name": "픽셀화"
       },
       "gpu-rgb-split": {
-        "name": "RGB ??"
+        "name": "RGB 분리"
       },
       "gpu-twirl": {
-        "name": "????"
+        "name": "소용돌이"
       },
       "gpu-wave": {
-        "name": "???"
+        "name": "파동"
       },
       "gpu-ascii": {
         "name": "ASCII"
       },
       "gpu-color-glitch": {
-        "name": "?? ???"
+        "name": "컬러 글리치"
       },
       "gpu-edge-detect": {
-        "name": "???? ??"
+        "name": "엣지 감지"
       },
       "gpu-halftone": {
-        "name": "???"
+        "name": "하프톤"
       },
       "gpu-posterize": {
-        "name": "????"
+        "name": "포스터화"
       },
       "gpu-scanlines": {
-        "name": "????"
+        "name": "스캔라인"
       },
       "gpu-sharpen": {
-        "name": "????"
+        "name": "선명하게"
       },
       "gpu-vignette": {
-        "name": "???"
+        "name": "비네트"
       },
       "gpu-chroma-key": {
-        "name": "??? ?"
+        "name": "크로마 키"
       }
     },
     "params": {
@@ -2087,97 +2087,97 @@
         "name": "胶片颗粒"
       },
       "gpu-exposure": {
-        "name": "??"
+        "name": "曝光"
       },
       "gpu-grayscale": {
-        "name": "??"
+        "name": "灰度"
       },
       "gpu-hue-shift": {
-        "name": "????"
+        "name": "色相偏移"
       },
       "gpu-invert": {
-        "name": "??"
+        "name": "反相"
       },
       "gpu-levels": {
-        "name": "??"
+        "name": "色阶"
       },
       "gpu-saturation": {
-        "name": "???"
+        "name": "饱和度"
       },
       "gpu-sepia": {
-        "name": "???"
+        "name": "棕褐色"
       },
       "gpu-temperature": {
-        "name": "??"
+        "name": "色温"
       },
       "gpu-vibrance": {
-        "name": "?????"
+        "name": "自然饱和度"
       },
       "gpu-box-blur": {
-        "name": "????"
+        "name": "方框模糊"
       },
       "gpu-gaussian-blur": {
-        "name": "????"
+        "name": "高斯模糊"
       },
       "gpu-motion-blur": {
-        "name": "????"
+        "name": "运动模糊"
       },
       "gpu-radial-blur": {
-        "name": "????"
+        "name": "径向模糊"
       },
       "gpu-zoom-blur": {
-        "name": "????"
+        "name": "缩放模糊"
       },
       "gpu-bulge": {
-        "name": "??/??"
+        "name": "凸出/挤压"
       },
       "gpu-fluted-glass": {
-        "name": "????"
+        "name": "凹槽玻璃"
       },
       "gpu-kaleidoscope": {
-        "name": "???"
+        "name": "万花筒"
       },
       "gpu-mirror": {
-        "name": "??"
+        "name": "镜像"
       },
       "gpu-pixelate": {
-        "name": "???"
+        "name": "像素化"
       },
       "gpu-rgb-split": {
-        "name": "RGB ??"
+        "name": "RGB 分离"
       },
       "gpu-twirl": {
-        "name": "??"
+        "name": "旋转"
       },
       "gpu-wave": {
-        "name": "??"
+        "name": "波浪"
       },
       "gpu-ascii": {
         "name": "ASCII"
       },
       "gpu-color-glitch": {
-        "name": "????"
+        "name": "色彩故障"
       },
       "gpu-edge-detect": {
-        "name": "????"
+        "name": "边缘检测"
       },
       "gpu-halftone": {
-        "name": "???"
+        "name": "半色调"
       },
       "gpu-posterize": {
-        "name": "????"
+        "name": "色调分离"
       },
       "gpu-scanlines": {
-        "name": "???"
+        "name": "扫描线"
       },
       "gpu-sharpen": {
-        "name": "??"
+        "name": "锐化"
       },
       "gpu-vignette": {
-        "name": "??"
+        "name": "暗角"
       },
       "gpu-chroma-key": {
-        "name": "???"
+        "name": "色度键"
       }
     },
     "params": {

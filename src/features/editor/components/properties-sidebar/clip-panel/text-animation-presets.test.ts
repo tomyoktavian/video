@@ -30,7 +30,7 @@ describe('text animation presets', () => {
   it('includes a none option for animation selectors', () => {
     expect(TEXT_ANIMATION_PRESETS[0]).toEqual({
       id: 'none',
-      label: 'None',
+      labelKey: 'none',
     })
     expect(TEXT_ANIMATION_PRESETS.map((preset) => preset.id)).toEqual([
       'none',

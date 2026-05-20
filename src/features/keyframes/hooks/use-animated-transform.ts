@@ -9,6 +9,7 @@ import {
   resolveTransform,
   getSourceDimensions,
   expandTextTransformToFitContent,
+  hasCornerPin,
 } from '@/features/keyframes/deps/composition-runtime-contract'
 import { resolveAnimatedTransform } from '../utils/animated-transform-resolver'
 import { resolveAnimatedTextItem } from '../utils/animated-text-item'
@@ -82,7 +83,7 @@ export function useAnimatedTransform(
       ? resolveAnimatedTransform(baseResolved, itemKeyframes, relativeFrame)
       : baseResolved
 
-    if (animatedTextItem) {
+    if (animatedTextItem && !hasCornerPin(item.cornerPin)) {
       return expandTextTransformToFitContent(animatedTextItem, resolvedTransform)
     }
 
@@ -144,7 +145,7 @@ export function useAnimatedTransforms(
         ? resolveAnimatedTransform(baseResolved, itemKeyframes, relativeFrame)
         : baseResolved
 
-      if (animatedTextItem) {
+      if (animatedTextItem && !hasCornerPin(item.cornerPin)) {
         transforms.set(
           item.id,
           expandTextTransformToFitContent(animatedTextItem, resolvedTransform),

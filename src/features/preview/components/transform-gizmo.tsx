@@ -11,6 +11,7 @@ import {
   getScaleCursor,
   getScreenTransformOrigin,
 } from '../utils/coordinate-transform'
+import { hasCornerPin } from '@/features/preview/deps/composition-runtime'
 import { expandTextTransformForPreview } from '../utils/text-layout'
 
 interface TransformGizmoProps {
@@ -68,7 +69,7 @@ export function TransformGizmo({
       cornerRadius: animatedTransform.cornerRadius,
     }
 
-    if (item.type === 'text' && itemPreview?.properties) {
+    if (item.type === 'text' && itemPreview?.properties && !hasCornerPin(item.cornerPin)) {
       baseTransform = expandTextTransformForPreview(
         item,
         {

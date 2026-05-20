@@ -83,10 +83,7 @@ export function useWaveformPrefetch() {
         if (itemEnd > visibleStartFrame && item.from < visibleEndFrame) continue
         if (!item.mediaId) continue
 
-        const blobUrl = blobUrlManager.get(item.mediaId)
-        if (blobUrl) {
-          waveformCache.prefetch(item.mediaId, blobUrl)
-        }
+        waveformCache.prefetch(item.mediaId, blobUrlManager.get(item.mediaId))
       }
     }
 

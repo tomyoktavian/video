@@ -17,12 +17,12 @@ export type TextAnimationPhase = 'intro' | 'outro'
 
 export interface TextAnimationPreset {
   id: TextAnimationPresetId
-  label: string
+  labelKey: string
 }
 
 export interface TextAnimationPresetOption {
   id: TextAnimationPresetOptionId
-  label: string
+  labelKey: string
 }
 
 export interface TextAnimationKeyframePayload {
@@ -35,18 +35,18 @@ export interface TextAnimationKeyframePayload {
 }
 
 const TEXT_ANIMATION_EFFECT_PRESETS: TextAnimationPreset[] = [
-  { id: 'fade', label: 'Fade' },
-  { id: 'rise', label: 'Rise' },
-  { id: 'drop', label: 'Drop' },
-  { id: 'left', label: 'Left' },
-  { id: 'right', label: 'Right' },
-  { id: 'tilt', label: 'Tilt' },
-  { id: 'pop', label: 'Pop' },
-  { id: 'swing', label: 'Swing' },
+  { id: 'fade', labelKey: 'fade' },
+  { id: 'rise', labelKey: 'rise' },
+  { id: 'drop', labelKey: 'drop' },
+  { id: 'left', labelKey: 'left' },
+  { id: 'right', labelKey: 'right' },
+  { id: 'tilt', labelKey: 'tilt' },
+  { id: 'pop', labelKey: 'pop' },
+  { id: 'swing', labelKey: 'swing' },
 ]
 
 export const TEXT_ANIMATION_PRESETS: TextAnimationPresetOption[] = [
-  { id: 'none', label: 'None' },
+  { id: 'none', labelKey: 'none' },
   ...TEXT_ANIMATION_EFFECT_PRESETS,
 ]
 

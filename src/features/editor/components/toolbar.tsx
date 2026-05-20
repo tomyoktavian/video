@@ -8,7 +8,6 @@ import {
   Download,
   FolderArchive,
   Github,
-  Check,
   Keyboard,
   Save,
   Settings,
@@ -33,14 +32,10 @@ import { WhatsNewDialog } from './whats-new-dialog'
 import { hasUnseenChangelog } from './whats-new-seen'
 import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
 import { cn } from '@/shared/ui/cn'
+import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { useDebugStore } from '@/features/editor/stores/debug-store'
-import { SUPPORTED_LANGUAGES, resolveSupportedLanguage } from '@/i18n/languages'
 
 const SAVE_ANIMATION_MIN_MS = 1800
-
-function getLanguageButtonLabel(languageCode: string): string {
-  return languageCode.split('-')[0]?.slice(0, 2).toUpperCase() || 'EN'
-}
 
 interface ToolbarProps {
   projectId: string
@@ -70,7 +65,7 @@ export const Toolbar = memo(function Toolbar({
   onExportLauncher,
 }: ToolbarProps) {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
@@ -96,9 +91,6 @@ export const Toolbar = memo(function Toolbar({
     setHasUnseenWhatsNew(false)
     setShowWhatsNewDialog(true)
   }
-
-  const currentLanguage = resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language)
-  const currentLanguageLabel = getLanguageButtonLabel(currentLanguage)
 
   const handleBackClick = () => {
     if (isDirty) {
@@ -233,42 +225,7 @@ export const Toolbar = memo(function Toolbar({
         >
           <Keyboard className="h-4 w-4" />
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7 font-mono text-[10px] font-semibold leading-none tracking-normal"
-              data-tooltip={t('language.label')}
-              data-tooltip-side="bottom"
-              aria-label={t('language.ariaLabel')}
-            >
-              {currentLanguageLabel}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {SUPPORTED_LANGUAGES.map((lng) => {
-              const active = lng.code === currentLanguage
-              return (
-                <DropdownMenuItem
-                  key={lng.code}
-                  onClick={() => {
-                    void i18n.changeLanguage(resolveSupportedLanguage(lng.code))
-                  }}
-                  className="justify-between"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate">{lng.nativeName}</span>
-                    <span className="truncate text-[11px] text-muted-foreground">
-                      {lng.englishName}
-                    </span>
-                  </span>
-                  <Check className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-0')} />
-                </DropdownMenuItem>
-              )
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <LanguageSwitcher size="sm" align="end" side="bottom" />
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <a
             href="https://github.com/walterlow/freecut"

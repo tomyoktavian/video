@@ -35,6 +35,7 @@ import { LegacyMigrationBanner } from '@/features/projects/components/legacy-mig
 import { LegacyMigrationErrors } from '@/features/projects/components/legacy-migration-errors'
 import { TrashSection } from '@/features/projects/components/trash-section'
 import { WorkspaceIndicator } from '@/features/workspace-gate'
+import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 
 export const Route = createFileRoute('/projects/')({
   component: ProjectsIndex,
@@ -269,6 +270,7 @@ function ProjectsIndex() {
             </Link>
             <div className="flex items-center gap-3">
               <WorkspaceIndicator />
+              <LanguageSwitcher size="md" align="end" side="bottom" />
               <Button variant="outline" size="icon" className="h-10 w-10" asChild>
                 <a
                   href="https://github.com/walterlow/freecut"

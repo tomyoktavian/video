@@ -8,3 +8,4 @@ export {
   getSourceDimensions,
 } from '@/features/composition-runtime/utils/transform-resolver'
 export { expandTextTransformToFitContent } from '@/features/composition-runtime/utils/text-layout'
+export { hasCornerPin } from '@/features/composition-runtime/utils/corner-pin'

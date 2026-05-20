@@ -667,20 +667,20 @@ const CompositionCard = memo(function CompositionCard({
       </ContextMenuTrigger>
 
       <ContextMenuContent>
-        <ContextMenuItem onClick={onEnter}>Enter Compound Clip</ContextMenuItem>
+        <ContextMenuItem onClick={onEnter}>{t('media.compositions.enter')}</ContextMenuItem>
         <ContextMenuItem onClick={onAddCover}>
           <Sparkles className="mr-2 h-3 w-3" />
-          Add Cover…
+          {t('media.compositions.addCover')}
         </ContextMenuItem>
         {composition.spoilerMetadata && (
           <ContextMenuItem onClick={onRegenerateNarration}>
             <RotateCw className="mr-2 h-3 w-3" />
-            Regenerate Narration…
+            {t('media.compositions.regenerateNarration')}
           </ContextMenuItem>
         )}
-        <ContextMenuItem onClick={onStartRename}>Rename</ContextMenuItem>
+        <ContextMenuItem onClick={onStartRename}>{t('media.compositions.rename')}</ContextMenuItem>
         <ContextMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-          Delete
+          {t('common.delete')}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

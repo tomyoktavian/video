@@ -1066,9 +1066,23 @@ class WaveformCacheService {
   }
 
   /**
+   * Load an existing waveform without requiring source media access.
+   * Checks memory first, then persisted IndexedDB/OPFS/workspace-backed cache.
+   * Returns null when the waveform needs generation from the source blob.
+   */
+  async getCachedWaveform(mediaId: string): Promise<CachedWaveform | null> {
+    const memoryCached = this.getFromMemoryCache(mediaId)
+    if (memoryCached) {
+      return memoryCached
+    }
+
+    return this.loadFromStorage(mediaId)
+  }
+
+  /**
    * Prefetch waveform in background
    */
-  prefetch(mediaId: string, blobUrl: string): void {
+  prefetch(mediaId: string, blobUrl?: string | null): void {
     // Skip if already cached or pending
     if (this.getFromMemoryCache(mediaId) || this.pendingRequests.has(mediaId)) {
       return
@@ -1077,7 +1091,7 @@ class WaveformCacheService {
     // Check storage asynchronously and generate if needed
     this.loadFromStorage(mediaId)
       .then((cached) => {
-        if (!cached && !this.pendingRequests.has(mediaId)) {
+        if (!cached && blobUrl && !this.pendingRequests.has(mediaId)) {
           // Generate in background (no progress callback)
           this.getWaveform(mediaId, blobUrl).catch((error) => {
             if (error instanceof AbortError) return

@@ -231,4 +231,38 @@ describe('waveform prefetch filtering', () => {
       vi.useRealTimers()
     }
   })
+
+  it('prefetches storage-backed waveform cache even before a blob URL exists', () => {
+    vi.useFakeTimers()
+    let idleId = 0
+    vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 50,
+      } as IdleDeadline)
+      idleId += 1
+      return idleId
+    })
+    vi.stubGlobal('cancelIdleCallback', (id: number) => {
+      void id
+    })
+
+    try {
+      const item = makeAudioItem('ahead', 400, 100)
+      useItemsStore.getState().setItems([item])
+      vi.spyOn(blobUrlManager, 'get').mockReturnValue(null)
+      const prefetchSpy = vi.spyOn(waveformCache, 'prefetch').mockImplementation(() => {})
+
+      render(createElement(WaveformPrefetchProbe, { onRender: () => {} }))
+
+      act(() => {
+        vi.advanceTimersByTime(120)
+        vi.runOnlyPendingTimers()
+      })
+
+      expect(prefetchSpy).toHaveBeenCalledWith(item.mediaId, null)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
