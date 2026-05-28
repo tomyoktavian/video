@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import type { AudioItem, VideoItem } from '@/types/timeline'

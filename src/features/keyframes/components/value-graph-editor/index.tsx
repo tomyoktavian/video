@@ -867,7 +867,7 @@ export const ValueGraphEditor = memo(function ValueGraphEditor({
         return
       }
 
-      handleBackgroundClick(event as unknown as React.MouseEvent<SVGElement>)
+      handleBackgroundClick(event)
     },
     [handleBackgroundClick],
   )

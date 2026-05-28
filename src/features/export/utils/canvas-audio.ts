@@ -17,7 +17,7 @@ import type { AudioEqSettings, ResolvedAudioEqSettings } from '@/types/audio'
 import type { Keyframe as VolumeKeyframe } from '@/types/keyframe'
 import type { Transition } from '@/types/transition'
 import { createLogger } from '@/shared/logging/logger'
-import { resolveTransitionWindows } from '@/core/timeline/transitions/transition-planner'
+import { resolveTransitionWindows } from '@/shared/timeline/transitions/transition-planner'
 import {
   timelineToSourceFrames,
   sourceToTimelineFrames,
@@ -27,7 +27,7 @@ import {
 import { getPropertyKeyframes, interpolatePropertyValue } from '@/features/export/deps/keyframes'
 import { blobUrlManager } from '@/infrastructure/browser/blob-url-manager'
 import { getMediaAudioCodecById, resolveMediaUrl } from '@/features/export/deps/media-library'
-import { ensureAc3DecoderRegistered, isAc3AudioCodec } from '@/shared/media/ac3-decoder'
+import { ensureAc3DecoderRegistered, isAc3AudioCodec } from '@/shared/utils/ac3-decoder'
 import {
   getLinkedAudioCompanion,
   getLinkedCompositionAudioCompanion,

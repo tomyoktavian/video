@@ -2,4 +2,4 @@
  * Single import seam for preview -> player dependencies.
  */
 
-export * from '@/features/player/contracts/preview'
+export * from '@/runtime/player/contracts/preview'

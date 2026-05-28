@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { TimelineItem, TimelineTrack } from '@/types/timeline'
 import type { DragState, UseTimelineDragReturn, SnapTarget } from '../types/drag'
 import { useTimelineStore } from '../stores/timeline-store'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import {
   pixelsToFramePreciseNow,

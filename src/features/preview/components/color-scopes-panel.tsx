@@ -1,3 +1,3 @@
-import { ColorScopesView } from '@/shared/components/color-scopes-view'
+import { ColorScopesView } from '@/features/preview/components/color-scopes-view'
 
 export const ColorScopesPanel = ColorScopesView

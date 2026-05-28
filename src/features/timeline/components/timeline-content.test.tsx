@@ -2,7 +2,7 @@ import { createRef, type ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { usePreviewBridgeStore } from '@/shared/state/preview-bridge'
 import { useSelectionStore } from '@/shared/state/selection'
@@ -23,7 +23,7 @@ vi.mock('../hooks/use-timeline-zoom', () => ({
   }),
 }))
 
-vi.mock('@/hooks/use-marquee-selection', () => {
+vi.mock('@/shared/marquee/use-marquee-selection', () => {
   const INACTIVE = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 }
   return {
     useMarqueeSelection: () => ({
@@ -72,7 +72,7 @@ vi.mock('./track-row-frame', () => ({
   TrackSectionDivider: () => null,
 }))
 
-vi.mock('@/components/marquee-overlay', () => ({
+vi.mock('@/shared/marquee/marquee-overlay', () => ({
   MarqueeOverlay: () => null,
 }))
 

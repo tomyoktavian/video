@@ -8,7 +8,7 @@
 
 import { createMediabunnyInputSource } from '@/infrastructure/browser/mediabunny-input-source'
 import type { ObjectUrlSourceMetadata } from '@/infrastructure/browser/object-url-registry'
-import { ensureAc3DecoderRegistered, isAc3AudioCodec } from '@/shared/media/ac3-decoder'
+import { ensureAc3DecoderRegistered, isAc3AudioCodec } from '@/shared/utils/ac3-decoder'
 
 export interface WaveformRequest {
   type: 'generate'

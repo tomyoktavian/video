@@ -28,7 +28,7 @@ import type { MediaMetadata } from '@/types/storage'
 import {
   useProjectMediaMatchDialogStore,
   type ProjectMediaMatchChoice,
-} from '@/app/state/project-media-match-dialog'
+} from '@/shared/state/project-media-match-dialog'
 
 type DropSource = 'library' | 'external-file'
 

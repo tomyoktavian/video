@@ -7,7 +7,7 @@ import { useItemsStore } from '../items-store'
 import { useMarkersStore } from '../markers-store'
 import { useTimelineSettingsStore } from '../timeline-settings-store'
 import { execute } from './shared'
-import { getEffectiveTimelineMaxFrame } from '../../utils/in-out-points'
+import { getEffectiveTimelineMaxFrame, sanitizeInOutPoints } from '../../utils/in-out-points'
 
 function getEffectiveMaxFrame(): number {
   const items = useItemsStore.getState().items
@@ -118,4 +118,22 @@ export function clearInOutPoints(): void {
     useMarkersStore.getState().clearInOutPoints()
     useTimelineSettingsStore.getState().markDirty()
   })
+}
+
+/**
+ * Atomic, non-undoable in/out point write used by continuous UI interactions
+ * (range drag, post-edit sanitization sync). Sanitizes against the current
+ * timeline max frame and does NOT mark the project dirty — callers that own
+ * the interaction lifecycle (e.g. mouseup) handle markDirty themselves.
+ */
+export function setInOutPointsWithoutHistory(
+  inPoint: number | null,
+  outPoint: number | null,
+): void {
+  const sanitized = sanitizeInOutPoints({
+    inPoint,
+    outPoint,
+    maxFrame: getEffectiveMaxFrame(),
+  })
+  useMarkersStore.getState().setInOutPoints(sanitized.inPoint, sanitized.outPoint)
 }

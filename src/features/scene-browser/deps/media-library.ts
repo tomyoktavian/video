@@ -6,5 +6,5 @@
 
 export * from './media-library-contract'
 export { useSourcePlayerStore } from '@/shared/state/source-player'
-export { useEditorStore } from '@/app/state/editor'
+export { useEditorStore } from '@/shared/state/editor'
 export type { MediaMetadata } from '@/types/storage'

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { useItemsStore } from '@/features/editor/deps/timeline-store'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import type { AudioItem, VideoItem } from '@/types/timeline'
 import { PropertiesSidebar } from './index'

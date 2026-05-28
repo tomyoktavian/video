@@ -24,8 +24,8 @@ import {
   useMarqueeSelection,
   isMarqueeJustFinished,
   type Rect,
-} from '@/hooks/use-marquee-selection'
-import { MarqueeOverlay } from '@/components/marquee-overlay'
+} from '@/shared/marquee/use-marquee-selection'
+import { MarqueeOverlay } from '@/shared/marquee/marquee-overlay'
 import { useVisualTransforms } from '../hooks/use-visual-transform'
 import { useCanvasMediaDrop } from '../hooks/use-canvas-media-drop'
 import {

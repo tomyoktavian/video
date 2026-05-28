@@ -47,7 +47,7 @@ import { setMediaDragData, clearMediaDragData } from '../utils/drag-data-cache'
 import { proxyService } from '../services/proxy-service'
 import { mediaTranscriptionService } from '../services/media-transcription-service'
 import { subtitleSidecarService } from '../services/subtitle-sidecar-service'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useSourcePlayerStore } from '@/shared/state/source-player'
 import {
@@ -62,9 +62,9 @@ import {
 } from '@/shared/utils/transcription-cancellation'
 import { TranscribeDialog, type TranscribeDialogValues } from './transcribe-dialog'
 import { AnalyzeDialog, type AnalyzeDialogValues } from './analyze-dialog'
-import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
-import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
-import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
+import { useTranscriptViewerDialogStore } from '@/shared/state/transcript-viewer-dialog'
+import { useSpoilerGeneratorDialogStore } from '@/shared/state/spoiler-generator-dialog'
+import { useSetCoverToCompoundsDialogStore } from '@/shared/state/set-cover-to-compounds-dialog'
 import {
   useItemsStore,
   useTimelineStore,

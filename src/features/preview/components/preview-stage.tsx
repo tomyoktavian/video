@@ -13,7 +13,7 @@ import { Player, type PlayerRef } from '@/features/preview/deps/player-core'
 import { MainComposition } from '@/features/preview/deps/composition-runtime'
 import type { CompositionInputProps } from '@/types/export'
 import { usePlaybackStore } from '@/shared/state/playback'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import { FAST_SCRUB_RENDERER_ENABLED } from '../utils/preview-constants'
 import { getPreviewPixelSnapOffset, ZERO_PIXEL_SNAP_OFFSET } from '../utils/preview-pixel-snap'
 

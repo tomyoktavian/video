@@ -5,7 +5,18 @@ import { i18n } from './i18n'
 import { App } from './app'
 import { initializeDebugUtils } from '@/app/debug'
 import { createLogger } from '@/shared/logging/logger'
+import { setOpenAiCompatibleVisionConfigGetter } from '@/infrastructure/analysis/captioning/openai-compatible-vision-config'
+import { getCustomAiVisionAnalyzerConfig } from '@/features/settings/stores/custom-ai-store'
 import './index.css'
+
+setOpenAiCompatibleVisionConfigGetter(() => {
+  const cfg = getCustomAiVisionAnalyzerConfig()
+  return {
+    baseUrl: cfg.baseUrl,
+    apiKey: cfg.apiKey,
+    model: cfg.model,
+  }
+})
 
 const log = createLogger('App')
 const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000

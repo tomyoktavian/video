@@ -15,7 +15,7 @@ import {
   getGpuCategoriesWithEffects,
   getGpuEffect,
   getGpuEffectDefaultParams,
-} from '@/infrastructure/gpu/effects'
+} from '@/infrastructure/gpu-effects'
 import { useEffectPreviews } from '../hooks/use-effect-previews'
 import { getMappedSelectionEffectEntry } from '../utils/effect-selection'
 import {

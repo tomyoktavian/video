@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { CompositionInputProps } from '@/types/export'
 import { usePlaybackStore } from '@/shared/state/playback'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import {
   buildSubCompositionInput,
   collectSubCompositionMediaIds,

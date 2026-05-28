@@ -45,7 +45,7 @@ import {
   findNearestAvailableSpace,
   linkItems,
 } from '@/features/editor/deps/timeline-utils'
-import { useTtsGenerateDialogStore } from '@/app/state/tts-generate-dialog'
+import { useTtsGenerateDialogStore } from '@/shared/state/tts-generate-dialog'
 import type { AudioItem } from '@/types/timeline'
 import type { MediaMetadata } from '@/types/storage'
 import {

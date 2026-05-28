@@ -20,7 +20,7 @@ import { useBlobUrlVersion } from '@/infrastructure/browser/blob-url-manager'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useGizmoStore } from '../stores/gizmo-store'
 import { useMaskEditorStore } from '../stores/mask-editor-store'
-import { isMarqueeJustFinished } from '@/hooks/use-marquee-selection'
+import { isMarqueeJustFinished } from '@/shared/marquee/use-marquee-selection'
 import { getPreviewPixelSnapSize } from '../utils/preview-pixel-snap'
 
 interface PreviewProjectDimensions {

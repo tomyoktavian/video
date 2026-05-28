@@ -6,7 +6,7 @@ import { useMediaLibraryStore } from '../stores/media-library-store'
 import { useDownloadStore } from '../stores/download-store'
 import { GRID_MIN_SIZE_PX, GRID_GAP_BY_SIZE } from './media-grid-constants'
 import { MediaCard, type OnlineEpisode, type FetchStatus } from './media-card'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { formatBytes, formatSpeed } from '../utils/download-utils'
 
 const logger = createLogger('OnlineMediaTab')

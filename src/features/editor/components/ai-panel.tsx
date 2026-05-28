@@ -68,7 +68,7 @@ import {
   type AiImageGeneratedPayload,
 } from '@/features/editor/deps/compound-cover'
 import { useProjectStore } from '@/features/editor/deps/projects'
-import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
+import { useSetCoverToCompoundsDialogStore } from '@/shared/state/set-cover-to-compounds-dialog'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import {
   findCompatibleTrackForItemType,

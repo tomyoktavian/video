@@ -6,13 +6,13 @@
 export {
   resolveTransform,
   getSourceDimensions,
-} from '@/features/composition-runtime/utils/transform-resolver'
-export { resolveCornerPinTargetRect } from '@/features/composition-runtime/utils/corner-pin'
-export { needsCustomAudioDecoder } from '@/features/composition-runtime/utils/audio-codec-detection'
+} from '@/runtime/composition-runtime/utils/transform-resolver'
+export { resolveCornerPinTargetRect } from '@/runtime/composition-runtime/utils/corner-pin'
+export { needsCustomAudioDecoder } from '@/runtime/composition-runtime/utils/audio-codec-detection'
 export {
   getOrDecodeAudio,
   getOrDecodeAudioSliceForPlayback,
   startPreviewAudioConform,
   startPreviewAudioStartupWarm,
-} from '@/features/composition-runtime/utils/audio-decode-cache'
-export { prewarmPreviewAudioElement } from '@/features/composition-runtime/utils/preview-audio-element-pool'
+} from '@/runtime/composition-runtime/utils/audio-decode-cache'
+export { prewarmPreviewAudioElement } from '@/runtime/composition-runtime/utils/preview-audio-element-pool'

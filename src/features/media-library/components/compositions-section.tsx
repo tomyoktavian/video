@@ -19,9 +19,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/shared/ui/cn'
-import { useEditorStore } from '@/app/state/editor'
-import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
-import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
+import { useEditorStore } from '@/shared/state/editor'
+import { useAddCoverDialogStore } from '@/shared/state/add-cover-dialog'
+import { useRegenerateNarrationDialogStore } from '@/shared/state/regenerate-narration-dialog'
 import {
   deleteCompoundClips,
   getCompoundClipDeletionImpact,

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { usePreviewBridgeStore } from '@/shared/state/preview-bridge'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import {
   useMediaLibraryStore,
   mediaLibraryService,
@@ -203,9 +203,7 @@ export function PlaybackControls({ totalFrames, fps }: PlaybackControlsProps) {
         },
       )
 
-      useMediaLibraryStore.setState((state) => ({
-        mediaItems: [savedMedia, ...state.mediaItems],
-      }))
+      useMediaLibraryStore.getState().prependMediaItem(savedMedia)
 
       toast.success(i18n.t('preview.controls.frameSaved', { name: savedMedia.fileName }))
     } catch (error) {

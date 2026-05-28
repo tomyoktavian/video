@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTrackCaptionsDialogStore } from '@/app/state/track-captions-dialog'
+import { useTrackCaptionsDialogStore } from '@/shared/state/track-captions-dialog'
 import {
   TranscribeDialog,
   type TranscribeDialogValues,

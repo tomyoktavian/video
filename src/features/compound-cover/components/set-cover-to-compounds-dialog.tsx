@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Slider } from '@/components/ui/slider'
-import { useSetCoverToCompoundsDialogStore } from '@/app/state/set-cover-to-compounds-dialog'
+import { useSetCoverToCompoundsDialogStore } from '@/shared/state/set-cover-to-compounds-dialog'
 import { createLogger } from '@/shared/logging/logger'
 
 import { COVER_DURATION_BOUNDS } from '../constants'

@@ -3,7 +3,7 @@
  * Supports animating transform properties over time with easing.
  */
 
-import { getGpuEffect } from '@/infrastructure/gpu/effects'
+import { getGpuEffect } from '@/infrastructure/gpu-effects'
 
 /** Properties that can be animated via keyframes */
 export type BuiltInAnimatableProperty =
@@ -55,8 +55,12 @@ export type CropAnimatableProperty =
   | 'cropBottom'
   | 'cropSoftness'
 
-/** Basic easing functions for interpolation between keyframes */
-export type BasicEasingType = 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out'
+/**
+ * Basic easing functions for interpolation between keyframes.
+ * `hold` is a step interpolation — the value stays at the keyframe's
+ * value until the next keyframe is reached (no interpolation).
+ */
+export type BasicEasingType = 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'hold'
 
 /** Advanced easing types that require configuration */
 export type AdvancedEasingType = 'cubic-bezier' | 'spring'

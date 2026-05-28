@@ -14,23 +14,35 @@
   },
   "overrides": [
     {
-      "files": ["src/domain/**/*.{ts,tsx}"],
+      "files": ["src/shared/timeline/**/*.{ts,tsx}", "src/shared/projects/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "paths": [
-              { "name": "react", "message": "domain/ must stay framework-agnostic." },
-              { "name": "react-dom", "message": "domain/ must stay framework-agnostic." },
+              {
+                "name": "react",
+                "message": "shared domain modules must stay framework-agnostic."
+              },
+              {
+                "name": "react-dom",
+                "message": "shared domain modules must stay framework-agnostic."
+              },
               {
                 "name": "@tanstack/react-router",
-                "message": "domain/ must not depend on routing frameworks."
+                "message": "shared domain modules must not depend on routing frameworks."
               }
             ],
             "patterns": [
               {
-                "group": ["@/app/**", "@/features/**", "@/routes/**", "@/components/**"],
-                "message": "domain/ must not depend on app/routes/features/components."
+                "group": [
+                  "@/app/**",
+                  "@/features/**",
+                  "@/runtime/**",
+                  "@/routes/**",
+                  "@/components/**"
+                ],
+                "message": "shared domain modules must not depend on app/routes/features/runtime/components."
               }
             ]
           }
@@ -129,7 +141,7 @@
                 "message": "timeline/ must import projects dependencies through timeline/deps/* adapters."
               },
               {
-                "group": ["@/features/composition-runtime/**"],
+                "group": ["@/runtime/composition-runtime/**"],
                 "message": "timeline/ must import composition-runtime dependencies through timeline/deps/* adapters."
               },
               {
@@ -165,7 +177,7 @@
                 "message": "preview/ must import media-library dependencies through preview/deps/* adapters."
               },
               {
-                "group": ["@/features/player/**"],
+                "group": ["@/runtime/player/**"],
                 "message": "preview/ must import player dependencies through preview/deps/* adapters."
               },
               {
@@ -181,7 +193,7 @@
                 "message": "preview/ must import keyframes dependencies through preview/deps/* adapters."
               },
               {
-                "group": ["@/features/composition-runtime/**"],
+                "group": ["@/runtime/composition-runtime/**"],
                 "message": "preview/ must import composition-runtime dependencies through preview/deps/* adapters."
               },
               {
@@ -241,7 +253,7 @@
                 "message": "editor/ must import export dependencies through editor/deps/* adapters."
               },
               {
-                "group": ["@/features/composition-runtime/**"],
+                "group": ["@/runtime/composition-runtime/**"],
                 "message": "editor/ must import composition-runtime dependencies through editor/deps/* adapters."
               }
             ]
@@ -293,7 +305,7 @@
                 "message": "export/ must import media-library dependencies through export/deps/* adapters."
               },
               {
-                "group": ["@/features/composition-runtime/**"],
+                "group": ["@/runtime/composition-runtime/**"],
                 "message": "export/ must import composition-runtime dependencies through export/deps/* adapters."
               },
               {
@@ -309,7 +321,7 @@
                 "message": "export/ must import projects dependencies through export/deps/* adapters."
               },
               {
-                "group": ["@/features/player/**"],
+                "group": ["@/runtime/player/**"],
                 "message": "export/ must import player dependencies through export/deps/* adapters."
               },
               {
@@ -360,7 +372,7 @@
                 "message": "keyframes/ must import preview dependencies through keyframes/deps/* adapters."
               },
               {
-                "group": ["@/features/composition-runtime/**"],
+                "group": ["@/runtime/composition-runtime/**"],
                 "message": "keyframes/ must import composition-runtime dependencies through keyframes/deps/* adapters."
               }
             ]
@@ -417,7 +429,7 @@
       "rules": { "no-restricted-imports": "off" }
     },
     {
-      "files": ["src/features/composition-runtime/**/*.{ts,tsx}"],
+      "files": ["src/runtime/composition-runtime/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -430,7 +442,7 @@
                   "@/features/export/**",
                   "@/features/keyframes/**",
                   "@/features/media-library/**",
-                  "@/features/player/**",
+                  "@/runtime/player/**",
                   "@/features/preview/**",
                   "@/features/project-bundle/**",
                   "@/features/projects/**",
@@ -445,7 +457,7 @@
       }
     },
     {
-      "files": ["src/features/composition-runtime/deps/**/*.{ts,tsx}"],
+      "files": ["src/runtime/composition-runtime/deps/**/*.{ts,tsx}"],
       "rules": { "no-restricted-imports": "off" }
     }
   ]

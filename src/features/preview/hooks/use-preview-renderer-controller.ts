@@ -1102,13 +1102,13 @@ export function usePreviewRendererController({
     if (!FAST_SCRUB_RENDERER_ENABLED) return
     void (async () => {
       try {
-        const { EffectsPipeline } = await import('@/infrastructure/gpu/effects')
+        const { EffectsPipeline } = await import('@/infrastructure/gpu-effects')
         const device = await EffectsPipeline.requestCachedDevice()
         if (device) {
           const warmPipeline = await EffectsPipeline.create()
           if (warmPipeline) {
             try {
-              const { TransitionPipeline } = await import('@/infrastructure/gpu/transitions')
+              const { TransitionPipeline } = await import('@/infrastructure/gpu-transitions')
               TransitionPipeline.create(device)?.destroy()
             } finally {
               warmPipeline.destroy()

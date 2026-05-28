@@ -21,7 +21,6 @@ import {
   unregisterObjectUrl,
 } from '@/infrastructure/browser/object-url-registry'
 import { filmstripCache } from '@/features/media-library/deps/timeline-services'
-import { isVideoProxyCandidate } from '@/config/proxy-generation'
 import {
   mirrorBlobToWorkspace,
   mirrorJsonToWorkspace,
@@ -223,7 +222,7 @@ class ProxyService {
    * Check if media supports manual proxy generation.
    */
   canGenerateProxy(mimeType: string): boolean {
-    return isVideoProxyCandidate(mimeType)
+    return mimeType.startsWith('video/')
   }
 
   /**

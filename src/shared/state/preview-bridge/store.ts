@@ -1,11 +1,14 @@
 import { create } from 'zustand'
 import type { PreviewBridgeActions, PreviewBridgeState } from './types'
+import { createLogger } from '@/shared/logging/logger'
+
+const log = createLogger('PreviewBridge')
 
 function normalizeFrame(frame: number | null): number | null {
   if (frame == null) return null
   if (!Number.isFinite(frame)) {
     if (import.meta.env.DEV) {
-      console.warn('[PreviewBridge] normalizeFrame received non-finite value:', frame)
+      log.warn('normalizeFrame received non-finite value:', frame)
     }
     return 0
   }

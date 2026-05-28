@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { PROPERTY_LABELS } from '@/types/keyframe'
-import { useClearKeyframesDialogStore } from '@/app/state/clear-keyframes-dialog'
+import { useClearKeyframesDialogStore } from '@/shared/state/clear-keyframes-dialog'
 
 /**
  * Confirmation dialog for clearing keyframes from selected items.

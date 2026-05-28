@@ -5,7 +5,7 @@ import { i18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Settings2 } from 'lucide-react'
 import { useItemsStore } from '@/features/editor/deps/timeline-store'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import type { TimelineItem } from '@/types/timeline'
 import { CanvasPanel } from './canvas-panel'
@@ -17,7 +17,7 @@ import {
   EDITOR_LAYOUT_CSS_VALUES,
   clampRightEditorSidebarWidth,
   getEditorLayout,
-} from '@/app/editor-layout'
+} from '@/config/editor-layout'
 
 type HeaderItem = Pick<TimelineItem, 'id' | 'label' | 'linkedGroupId' | 'type'>
 

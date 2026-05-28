@@ -65,7 +65,7 @@ import {
 } from '@/components/ui/dialog'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { MarqueeOverlay } from '@/components/marquee-overlay'
+import { MarqueeOverlay } from '@/shared/marquee/marquee-overlay'
 import { cn } from '@/shared/ui/cn'
 import { MediaGrid } from './media-grid'
 import { CompositionsSection } from './compositions-section'
@@ -102,7 +102,7 @@ import {
   isMarqueeJustFinished,
   useMarqueeSelection,
   type MarqueeItem,
-} from '@/hooks/use-marquee-selection'
+} from '@/shared/marquee/use-marquee-selection'
 import {
   useItemsStore,
   useTimelineStore,

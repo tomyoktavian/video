@@ -99,16 +99,16 @@ vi.mock('./media-processor-service', () => ({
   mediaProcessorService: mediaProcessorMocks,
 }))
 
-vi.mock('@/features/composition-runtime/utils/audio-codec-detection', () => ({
+vi.mock('@/runtime/composition-runtime/utils/audio-codec-detection', () => ({
   needsCustomAudioDecoder: compositionRuntimeMocks.needsCustomAudioDecoder,
 }))
 
-vi.mock('@/features/composition-runtime/utils/audio-decode-cache', () => ({
+vi.mock('@/runtime/composition-runtime/utils/audio-decode-cache', () => ({
   startPreviewAudioConform: compositionRuntimeMocks.startPreviewAudioConform,
   startPreviewAudioStartupWarm: compositionRuntimeMocks.startPreviewAudioStartupWarm,
 }))
 
-vi.mock('@/features/composition-runtime/utils/preview-audio-conform', () => ({
+vi.mock('@/runtime/composition-runtime/utils/preview-audio-conform', () => ({
   deletePreviewAudioConform: previewAudioConformMocks.deletePreviewAudioConform,
 }))
 

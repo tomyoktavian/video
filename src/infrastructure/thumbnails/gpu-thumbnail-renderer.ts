@@ -8,9 +8,9 @@
  * Lazy singleton — created on first use.
  */
 
-import { EffectsPipeline } from '@/infrastructure/gpu/effects'
-import { CompositorPipeline } from '@/infrastructure/gpu/compositor'
-import { MaskTextureManager } from '@/infrastructure/gpu/masks'
+import { EffectsPipeline } from '@/infrastructure/gpu-effects'
+import { CompositorPipeline } from '@/infrastructure/gpu-compositor'
+import { MaskTextureManager } from '@/infrastructure/gpu-masks'
 
 export interface ThumbnailFrame {
   /** Source elements to composite (bottom-to-top order) */

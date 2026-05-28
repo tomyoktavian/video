@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { useAddCoverDialogStore } from '@/app/state/add-cover-dialog'
+import { useAddCoverDialogStore } from '@/shared/state/add-cover-dialog'
 
 import { COVER_DURATION_BOUNDS } from '../constants'
 import { useCustomAiStore } from '../deps/settings'

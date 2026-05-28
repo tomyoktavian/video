@@ -5,7 +5,7 @@ import {
   parseEffectAnimatableProperty,
   type AnimatableProperty,
 } from '@/types/keyframe'
-import { getGpuEffect } from '@/infrastructure/gpu/effects'
+import { getGpuEffect } from '@/infrastructure/gpu-effects'
 
 export function getKeyframePropertyLabel(t: TFunction, property: AnimatableProperty): string {
   if (isBuiltInAnimatableProperty(property)) {

@@ -37,7 +37,14 @@
         "displayTimeRulerSeconds": "Display time ruler in seconds",
         "displayTimeRulerFrames": "Display time ruler in frames",
         "showAllHandles": "Show all handles",
-        "autoZoomGraphHeight": "Auto zoom graph height"
+        "autoZoomGraphHeight": "Auto zoom graph height",
+        "easing": {
+          "hold": "Hold",
+          "linear": "Linear",
+          "easeIn": "Ease In",
+          "easeInOut": "Ease In/Out",
+          "easeOut": "Ease Out"
+        }
       }
     },
     "keyframes": {
@@ -114,7 +121,14 @@
         "displayTimeRulerSeconds": "以秒显示时间标尺",
         "displayTimeRulerFrames": "以帧显示时间标尺",
         "showAllHandles": "显示所有手柄",
-        "autoZoomGraphHeight": "自动缩放曲线高度"
+        "autoZoomGraphHeight": "自动缩放曲线高度",
+        "easing": {
+          "hold": "保持",
+          "linear": "线性",
+          "easeIn": "缓入",
+          "easeInOut": "缓入缓出",
+          "easeOut": "缓出"
+        }
       }
     },
     "keyframes": {
@@ -191,7 +205,14 @@
         "displayTimeRulerSeconds": "Zaman cetvelini saniye olarak göster",
         "displayTimeRulerFrames": "Zaman cetvelini kare olarak göster",
         "showAllHandles": "Tüm tutamaçları göster",
-        "autoZoomGraphHeight": "Grafik yüksekliğini otomatik yakınlaştır"
+        "autoZoomGraphHeight": "Grafik yüksekliğini otomatik yakınlaştır",
+        "easing": {
+          "hold": "Tut",
+          "linear": "Doğrusal",
+          "easeIn": "Yavaş Giriş",
+          "easeInOut": "Yavaş Giriş/Çıkış",
+          "easeOut": "Yavaş Çıkış"
+        }
       }
     },
     "keyframes": {

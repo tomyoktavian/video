@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { TimelineItem } from '@/types/timeline'
 import { commitPreviewFrameToCurrentFrame } from '@/shared/state/playback'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { toast } from 'sonner'
 import type { SnapTarget } from '../types/drag'
 import { useTimelineStore } from '../stores/timeline-store'

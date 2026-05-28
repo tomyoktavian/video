@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { useTranscriptViewerDialogStore } from '@/app/state/transcript-viewer-dialog'
+import { useTranscriptViewerDialogStore } from '@/shared/state/transcript-viewer-dialog'
 import { getTranscript } from '@/infrastructure/storage'
 import type { MediaTranscript, MediaTranscriptSegment } from '@/types/storage'
 

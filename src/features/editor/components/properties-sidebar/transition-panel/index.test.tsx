@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import { transitionRegistry } from '@/core/timeline/transitions'
+import { transitionRegistry } from '@/shared/timeline/transitions'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useSelectionStore } from '@/shared/state/selection'
 import type { Transition } from '@/types/transition'
 import type { VideoItem } from '@/types/timeline'
-import type { TransitionRenderer } from '@/core/timeline/transitions/registry'
+import type { TransitionRenderer } from '@/shared/timeline/transitions/registry'
 import { TransitionPanel } from './index'
 
 vi.mock('../components', () => ({
@@ -64,9 +64,7 @@ const TRANSITION: Transition = {
 
 const LINEAR_ONLY_PRESENTATION_ID = 'test-linear-only-transition'
 
-const NO_EASE_RENDERER: TransitionRenderer = {
-  calculateStyles: () => ({ opacity: 1 }),
-}
+const NO_EASE_RENDERER: TransitionRenderer = {}
 
 describe('TransitionPanel', () => {
   beforeAll(() => {

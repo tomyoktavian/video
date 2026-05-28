@@ -1,4 +1,4 @@
-import { EDITOR_LAYOUT } from '@/app/editor-layout'
+import { EDITOR_LAYOUT } from '@/config/editor-layout'
 
 const TIMELINE_CLIP_LABEL_ROW_HEIGHT_CSS_VAR = '--editor-timeline-clip-label-row-height'
 

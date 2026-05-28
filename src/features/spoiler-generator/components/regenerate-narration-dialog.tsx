@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useRegenerateNarrationDialogStore } from '@/app/state/regenerate-narration-dialog'
+import { useRegenerateNarrationDialogStore } from '@/shared/state/regenerate-narration-dialog'
 
 import { isTextToSpeechConfigured, useCustomAiStore } from '../deps/settings'
 import { useCompositionsStore } from '../deps/timeline'

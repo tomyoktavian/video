@@ -2,11 +2,10 @@
 
 Application shell and composition root.
 
-Put router setup, global providers, startup wiring, and app-level editor shell
-configuration here.
+Put router setup, global providers, startup wiring, and DEV-only debug
+utilities here.
 
 Current modules:
 
-- `editor-layout.ts`: editor density presets and shell layout helpers.
-- `state/*`: app-level workflow stores that span multiple editor-facing features
-  without belonging to generic shared state.
+- `debug/*`: DEV-only `window.__DEBUG__` console helpers (tree-shaken in
+  production).

@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import {
   isVisionAnalyzerConfigured,

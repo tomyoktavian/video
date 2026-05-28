@@ -1,12 +1,18 @@
+import type { BezierControlPoints } from '@/types/keyframe'
+
+function clampX(x: number): number {
+  return Math.max(0, Math.min(1, x))
+}
+
 export function updateBezierFromHandle(
-  currentConfig: { x1: number; y1: number; x2: number; y2: number },
+  currentConfig: BezierControlPoints,
   handleType: 'in' | 'out',
   newX: number,
   newY: number,
-): { x1: number; y1: number; x2: number; y2: number } {
+): BezierControlPoints {
   if (handleType === 'out') {
-    return { ...currentConfig, x1: newX, y1: newY }
+    return { ...currentConfig, x1: clampX(newX), y1: newY }
   }
 
-  return { ...currentConfig, x2: newX, y2: newY }
+  return { ...currentConfig, x2: clampX(newX), y2: newY }
 }

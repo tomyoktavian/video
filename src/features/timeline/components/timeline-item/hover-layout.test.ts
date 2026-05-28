@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { EDITOR_LAYOUT } from '@/app/editor-layout'
+import { EDITOR_LAYOUT } from '@/config/editor-layout'
 import { getTimelineClipLabelRowHeightPx } from './hover-layout'
 
 describe('hover layout', () => {

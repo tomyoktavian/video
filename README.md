@@ -222,7 +222,7 @@ npm run test:preview-sync:stress # Repeated preview sync stress runner
 
 npm run check:boundaries            # Feature boundary architecture check
 npm run check:deps-contracts        # Enforce deps contract adapter routing
-npm run check:legacy-lib-imports    # Block feature imports from "@/lib/*"
+npm run check:legacy-lib-imports    # Tripwire: block any "@/lib/*" import (layer removed)
 npm run check:deps-wrapper-health   # Fail on unused pass-through deps wrappers
 npm run check:edge-budgets          # Feature coupling budget check
 npm run report:feature-edges        # Human-readable feature edge report
@@ -252,21 +252,16 @@ VITE_SHOW_DEBUG_PANEL=true   # Show debug panel in dev
 
 ```text
 src/
-|- app/                     # App-level providers and shared app state
-|- components/              # Shared app components and shadcn-style UI
-|- config/                  # Hotkeys and editor configuration
-|- core/                    # Framework-agnostic domain rules and migrations
-|  |- projects/              # Project schema migrations and normalization
-|  \- timeline/              # Timeline defaults and transition engine/registry
+|- app/                     # App bootstrap, error boundary, PWA install prompt, debug utilities
+|- components/              # shadcn/ui components and brand assets
+|- config/                  # Hotkeys and editor layout configuration
 |- data/                    # Generated app data, including changelog JSON
-|- features/
-|  |- composition-runtime/   # Composition renderer, media layout, audio graph, masks
+|- features/                # User-facing UI modules
 |  |- editor/                # Editor shell, toolbar, panels, dialogs, deps adapters
 |  |- effects/               # Effect registry and effect UI
 |  |- export/                # WebCodecs export pipeline and canvas fallback rendering
 |  |- keyframes/             # Graph editor, dopesheet, animation resolvers
 |  |- media-library/         # Import, metadata, proxies, transcription, captioning
-|  |- player/                # Clock, player primitives, video source pools
 |  |- preview/               # Program/source monitors, overlays, gizmos, scopes
 |  |- project-bundle/        # ZIP and JSON project import/export
 |  |- projects/              # Project list, templates, migration, trash
@@ -274,27 +269,48 @@ src/
 |  |- settings/              # Settings store, hotkey editor, model cache controls
 |  |- timeline/              # Timeline UI, tools, stores, services, workers
 |  \- workspace-gate/        # Workspace picker, permission gate, workspace switcher
-|- hooks/                   # Shared React hooks
-|- infrastructure/          # Browser, storage, GPU, thumbnail, and analysis adapters
+|- runtime/                 # Playback and rendering engines (not user-facing UI)
+|  |- composition-runtime/   # Composition renderer, media layout, audio graph, masks
+|  \- player/                # Clock, player primitives, video source pools
+|- infrastructure/          # Platform adapters: browser, storage, GPU, analysis, audio, thumbnails
+|  |- analysis/              # Scene detection, captioning, embeddings, optical flow
+|  |- audio/                 # SoundTouch-based time-stretch
 |  |- browser/               # Blob/object URL and Mediabunny input adapters
-|  |- gpu/                   # Stable facades over GPU lib modules
+|  |- gpu-effects/           # WebGPU effect pipeline + shader definitions
+|  |- gpu-transitions/       # WebGPU transition pipeline + shaders
+|  |- gpu-compositor/        # WebGPU blend-mode compositor
+|  |- gpu-masks/             # Mask combine pipeline + texture manager
+|  |- gpu-media/             # Media render/blend pipelines
+|  |- gpu-scopes/            # Waveform/vectorscope/histogram renderers
+|  |- gpu-shapes/            # Shape render pipeline
+|  |- gpu-text/              # Glyph-atlas text pipeline
+|  |- gpu-shared/            # WGSL fragments shared across GPU modules
 |  |- storage/               # Workspace FS, handles DB, legacy IDB migration
 |  \- thumbnails/            # GPU-backed thumbnail generation adapters
-|- lib/                     # Low-level engines: GPU effects, transitions, scopes, analysis
 |- routes/                  # TanStack Router file routes
-|- shared/                  # Shared UI, utilities, typography, model settings
+|- shared/                  # Framework-agnostic primitives + cross-feature state
+|  |- timeline/              # Transition engine/registry/renderers, defaults
+|  |- projects/              # Schema migrations and normalization
+|  |- state/                 # Cross-feature Zustand stores
+|  |- marquee/               # Marquee-selection hook + overlay (paired)
+|  |- ui/                    # cn helper, property controls
+|  |- logging/               # Structured logger
+|  |- typography/            # Font loading, text style presets
+|  |- graphics/              # Shape generators and path helpers
+|  \- utils/                 # Workers, color/curve math, easing, time helpers
 |- test/                    # Test setup
 \- types/                   # Shared TypeScript types
 ```
 
-Feature modules should use their local `deps/` adapters for cross-feature imports.
-Feature code should not import directly from `@/lib/*`; route low-level engines
-through `@/infrastructure/*` facades when crossing feature boundaries.
+Feature modules should use their local `deps/` adapters for cross-feature
+imports. Platform-coupled code (GPU, ML, audio, storage, browser) lives in
+`@/infrastructure/*` and is imported directly; there is no separate `lib/`
+layer.
 
 Layer notes:
 
-- [src/core/README.md](src/core/README.md)
 - [src/infrastructure/README.md](src/infrastructure/README.md)
+- [src/shared/README.md](src/shared/README.md)
 - Feature `deps/README.md` files inside individual feature folders
 
 ## Contributing

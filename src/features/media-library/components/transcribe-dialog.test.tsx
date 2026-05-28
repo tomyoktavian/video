@@ -40,7 +40,7 @@ vi.mock('@/features/media-library/deps/settings-contract', () => ({
   isCaptionMakerConfigured: () => false,
 }))
 
-vi.mock('@/app/state/editor', () => ({
+vi.mock('@/shared/state/editor', () => ({
   useEditorStore: (selector: (state: typeof editorStoreState) => unknown) =>
     selector(editorStoreState),
 }))

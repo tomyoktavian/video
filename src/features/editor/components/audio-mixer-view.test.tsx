@@ -2,8 +2,8 @@ import { fireEvent, render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vite-plus/test'
 import { AudioMixerView } from './audio-mixer-view'
 
-vi.mock('@/app/editor-layout', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/editor-layout')>()
+vi.mock('@/config/editor-layout', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/config/editor-layout')>()
   return {
     ...actual,
     EDITOR_LAYOUT_CSS_VALUES: {

@@ -10,7 +10,7 @@ import {
   type RefObject,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import {
   linearLevelToPercent,
   setLiveTrackVolumeOverride,

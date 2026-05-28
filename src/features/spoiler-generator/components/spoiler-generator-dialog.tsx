@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { SliderInput } from '@/shared/ui/property-controls'
-import { useSpoilerGeneratorDialogStore } from '@/app/state/spoiler-generator-dialog'
+import { useSpoilerGeneratorDialogStore } from '@/shared/state/spoiler-generator-dialog'
 
 import {
   AiImagePanel,

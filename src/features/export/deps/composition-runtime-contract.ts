@@ -6,7 +6,7 @@
 export {
   resolveTransform,
   getSourceDimensions,
-} from '@/features/composition-runtime/utils/transform-resolver'
+} from '@/runtime/composition-runtime/utils/transform-resolver'
 export {
   applyTransformOverride,
   createFrameCompositionSceneCache,
@@ -15,13 +15,13 @@ export {
   resolveFrameCompositionScene,
   resolveFrameCompositionSceneCached,
   invalidateFrameSceneCache,
-} from '@/features/composition-runtime/utils/frame-scene'
+} from '@/runtime/composition-runtime/utils/frame-scene'
 export {
   applyPreviewPathVerticesToItem,
   applyPreviewPathVerticesToShape,
   type PreviewPathVerticesOverride,
-} from '@/features/composition-runtime/utils/preview-path-override'
-export { expandTextTransformToFitContent } from '@/features/composition-runtime/utils/text-layout'
+} from '@/runtime/composition-runtime/utils/preview-path-override'
+export { expandTextTransformToFitContent } from '@/runtime/composition-runtime/utils/text-layout'
 export {
   resolveTrackRenderState,
   resolveCompositionRenderPlan,
@@ -34,12 +34,12 @@ export {
   groupTransitionsByTrackOrder,
   resolveOcclusionCutoffOrder,
   resolveFrameRenderScene,
-} from '@/features/composition-runtime/utils/scene-assembly'
+} from '@/runtime/composition-runtime/utils/scene-assembly'
 export {
   calculateTransitionProgress,
   resolveTransitionFrameState,
-} from '@/features/composition-runtime/utils/transition-scene'
-export { getShapePath, rotatePath } from '@/features/composition-runtime/utils/shape-path'
+} from '@/runtime/composition-runtime/utils/transition-scene'
+export { getShapePath, rotatePath } from '@/runtime/composition-runtime/utils/shape-path'
 export {
   hasCornerPin,
   computeCornerPinHomography,
@@ -47,8 +47,8 @@ export {
   drawCornerPinImage,
   resolveCornerPinTargetRect,
   resolveCornerPinForSize,
-} from '@/features/composition-runtime/utils/corner-pin'
+} from '@/runtime/composition-runtime/utils/corner-pin'
 export {
   getVideoTargetTimeSeconds,
   snapSourceTime,
-} from '@/features/composition-runtime/utils/video-timing'
+} from '@/runtime/composition-runtime/utils/video-timing'

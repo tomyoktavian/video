@@ -20,8 +20,8 @@ import { useGizmoStore } from '@/features/editor/deps/preview'
 import { importMediaLibraryService } from '@/features/editor/deps/media-library'
 import { getResolvedPlaybackFrame, usePlaybackStore } from '@/shared/state/playback'
 import { usePreviewBridgeStore } from '@/shared/state/preview-bridge'
-import { useEditorStore } from '@/app/state/editor/store'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { useEditorStore } from '@/shared/state/editor/store'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import {
   DropdownMenu,
   DropdownMenuContent,

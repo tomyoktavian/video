@@ -73,7 +73,7 @@ const importGeneratedImageMock = vi.hoisted(() =>
 )
 const resolveMediaUrlMock = vi.hoisted(() => vi.fn(async (id: string) => `resolved://${id}`))
 
-vi.mock('@/app/state/set-cover-to-compounds-dialog', () => ({
+vi.mock('@/shared/state/set-cover-to-compounds-dialog', () => ({
   useSetCoverToCompoundsDialogStore: Object.assign(
     (selector: (state: typeof dialogStoreState) => unknown) => selector(dialogStoreState),
     { getState: () => dialogStoreState },

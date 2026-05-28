@@ -148,6 +148,12 @@ export interface MediaLibraryActions {
   importHandlesForPlacement: (handles: FileSystemFileHandle[]) => Promise<MediaMetadata[]>
   deleteMedia: (id: string) => Promise<void>
   deleteMediaBatch: (ids: string[]) => Promise<void>
+  /**
+   * Insert a freshly created media item at the front of the library
+   * (freeze-frame capture, save-frame). The `mediaById` index is rebuilt
+   * automatically by the store's mediaItems subscription.
+   */
+  prependMediaItem: (media: MediaMetadata) => void
 
   // Selection
   setSelection: (selection: MediaLibrarySelection) => void

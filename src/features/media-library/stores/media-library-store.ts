@@ -223,6 +223,10 @@ const newStore: MediaLibraryStoreApi =
         ...createDeleteActions(set, get),
         ...createRelinkingActions(set, get),
 
+        prependMediaItem: (media) => {
+          set((state) => ({ mediaItems: [media, ...state.mediaItems] }))
+        },
+
         // Selection management
         setSelection: ({ mediaIds, compositionIds }) => {
           const state = get()

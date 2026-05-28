@@ -17,6 +17,8 @@ interface MarkersActions {
   setMarkers: (markers: ProjectMarker[]) => void
   setInPoint: (frame: number | null) => void
   setOutPoint: (frame: number | null) => void
+  /** Atomic write of both in/out points in a single store update. */
+  setInOutPoints: (inPoint: number | null, outPoint: number | null) => void
 
   // CRUD operations
   addMarker: (frame: number, color?: string, label?: string) => void
@@ -38,6 +40,7 @@ export const useMarkersStore = create<MarkersState & MarkersActions>()((set) => 
   setMarkers: (markers) => set({ markers }),
   setInPoint: (frame) => set({ inPoint: frame }),
   setOutPoint: (frame) => set({ outPoint: frame }),
+  setInOutPoints: (inPoint, outPoint) => set({ inPoint, outPoint }),
 
   // Marker CRUD
   addMarker: (frame, color = '#3B82F6', label = '') =>

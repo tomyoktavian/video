@@ -1,4 +1,4 @@
-import { getGpuEffect } from '@/infrastructure/gpu/effects'
+import { getGpuEffect } from '@/infrastructure/gpu-effects'
 import {
   isBuiltInAnimatableProperty,
   parseEffectAnimatableProperty,

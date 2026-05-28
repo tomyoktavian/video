@@ -4,211 +4,25 @@
  * Uses pointer capture for reliable dragging even outside SVG bounds.
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
-import type {
-  GraphKeyframePoint,
-  GraphViewport,
-  GraphPadding,
-  GraphDragState,
-  GraphBezierHandle,
-} from './types'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useGraphSnapping } from './use-graph-snapping'
+import { useGraphViewport } from './use-graph-viewport'
+import { useGraphWheel } from './use-graph-wheel'
+import { useMarquee } from './use-marquee'
+import type { GraphBezierHandle, GraphDragState, GraphKeyframePoint } from './types'
 import { PROPERTY_VALUE_RANGES } from './types'
-import type { KeyframeRef, BezierControlPoints } from '@/types/keyframe'
+import type { BezierControlPoints } from '@/types/keyframe'
 import { getBezierPresetForEasing } from '@/features/keyframes/utils/easing-presets'
 import { updateBezierFromHandle } from './bezier-utils'
-import type { BlockedFrameRange } from '../../utils/transition-region'
-import { KEYFRAME_MARQUEE_THRESHOLD, type KeyframeMarqueeRect } from '../keyframe-marquee'
-
-/** Movement threshold in pixels before committing to drag (vs click) */
-const DRAG_THRESHOLD = 3
-
-/** Snap threshold in pixels - keyframes snap when within this distance */
-const SNAP_THRESHOLD_PX = 8
-const FRAME_ZOOM_IN_FACTOR = 0.8
-const FRAME_ZOOM_OUT_FACTOR = 1.25
-
-/** Drag start state stored in ref to avoid stale closures */
-interface DragStartState {
-  mouseX: number
-  mouseY: number
-  initialFrame: number
-  initialValue: number
-  boundingRect: DOMRect
-  pointerId: number
-  point: GraphKeyframePoint
-  initialKeyframeStates: Map<
-    string,
-    {
-      itemId: string
-      property: GraphKeyframePoint['property']
-      frame: number
-      value: number
-      minValue: number
-      maxValue: number
-    }
-  >
-  duplicateOnCommit: boolean
-}
-
-/** Info about the adjacent segment for mid-point tangent mirroring */
-interface AdjacentSegmentInfo {
-  /** Keyframe ID that owns the adjacent bezier config */
-  keyframeId: string
-  /** Item ID */
-  itemId: string
-  /** Property */
-  property: GraphKeyframePoint['property']
-  /** Which bezier component to update on the adjacent segment */
-  handleType: 'in' | 'out'
-  /** Start point of the adjacent segment (in screen coords) */
-  startPoint: GraphKeyframePoint
-  /** End point of the adjacent segment (in screen coords) */
-  endPoint: GraphKeyframePoint
-  /** Initial bezier config of the adjacent keyframe */
-  initialBezier: BezierControlPoints
-  /** Initial distance from mid-point to opposite handle */
-  initialLength: number
-}
-
-/** Bezier drag start state */
-interface BezierDragStartState {
-  mouseX: number
-  mouseY: number
-  boundingRect: DOMRect
-  pointerId: number
-  handle: GraphBezierHandle
-  startPoint: GraphKeyframePoint
-  endPoint: GraphKeyframePoint
-  initialBezier: BezierControlPoints
-  /** Adjacent segment info for mid-point tangent mirroring (null if endpoint) */
-  adjacent: AdjacentSegmentInfo | null
-  /** The mid-point position (screen coords) — anchor of the dragged handle */
-  midPoint: { x: number; y: number }
-}
-
-type MarqueeMode = 'replace' | 'add' | 'toggle'
-
-interface MarqueeState {
-  pointerId: number
-  startX: number
-  startY: number
-  currentX: number
-  currentY: number
-  mode: MarqueeMode
-  baseSelection: Set<string>
-  started: boolean
-}
-
-function arePreviewValuesEqual(
-  a: Record<string, { frame: number; value: number }> | null,
-  b: Record<string, { frame: number; value: number }> | null,
-): boolean {
-  if (a === b) return true
-  if (!a || !b) return a === b
-
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-  if (aKeys.length !== bKeys.length) return false
-
-  for (const key of aKeys) {
-    const aValue = a[key]
-    const bValue = b[key]
-    if (!aValue || !bValue) return false
-    if (aValue.frame !== bValue.frame || aValue.value !== bValue.value) {
-      return false
-    }
-  }
-
-  return true
-}
-
-interface UseGraphInteractionOptions {
-  /** Current viewport */
-  viewport: GraphViewport
-  /** Graph padding */
-  padding: GraphPadding
-  /** All keyframe points */
-  points: GraphKeyframePoint[]
-  /** Currently selected keyframe IDs */
-  selectedKeyframeIds: Set<string>
-  /** Maximum frame (clip duration) for clamping */
-  maxFrame?: number
-  /** Minimum value for clamping */
-  minValue?: number
-  /** Maximum value for clamping */
-  maxValue?: number
-  /** Callback when viewport changes (zoom/pan) */
-  onViewportChange?: (viewport: GraphViewport) => void
-  /** Callback when keyframe selection changes */
-  onSelectionChange?: (keyframeIds: Set<string>) => void
-  /** Callback when clicking empty graph space */
-  onBackgroundClick?: () => void
-  /** Callback when keyframe is moved */
-  onKeyframeMove?: (ref: KeyframeRef, newFrame: number, newValue: number) => void
-  /** Callback when keyframes are duplicated to explicit targets */
-  onDuplicateKeyframes?: (
-    entries: Array<{ ref: KeyframeRef; frame: number; value: number }>,
-  ) => void
-  /** Optional frame-delta constraint for horizontal drags */
-  constrainFrameDelta?: (deltaFrames: number, draggedKeyframeIds: string[]) => number
-  /** Callback when bezier handle is moved */
-  onBezierHandleMove?: (ref: KeyframeRef, bezier: BezierControlPoints) => void
-  /** Callback when drag starts (for undo batching) */
-  onDragStart?: () => void
-  /** Callback when drag ends (for undo batching) */
-  onDragEnd?: () => void
-  /** Whether snapping is enabled */
-  snapEnabled?: boolean
-  /** Snap targets for frames (other keyframe frames, playhead, etc.) */
-  snapFrameTargets?: number[]
-  /** Snap targets for values (other keyframe values, 0, min, max, etc.) */
-  snapValueTargets?: number[]
-  /** Blocked frame ranges (transition regions where keyframes cannot be placed) */
-  blockedFrameRanges?: BlockedFrameRange[]
-  /** Whether interaction is disabled */
-  disabled?: boolean
-}
-
-interface UseGraphInteractionReturn {
-  /** Current drag state (null if not dragging) */
-  dragState: GraphDragState | null
-  /** Whether actively dragging (past threshold) */
-  isDragging: boolean
-  /** Preview values during drag keyed by keyframe ID */
-  previewValues: Record<string, { frame: number; value: number }> | null
-  /** Currently dragging handle info */
-  draggingHandle: { keyframeId: string; type: 'in' | 'out' } | null
-  /** Preview bezier configs during handle drag (avoids store updates until pointer up) */
-  previewBezierConfigs: Record<string, BezierControlPoints> | null
-  /** Current constraint axis when Shift is held ('x' = frame only, 'y' = value only, null = no constraint) */
-  constraintAxis: 'x' | 'y' | null
-  /** Handle keyframe pointer down */
-  handleKeyframePointerDown: (point: GraphKeyframePoint, event: React.PointerEvent) => void
-  /** Handle keyframe click (legacy, for selection only) */
-  handleKeyframeClick: (point: GraphKeyframePoint, event: React.MouseEvent) => void
-  /** Handle bezier handle pointer down */
-  handleBezierPointerDown: (handle: GraphBezierHandle, event: React.PointerEvent) => void
-  /** Handle pointer move on graph (SVG level) */
-  handlePointerMove: (event: React.PointerEvent) => void
-  /** Handle pointer up (SVG level) */
-  handlePointerUp: (event: React.PointerEvent) => void
-  /** Handle wheel (zoom) */
-  handleWheel: (event: React.WheelEvent) => void
-  /** Handle pointer down on graph background (starts marquee selection) */
-  handleBackgroundPointerDown: (event: React.PointerEvent<SVGElement>) => void
-  /** Handle graph background click (deselect) */
-  handleBackgroundClick: (event: React.MouseEvent<SVGElement>) => void
-  /** Timestamp of last keyframe/handle pointerDown (for click dedup) */
-  lastInteractionTime: React.RefObject<number>
-  /** Active marquee rect while selecting */
-  marqueeRect: KeyframeMarqueeRect | null
-  /** Zoom in */
-  zoomIn: () => void
-  /** Zoom out */
-  zoomOut: () => void
-  /** Fit view to all keyframes */
-  fitToContent: () => void
-}
+import {
+  arePreviewValuesEqual,
+  DRAG_THRESHOLD,
+  type AdjacentSegmentInfo,
+  type BezierDragStartState,
+  type DragStartState,
+  type UseGraphInteractionOptions,
+  type UseGraphInteractionReturn,
+} from './graph-interaction-types'
 
 /**
  * Hook for managing graph interactions with proper pointer capture.
@@ -251,13 +65,10 @@ export function useGraphInteraction({
     BezierControlPoints
   > | null>(null)
   const [constraintAxis, setConstraintAxis] = useState<'x' | 'y' | null>(null)
-  const [marqueeRect, setMarqueeRect] = useState<KeyframeMarqueeRect | null>(null)
 
   // Refs for stable values during drag
   const dragStartRef = useRef<DragStartState | null>(null)
   const bezierDragStartRef = useRef<BezierDragStartState | null>(null)
-  const marqueeStateRef = useRef<MarqueeState | null>(null)
-  const marqueeJustEndedRef = useRef(false)
   const svgRef = useRef<SVGSVGElement | null>(null)
   const pointsRef = useRef(points)
   useEffect(() => {
@@ -312,307 +123,42 @@ export function useGraphInteraction({
   // that fire on the SVG after pointer capture redirects them away from the original target)
   const lastInteractionTimeRef = useRef(0)
 
-  // Memoized graph dimensions
-  const graphDimensions = useMemo(() => {
-    const graphLeft = padding.left
-    const graphTop = padding.top
-    const graphWidth = viewport.width - padding.left - padding.right
-    const graphHeight = viewport.height - padding.top - padding.bottom
-    const frameRange = viewport.endFrame - viewport.startFrame
-    const valueRange = viewport.maxValue - viewport.minValue
-    return { graphLeft, graphTop, graphWidth, graphHeight, frameRange, valueRange }
-  }, [viewport, padding])
-
-  const zoomFocusPoint = useMemo(() => {
-    const selectedPoints = points.filter((point) => selectedKeyframeIds.has(point.keyframe.id))
-    const visiblePoints = points.filter(
-      (point) =>
-        point.keyframe.frame >= viewport.startFrame &&
-        point.keyframe.frame <= viewport.endFrame &&
-        point.keyframe.value >= viewport.minValue &&
-        point.keyframe.value <= viewport.maxValue,
-    )
-    const focusPoints =
-      selectedPoints.length > 0 ? selectedPoints : visiblePoints.length > 0 ? visiblePoints : points
-
-    if (focusPoints.length === 0) return null
-
-    const totals = focusPoints.reduce(
-      (acc, point) => ({
-        frame: acc.frame + point.keyframe.frame,
-        value: acc.value + point.keyframe.value,
-      }),
-      { frame: 0, value: 0 },
-    )
-
-    return {
-      frame: totals.frame / focusPoints.length,
-      value: totals.value / focusPoints.length,
-    }
-  }, [
+  const {
+    graphDimensions,
+    clampViewportToBounds,
+    ensureKeyframesRemainVisible,
+    screenToGraph,
+    zoomIn,
+    zoomOut,
+    fitToContent,
+  } = useGraphViewport({
+    viewport,
+    padding,
     points,
     selectedKeyframeIds,
-    viewport.startFrame,
-    viewport.endFrame,
-    viewport.minValue,
-    viewport.maxValue,
-  ])
+    maxFrame,
+    minValue: clampMinValue,
+    maxValue: clampMaxValue,
+    onViewportChange,
+  })
 
-  const clampViewportToBounds = useCallback(
-    (nextViewport: GraphViewport): GraphViewport => {
-      let startFrame = nextViewport.startFrame
-      let endFrame = nextViewport.endFrame
-      let minValue = nextViewport.minValue
-      let maxValue = nextViewport.maxValue
-
-      const frameRange = Math.max(1, endFrame - startFrame)
-      const maxFrameExtent = Math.max(maxFrame ?? 0, frameRange)
-
-      if (startFrame < 0) {
-        endFrame -= startFrame
-        startFrame = 0
-      }
-      if (endFrame > maxFrameExtent) {
-        const overflow = endFrame - maxFrameExtent
-        startFrame = Math.max(0, startFrame - overflow)
-        endFrame = maxFrameExtent
-      }
-
-      const valueRange = Math.max(0.0001, maxValue - minValue)
-      if (clampMinValue !== undefined && clampMaxValue !== undefined) {
-        const totalRange = Math.max(0.0001, clampMaxValue - clampMinValue)
-        const boundedRange = Math.min(valueRange, totalRange)
-        minValue = Math.max(clampMinValue, Math.min(clampMaxValue - boundedRange, minValue))
-        maxValue = minValue + boundedRange
-      } else {
-        if (clampMinValue !== undefined && minValue < clampMinValue) {
-          maxValue += clampMinValue - minValue
-          minValue = clampMinValue
-        }
-        if (clampMaxValue !== undefined && maxValue > clampMaxValue) {
-          minValue -= maxValue - clampMaxValue
-          maxValue = clampMaxValue
-        }
-      }
-
-      return {
-        ...nextViewport,
-        startFrame,
-        endFrame,
-        minValue,
-        maxValue,
-      }
-    },
-    [maxFrame, clampMinValue, clampMaxValue],
-  )
-
-  const ensureKeyframesRemainVisible = useCallback(
-    (nextViewport: GraphViewport): GraphViewport => {
-      const clampedViewport = clampViewportToBounds(nextViewport)
-      if (points.length === 0 || !zoomFocusPoint) {
-        return clampedViewport
-      }
-
-      const hasVisiblePoint = points.some(
-        (point) =>
-          point.keyframe.frame >= clampedViewport.startFrame &&
-          point.keyframe.frame <= clampedViewport.endFrame &&
-          point.keyframe.value >= clampedViewport.minValue &&
-          point.keyframe.value <= clampedViewport.maxValue,
-      )
-
-      if (hasVisiblePoint) {
-        return clampedViewport
-      }
-
-      const frameRange = Math.max(1, clampedViewport.endFrame - clampedViewport.startFrame)
-      const valueRange = Math.max(0.0001, clampedViewport.maxValue - clampedViewport.minValue)
-
-      return clampViewportToBounds({
-        ...clampedViewport,
-        startFrame: zoomFocusPoint.frame - frameRange / 2,
-        endFrame: zoomFocusPoint.frame + frameRange / 2,
-        minValue: zoomFocusPoint.value - valueRange / 2,
-        maxValue: zoomFocusPoint.value + valueRange / 2,
-      })
-    },
-    [clampViewportToBounds, points, zoomFocusPoint],
-  )
-
-  // Convert screen coordinates to graph coordinates
-  const screenToGraph = useCallback(
-    (screenX: number, screenY: number): { frame: number; value: number } => {
-      const { graphLeft, graphTop, graphWidth, graphHeight, frameRange, valueRange } =
-        graphDimensions
-      const frame = viewport.startFrame + ((screenX - graphLeft) / graphWidth) * frameRange
-      const value = viewport.maxValue - ((screenY - graphTop) / graphHeight) * valueRange
-      return { frame, value }
-    },
-    [viewport, graphDimensions],
-  )
-
-  // Snap a value to the nearest target within threshold
-  const snapToTargets = useCallback(
-    (
-      value: number,
-      targets: number[],
-      thresholdInUnits: number,
-    ): { snapped: number; didSnap: boolean } => {
-      if (!snapEnabled || targets.length === 0) {
-        return { snapped: value, didSnap: false }
-      }
-
-      let closestTarget = value
-      let closestDistance = Infinity
-
-      for (const target of targets) {
-        const distance = Math.abs(value - target)
-        if (distance < closestDistance && distance <= thresholdInUnits) {
-          closestDistance = distance
-          closestTarget = target
-        }
-      }
-
-      return {
-        snapped: closestDistance <= thresholdInUnits ? closestTarget : value,
-        didSnap: closestDistance <= thresholdInUnits,
-      }
-    },
-    [snapEnabled],
-  )
-
-  // Calculate snap thresholds in graph units (frames/values) based on pixel threshold
-  const snapThresholds = useMemo(() => {
-    const { graphWidth, graphHeight, frameRange, valueRange } = graphDimensions
-    // Convert pixel threshold to graph units
-    const frameThreshold = (SNAP_THRESHOLD_PX / graphWidth) * frameRange
-    const valueThreshold = (SNAP_THRESHOLD_PX / graphHeight) * valueRange
-    return { frameThreshold, valueThreshold }
-  }, [graphDimensions])
-
-  // Check if a frame is in a blocked range and clamp it to stay outside
-  const clampToAvoidBlockedRanges = useCallback(
-    (frame: number, initialFrame: number): number => {
-      if (blockedFrameRanges.length === 0) return frame
-
-      for (const range of blockedFrameRanges) {
-        // Check if the new frame would be inside a blocked range
-        if (frame >= range.start && frame < range.end) {
-          // Determine which edge to clamp to based on movement direction
-          if (initialFrame < range.start) {
-            // Coming from the left, clamp to left edge
-            return range.start - 1
-          } else if (initialFrame >= range.end) {
-            // Coming from the right, clamp to right edge
-            return range.end
-          } else {
-            // Started inside the blocked range (shouldn't happen, but handle it)
-            // Clamp to nearest edge
-            const distToStart = frame - range.start
-            const distToEnd = range.end - frame
-            return distToStart < distToEnd ? range.start - 1 : range.end
-          }
-        }
-      }
-      return frame
-    },
-    [blockedFrameRanges],
-  )
-
-  const updateSelectionFromMarquee = useCallback((state: MarqueeState) => {
-    const minX = Math.min(state.startX, state.currentX)
-    const maxX = Math.max(state.startX, state.currentX)
-    const minY = Math.min(state.startY, state.currentY)
-    const maxY = Math.max(state.startY, state.currentY)
-
-    const hitIds = new Set<string>()
-    for (const point of pointsRef.current) {
-      if (point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY) {
-        hitIds.add(point.keyframe.id)
-      }
-    }
-
-    let nextSelection = new Set<string>()
-    if (state.mode === 'replace') {
-      nextSelection = hitIds
-    } else if (state.mode === 'add') {
-      nextSelection = new Set([...state.baseSelection, ...hitIds])
-    } else {
-      nextSelection = new Set(state.baseSelection)
-      for (const keyframeId of hitIds) {
-        if (nextSelection.has(keyframeId)) {
-          nextSelection.delete(keyframeId)
-        } else {
-          nextSelection.add(keyframeId)
-        }
-      }
-    }
-
-    callbacksRef.current.onSelectionChange?.(nextSelection)
-    setMarqueeRect({
-      x: minX,
-      y: minY,
-      width: Math.max(1, maxX - minX),
-      height: Math.max(1, maxY - minY),
+  const { marqueeRect, marqueeStateRef, marqueeJustEndedRef, handleBackgroundPointerDown } =
+    useMarquee({
+      disabled,
+      viewport,
+      selectedKeyframeIds,
+      pointsRef,
+      svgRef,
+      dragStartRef,
+      bezierDragStartRef,
+      onSelectionChange,
     })
-  }, [])
 
-  useEffect(() => {
-    const handleMarqueePointerMove = (event: PointerEvent) => {
-      const marqueeState = marqueeStateRef.current
-      const svg = svgRef.current
-      if (!marqueeState || marqueeState.pointerId !== event.pointerId || !svg) return
-
-      const rect = svg.getBoundingClientRect()
-      const x = Math.max(0, Math.min(viewport.width, event.clientX - rect.left))
-      const y = Math.max(0, Math.min(viewport.height, event.clientY - rect.top))
-
-      const movedEnough =
-        Math.abs(x - marqueeState.startX) > KEYFRAME_MARQUEE_THRESHOLD ||
-        Math.abs(y - marqueeState.startY) > KEYFRAME_MARQUEE_THRESHOLD
-      if (!marqueeState.started && movedEnough) {
-        marqueeState.started = true
-      }
-      if (!marqueeState.started) return
-
-      marqueeState.currentX = x
-      marqueeState.currentY = y
-      updateSelectionFromMarquee(marqueeState)
-    }
-
-    const handleMarqueePointerUp = (event: PointerEvent) => {
-      const marqueeState = marqueeStateRef.current
-      if (!marqueeState || marqueeState.pointerId !== event.pointerId) return
-
-      const svg = svgRef.current
-      if (svg) {
-        try {
-          svg.releasePointerCapture(event.pointerId)
-        } catch {
-          // Pointer capture may already be released.
-        }
-      }
-
-      if (marqueeState.started) {
-        marqueeJustEndedRef.current = true
-        setTimeout(() => {
-          marqueeJustEndedRef.current = false
-        }, 100)
-      }
-
-      marqueeStateRef.current = null
-      svgRef.current = null
-      setMarqueeRect(null)
-    }
-
-    window.addEventListener('pointermove', handleMarqueePointerMove)
-    window.addEventListener('pointerup', handleMarqueePointerUp)
-
-    return () => {
-      window.removeEventListener('pointermove', handleMarqueePointerMove)
-      window.removeEventListener('pointerup', handleMarqueePointerUp)
-    }
-  }, [updateSelectionFromMarquee, viewport.height, viewport.width])
+  const { snapToTargets, snapThresholds, clampToAvoidBlockedRanges } = useGraphSnapping({
+    snapEnabled,
+    graphDimensions,
+    blockedFrameRanges,
+  })
 
   // Handle keyframe pointer down (start potential drag)
   const handleKeyframePointerDown = useCallback(
@@ -846,46 +392,6 @@ export function useGraphInteraction({
       })
     },
     [disabled, points],
-  )
-
-  const handleBackgroundPointerDown = useCallback(
-    (event: React.PointerEvent<SVGElement>) => {
-      if (disabled) return
-      if (event.button !== 0) return
-      if (dragStartRef.current || bezierDragStartRef.current) return
-
-      event.preventDefault()
-
-      const svg =
-        event.currentTarget.ownerSVGElement ??
-        (event.currentTarget instanceof SVGSVGElement ? event.currentTarget : null)
-      if (!svg) return
-
-      svg.setPointerCapture(event.pointerId)
-      svgRef.current = svg
-
-      const rect = svg.getBoundingClientRect()
-      const startX = Math.max(0, Math.min(viewport.width, event.clientX - rect.left))
-      const startY = Math.max(0, Math.min(viewport.height, event.clientY - rect.top))
-      const mode: MarqueeMode = event.shiftKey
-        ? 'add'
-        : event.ctrlKey || event.metaKey
-          ? 'toggle'
-          : 'replace'
-
-      marqueeStateRef.current = {
-        pointerId: event.pointerId,
-        startX,
-        startY,
-        currentX: startX,
-        currentY: startY,
-        mode,
-        baseSelection: new Set(selectedKeyframeIds),
-        started: false,
-      }
-      setMarqueeRect(null)
-    },
-    [disabled, selectedKeyframeIds, viewport.height, viewport.width],
   )
 
   // Handle pointer move (SVG level)
@@ -1225,74 +731,24 @@ export function useGraphInteraction({
       setDraggingHandle(null)
       setConstraintAxis(null)
     },
-    [dragStateType],
+    [dragStateType, marqueeStateRef],
   )
 
-  // Handle wheel (zoom) - disabled during dragging
-  const handleWheel = useCallback(
-    (event: React.WheelEvent) => {
-      if (disabled) return
-      // Don't zoom while dragging a keyframe
-      if (dragStartRef.current || bezierDragStartRef.current) return
-
-      event.preventDefault()
-
-      const rect = event.currentTarget.getBoundingClientRect()
-      const mouseX = event.clientX - rect.left
-      const mouseY = event.clientY - rect.top
-
-      const { frameRange, valueRange } = graphDimensions
-      const { frame: mouseFrame, value: mouseValue } = screenToGraph(mouseX, mouseY)
-
-      if (event.ctrlKey || event.metaKey) {
-        const zoomFactor = event.deltaY > 0 ? FRAME_ZOOM_OUT_FACTOR : FRAME_ZOOM_IN_FACTOR
-        const newFrameRange = frameRange * zoomFactor
-        const frameRatioBefore = (mouseFrame - viewport.startFrame) / frameRange
-        const unclampedStartFrame = mouseFrame - newFrameRange * frameRatioBefore
-        const nextViewport = ensureKeyframesRemainVisible({
-          ...viewport,
-          startFrame: Math.max(0, unclampedStartFrame),
-          endFrame: Math.max(0, unclampedStartFrame) + newFrameRange,
-          minValue: viewport.minValue,
-          maxValue: viewport.maxValue,
-        })
-
-        callbacksRef.current.onViewportChange?.({
-          ...nextViewport,
-          minValue: viewport.minValue,
-          maxValue: viewport.maxValue,
-        })
-        return
-      }
-
-      void mouseValue
-      void valueRange
-
-      const deltaFrames = Math.round(
-        (event.deltaY / Math.max(1, graphDimensions.graphWidth)) * frameRange,
-      )
-      callbacksRef.current.onViewportChange?.(
-        clampViewportToBounds({
-          ...viewport,
-          startFrame: viewport.startFrame + deltaFrames,
-          endFrame: viewport.endFrame + deltaFrames,
-        }),
-      )
-    },
-    [
-      disabled,
-      viewport,
-      screenToGraph,
-      graphDimensions,
-      ensureKeyframesRemainVisible,
-      clampViewportToBounds,
-    ],
-  )
+  const { handleWheel } = useGraphWheel({
+    disabled,
+    viewport,
+    graphDimensions,
+    screenToGraph,
+    clampViewportToBounds,
+    ensureKeyframesRemainVisible,
+    dragStartRef,
+    bezierDragStartRef,
+    onViewportChange,
+  })
 
   // Handle background click (deselect)
   const handleBackgroundClick = useCallback(
-    (event: React.MouseEvent<SVGElement>) => {
-      void event
+    (_event: React.MouseEvent) => {
       if (disabled) return
       if (marqueeJustEndedRef.current) return
       // Pointer capture redirects click targets to SVG — ignore clicks
@@ -1301,59 +757,8 @@ export function useGraphInteraction({
       callbacksRef.current.onSelectionChange?.(new Set())
       callbacksRef.current.onBackgroundClick?.()
     },
-    [disabled],
+    [disabled, marqueeJustEndedRef],
   )
-
-  // Zoom in
-  const zoomIn = useCallback(() => {
-    const { frameRange, valueRange } = graphDimensions
-    const centerFrame = zoomFocusPoint?.frame ?? (viewport.startFrame + viewport.endFrame) / 2
-    const centerValue = zoomFocusPoint?.value ?? (viewport.minValue + viewport.maxValue) / 2
-    const newFrameRange = frameRange * 0.8
-    const newValueRange = valueRange * 0.8
-
-    callbacksRef.current.onViewportChange?.(
-      ensureKeyframesRemainVisible({
-        ...viewport,
-        startFrame: centerFrame - newFrameRange / 2,
-        endFrame: centerFrame + newFrameRange / 2,
-        minValue: centerValue - newValueRange / 2,
-        maxValue: centerValue + newValueRange / 2,
-      }),
-    )
-  }, [viewport, graphDimensions, zoomFocusPoint, ensureKeyframesRemainVisible])
-
-  // Zoom out
-  const zoomOut = useCallback(() => {
-    const { frameRange, valueRange } = graphDimensions
-    const centerFrame = zoomFocusPoint?.frame ?? (viewport.startFrame + viewport.endFrame) / 2
-    const centerValue = zoomFocusPoint?.value ?? (viewport.minValue + viewport.maxValue) / 2
-    const newFrameRange = frameRange * 1.25
-    const newValueRange = valueRange * 1.25
-
-    callbacksRef.current.onViewportChange?.(
-      ensureKeyframesRemainVisible({
-        ...viewport,
-        startFrame: centerFrame - newFrameRange / 2,
-        endFrame: centerFrame + newFrameRange / 2,
-        minValue: centerValue - newValueRange / 2,
-        maxValue: centerValue + newValueRange / 2,
-      }),
-    )
-  }, [viewport, graphDimensions, zoomFocusPoint, ensureKeyframesRemainVisible])
-
-  // Fit view to fixed bounds (0 to maxFrame, minValue to maxValue)
-  const fitToContent = useCallback(() => {
-    callbacksRef.current.onViewportChange?.(
-      clampViewportToBounds({
-        ...viewport,
-        startFrame: 0,
-        endFrame: Math.max(maxFrame ?? 60, 60),
-        minValue: clampMinValue ?? 0,
-        maxValue: clampMaxValue ?? 1,
-      }),
-    )
-  }, [viewport, maxFrame, clampMinValue, clampMaxValue, clampViewportToBounds])
 
   return {
     dragState,

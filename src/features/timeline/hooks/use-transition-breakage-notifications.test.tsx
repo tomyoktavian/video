@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { toast } from 'sonner'
 
 import type { TransitionBreakage } from '@/types/transition'
-import { clearDomainEventListeners, emitDomainEvent } from '@/shared/events/domain-events'
+import { clearDomainEventListeners, emitDomainEvent } from '@/shared/utils/domain-events'
 
 import { useTransitionBreakageNotifications } from './use-transition-breakage-notifications'
 

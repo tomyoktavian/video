@@ -35,7 +35,7 @@ import {
   type CollisionRect,
 } from '../utils/collision-utils'
 import { resolveEffectiveTrackStates } from '../utils/group-utils'
-import { mapWithConcurrency } from '@/shared/async/async-utils'
+import { mapWithConcurrency } from '@/shared/utils/async-utils'
 import { useExternalDragPreview } from '../hooks/use-external-drag-preview'
 import { useCompositionNavigationStore } from '../stores/composition-navigation-store'
 import { wouldCreateCompositionCycle } from '../utils/composition-graph'

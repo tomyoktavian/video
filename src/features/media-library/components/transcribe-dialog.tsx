@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
 import {
   Select,

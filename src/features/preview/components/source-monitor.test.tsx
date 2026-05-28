@@ -132,7 +132,7 @@ vi.mock('@/features/preview/deps/settings', () => {
   return { useSettingsStore }
 })
 
-vi.mock('@/app/state/editor', () => {
+vi.mock('@/shared/state/editor', () => {
   const useEditorStore = Object.assign(
     (selector: (state: typeof editorStoreState) => unknown) => selector(editorStoreState),
     { getState: () => editorStoreState },

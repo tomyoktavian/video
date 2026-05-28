@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { GpuEffectDefinition } from '@/infrastructure/gpu/effects'
+import type { GpuEffectDefinition } from '@/infrastructure/gpu-effects'
 
 export function getEffectCategoryLabel(t: TFunction, category: string): string {
   return t(`effects.categories.${category}`, { defaultValue: category })

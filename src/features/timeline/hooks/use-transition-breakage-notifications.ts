@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { onDomainEvent } from '@/shared/events/domain-events'
+import { onDomainEvent } from '@/shared/utils/domain-events'
 import type { TransitionBreakage } from '@/types/transition'
 
 /**

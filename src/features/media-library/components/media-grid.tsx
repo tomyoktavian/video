@@ -11,7 +11,7 @@ import {
   getMediaDeletionImpact,
   removeProjectItems,
 } from '@/features/media-library/deps/timeline-stores'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import {
   AlertDialog,
   AlertDialogAction,

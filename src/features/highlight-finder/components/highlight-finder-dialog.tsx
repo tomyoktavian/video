@@ -19,9 +19,9 @@ import {
   WHISPER_AUTO_LANGUAGE_VALUE,
   WHISPER_LANGUAGE_OPTIONS,
 } from '@/shared/utils/whisper-settings'
-import { useEditorStore } from '@/app/state/editor'
+import { useEditorStore } from '@/shared/state/editor'
 import { usePlaybackStore } from '@/shared/state/playback'
-import { useHighlightFinderDialogStore } from '@/app/state/highlight-finder-dialog'
+import { useHighlightFinderDialogStore } from '@/shared/state/highlight-finder-dialog'
 
 import { useCustomAiStore } from '../deps/settings-contract'
 import { useTimelineStore } from '../deps/timeline'

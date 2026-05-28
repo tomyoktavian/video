@@ -11,7 +11,7 @@ import { useCompositionsStore } from '../../stores/compositions-store'
 import { useItemsStore } from '../../stores/items-store'
 import { useClipVisibility } from '../../hooks/use-clip-visibility'
 import { useZoomStore } from '../../stores/zoom-store'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import { getTextItemPlainText } from '@/shared/utils/text-item-spans'
 import {
   getCompositionVisualSegments,

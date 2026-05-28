@@ -12,8 +12,8 @@ import {
   DEFAULT_WHISPER_QUANTIZATION,
   normalizeSelectableWhisperModel,
 } from '@/shared/utils/whisper-settings'
-import type { EditorDensityPresetName } from '@/app/editor-layout'
-import { DEFAULT_EDITOR_DENSITY_PRESET, normalizeEditorDensityPreset } from '@/app/editor-layout'
+import type { EditorDensityPresetName } from '@/config/editor-layout'
+import { DEFAULT_EDITOR_DENSITY_PRESET, normalizeEditorDensityPreset } from '@/config/editor-layout'
 import {
   HOTKEYS,
   normalizeHotkeyBinding,

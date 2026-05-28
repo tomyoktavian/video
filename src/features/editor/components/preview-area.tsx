@@ -15,11 +15,11 @@ import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useProjectStore } from '@/features/editor/deps/projects'
 import { useSettingsStore } from '@/features/editor/deps/settings'
 import { useMaskEditorStore, useItemsStore } from '@/features/editor/deps/preview'
-import { useEditorStore } from '@/app/state/editor'
-import { EDITOR_LAYOUT_CSS_VALUES, getEditorLayout } from '@/app/editor-layout'
+import { useEditorStore } from '@/shared/state/editor'
+import { EDITOR_LAYOUT_CSS_VALUES, getEditorLayout } from '@/config/editor-layout'
 import { InteractionLockRegion } from './interaction-lock-region'
 import { Button } from '@/components/ui/button'
-import { ErrorBoundary } from '@/components/error-boundary'
+import { ErrorBoundary } from '@/app/error-boundary'
 
 interface PreviewAreaProps {
   project: {

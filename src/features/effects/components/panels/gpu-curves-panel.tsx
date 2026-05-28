@@ -3,7 +3,7 @@ import type React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, RotateCcw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { GpuEffectDefinition } from '@/infrastructure/gpu/effects'
+import type { GpuEffectDefinition } from '@/infrastructure/gpu-effects'
 import { PropertyRow } from '@/shared/ui/property-controls'
 import { buildMonotoneCurveSvgPath } from '@/shared/utils/curve-spline'
 import {

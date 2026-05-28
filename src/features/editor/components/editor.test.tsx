@@ -59,7 +59,7 @@ vi.mock('@/components/ui/resizable', () => ({
   ResizableHandle: () => <div data-testid="resizable-handle" />,
 }))
 
-vi.mock('@/components/error-boundary', () => ({
+vi.mock('@/app/error-boundary', () => ({
   ErrorBoundary: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
 
@@ -212,7 +212,7 @@ vi.mock('@/shared/state/playback', () => {
   return { usePlaybackStore }
 })
 
-vi.mock('@/app/state/editor', () => ({
+vi.mock('@/shared/state/editor', () => ({
   useEditorStore: (
     selector: (state: { syncSidebarLayout: typeof mocks.syncSidebarLayout }) => unknown,
   ) => selector({ syncSidebarLayout: mocks.syncSidebarLayout }),
@@ -236,8 +236,8 @@ vi.mock('@/features/editor/deps/export-contract', () => ({
   importExportDialog: mocks.importExportDialog,
 }))
 
-vi.mock('@/app/editor-layout', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/app/editor-layout')>()
+vi.mock('@/config/editor-layout', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/config/editor-layout')>()
   const layout = {
     ...actual.EDITOR_LAYOUT,
     timelineDefaultSize: 35,

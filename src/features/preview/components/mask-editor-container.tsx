@@ -12,7 +12,7 @@ import { useItemsStore } from '@/features/preview/deps/timeline-store'
 import { MaskEditorOverlay } from './mask-editor-overlay'
 import type { CoordinateParams, Transform } from '../types/gizmo'
 import { useVisualTransforms } from '../hooks/use-visual-transform'
-import { ErrorBoundary } from '@/components/error-boundary'
+import { ErrorBoundary } from '@/app/error-boundary'
 
 interface MaskEditorContainerProps {
   containerRect: DOMRect | null

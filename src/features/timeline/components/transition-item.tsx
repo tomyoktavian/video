@@ -26,7 +26,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
 import { cn } from '@/shared/ui/cn'
-import { EDITOR_LAYOUT_CSS_VALUES } from '@/app/editor-layout'
+import { EDITOR_LAYOUT_CSS_VALUES } from '@/config/editor-layout'
 import { Trash2 } from 'lucide-react'
 import {
   applyPreviewGeometryToClip,

@@ -1,20 +1,32 @@
-/**
- * Infrastructure facade for media analysis utilities.
- * All consumers should import analysis types from here instead of @/lib/analysis.
- */
-
-export { detectScenes, clearSceneCache } from '@/lib/analysis'
-export type { SceneCut, SceneDetectionProgress, VerificationModel } from '@/lib/analysis'
-export { getSceneVerificationModelLabel, getSceneVerificationModelOptions } from '@/lib/analysis'
+export { OpticalFlowAnalyzer } from './optical-flow-analyzer'
+export type { MotionResult } from './optical-flow-analyzer'
+export { detectScenes, clearSceneCache } from './scene-detection'
+export type {
+  SceneCut,
+  SceneDetectionProgress,
+  DetectScenesOptions,
+  VerificationModel,
+} from './scene-detection'
 export {
-  captionVideo,
-  captionImage,
-  captionVideoWith,
-  captionImageWith,
+  getDefaultSceneVerificationProvider,
+  getSceneVerificationModelLabel,
+  getSceneVerificationModelOptions,
+  getSceneVerificationProvider,
+} from './verification/registry'
+export type { SceneVerificationProvider } from './verification/types'
+export {
+  detectScenesHistogram,
+  computeHistogram,
+  chiSquaredDistance,
+} from './histogram-scene-detection'
+export type { HistogramDetectOptions } from './histogram-scene-detection'
+export { seekVideo, deduplicateCuts } from './scene-detection-utils'
+export { captionVideo, captionImage, captionVideoWith, captionImageWith } from './media-tagger'
+export type { MediaCaption, CaptioningProgress, CaptioningOptions } from './media-tagger'
+export {
   DEFAULT_MEDIA_CAPTIONING_PROVIDER_ID,
   OPENAI_COMPATIBLE_VISION_PROVIDER_ID,
-} from '@/lib/analysis'
-export type { MediaCaption, CaptioningProgress, CaptioningOptions } from '@/lib/analysis'
+} from './captioning/registry'
 export {
   embeddingsProvider,
   EMBEDDING_MODEL_ID,
@@ -29,7 +41,7 @@ export {
   rgbToLab,
   deltaE76,
   deltaE2000,
-} from '@/lib/analysis'
+} from './embeddings'
 export type {
   EmbeddingsOptions,
   EmbeddingsProgress,
@@ -38,4 +50,5 @@ export type {
   TranscriptSegment,
   PaletteEntry,
   LabColor,
-} from '@/lib/analysis'
+} from './embeddings'
+export { ANALYSIS_WIDTH, ANALYSIS_HEIGHT, PYRAMID_LEVELS } from './optical-flow-shaders'
