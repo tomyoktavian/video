@@ -43,7 +43,9 @@ export function mixCompoundClipWaveformPeaks(params: {
 
       const existing = peaks[outputSample] ?? 0
       const next = waveformPeaks[waveformIndex] ?? 0
-      peaks[outputSample] = Math.min(1, Math.hypot(existing, next))
+      // Peaks are normalized to [0,1], so there is no overflow risk and this is
+      // equivalent to Math.hypot — but Math.sqrt is several times faster in V8.
+      peaks[outputSample] = Math.min(1, Math.sqrt(existing * existing + next * next))
     }
   }
 

@@ -45,6 +45,7 @@ describe('ClipContent', () => {
     })
     useSettingsStore.setState({
       showFilmstrips: false,
+      enableFilmstripExtraction: false,
       showWaveforms: false,
     })
     useMediaLibraryStore.setState({
@@ -105,16 +106,20 @@ describe('ClipContent', () => {
     expect(screen.getByText('Linked clip')).toBeInTheDocument()
   })
 
-  it('uses settled zoom for filmstrip content by default', () => {
+  it('uses settled zoom for filmstrip content by default', async () => {
+    // Not interacting: content renders (mid-gesture deferral is covered by its
+    // own test below). pixelsPerSecond (180) and contentPixelsPerSecond (100)
+    // are set apart purely to verify which one the filmstrip reads.
     useZoomStore.setState({
       level: 1.8,
       pixelsPerSecond: 180,
       contentLevel: 1,
       contentPixelsPerSecond: 100,
-      isZoomInteracting: true,
+      isZoomInteracting: false,
     })
     useSettingsStore.setState({
       showFilmstrips: true,
+      enableFilmstripExtraction: true,
       showWaveforms: false,
     })
 
@@ -131,16 +136,19 @@ describe('ClipContent', () => {
 
     render(<ClipContent item={item} clipLeftFrames={0} clipWidthFrames={96} fps={30} />)
 
-    expect(screen.getByTestId('clip-filmstrip')).toHaveAttribute('data-pps', '180')
+    // Default (no preferImmediateRendering): filmstrip tracks the SETTLED zoom
+    // (contentPixelsPerSecond = 100), not the live in-gesture pps (180). This is
+    // what keeps the filmstrip tile grid from re-rendering on every zoom frame.
+    expect(await screen.findByTestId('clip-filmstrip')).toHaveAttribute('data-pps', '100')
   })
 
-  it('can opt clip internals into live zoom for immediate edit previews', () => {
+  it('can opt clip internals into live zoom for immediate edit previews', async () => {
     useZoomStore.setState({
       level: 1.8,
       pixelsPerSecond: 180,
       contentLevel: 1,
       contentPixelsPerSecond: 100,
-      isZoomInteracting: true,
+      isZoomInteracting: false,
     })
     useSettingsStore.setState({
       showFilmstrips: false,
@@ -168,6 +176,41 @@ describe('ClipContent', () => {
       />,
     )
 
-    expect(screen.getByTestId('clip-waveform')).toHaveAttribute('data-pps', '180')
+    expect(await screen.findByTestId('clip-waveform')).toHaveAttribute('data-pps', '180')
+  })
+
+  it('defers filmstrip content for clips that mount during an active zoom gesture', () => {
+    // A clip first appearing mid-zoom (e.g. entering the viewport while zooming
+    // out) must NOT mount its filmstrip tile grid yet — that mount burst is the
+    // bulk of zoom-out cost. It shows just the clip shell until the zoom settles.
+    useZoomStore.setState({
+      level: 1,
+      pixelsPerSecond: 100,
+      contentLevel: 1,
+      contentPixelsPerSecond: 100,
+      isZoomInteracting: true,
+    })
+    useSettingsStore.setState({
+      showFilmstrips: true,
+      enableFilmstripExtraction: true,
+      showWaveforms: false,
+    })
+
+    const item: TimelineItem = {
+      id: 'video-defer',
+      type: 'video',
+      trackId: 'track-1',
+      from: 0,
+      durationInFrames: 60,
+      label: 'Video clip',
+      mediaId: 'media-1',
+      src: 'blob:test',
+    } as TimelineItem
+
+    render(<ClipContent item={item} clipLeftFrames={0} clipWidthFrames={96} fps={30} />)
+
+    // Mounted mid-gesture → filmstrip deferred (label still renders).
+    expect(screen.queryByTestId('clip-filmstrip')).toBeNull()
+    expect(screen.getByText('Video clip')).toBeInTheDocument()
   })
 })

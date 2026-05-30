@@ -1,7 +1,7 @@
 import type { CompositionInputProps } from '@/types/export'
 import type { TimelineItem, TimelineTrack, VideoItem } from '@/types/timeline'
 import {
-  renderComposition,
+  importCanvasRenderOrchestrator,
   type ClientExportSettings,
   type RenderProgress,
 } from '../deps/export-contract'
@@ -13,6 +13,7 @@ import { reverseConformFilePath } from '@/infrastructure/storage/workspace-fs/pa
 import { opfsService } from '../deps/media-library-service'
 import { resolveMediaUrls } from '../deps/media-library-resolver'
 import { useMediaLibraryStore } from '../deps/media-library-store'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 
 export interface ReverseConformResult {
   itemId: string
@@ -171,8 +172,8 @@ function getConformDimensions(
   item: VideoItem,
   quality: ReverseConformQuality,
 ): { width: number; height: number } {
-  const sourceWidth = Math.max(2, item.sourceWidth ?? 1920)
-  const sourceHeight = Math.max(2, item.sourceHeight ?? 1080)
+  const sourceWidth = Math.max(2, item.sourceWidth ?? DEFAULT_PROJECT_WIDTH)
+  const sourceHeight = Math.max(2, item.sourceHeight ?? DEFAULT_PROJECT_HEIGHT)
   if (quality === 'full') {
     return { width: toEven(sourceWidth), height: toEven(sourceHeight) }
   }
@@ -364,6 +365,7 @@ export const reverseConformService = {
         if (!resolvedItem || resolvedItem.type !== 'video' || !resolvedItem.src) {
           throw new Error('Could not resolve the source media for reverse.')
         }
+        const { renderComposition } = await importCanvasRenderOrchestrator()
         const result = await renderComposition({
           composition,
           settings: buildConformSettings(item, timelineFps, quality),

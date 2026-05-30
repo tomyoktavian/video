@@ -69,15 +69,9 @@ function normalizePartialSlice(path: string, slice: LocaleTree): LocaleTree {
   return slice
 }
 
-const orderedPartialModules = Object.entries(partialModules).sort(([leftPath], [rightPath]) => {
-  const leftIsFallback = leftPath.endsWith('/missing.json')
-  const rightIsFallback = rightPath.endsWith('/missing.json')
-  if (leftIsFallback !== rightIsFallback) {
-    return leftIsFallback ? -1 : 1
-  }
-
-  return leftPath.localeCompare(rightPath)
-})
+const orderedPartialModules = Object.entries(partialModules).sort(([leftPath], [rightPath]) =>
+  leftPath.localeCompare(rightPath),
+)
 
 for (const [path, mod] of orderedPartialModules) {
   const partial = mod.default ?? {}

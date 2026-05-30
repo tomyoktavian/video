@@ -31,6 +31,8 @@ import { useHeaderFrameInputs } from './use-header-frame-inputs'
 import { usePropertyFilters } from './use-property-filters'
 import { useDopesheetMarquee } from './use-dopesheet-marquee'
 import { useTimingStripDrag } from './use-timing-strip-drag'
+import { useDopesheetViewport } from './use-dopesheet-viewport'
+import { useElementSize } from './use-element-size'
 import { DopesheetHeaderFrameInputs } from './dopesheet-header-frame-inputs'
 import { DopesheetRulerHeader } from './dopesheet-ruler-header'
 import { DopesheetSheetBody } from './dopesheet-sheet-body'
@@ -50,7 +52,6 @@ import {
   GROUP_HEADER_HEIGHT,
   MINI_ICON_BUTTON_CLASS,
   MINI_ICON_CLASS,
-  MIN_VISIBLE_FRAMES,
   PROPERTY_COLUMN_WIDTH,
   ROW_HEIGHT,
   SNAP_THRESHOLD_PX,
@@ -65,7 +66,6 @@ import type {
   RenderedSheetEntry,
   Viewport,
 } from './dopesheet-types'
-import { normalizeKeyframeNavigatorViewport } from './compact-navigator-utils'
 import { getDopesheetRowControlState } from './row-controls'
 import { getPropertyAccordionGroups } from './property-groups'
 import { getCombinedGraphValueRange } from '../value-graph-editor/value-range-utils'
@@ -230,8 +230,6 @@ export const DopesheetEditor = memo(function DopesheetEditor({
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const graphPaneRef = useRef<HTMLDivElement>(null)
   const keyframeButtonRefs = useRef(new Map<string, HTMLButtonElement>())
-  const [timelineWidth, setTimelineWidth] = useState(0)
-  const [graphPaneSize, setGraphPaneSize] = useState({ width: 0, height: 0 })
   const snapEnabled = true
   const [valueDrafts, setValueDrafts] = useState<Partial<Record<AnimatableProperty, string>>>({})
   const [editingValueProperty, setEditingValueProperty] = useState<AnimatableProperty | null>(null)
@@ -249,73 +247,16 @@ export const DopesheetEditor = memo(function DopesheetEditor({
   const [sheetPreviewDuplicateKeyframeIds, setSheetPreviewDuplicateKeyframeIds] = useState<
     string[] | null
   >(null)
-  const contentFrameMax = useMemo(() => Math.max(totalFrames, 1), [totalFrames])
-  const minViewportFrames = useMemo(
-    () => Math.max(1, Math.min(MIN_VISIBLE_FRAMES, contentFrameMax)),
-    [contentFrameMax],
-  )
 
-  const normalizeViewport = useCallback(
-    (nextViewport: Viewport) =>
-      normalizeKeyframeNavigatorViewport(nextViewport, contentFrameMax, minViewportFrames),
-    [contentFrameMax, minViewportFrames],
-  )
-
-  const buildDefaultViewport = useCallback((): Viewport => {
-    return normalizeViewport({
-      startFrame: 0,
-      endFrame: contentFrameMax,
+  const { viewport, updateViewport, normalizeViewport, contentFrameMax, minViewportFrames } =
+    useDopesheetViewport({
+      totalFrames,
+      selectedProperty,
+      frameViewport,
+      onFrameViewportChange,
     })
-  }, [contentFrameMax, normalizeViewport])
 
-  const [viewport, setViewport] = useState<Viewport>(() => frameViewport ?? buildDefaultViewport())
-  const updateViewport = useCallback(
-    (next: Viewport | ((prev: Viewport) => Viewport)) => {
-      setViewport((prev) => {
-        const resolved = normalizeViewport(typeof next === 'function' ? next(prev) : next)
-        if (resolved.startFrame !== prev.startFrame || resolved.endFrame !== prev.endFrame) {
-          onFrameViewportChange?.(resolved)
-        }
-        return resolved
-      })
-    },
-    [normalizeViewport, onFrameViewportChange],
-  )
-
-  useEffect(() => {
-    setViewport(frameViewport ? normalizeViewport(frameViewport) : buildDefaultViewport())
-  }, [buildDefaultViewport, frameViewport, normalizeViewport, selectedProperty])
-
-  useEffect(() => {
-    if (!frameViewport) return
-    setViewport((prev) => {
-      const normalizedViewport = normalizeViewport(frameViewport)
-      if (
-        prev.startFrame === normalizedViewport.startFrame &&
-        prev.endFrame === normalizedViewport.endFrame
-      ) {
-        return prev
-      }
-      return normalizedViewport
-    })
-  }, [frameViewport, normalizeViewport])
-
-  useEffect(() => {
-    const node = timelineRef.current
-    if (!node) {
-      setTimelineWidth(0)
-      return
-    }
-
-    const updateWidth = () => {
-      setTimelineWidth(node.clientWidth)
-    }
-
-    updateWidth()
-    const observer = new ResizeObserver(updateWidth)
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [visualizationMode])
+  const { width: timelineWidth } = useElementSize(timelineRef, { deps: [visualizationMode] })
 
   const availableProperties = useMemo(
     () => Object.keys(keyframesByProperty) as AnimatableProperty[],
@@ -451,24 +392,10 @@ export const DopesheetEditor = memo(function DopesheetEditor({
     setAllGroupsExpanded(true)
   }, [allPropertyGroups, setAllGroupsExpanded, setShowKeyframedOnly, setVisibleGroups])
 
-  useEffect(() => {
-    if (visualizationMode !== 'graph') return
-
-    const node = graphPaneRef.current
-    if (!node) return
-
-    const updateSize = () => {
-      setGraphPaneSize({
-        width: node.clientWidth,
-        height: node.clientHeight,
-      })
-    }
-
-    updateSize()
-    const observer = new ResizeObserver(updateSize)
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [visualizationMode, propertyRows.length])
+  const graphPaneSize = useElementSize(graphPaneRef, {
+    enabled: visualizationMode === 'graph',
+    deps: [visualizationMode, propertyRows.length],
+  })
 
   const formatPropertyValue = useCallback(
     (property: AnimatableProperty, value: number | undefined) => {
@@ -978,8 +905,8 @@ export const DopesheetEditor = memo(function DopesheetEditor({
   )
 
   const resetViewport = useCallback(() => {
-    updateViewport(buildDefaultViewport())
-  }, [buildDefaultViewport, updateViewport])
+    updateViewport({ startFrame: 0, endFrame: contentFrameMax })
+  }, [contentFrameMax, updateViewport])
 
   const handleRemoveKeyframes = useCallback(() => {
     if (!onRemoveKeyframes || selectedRefs.length === 0) return

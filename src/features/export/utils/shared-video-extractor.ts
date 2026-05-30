@@ -1,4 +1,5 @@
 import { createLogger } from '@/shared/logging/logger'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import {
   VideoFrameExtractor,
   type CaptureFrameResult,
@@ -314,7 +315,9 @@ export class SharedVideoExtractorPool {
 
   getItemDimensions(itemId: string, src: string): { width: number; height: number } {
     const extractor = this.getExtractorForItem(itemId, src)
-    return extractor?.getDimensions() ?? { width: 1920, height: 1080 }
+    return (
+      extractor?.getDimensions() ?? { width: DEFAULT_PROJECT_WIDTH, height: DEFAULT_PROJECT_HEIGHT }
+    )
   }
 
   getItemDuration(itemId: string, src: string): number {

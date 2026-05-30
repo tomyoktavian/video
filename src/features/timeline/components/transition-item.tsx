@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import type { Transition } from '@/types/transition'
 import { useShallow } from 'zustand/react/shallow'
+import { perfMarkRender } from '@/shared/logging/perf-marks'
 import { useTimelineStore } from '../stores/timeline-store'
 import { useItemsStore } from '../stores/items-store'
 import { useRollingEditPreviewStore } from '../stores/rolling-edit-preview-store'
@@ -73,6 +74,7 @@ export const TransitionItem = memo(function TransitionItem({
   transition,
   trackHidden = false,
 }: TransitionItemProps) {
+  perfMarkRender('TransitionItem')
   const { frameToPixels } = useTimelineZoomContext()
   const fps = useTimelineStore((s: TimelineState) => s.fps)
   const removeTransition = useTimelineStore((s: TimelineActions) => s.removeTransition)

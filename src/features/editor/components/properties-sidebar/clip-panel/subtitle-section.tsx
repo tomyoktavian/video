@@ -6,6 +6,7 @@ import { i18n } from '@/i18n'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { usePlaybackStore } from '@/shared/state/playback'
 import {
@@ -57,8 +58,8 @@ export const SubtitleSection = memo(function SubtitleSection({
 
   if (segments.length === 0) return null
 
-  const canvasWidth = canvas?.width ?? 1920
-  const canvasHeight = canvas?.height ?? 1080
+  const canvasWidth = canvas?.width ?? DEFAULT_PROJECT_WIDTH
+  const canvasHeight = canvas?.height ?? DEFAULT_PROJECT_HEIGHT
 
   if (segments.length > 1) {
     const totalCues = segments.reduce((sum, segment) => sum + segment.cues.length, 0)

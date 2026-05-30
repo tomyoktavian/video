@@ -115,11 +115,42 @@ interface ProjectDebugAPI {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   overlaps: () => Promise<any>
 
+  // User Timing summary: aggregates `performance.measure` entries (default
+  // `tl.*` prefix from timeline perf-marks) into a per-name stat row.
+  perfSummary: (prefix?: string) => Array<{
+    name: string
+    count: number
+    minMs: number
+    maxMs: number
+    avgMs: number
+    p95Ms: number
+    totalMs: number
+  }>
+  perfClear: () => void
+
   // Render pipeline diagnostics — delegates to existing ad-hoc window globals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   previewPerf: () => any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transitionTrace: () => any
+  /**
+   * Capture and analyze the live preview render path through a transition.
+   * One call: seeks ahead of the transition, plays through it while recording
+   * which overlay path the pump chose and which participants composited per
+   * frame, then returns a per-half analysis with a plain-language verdict.
+   * Pass a frame near the transition; omit to use the nearest at/after the
+   * current playhead. Requires a foreground tab (playback needs rAF).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  captureTransition: (targetFrame?: number) => Promise<any>
+  /** Low-level preview-trace controls (start/stop/dump the raw event buffer). */
+  previewTrace: {
+    start: () => void
+    stop: () => void
+    clear: () => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    events: () => readonly any[]
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prewarmCache: () => any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -481,6 +512,58 @@ function createDebugAPI(): ProjectDebugAPI {
       }
     },
 
+    perfSummary: (prefix = 'tl.') => {
+      if (
+        typeof performance === 'undefined' ||
+        typeof performance.getEntriesByType !== 'function'
+      ) {
+        return []
+      }
+      const entries = performance.getEntriesByType('measure') as PerformanceMeasure[]
+      const byName = new Map<string, number[]>()
+      for (const entry of entries) {
+        if (!entry.name.startsWith(prefix)) continue
+        let durations = byName.get(entry.name)
+        if (!durations) {
+          durations = []
+          byName.set(entry.name, durations)
+        }
+        durations.push(entry.duration)
+      }
+      const rows: Array<{
+        name: string
+        count: number
+        minMs: number
+        maxMs: number
+        avgMs: number
+        p95Ms: number
+        totalMs: number
+      }> = []
+      for (const [name, durations] of byName) {
+        const sorted = [...durations].sort((a, b) => a - b)
+        const count = sorted.length
+        const total = durations.reduce((sum, value) => sum + value, 0)
+        const p95Index = Math.min(count - 1, Math.floor(count * 0.95))
+        rows.push({
+          name,
+          count,
+          minMs: Number((sorted[0] ?? 0).toFixed(3)),
+          maxMs: Number((sorted[count - 1] ?? 0).toFixed(3)),
+          avgMs: Number((total / count).toFixed(3)),
+          p95Ms: Number((sorted[p95Index] ?? 0).toFixed(3)),
+          totalMs: Number(total.toFixed(2)),
+        })
+      }
+      rows.sort((a, b) => b.totalMs - a.totalMs)
+      return rows
+    },
+
+    perfClear: () => {
+      if (typeof performance !== 'undefined' && typeof performance.clearMeasures === 'function') {
+        performance.clearMeasures()
+      }
+    },
+
     // Render pipeline diagnostics — thin delegates to existing window globals
     // so we never need to add/remove ad-hoc globals in components again.
     previewPerf: () => {
@@ -489,6 +572,123 @@ function createDebugAPI(): ProjectDebugAPI {
 
     transitionTrace: () => {
       return (window as unknown as Record<string, unknown>).__PREVIEW_TRANSITIONS__ ?? []
+    },
+
+    previewTrace: {
+      start: () => {
+        void import('@/shared/logging/preview-trace').then((m) => m.startPreviewTrace())
+      },
+      stop: () => {
+        void import('@/shared/logging/preview-trace').then((m) => m.stopPreviewTrace())
+      },
+      clear: () => {
+        void import('@/shared/logging/preview-trace').then((m) => m.clearPreviewTrace())
+      },
+      events: () => {
+        const buf = (window as unknown as { __PREVIEW_TRACE_LAST__?: readonly unknown[] })
+          .__PREVIEW_TRACE_LAST__
+        return buf ?? []
+      },
+    },
+
+    captureTransition: async (targetFrame?: number) => {
+      const [
+        { usePlaybackStore },
+        { useTransitionsStore },
+        { useItemsStore },
+        { useTimelineStore },
+        { resolveTransitionWindows },
+        trace,
+      ] = await Promise.all([
+        import('@/shared/state/playback'),
+        import('@/features/timeline/stores/transitions-store'),
+        import('@/features/timeline/stores/items-store'),
+        import('@/features/timeline/stores/timeline-store'),
+        import('@/shared/timeline/transitions/transition-planner'),
+        import('@/shared/logging/preview-trace'),
+      ])
+
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return {
+          error:
+            'Tab must be foreground for playback (requestAnimationFrame is throttled in background tabs). Focus the editor tab and retry.',
+        }
+      }
+
+      const transitions = useTransitionsStore.getState().transitions
+      const itemsByTrackId = useItemsStore.getState().itemsByTrackId
+      const tracks = useTimelineStore.getState().tracks
+      const clipMap = new Map<string, unknown>()
+      for (const track of tracks) {
+        for (const item of itemsByTrackId[track.id] ?? []) clipMap.set(item.id, item)
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const windows = resolveTransitionWindows(transitions, clipMap as any)
+      if (windows.length === 0) return { error: 'No transitions in this project.' }
+
+      const playback = usePlaybackStore.getState()
+      const ref = targetFrame ?? playback.currentFrame
+      // Prefer a window containing the reference frame, else the nearest by start.
+      const containing = windows.find((w) => ref >= w.startFrame && ref < w.endFrame)
+      const win =
+        containing ??
+        windows
+          .slice()
+          .sort((a, b) => Math.abs(a.startFrame - ref) - Math.abs(b.startFrame - ref))[0]!
+
+      const fps = useTimelineStore.getState().fps || 30
+      const runUpFrames = Math.round(fps * 1.5)
+      const startFrame = Math.max(0, win.startFrame - runUpFrames)
+      const endTarget = win.endFrame + Math.round(fps * 0.5)
+
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+      usePlaybackStore.getState().pause()
+      usePlaybackStore.getState().setCurrentFrame(startFrame)
+      await sleep(400)
+
+      trace.startPreviewTrace()
+      usePlaybackStore.getState().play()
+
+      // Play until past the window end, with a hard timeout.
+      const deadline = Date.now() + 12000
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        await sleep(80)
+        const cur = usePlaybackStore.getState().currentFrame
+        if (cur >= endTarget || !usePlaybackStore.getState().isPlaying) break
+        if (Date.now() > deadline) break
+      }
+      usePlaybackStore.getState().pause()
+      await sleep(150)
+      trace.stopPreviewTrace()
+
+      const events = trace.getPreviewTraceEvents()
+      // Stash raw events so previewTrace.events() can return them post-capture.
+      ;(window as unknown as { __PREVIEW_TRACE_LAST__?: unknown }).__PREVIEW_TRACE_LAST__ = [
+        ...events,
+      ]
+
+      const analysis = trace.analyzePreviewTrace(events, {
+        startFrame: win.startFrame,
+        cutPoint: win.cutPoint,
+        endFrame: win.endFrame,
+        leftClipId: win.leftClip.id.slice(0, 8),
+        rightClipId: win.rightClip.id.slice(0, 8),
+      })
+      return {
+        transition: {
+          presentation: win.transition.presentation,
+          startFrame: win.startFrame,
+          cutPoint: win.cutPoint,
+          endFrame: win.endFrame,
+          leftClipId: win.leftClip.id.slice(0, 8),
+          leftReversed: win.leftClip.type === 'video' && win.leftClip.isReversed === true,
+          rightClipId: win.rightClip.id.slice(0, 8),
+          rightReversed: win.rightClip.type === 'video' && win.rightClip.isReversed === true,
+        },
+        ...analysis,
+      }
     },
 
     prewarmCache: () => {

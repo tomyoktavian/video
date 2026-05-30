@@ -1,24 +1,7 @@
-const MASK_COMBINE_SHADER = /* wgsl */ `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
+import { FULLSCREEN_QUAD_WGSL } from '@/infrastructure/gpu-shared/fullscreen-quad'
 
-@vertex
-fn vertexMain(@builtin(vertex_index) vi: u32) -> VertexOutput {
-  var pos = array<vec2f, 6>(
-    vec2f(-1,-1), vec2f(1,-1), vec2f(-1,1),
-    vec2f(-1,1), vec2f(1,-1), vec2f(1,1)
-  );
-  var uv = array<vec2f, 6>(
-    vec2f(0,1), vec2f(1,1), vec2f(0,0),
-    vec2f(0,0), vec2f(1,1), vec2f(1,0)
-  );
-  var o: VertexOutput;
-  o.position = vec4f(pos[vi], 0, 1);
-  o.uv = uv[vi];
-  return o;
-}
+const MASK_COMBINE_SHADER = /* wgsl */ `
+${FULLSCREEN_QUAD_WGSL}
 
 @group(0) @binding(0) var texSampler: sampler;
 @group(0) @binding(1) var baseMask: texture_2d<f32>;

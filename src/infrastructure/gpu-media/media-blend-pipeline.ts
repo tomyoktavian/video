@@ -1,28 +1,10 @@
 import type { BlendMode } from '@/types/blend-modes'
 import { BLEND_MODE_INDEX } from '@/types/blend-modes'
 import { BLEND_MODES_WGSL } from '@/infrastructure/gpu-shared/blend-modes'
+import { FULLSCREEN_QUAD_WGSL } from '@/infrastructure/gpu-shared/fullscreen-quad'
 
 const MEDIA_BLEND_SHADER = /* wgsl */ `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex
-fn vertexMain(@builtin(vertex_index) vi: u32) -> VertexOutput {
-  var pos = array<vec2f, 6>(
-    vec2f(-1,-1), vec2f(1,-1), vec2f(-1,1),
-    vec2f(-1,1), vec2f(1,-1), vec2f(1,1)
-  );
-  var uv = array<vec2f, 6>(
-    vec2f(0,1), vec2f(1,1), vec2f(0,0),
-    vec2f(0,0), vec2f(1,1), vec2f(1,0)
-  );
-  var o: VertexOutput;
-  o.position = vec4f(pos[vi], 0, 1);
-  o.uv = uv[vi];
-  return o;
-}
+${FULLSCREEN_QUAD_WGSL}
 
 ${BLEND_MODES_WGSL}
 

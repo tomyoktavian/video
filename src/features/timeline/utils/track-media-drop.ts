@@ -243,9 +243,19 @@ export function planTrackMediaDropPlacements<T>(params: {
     currentPosition = placements[0]!.from + entry.durationInFrames
   }
 
+  // Preserve the original tracks reference when planning added/changed no track.
+  // workingTracks starts as a fresh copy (`[...params.tracks]`), so returning it
+  // unconditionally would make callers see a "changed" tracks array on every drop
+  // and trigger a redundant setTracks() — which reclones every track object and
+  // forces all timeline track rows to re-render. Returning the original reference
+  // lets the no-op case short-circuit (dropResult.tracks === currentTracks).
+  const tracksUnchanged =
+    workingTracks.length === params.tracks.length &&
+    workingTracks.every((track, index) => track === params.tracks[index])
+
   return {
     plannedItems,
-    tracks: workingTracks,
+    tracks: tracksUnchanged ? params.tracks : workingTracks,
   }
 }
 

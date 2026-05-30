@@ -21,9 +21,9 @@
  *   - Float32 peak values for each level, concatenated
  *
  * Resolution levels (for efficient zoom rendering):
- *   - Level 0: 1000 samples/sec (highest detail, zoomed in)
- *   - Level 1: 200 samples/sec (medium detail)
- *   - Level 2: 50 samples/sec (low detail, zoomed out)
+ *   - Level 0: 500 samples/sec (highest detail, zoomed in)
+ *   - Level 1: 100 samples/sec (medium detail)
+ *   - Level 2: 25 samples/sec (low detail, zoomed out)
  *   - Level 3: 10 samples/sec (overview)
  */
 
@@ -39,13 +39,15 @@ import { waveformMultiResPath } from '@/infrastructure/storage/workspace-fs/path
 const logger = createLogger('WaveformOPFS')
 
 const MAGIC = 'WFORM'
+const RANGE_MAGIC = 'WFRNG'
 const BINARY_VERSION = 1 // Version stored in file header (for parsing)
 const HEADER_SIZE = 48
+const RANGE_HEADER_SIZE = 64
 const LEVEL_INDEX_SIZE = 12
 const WAVEFORM_DIR = 'waveforms'
 
 // Multi-resolution levels (samples per second)
-export const WAVEFORM_LEVELS = [1000, 200, 50, 10] as const
+export const WAVEFORM_LEVELS = [500, 100, 25, 10] as const
 
 function getFloatsPerSample(channels: number): number {
   return channels >= 2 ? 2 : 1
@@ -63,6 +65,14 @@ interface LevelIndex {
   offset: number
 }
 
+interface RangeIndex {
+  mediaId: string
+  fileName: string
+  sampleRate: number
+  startSample: number
+  sampleCount: number
+}
+
 export interface MultiResolutionWaveform {
   duration: number
   channels: number
@@ -72,9 +82,17 @@ export interface MultiResolutionWaveform {
   }[]
 }
 
+export interface WaveformRange {
+  duration: number
+  channels: number
+  sampleRate: number
+  startSample: number
+  peaks: Float32Array
+}
+
 /**
- * Choose the best resolution level for a given pixelsPerSecond
- * Higher zoom (more pixels/sec) = higher resolution needed
+ * Choose a resolution level for range-based reads where bars are a few pixels
+ * wide (used by getWaveformRange/getWaveformLevel).
  */
 export function chooseLevelForZoom(pixelsPerSecond: number): number {
   // Bars are typically 2-3 pixels wide, so we want ~1 sample per 3 pixels
@@ -86,6 +104,36 @@ export function chooseLevelForZoom(pixelsPerSecond: number): number {
     }
   }
   return WAVEFORM_LEVELS.length - 1
+}
+
+// At or above this zoom we render full resolution (level 0). Any downsampled
+// level visibly loses transient detail when scrutinizing a waveform, so we only
+// drop below full-res at overview zoom, where the whole (often long) clip is on
+// screen — there the detail is imperceptible but the memory savings are largest
+// (16 px/s ≈ a full minute of audio across a ~960px viewport).
+const DISPLAY_FULL_RES_MIN_PIXELS_PER_SECOND = 16
+
+/**
+ * Choose the resolution level for rendering a full clip's waveform at a given
+ * zoom. Returns full resolution (level 0) whenever zoomed in enough to inspect
+ * detail; only at overview zoom does it step down to the coarsest level that
+ * still keeps comfortably more than one sample per pixel (so it stays smooth
+ * while using a fraction of the memory for a long clip).
+ */
+export function chooseDisplayLevelForZoom(pixelsPerSecond: number): number {
+  if (pixelsPerSecond >= DISPLAY_FULL_RES_MIN_PIXELS_PER_SECOND) {
+    return 0
+  }
+
+  const neededSamplesPerSecond = Math.max(1, pixelsPerSecond * 1.5)
+  // WAVEFORM_LEVELS is descending; walk from coarsest to finest and take the
+  // first (coarsest) level that still meets the needed density.
+  for (let i = WAVEFORM_LEVELS.length - 1; i >= 0; i--) {
+    if (WAVEFORM_LEVELS[i]! >= neededSamplesPerSecond) {
+      return i
+    }
+  }
+  return 0
 }
 
 /**
@@ -235,6 +283,92 @@ class WaveformOPFSStorage {
     }
   }
 
+  private getRangeFileName(
+    mediaId: string,
+    sampleRate: number,
+    startSample: number,
+    sampleCount: number,
+  ): string {
+    return `${mediaId}.range.${sampleRate}.${startSample}.${sampleCount}.bin`
+  }
+
+  private parseRangeFileName(fileName: string): RangeIndex | null {
+    const match = /^(.+)\.range\.(\d+)\.(\d+)\.(\d+)\.bin$/.exec(fileName)
+    if (!match) return null
+
+    const [, mediaId, sampleRateValue, startSampleValue, sampleCountValue] = match
+    const sampleRate = Number(sampleRateValue)
+    const startSample = Number(startSampleValue)
+    const sampleCount = Number(sampleCountValue)
+    if (
+      !mediaId ||
+      !Number.isFinite(sampleRate) ||
+      !Number.isFinite(startSample) ||
+      !Number.isFinite(sampleCount) ||
+      sampleRate <= 0 ||
+      startSample < 0 ||
+      sampleCount <= 0
+    ) {
+      return null
+    }
+
+    return { mediaId, fileName, sampleRate, startSample, sampleCount }
+  }
+
+  private writeRangeHeader(
+    view: DataView,
+    range: {
+      duration: number
+      channels: number
+      sampleRate: number
+      startSample: number
+      sampleCount: number
+    },
+  ): void {
+    let offset = 0
+    for (let i = 0; i < RANGE_MAGIC.length; i++) {
+      view.setUint8(offset++, RANGE_MAGIC.charCodeAt(i))
+    }
+    view.setUint8(offset++, BINARY_VERSION)
+    view.setFloat32(offset, range.duration, true)
+    offset += 4
+    view.setUint8(offset++, range.channels)
+    view.setUint16(offset, range.sampleRate, true)
+    offset += 2
+    view.setUint32(offset, range.startSample, true)
+    offset += 4
+    view.setUint32(offset, range.sampleCount, true)
+  }
+
+  private readRangeHeader(view: DataView): {
+    duration: number
+    channels: number
+    sampleRate: number
+    startSample: number
+    sampleCount: number
+  } | null {
+    let offset = 0
+    let magic = ''
+    for (let i = 0; i < RANGE_MAGIC.length; i++) {
+      magic += String.fromCharCode(view.getUint8(offset++))
+    }
+    if (magic !== RANGE_MAGIC) return null
+
+    const version = view.getUint8(offset++)
+    if (version !== BINARY_VERSION) return null
+
+    const duration = view.getFloat32(offset, true)
+    offset += 4
+    const channels = view.getUint8(offset++)
+    const sampleRate = view.getUint16(offset, true)
+    offset += 2
+    const startSample = view.getUint32(offset, true)
+    offset += 4
+    const sampleCount = view.getUint32(offset, true)
+
+    return { duration, channels, sampleRate, startSample, sampleCount }
+  }
+
   /**
    * Generate multi-resolution peaks from source peaks
    */
@@ -249,11 +383,9 @@ class WaveformOPFSStorage {
 
     for (const targetRate of WAVEFORM_LEVELS) {
       if (targetRate >= sourceSampleRate) {
-        // Can't upsample, use source directly or skip
-        if (levels.length === 0) {
-          // First level - use source as-is
-          levels.push({ sampleRate: sourceSampleRate, peaks: sourcePeaks })
-        }
+        // Can't upsample. Keep a source-rate entry for this slot so partially
+        // prepared overview files still satisfy every display-level index.
+        levels.push({ sampleRate: sourceSampleRate, peaks: sourcePeaks })
         continue
       }
 
@@ -371,6 +503,141 @@ class WaveformOPFSStorage {
     } catch (error) {
       logger.error(`Failed to save waveform ${mediaId}:`, error)
       throw error
+    }
+  }
+
+  async saveRange(
+    mediaId: string,
+    range: {
+      duration: number
+      channels: number
+      sampleRate: number
+      startTime: number
+      endTime: number
+      peaks: Float32Array
+    },
+  ): Promise<void> {
+    if (range.sampleRate <= 0 || range.endTime <= range.startTime || range.peaks.length === 0) {
+      return
+    }
+
+    const dir = await this.ensureDirectory()
+    const floatsPerSample = getFloatsPerSample(range.channels)
+    const totalSamples = Math.floor(range.peaks.length / floatsPerSample)
+    const startSample = Math.max(0, Math.floor(range.startTime * range.sampleRate))
+    const endSample = Math.min(totalSamples, Math.ceil(range.endTime * range.sampleRate))
+    const sampleCount = Math.max(0, endSample - startSample)
+    if (sampleCount <= 0) return
+
+    const valueStart = startSample * floatsPerSample
+    const valueEnd = endSample * floatsPerSample
+    const compactPeaks = range.peaks.slice(valueStart, valueEnd)
+    const totalSize = RANGE_HEADER_SIZE + compactPeaks.byteLength
+    const buffer = new ArrayBuffer(totalSize)
+    const view = new DataView(buffer)
+    const uint8 = new Uint8Array(buffer)
+
+    this.writeRangeHeader(view, {
+      duration: range.duration,
+      channels: range.channels,
+      sampleRate: range.sampleRate,
+      startSample,
+      sampleCount,
+    })
+    uint8.set(new Uint8Array(compactPeaks.buffer), RANGE_HEADER_SIZE)
+
+    const fileHandle = await dir.getFileHandle(
+      this.getRangeFileName(mediaId, range.sampleRate, startSample, sampleCount),
+      { create: true },
+    )
+    const writable = await fileHandle.createWritable()
+    await writable.write(buffer)
+    await writable.close()
+  }
+
+  async getCachedRange(
+    mediaId: string,
+    sampleRate: number,
+    startTime: number,
+    endTime: number,
+  ): Promise<WaveformRange | null> {
+    try {
+      const dir = await this.ensureDirectory()
+      const requestedStartSample = Math.max(0, Math.floor(startTime * sampleRate))
+      const requestedEndSample = Math.max(requestedStartSample + 1, Math.ceil(endTime * sampleRate))
+      const candidates: RangeIndex[] = []
+
+      for await (const entry of dir.values()) {
+        if (entry.kind !== 'file') continue
+        const parsed = this.parseRangeFileName(entry.name)
+        if (
+          parsed &&
+          parsed.mediaId === mediaId &&
+          parsed.sampleRate === sampleRate &&
+          parsed.startSample < requestedEndSample &&
+          parsed.startSample + parsed.sampleCount > requestedStartSample
+        ) {
+          candidates.push(parsed)
+        }
+      }
+
+      if (candidates.length === 0) return null
+      candidates.sort((a, b) => a.startSample - b.startSample)
+
+      let coveredUntil = requestedStartSample
+      const covering: RangeIndex[] = []
+      for (const candidate of candidates) {
+        const candidateEnd = candidate.startSample + candidate.sampleCount
+        if (candidateEnd <= coveredUntil) continue
+        if (candidate.startSample > coveredUntil) break
+        covering.push(candidate)
+        coveredUntil = Math.max(coveredUntil, candidateEnd)
+        if (coveredUntil >= requestedEndSample) break
+      }
+
+      if (coveredUntil < requestedEndSample) return null
+
+      let duration = 0
+      let channels = 1
+      let floatsPerSample = 1
+      let peaks: Float32Array | null = null
+
+      for (const rangeFile of covering) {
+        const fileHandle = await dir.getFileHandle(rangeFile.fileName)
+        const file = await fileHandle.getFile()
+        const buffer = await file.arrayBuffer()
+        const header = this.readRangeHeader(new DataView(buffer.slice(0, RANGE_HEADER_SIZE)))
+        if (!header || header.sampleRate !== sampleRate) {
+          continue
+        }
+
+        duration = Math.max(duration, header.duration)
+        channels = header.channels
+        floatsPerSample = getFloatsPerSample(channels)
+        const totalValues = Math.ceil(header.duration * sampleRate) * floatsPerSample
+        if (!peaks) {
+          peaks = new Float32Array(totalValues)
+        } else if (peaks.length < totalValues) {
+          const expanded = new Float32Array(totalValues)
+          expanded.set(peaks)
+          peaks = expanded
+        }
+
+        const rangeValues = new Float32Array(buffer.slice(RANGE_HEADER_SIZE))
+        peaks.set(rangeValues, header.startSample * floatsPerSample)
+      }
+
+      if (!peaks) return null
+      return {
+        duration,
+        channels,
+        sampleRate,
+        startSample: requestedStartSample,
+        peaks,
+      }
+    } catch (error) {
+      logger.warn(`Failed to read cached waveform range for ${mediaId}:`, error)
+      return null
     }
   }
 
@@ -612,7 +879,12 @@ class WaveformOPFSStorage {
   async delete(mediaId: string): Promise<void> {
     try {
       const dir = await this.ensureDirectory()
-      await dir.removeEntry(`${mediaId}.bin`)
+      await dir.removeEntry(`${mediaId}.bin`).catch(() => undefined)
+      for await (const entry of dir.values()) {
+        if (entry.kind === 'file' && entry.name.startsWith(`${mediaId}.range.`)) {
+          await dir.removeEntry(entry.name).catch(() => undefined)
+        }
+      }
     } catch {
       // File may not exist, ignore
     }
@@ -628,7 +900,11 @@ class WaveformOPFSStorage {
       const mediaIds: string[] = []
 
       for await (const entry of dir.values()) {
-        if (entry.kind === 'file' && entry.name.endsWith('.bin')) {
+        if (
+          entry.kind === 'file' &&
+          entry.name.endsWith('.bin') &&
+          !this.parseRangeFileName(entry.name)
+        ) {
           mediaIds.push(entry.name.replace('.bin', ''))
         }
       }
@@ -681,7 +957,7 @@ class WaveformOPFSStorage {
         await dir.removeEntry(name)
         // Remove the corresponding workspace mirror so a later hydrate can't
         // silently restore a waveform we just cleared.
-        if (name.endsWith('.bin')) {
+        if (name.endsWith('.bin') && !this.parseRangeFileName(name)) {
           const mediaId = name.slice(0, -'.bin'.length)
           await removeWorkspaceCacheEntry(waveformMultiResPath(mediaId))
         }

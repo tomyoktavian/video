@@ -24,7 +24,7 @@ export {
   buildEmbeddingText,
   extractDominantColors,
   extractDominantColorPhrase,
-} from '@/infrastructure/analysis'
+} from '@/infrastructure/analysis/embeddings'
 export type {
   EmbeddingsOptions,
   EmbeddingsProgress,
@@ -32,4 +32,4 @@ export type {
   BuildEmbeddingTextInput,
   TranscriptSegment,
   PaletteEntry,
-} from '@/infrastructure/analysis'
+} from '@/infrastructure/analysis/embeddings'

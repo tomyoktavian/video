@@ -8,6 +8,7 @@ import { useSelectionStore } from '@/shared/state/selection'
 // Utilities and hooks
 import { useTimelineZoomContext } from '../contexts/timeline-zoom-context'
 import { createScrubThrottleState, shouldCommitScrubFrame } from '../utils/scrub-throttle'
+import { withPerfMeasure, perfMarkRender } from '@/shared/logging/perf-marks'
 
 interface TimelinePlayheadProps {
   inRuler?: boolean // If true, shows diamond indicator for ruler
@@ -24,6 +25,7 @@ interface TimelinePlayheadProps {
  * - Draggable for scrubbing through timeline
  */
 export function TimelinePlayhead({ inRuler = false, maxFrame }: TimelinePlayheadProps) {
+  perfMarkRender('TimelinePlayhead')
   // Don't subscribe to currentFrame - use ref + manual subscription instead
   const setScrubFrame = usePlaybackStore((s) => s.setScrubFrame)
   const { frameToPixels, pixelsToFrame, pixelsPerSecond } = useTimelineZoomContext()
@@ -189,21 +191,23 @@ export function TimelinePlayhead({ inRuler = false, maxFrame }: TimelinePlayhead
       if (rafIdRef.current === null) {
         rafIdRef.current = requestAnimationFrame(() => {
           rafIdRef.current = null
-          if (pendingFrameRef.current !== null && pendingPointerXRef.current !== null) {
-            const targetFrame = pendingFrameRef.current
-            const pointerX = pendingPointerXRef.current
-            if (
-              shouldCommitScrubFrame({
-                state: scrubThrottleStateRef.current,
-                pointerX,
-                targetFrame,
-                pixelsPerSecond: pixelsPerSecondRef.current,
-                nowMs: performance.now(),
-              })
-            ) {
-              setScrubFrameRef.current(targetFrame)
+          withPerfMeasure('tl.raf.playheadScrub', () => {
+            if (pendingFrameRef.current !== null && pendingPointerXRef.current !== null) {
+              const targetFrame = pendingFrameRef.current
+              const pointerX = pendingPointerXRef.current
+              if (
+                shouldCommitScrubFrame({
+                  state: scrubThrottleStateRef.current,
+                  pointerX,
+                  targetFrame,
+                  pixelsPerSecond: pixelsPerSecondRef.current,
+                  nowMs: performance.now(),
+                })
+              ) {
+                setScrubFrameRef.current(targetFrame)
+              }
             }
-          }
+          })
         })
       }
     }

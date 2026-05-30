@@ -69,6 +69,7 @@ export function useFilmstrip({
   const [error, setError] = useState<string | null>(null)
 
   const isGeneratingRef = useRef(false)
+  const ownsGenerationRef = useRef(false)
   const hasPendingStartRef = useRef(false)
   const lastMediaIdRef = useRef<string>(mediaId)
 
@@ -77,6 +78,7 @@ export function useFilmstrip({
     if (lastMediaIdRef.current !== mediaId) {
       lastMediaIdRef.current = mediaId
       isGeneratingRef.current = false
+      ownsGenerationRef.current = false
       hasPendingStartRef.current = false
       const cached = filmstripCache.getFromCacheSync(mediaId)
       setFilmstrip(cached)
@@ -93,7 +95,9 @@ export function useFilmstrip({
   // Abort any in-flight extraction when this consumer goes away or switches media.
   useEffect(() => {
     return () => {
-      filmstripCache.abort(mediaId)
+      if (ownsGenerationRef.current) {
+        filmstripCache.abort(mediaId)
+      }
     }
   }, [mediaId])
 
@@ -157,14 +161,23 @@ export function useFilmstrip({
   // and parallel, so prefetching off-viewport clips lets them paint instantly
   // when scrolled into view. The extraction effect below still no-ops when it
   // finds a complete cache.
+  const hasInMemoryFrames = (filmstrip?.frames?.length ?? 0) > 0
   useEffect(() => {
     if (!enabled || !duration || duration <= 0) return
     if (filmstrip?.isComplete) return
+    // Frames already live in the (singleton) in-memory cache, so re-reading
+    // every tile from disk on remount would only re-mint identical object URLs
+    // and thrash OPFS — which is exactly what happens while scrolling an
+    // incomplete (long-video) filmstrip in and out of view. The live extraction
+    // path keeps the in-memory cache current via notifyUpdate, and a fully
+    // evicted entry resets this to 0 (so a genuine reload still runs), so
+    // skipping here is safe.
+    if (hasInMemoryFrames) return
 
     void filmstripCache.loadFromDisk(mediaId, duration).catch(() => {
       // Swallow: extraction path below is the fallback once blobUrl arrives.
     })
-  }, [mediaId, enabled, duration, filmstrip?.isComplete])
+  }, [mediaId, enabled, duration, filmstrip?.isComplete, hasInMemoryFrames])
 
   // Once a clip leaves the active workset, stop spending background decode time on it.
   useEffect(() => {
@@ -172,7 +185,10 @@ export function useFilmstrip({
       return
     }
 
-    filmstripCache.abort(mediaId)
+    if (ownsGenerationRef.current) {
+      filmstripCache.abort(mediaId)
+      ownsGenerationRef.current = false
+    }
     isGeneratingRef.current = false
     hasPendingStartRef.current = false
     setIsLoading(false)
@@ -220,6 +236,7 @@ export function useFilmstrip({
 
         hasPendingStartRef.current = false
         isGeneratingRef.current = true
+        ownsGenerationRef.current = !filmstripCache.hasPendingExtraction(mediaId)
 
         filmstripCache
           .getFilmstrip(mediaId, blobUrl, duration, onProgress, priorityRange ?? undefined, {
@@ -246,6 +263,7 @@ export function useFilmstrip({
           .finally(() => {
             if (lastMediaIdRef.current === requestMediaId) {
               isGeneratingRef.current = false
+              ownsGenerationRef.current = false
               hasPendingStartRef.current = false
             }
           })

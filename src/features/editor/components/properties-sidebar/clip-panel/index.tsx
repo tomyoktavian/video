@@ -1,12 +1,18 @@
-import { useMemo, useCallback, useEffect, memo } from 'react'
+import { useMemo, useCallback, useEffect, memo, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Film, Image, Shapes, Sparkles, Type, Volume2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Separator } from '@/components/ui/separator'
 import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import { useItemsStore, useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useProjectStore } from '@/features/editor/deps/projects'
+import {
+  DEFAULT_PROJECT_FPS,
+  DEFAULT_PROJECT_HEIGHT,
+  DEFAULT_PROJECT_WIDTH,
+} from '@/shared/projects/defaults'
 import type { ClipInspectorTab } from '@/shared/state/editor'
 import type { SelectionState, SelectionActions } from '@/shared/state/selection'
 import type { TimelineState, TimelineActions } from '@/features/editor/deps/timeline-store'
@@ -17,13 +23,24 @@ import { LayoutSection } from './layout-section'
 import { FillSection } from './fill-section'
 import { VideoSection } from './video-section'
 import { GifSection } from './gif-section'
-import { AudioSection } from './audio-section'
-import { TextSection } from './text-section'
-import { SubtitleSection } from './subtitle-section'
 import { ShapeSection } from './shape-section'
 import { ImageSection } from './image-section'
 import { CornerPinSection } from './corner-pin-section'
-import { EffectsSection } from '@/features/editor/deps/effects-contract'
+
+const LazyAudioSection = lazy(() =>
+  import('./audio-section').then((module) => ({ default: module.AudioSection })),
+)
+const LazyEffectsSection = lazy(() =>
+  import('@/features/editor/deps/effects-contract').then((module) => ({
+    default: module.EffectsSection,
+  })),
+)
+const LazySubtitleSection = lazy(() =>
+  import('./subtitle-section').then((module) => ({ default: module.SubtitleSection })),
+)
+const LazyTextSection = lazy(() =>
+  import('./text-section').then((module) => ({ default: module.TextSection })),
+)
 
 /**
  * Check if an item is a GIF (image with .gif extension)
@@ -78,9 +95,13 @@ export const ClipPanel = memo(function ClipPanel() {
   const updateItemsTransform = useTimelineStore(
     (s: TimelineState & TimelineActions) => s.updateItemsTransform,
   )
-  const projectWidth = useProjectStore((s) => s.currentProject?.metadata.width ?? 1920)
-  const projectHeight = useProjectStore((s) => s.currentProject?.metadata.height ?? 1080)
-  const projectFps = useProjectStore((s) => s.currentProject?.metadata.fps ?? 30)
+  const projectWidth = useProjectStore(
+    (s) => s.currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH,
+  )
+  const projectHeight = useProjectStore(
+    (s) => s.currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT,
+  )
+  const projectFps = useProjectStore((s) => s.currentProject?.metadata.fps ?? DEFAULT_PROJECT_FPS)
   const selectedItems = useItemsStore(
     useShallow(
       useCallback(
@@ -311,7 +332,22 @@ export const ClipPanel = memo(function ClipPanel() {
                 />
               )}
               {showVideoTab && <CornerPinSection items={layoutFillItems} />}
-              {hasSubtitleItems && <SubtitleSection items={selectedItems} canvas={canvas} />}
+              {hasTextItems && (
+                <Suspense fallback={null}>
+                  <LazyTextSection
+                    items={selectedItems}
+                    canvas={canvas}
+                    showEffectSection={false}
+                    showAnimationSection={false}
+                  />
+                </Suspense>
+              )}
+              {hasShapeItems && <ShapeSection items={selectedItems} canvas={canvas} />}
+              {hasSubtitleItems && (
+                <Suspense fallback={null}>
+                  <LazySubtitleSection items={selectedItems} canvas={canvas} />
+                </Suspense>
+              )}
               {hasGifItems && <GifSection items={selectedItems} />}
             </div>
           )}
@@ -319,14 +355,20 @@ export const ClipPanel = memo(function ClipPanel() {
 
         {/* Audio Tab - gain and fades */}
         <TabsContent value="audio" className="space-y-4 mt-3">
-          {hasAudioItems && <AudioSection items={selectedItems} />}
+          {hasAudioItems && activeTab === 'audio' && (
+            <Suspense fallback={null}>
+              <LazyAudioSection items={selectedItems} />
+            </Suspense>
+          )}
         </TabsContent>
 
         {/* Text Tab - text content, style, effects, animation */}
         {showTextTab && (
           <TabsContent value="text" className="mt-3">
             <div className="divide-y divide-border [&>*]:py-4 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
-              <TextSection items={selectedItems} canvas={canvas} />
+              <Suspense fallback={null}>
+                <LazyTextSection items={selectedItems} canvas={canvas} />
+              </Suspense>
             </div>
           </TabsContent>
         )}
@@ -359,7 +401,19 @@ export const ClipPanel = memo(function ClipPanel() {
                   {t('editor.clipPanel.adjustmentLayerHint')}
                 </div>
               )}
-              <EffectsSection items={visualItems} />
+              <Suspense fallback={null}>
+                <LazyEffectsSection items={visualItems} />
+              </Suspense>
+              {hasTextItems && <Separator />}
+              {hasTextItems && (
+                <Suspense fallback={null}>
+                  <LazyTextSection
+                    items={selectedItems}
+                    canvas={canvas}
+                    showContentSection={false}
+                  />
+                </Suspense>
+              )}
             </>
           )}
         </TabsContent>

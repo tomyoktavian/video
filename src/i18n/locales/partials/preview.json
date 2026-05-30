@@ -1,0 +1,794 @@
+{
+  "en": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Disable Canvas Snap",
+        "enableCanvasSnap": "Enable Canvas Snap",
+        "toggleCanvasSnap": "Toggle Canvas Snap"
+      },
+      "controls": {
+        "captureFailed": "Couldn't capture the current frame.",
+        "disableProxyPlayback": "Disable Proxy Playback",
+        "enableProxyPlayback": "Enable Proxy Playback",
+        "frameDownloadedNoProject": "Frame downloaded — open a project to save it to the media library.",
+        "frameDownloadedNotSaved": "Frame downloaded, but couldn't save to the media library: {{message}}",
+        "frameSaved": "Saved \"{{name}}\" to the media library.",
+        "goToEnd": "Go To End",
+        "goToEndTooltip": "Go To End",
+        "goToStart": "Go To Start",
+        "goToStartTooltip": "Go To Start",
+        "nextFrame": "Next Frame",
+        "nextFrameTooltip": "Next Frame",
+        "pauseTooltip": "Pause",
+        "playTooltip": "Play",
+        "prevFrame": "Prev Frame",
+        "prevFrameTooltip": "Prev Frame",
+        "proxyPlaybackOff": "Proxy Playback Off",
+        "proxyPlaybackOn": "Proxy Playback On",
+        "saveFrame": "Save frame",
+        "saveFrameFailed": "Couldn't save the frame.",
+        "saveFrameTooltip": "Save frame",
+        "savingFrame": "Saving frame",
+        "savingFrameTooltip": "Saving frame"
+      },
+      "monitor": {
+        "mute": "Mute",
+        "muteShort": "Mute Short",
+        "muted": "Muted",
+        "percent": "Percent",
+        "previewOnlyNote": "Only affects local playback — exports use the project mix.",
+        "thisDeviceOnly": "This Device Only",
+        "title": "Preview audio",
+        "unmute": "Unmute",
+        "volume": "Volume"
+      },
+      "player": {
+        "exitFullscreen": "Exit Fullscreen",
+        "fullscreen": "Fullscreen",
+        "mute": "Mute",
+        "pause": "Pause",
+        "play": "Play",
+        "seek": "Seek",
+        "unmute": "Unmute",
+        "volume": "Volume"
+      },
+      "stage": {
+        "loadingMedia": "Loading Media",
+        "videoPreview": "Video Preview"
+      },
+      "zoom": {
+        "ariaLabel": "ARIA Label",
+        "auto": "Auto",
+        "tooltip": "Zoom: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Drop on timeline",
+        "compoundClipsTimeline": "Compound clips still place best on the timeline.",
+        "presetsTimeline": "Text and shape presets still place best on the timeline.",
+        "dropOneItem": "Drop one item",
+        "oneMediaAtATime": "Place one media item at a time on the canvas.",
+        "audioGoesOnTimeline": "Audio goes on timeline",
+        "visualLayersOnly": "Canvas drop places visual layers only.",
+        "dropToPlace": "Drop to place",
+        "addAtPlayhead": "Add this media at the playhead and drop position.",
+        "dropOneFile": "Drop one file",
+        "oneVisualFileAtATime": "Canvas drop imports one visual file at a time.",
+        "importAndPlace": "Import and place",
+        "importAndPlaceDescription": "Import this file and place it on the canvas.",
+        "noCompatibleTrack": "No unlocked compatible track is available for this drop.",
+        "unableToLoadMedia": "Unable to load dropped media.",
+        "mediaNoLongerAvailable": "Dropped media is no longer available.",
+        "dragDropUnsupported": "Drag-drop is not supported in this browser. Use Chrome or Edge.",
+        "filesRejected": "Some files were rejected: {{errors}}",
+        "dropAudioOnTimeline": "Drop audio on the timeline instead.",
+        "unableToInspectVideo": "Unable to inspect dropped video.",
+        "unableToInspectFile": "Unable to inspect dropped file.",
+        "unableToImportFile": "Unable to import dropped file."
+      }
+    }
+  },
+  "es": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Desactivar ajuste al lienzo",
+        "enableCanvasSnap": "Activar ajuste al lienzo",
+        "toggleCanvasSnap": "Alternar ajuste al lienzo"
+      },
+      "controls": {
+        "captureFailed": "No se pudo capturar el fotograma actual.",
+        "disableProxyPlayback": "Desactivar reproducción con proxy",
+        "enableProxyPlayback": "Activar reproducción con proxy",
+        "frameDownloadedNoProject": "Fotograma descargado. Abre un proyecto para guardarlo en la biblioteca.",
+        "frameDownloadedNotSaved": "Fotograma descargado, pero no se pudo guardar en la biblioteca: {{message}}",
+        "frameSaved": "Se guardó \"{{name}}\" en la biblioteca.",
+        "goToEnd": "Ir al final",
+        "goToEndTooltip": "Ir al final",
+        "goToStart": "Ir al inicio",
+        "goToStartTooltip": "Ir al inicio",
+        "nextFrame": "Fotograma siguiente",
+        "nextFrameTooltip": "Fotograma siguiente",
+        "pauseTooltip": "Pausar",
+        "playTooltip": "Reproducir",
+        "prevFrame": "Fotograma anterior",
+        "prevFrameTooltip": "Fotograma anterior",
+        "proxyPlaybackOff": "Reproducción con proxy desactivada",
+        "proxyPlaybackOn": "Reproducción con proxy activada",
+        "saveFrame": "Guardar fotograma",
+        "saveFrameFailed": "No se pudo guardar el fotograma.",
+        "saveFrameTooltip": "Guardar fotograma",
+        "savingFrame": "Guardando fotograma…",
+        "savingFrameTooltip": "Guardando fotograma…"
+      },
+      "monitor": {
+        "mute": "Silenciar",
+        "muteShort": "Mudo",
+        "muted": "Silenciado",
+        "percent": "{{value}}%",
+        "previewOnlyNote": "Solo afecta a la reproducción local; la exportación usa la mezcla del proyecto.",
+        "thisDeviceOnly": "Solo en este dispositivo",
+        "title": "Audio de previsualización",
+        "unmute": "Activar sonido",
+        "volume": "Volumen"
+      },
+      "player": {
+        "exitFullscreen": "Salir de pantalla completa",
+        "fullscreen": "Pantalla completa",
+        "mute": "Silenciar",
+        "pause": "Pausar",
+        "play": "Reproducir",
+        "seek": "Buscar",
+        "unmute": "Activar sonido",
+        "volume": "Volumen"
+      },
+      "stage": {
+        "loadingMedia": "Cargando medios…",
+        "videoPreview": "Previsualización de vídeo"
+      },
+      "zoom": {
+        "ariaLabel": "Nivel de zoom: {{label}}",
+        "auto": "Automático",
+        "tooltip": "Zoom: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Soltar en la línea de tiempo",
+        "compoundClipsTimeline": "Los clips compuestos siguen funcionando mejor en la línea de tiempo.",
+        "presetsTimeline": "Los preajustes de texto y forma siguen funcionando mejor en la línea de tiempo.",
+        "dropOneItem": "Suelta un elemento",
+        "oneMediaAtATime": "Coloca un elemento multimedia a la vez en el lienzo.",
+        "audioGoesOnTimeline": "El audio va en la línea de tiempo",
+        "visualLayersOnly": "Soltar en el lienzo solo coloca capas visuales.",
+        "dropToPlace": "Soltar para colocar",
+        "addAtPlayhead": "Añade este medio en el cabezal de reproducción y la posición de soltar.",
+        "dropOneFile": "Suelta un archivo",
+        "oneVisualFileAtATime": "Soltar en el lienzo importa un archivo visual a la vez.",
+        "importAndPlace": "Importar y colocar",
+        "importAndPlaceDescription": "Importa este archivo y colócalo en el lienzo.",
+        "noCompatibleTrack": "No hay una pista compatible desbloqueada disponible para este elemento.",
+        "unableToLoadMedia": "No se pudo cargar el medio soltado.",
+        "mediaNoLongerAvailable": "El medio soltado ya no está disponible.",
+        "dragDropUnsupported": "Arrastrar y soltar no es compatible con este navegador. Usa Chrome o Edge.",
+        "filesRejected": "Se rechazaron algunos archivos: {{errors}}",
+        "dropAudioOnTimeline": "Suelta el audio en la línea de tiempo.",
+        "unableToInspectVideo": "No se pudo inspeccionar el video soltado.",
+        "unableToInspectFile": "No se pudo inspeccionar el archivo soltado.",
+        "unableToImportFile": "No se pudo importar el archivo soltado."
+      }
+    }
+  },
+  "fr": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Désactiver l'aimantation",
+        "enableCanvasSnap": "Activer l'aimantation",
+        "toggleCanvasSnap": "Basculer l'aimantation"
+      },
+      "controls": {
+        "captureFailed": "Impossible de capturer l'image actuelle.",
+        "disableProxyPlayback": "Désactiver la lecture proxy",
+        "enableProxyPlayback": "Activer la lecture proxy",
+        "frameDownloadedNoProject": "Image téléchargée — ouvrez un projet pour l'ajouter à la médiathèque.",
+        "frameDownloadedNotSaved": "Image téléchargée, mais impossible de l'enregistrer dans la médiathèque : {{message}}",
+        "frameSaved": "« {{name}} » enregistré dans la médiathèque.",
+        "goToEnd": "Aller à la fin",
+        "goToEndTooltip": "Aller à la fin",
+        "goToStart": "Aller au début",
+        "goToStartTooltip": "Aller au début",
+        "nextFrame": "Image suivante",
+        "nextFrameTooltip": "Image suivante",
+        "pauseTooltip": "Pause",
+        "playTooltip": "Lecture",
+        "prevFrame": "Image précédente",
+        "prevFrameTooltip": "Image précédente",
+        "proxyPlaybackOff": "Lecture proxy désactivée",
+        "proxyPlaybackOn": "Lecture proxy activée",
+        "saveFrame": "Enregistrer l'image",
+        "saveFrameFailed": "Impossible d'enregistrer l'image.",
+        "saveFrameTooltip": "Enregistrer l'image",
+        "savingFrame": "Enregistrement de l'image…",
+        "savingFrameTooltip": "Enregistrement de l'image…"
+      },
+      "monitor": {
+        "mute": "Couper le son",
+        "muteShort": "Muet",
+        "muted": "Muet",
+        "percent": "{{value}} %",
+        "previewOnlyNote": "Concerne uniquement la lecture locale — l'exportation utilise le mixage du projet.",
+        "thisDeviceOnly": "Cet appareil uniquement",
+        "title": "Audio de prévisualisation",
+        "unmute": "Réactiver le son",
+        "volume": "Volume"
+      },
+      "player": {
+        "exitFullscreen": "Quitter le plein écran",
+        "fullscreen": "Plein écran",
+        "mute": "Couper le son",
+        "pause": "Pause",
+        "play": "Lecture",
+        "seek": "Rechercher",
+        "unmute": "Réactiver le son",
+        "volume": "Volume"
+      },
+      "stage": {
+        "loadingMedia": "Chargement des médias…",
+        "videoPreview": "Prévisualisation vidéo"
+      },
+      "zoom": {
+        "ariaLabel": "Niveau de zoom : {{label}}",
+        "auto": "Auto",
+        "tooltip": "Zoom : {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Déposer sur la timeline",
+        "compoundClipsTimeline": "Les clips composés se placent toujours mieux sur la timeline.",
+        "presetsTimeline": "Les préréglages de texte et de forme se placent toujours mieux sur la timeline.",
+        "dropOneItem": "Déposer un élément",
+        "oneMediaAtATime": "Placez un média à la fois sur le canevas.",
+        "audioGoesOnTimeline": "L'audio va sur la timeline",
+        "visualLayersOnly": "Le dépôt sur le canevas place uniquement des calques visuels.",
+        "dropToPlace": "Déposer pour placer",
+        "addAtPlayhead": "Ajoutez ce média à la tête de lecture et à la position de dépôt.",
+        "dropOneFile": "Déposer un fichier",
+        "oneVisualFileAtATime": "Le dépôt sur le canevas importe un fichier visuel à la fois.",
+        "importAndPlace": "Importer et placer",
+        "importAndPlaceDescription": "Importez ce fichier et placez-le sur le canevas.",
+        "noCompatibleTrack": "Aucune piste compatible déverrouillée n'est disponible pour ce dépôt.",
+        "unableToLoadMedia": "Impossible de charger le média déposé.",
+        "mediaNoLongerAvailable": "Le média déposé n'est plus disponible.",
+        "dragDropUnsupported": "Le glisser-déposer n'est pas pris en charge par ce navigateur. Utilisez Chrome ou Edge.",
+        "filesRejected": "Certains fichiers ont été refusés : {{errors}}",
+        "dropAudioOnTimeline": "Déposez plutôt l'audio sur la timeline.",
+        "unableToInspectVideo": "Impossible d'inspecter la vidéo déposée.",
+        "unableToInspectFile": "Impossible d'inspecter le fichier déposé.",
+        "unableToImportFile": "Impossible d'importer le fichier déposé."
+      }
+    }
+  },
+  "de": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Canvas-Einrasten deaktivieren",
+        "enableCanvasSnap": "Canvas-Einrasten aktivieren",
+        "toggleCanvasSnap": "Canvas-Einrasten umschalten"
+      },
+      "controls": {
+        "captureFailed": "Aktuelles Bild konnte nicht erfasst werden.",
+        "disableProxyPlayback": "Proxy-Wiedergabe deaktivieren",
+        "enableProxyPlayback": "Proxy-Wiedergabe aktivieren",
+        "frameDownloadedNoProject": "Bild heruntergeladen — öffne ein Projekt, um es zur Mediathek hinzuzufügen.",
+        "frameDownloadedNotSaved": "Bild heruntergeladen, konnte aber nicht zur Mediathek hinzugefügt werden: {{message}}",
+        "frameSaved": "„{{name}}“ zur Mediathek hinzugefügt.",
+        "goToEnd": "Zum Ende",
+        "goToEndTooltip": "Zum Ende",
+        "goToStart": "Zum Anfang",
+        "goToStartTooltip": "Zum Anfang",
+        "nextFrame": "Nächstes Bild",
+        "nextFrameTooltip": "Nächstes Bild",
+        "pauseTooltip": "Pause",
+        "playTooltip": "Wiedergabe",
+        "prevFrame": "Vorheriges Bild",
+        "prevFrameTooltip": "Vorheriges Bild",
+        "proxyPlaybackOff": "Proxy-Wiedergabe aus",
+        "proxyPlaybackOn": "Proxy-Wiedergabe an",
+        "saveFrame": "Bild speichern",
+        "saveFrameFailed": "Bild konnte nicht gespeichert werden.",
+        "saveFrameTooltip": "Bild speichern",
+        "savingFrame": "Bild wird gespeichert…",
+        "savingFrameTooltip": "Bild wird gespeichert…"
+      },
+      "monitor": {
+        "mute": "Stummschalten",
+        "muteShort": "Stumm",
+        "muted": "Stummgeschaltet",
+        "percent": "{{value}} %",
+        "previewOnlyNote": "Wirkt nur auf die lokale Wiedergabe — Exporte nutzen den Projektmix.",
+        "thisDeviceOnly": "Nur dieses Gerät",
+        "title": "Vorschau-Audio",
+        "unmute": "Stummschaltung aufheben",
+        "volume": "Lautstärke"
+      },
+      "player": {
+        "exitFullscreen": "Vollbild beenden",
+        "fullscreen": "Vollbild",
+        "mute": "Stummschalten",
+        "pause": "Pause",
+        "play": "Wiedergabe",
+        "seek": "Suchen",
+        "unmute": "Stummschaltung aufheben",
+        "volume": "Lautstärke"
+      },
+      "stage": {
+        "loadingMedia": "Medien werden geladen…",
+        "videoPreview": "Videovorschau"
+      },
+      "zoom": {
+        "ariaLabel": "Zoomstufe: {{label}}",
+        "auto": "Automatisch",
+        "tooltip": "Zoom: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Auf Timeline ablegen",
+        "compoundClipsTimeline": "Compound-Clips werden weiterhin am besten auf der Timeline platziert.",
+        "presetsTimeline": "Text- und Formvorgaben werden weiterhin am besten auf der Timeline platziert.",
+        "dropOneItem": "Ein Element ablegen",
+        "oneMediaAtATime": "Platziere jeweils ein Medienelement auf der Leinwand.",
+        "audioGoesOnTimeline": "Audio gehört auf die Timeline",
+        "visualLayersOnly": "Auf der Leinwand werden nur visuelle Ebenen platziert.",
+        "dropToPlace": "Zum Platzieren ablegen",
+        "addAtPlayhead": "Füge dieses Medium am Abspielkopf und an der Ablageposition hinzu.",
+        "dropOneFile": "Eine Datei ablegen",
+        "oneVisualFileAtATime": "Auf der Leinwand wird jeweils eine visuelle Datei importiert.",
+        "importAndPlace": "Importieren und platzieren",
+        "importAndPlaceDescription": "Importiere diese Datei und platziere sie auf der Leinwand.",
+        "noCompatibleTrack": "Für dieses Ablegen ist keine entsperrte kompatible Spur verfügbar.",
+        "unableToLoadMedia": "Abgelegtes Medium konnte nicht geladen werden.",
+        "mediaNoLongerAvailable": "Das abgelegte Medium ist nicht mehr verfügbar.",
+        "dragDropUnsupported": "Drag-and-drop wird in diesem Browser nicht unterstützt. Verwende Chrome oder Edge.",
+        "filesRejected": "Einige Dateien wurden abgelehnt: {{errors}}",
+        "dropAudioOnTimeline": "Lege Audio stattdessen auf der Timeline ab.",
+        "unableToInspectVideo": "Abgelegtes Video konnte nicht geprüft werden.",
+        "unableToInspectFile": "Abgelegte Datei konnte nicht geprüft werden.",
+        "unableToImportFile": "Abgelegte Datei konnte nicht importiert werden."
+      }
+    }
+  },
+  "pt-BR": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Desativar encaixe no canvas",
+        "enableCanvasSnap": "Ativar encaixe no canvas",
+        "toggleCanvasSnap": "Alternar encaixe no canvas"
+      },
+      "controls": {
+        "captureFailed": "Não foi possível capturar o quadro atual.",
+        "disableProxyPlayback": "Desativar reproducao por proxy",
+        "enableProxyPlayback": "Ativar reproducao por proxy",
+        "frameDownloadedNoProject": "Quadro baixado — abra um projeto para salvar na biblioteca.",
+        "frameDownloadedNotSaved": "Quadro baixado, mas não foi possível salvar na biblioteca: {{message}}",
+        "frameSaved": "\"{{name}}\" salvo na biblioteca de mídia.",
+        "goToEnd": "Ir para o fim",
+        "goToEndTooltip": "Ir para o fim",
+        "goToStart": "Ir para o inicio",
+        "goToStartTooltip": "Ir para o inicio",
+        "nextFrame": "Proximo quadro",
+        "nextFrameTooltip": "Proximo quadro",
+        "pauseTooltip": "Pausar",
+        "playTooltip": "Reproduzir",
+        "prevFrame": "Quadro anterior",
+        "prevFrameTooltip": "Quadro anterior",
+        "proxyPlaybackOff": "Reproducao por proxy desativada",
+        "proxyPlaybackOn": "Reproducao por proxy ativada",
+        "saveFrame": "Salvar quadro",
+        "saveFrameFailed": "Não foi possível salvar o quadro.",
+        "saveFrameTooltip": "Salvar quadro",
+        "savingFrame": "Salvando quadro",
+        "savingFrameTooltip": "Salvando quadro"
+      },
+      "monitor": {
+        "mute": "Silenciar",
+        "muteShort": "Silenciar",
+        "muted": "Silenciado",
+        "percent": "Porcentagem",
+        "previewOnlyNote": "Afeta apenas a reprodução local — a exportação usa a mixagem do projeto.",
+        "thisDeviceOnly": "Somente este dispositivo",
+        "title": "Áudio da prévia",
+        "unmute": "Ativar som",
+        "volume": "Volume de som"
+      },
+      "player": {
+        "exitFullscreen": "Sair da tela cheia",
+        "fullscreen": "Tela cheia",
+        "mute": "Silenciar",
+        "pause": "Pausar",
+        "play": "Reproduzir",
+        "seek": "Buscar",
+        "unmute": "Ativar som",
+        "volume": "Volume de som"
+      },
+      "stage": {
+        "loadingMedia": "Carregando midia",
+        "videoPreview": "Pre-visualizacao de video"
+      },
+      "zoom": {
+        "ariaLabel": "Rotulo ARIA",
+        "auto": "Automático",
+        "tooltip": "Zoom: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Soltar na linha do tempo",
+        "compoundClipsTimeline": "Clipes compostos ainda ficam melhor na linha do tempo.",
+        "presetsTimeline": "Predefinições de texto e forma ainda ficam melhor na linha do tempo.",
+        "dropOneItem": "Solte um item",
+        "oneMediaAtATime": "Coloque um item de mídia por vez na tela.",
+        "audioGoesOnTimeline": "Áudio vai na linha do tempo",
+        "visualLayersOnly": "Soltar na tela coloca apenas camadas visuais.",
+        "dropToPlace": "Soltar para posicionar",
+        "addAtPlayhead": "Adicione esta mídia no indicador de reprodução e na posição de soltura.",
+        "dropOneFile": "Solte um arquivo",
+        "oneVisualFileAtATime": "Soltar na tela importa um arquivo visual por vez.",
+        "importAndPlace": "Importar e posicionar",
+        "importAndPlaceDescription": "Importe este arquivo e coloque-o na tela.",
+        "noCompatibleTrack": "Nenhuma faixa compatível desbloqueada está disponível para este item.",
+        "unableToLoadMedia": "Não foi possível carregar a mídia solta.",
+        "mediaNoLongerAvailable": "A mídia solta não está mais disponível.",
+        "dragDropUnsupported": "Arrastar e soltar não é compatível com este navegador. Use Chrome ou Edge.",
+        "filesRejected": "Alguns arquivos foram rejeitados: {{errors}}",
+        "dropAudioOnTimeline": "Solte o áudio na linha do tempo.",
+        "unableToInspectVideo": "Não foi possível inspecionar o vídeo solto.",
+        "unableToInspectFile": "Não foi possível inspecionar o arquivo solto.",
+        "unableToImportFile": "Não foi possível importar o arquivo solto."
+      }
+    }
+  },
+  "tr": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "Tuval yakalamayı kapat",
+        "enableCanvasSnap": "Tuval yakalamayı aç",
+        "toggleCanvasSnap": "Tuval yakalamayı aç/kapat"
+      },
+      "controls": {
+        "captureFailed": "Geçerli kare yakalanamadı.",
+        "disableProxyPlayback": "Proxy oynatmayı kapat",
+        "enableProxyPlayback": "Proxy oynatmayı aç",
+        "frameDownloadedNoProject": "Kare indirildi — kütüphaneye kaydetmek için bir proje açın.",
+        "frameDownloadedNotSaved": "Kare indirildi ancak kütüphaneye kaydedilemedi: {{message}}",
+        "frameSaved": "\"{{name}}\" kütüphaneye kaydedildi.",
+        "goToEnd": "Sona git",
+        "goToEndTooltip": "Sona git",
+        "goToStart": "Başa git",
+        "goToStartTooltip": "Başa git",
+        "nextFrame": "Sonraki kare",
+        "nextFrameTooltip": "Sonraki kare",
+        "pauseTooltip": "Duraklat",
+        "playTooltip": "Oynat",
+        "prevFrame": "Önceki kare",
+        "prevFrameTooltip": "Önceki kare",
+        "proxyPlaybackOff": "Proxy oynatma kapalı",
+        "proxyPlaybackOn": "Proxy oynatma açık",
+        "saveFrame": "Kareyi kaydet",
+        "saveFrameFailed": "Kare kaydedilemedi.",
+        "saveFrameTooltip": "Kareyi kaydet",
+        "savingFrame": "Kare kaydediliyor",
+        "savingFrameTooltip": "Kare kaydediliyor"
+      },
+      "monitor": {
+        "mute": "Sessize al",
+        "muteShort": "Sessiz",
+        "muted": "Sessiz",
+        "percent": "Yüzde",
+        "previewOnlyNote": "Yalnızca yerel oynatmayı etkiler — dışa aktarmada proje miksi kullanılır.",
+        "thisDeviceOnly": "Yalnızca bu cihaz",
+        "title": "Önizleme sesi",
+        "unmute": "Sesi aç",
+        "volume": "Ses düzeyi"
+      },
+      "player": {
+        "exitFullscreen": "Tam ekrandan çık",
+        "fullscreen": "Tam ekran",
+        "mute": "Sessize al",
+        "pause": "Duraklat",
+        "play": "Oynat",
+        "seek": "Ara",
+        "unmute": "Sesi aç",
+        "volume": "Ses düzeyi"
+      },
+      "stage": {
+        "loadingMedia": "Medya yükleniyor",
+        "videoPreview": "Video önizlemesi"
+      },
+      "zoom": {
+        "ariaLabel": "Önizleme yakınlaştırması",
+        "auto": "Otomatik",
+        "tooltip": "Yakınlaştırma: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "Zaman çizelgesine bırak",
+        "compoundClipsTimeline": "Bileşik klipler hâlâ en iyi zaman çizelgesine yerleşir.",
+        "presetsTimeline": "Metin ve şekil ön ayarları hâlâ en iyi zaman çizelgesine yerleşir.",
+        "dropOneItem": "Bir öğe bırak",
+        "oneMediaAtATime": "Tuvale tek seferde bir medya öğesi yerleştirin.",
+        "audioGoesOnTimeline": "Ses zaman çizelgesine gider",
+        "visualLayersOnly": "Tuvale bırakma yalnızca görsel katmanları yerleştirir.",
+        "dropToPlace": "Yerleştirmek için bırak",
+        "addAtPlayhead": "Bu medyayı oynatma kafasında ve bırakma konumunda ekle.",
+        "dropOneFile": "Bir dosya bırak",
+        "oneVisualFileAtATime": "Tuvale bırakma tek seferde bir görsel dosya içe aktarır.",
+        "importAndPlace": "İçe aktar ve yerleştir",
+        "importAndPlaceDescription": "Bu dosyayı içe aktar ve tuvale yerleştir.",
+        "noCompatibleTrack": "Bu bırakma için kilidi açık uyumlu iz yok.",
+        "unableToLoadMedia": "Bırakılan medya yüklenemedi.",
+        "mediaNoLongerAvailable": "Bırakılan medya artık kullanılamıyor.",
+        "dragDropUnsupported": "Bu tarayıcıda sürükle-bırak desteklenmiyor. Chrome veya Edge kullanın.",
+        "filesRejected": "Bazı dosyalar reddedildi: {{errors}}",
+        "dropAudioOnTimeline": "Sesi bunun yerine zaman çizelgesine bırakın.",
+        "unableToInspectVideo": "Bırakılan video incelenemedi.",
+        "unableToInspectFile": "Bırakılan dosya incelenemedi.",
+        "unableToImportFile": "Bırakılan dosya içe aktarılamadı."
+      }
+    }
+  },
+  "ja": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "キャンバスへのスナップを無効化",
+        "enableCanvasSnap": "キャンバスへのスナップを有効化",
+        "toggleCanvasSnap": "キャンバススナップを切り替え"
+      },
+      "controls": {
+        "captureFailed": "現在のフレームをキャプチャできませんでした。",
+        "disableProxyPlayback": "プロキシ再生を無効化",
+        "enableProxyPlayback": "プロキシ再生を有効化",
+        "frameDownloadedNoProject": "フレームをダウンロードしました — メディアライブラリに保存するにはプロジェクトを開いてください。",
+        "frameDownloadedNotSaved": "フレームはダウンロードしましたが、メディアライブラリに保存できませんでした: {{message}}",
+        "frameSaved": "「{{name}}」をメディアライブラリに保存しました。",
+        "goToEnd": "末尾へ",
+        "goToEndTooltip": "末尾へ",
+        "goToStart": "先頭へ",
+        "goToStartTooltip": "先頭へ",
+        "nextFrame": "次のフレーム",
+        "nextFrameTooltip": "次のフレーム",
+        "pauseTooltip": "一時停止",
+        "playTooltip": "再生",
+        "prevFrame": "前のフレーム",
+        "prevFrameTooltip": "前のフレーム",
+        "proxyPlaybackOff": "プロキシ再生はオフ",
+        "proxyPlaybackOn": "プロキシ再生はオン",
+        "saveFrame": "フレームを保存",
+        "saveFrameFailed": "フレームを保存できませんでした。",
+        "saveFrameTooltip": "フレームを保存",
+        "savingFrame": "フレームを保存中…",
+        "savingFrameTooltip": "フレームを保存中…"
+      },
+      "monitor": {
+        "mute": "ミュート",
+        "muteShort": "ミュート",
+        "muted": "ミュート中",
+        "percent": "{{value}}%",
+        "previewOnlyNote": "ローカル再生にのみ反映されます。書き出しはプロジェクトミックスを使用します。",
+        "thisDeviceOnly": "このデバイスのみ",
+        "title": "プレビュー音声",
+        "unmute": "ミュート解除",
+        "volume": "音量"
+      },
+      "player": {
+        "exitFullscreen": "全画面表示を終了",
+        "fullscreen": "全画面表示",
+        "mute": "ミュート",
+        "pause": "一時停止",
+        "play": "再生",
+        "seek": "シーク",
+        "unmute": "ミュート解除",
+        "volume": "音量"
+      },
+      "stage": {
+        "loadingMedia": "メディアを読み込み中…",
+        "videoPreview": "動画プレビュー"
+      },
+      "zoom": {
+        "ariaLabel": "ズーム倍率: {{label}}",
+        "auto": "自動",
+        "tooltip": "ズーム: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "タイムラインにドロップ",
+        "compoundClipsTimeline": "コンパウンドクリップはタイムラインに配置するのが最適です。",
+        "presetsTimeline": "テキストと図形のプリセットはタイムラインに配置するのが最適です。",
+        "dropOneItem": "1項目をドロップ",
+        "oneMediaAtATime": "キャンバスにはメディアを1つずつ配置してください。",
+        "audioGoesOnTimeline": "音声はタイムラインへ",
+        "visualLayersOnly": "キャンバスへのドロップはビジュアルレイヤーのみ配置します。",
+        "dropToPlace": "ドロップして配置",
+        "addAtPlayhead": "このメディアを再生ヘッドとドロップ位置に追加します。",
+        "dropOneFile": "1ファイルをドロップ",
+        "oneVisualFileAtATime": "キャンバスへのドロップではビジュアルファイルを1つずつ読み込みます。",
+        "importAndPlace": "読み込んで配置",
+        "importAndPlaceDescription": "このファイルを読み込み、キャンバスに配置します。",
+        "noCompatibleTrack": "このドロップに使えるロック解除済みの互換トラックがありません。",
+        "unableToLoadMedia": "ドロップしたメディアを読み込めませんでした。",
+        "mediaNoLongerAvailable": "ドロップしたメディアはもう利用できません。",
+        "dragDropUnsupported": "このブラウザーはドラッグ＆ドロップに対応していません。Chrome または Edge を使用してください。",
+        "filesRejected": "一部のファイルが拒否されました: {{errors}}",
+        "dropAudioOnTimeline": "音声はタイムラインにドロップしてください。",
+        "unableToInspectVideo": "ドロップした動画を検査できませんでした。",
+        "unableToInspectFile": "ドロップしたファイルを検査できませんでした。",
+        "unableToImportFile": "ドロップしたファイルを読み込めませんでした。"
+      }
+    }
+  },
+  "ko": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "캔버스 스냅 비활성화",
+        "enableCanvasSnap": "캔버스 스냅 활성화",
+        "toggleCanvasSnap": "캔버스 스냅 전환"
+      },
+      "controls": {
+        "captureFailed": "현재 프레임을 캡처할 수 없습니다.",
+        "disableProxyPlayback": "프록시 재생 비활성화",
+        "enableProxyPlayback": "프록시 재생 활성화",
+        "frameDownloadedNoProject": "프레임을 다운로드했습니다. 미디어 라이브러리에 저장하려면 프로젝트를 여세요.",
+        "frameDownloadedNotSaved": "프레임을 다운로드했지만 미디어 라이브러리에 저장하지 못했습니다: {{message}}",
+        "frameSaved": "\"{{name}}\"을(를) 미디어 라이브러리에 저장했습니다.",
+        "goToEnd": "끝으로",
+        "goToEndTooltip": "끝으로",
+        "goToStart": "처음으로",
+        "goToStartTooltip": "처음으로",
+        "nextFrame": "다음 프레임",
+        "nextFrameTooltip": "다음 프레임",
+        "pauseTooltip": "일시정지",
+        "playTooltip": "재생",
+        "prevFrame": "이전 프레임",
+        "prevFrameTooltip": "이전 프레임",
+        "proxyPlaybackOff": "프록시 재생 꺼짐",
+        "proxyPlaybackOn": "프록시 재생 켜짐",
+        "saveFrame": "프레임 저장",
+        "saveFrameFailed": "프레임을 저장할 수 없습니다.",
+        "saveFrameTooltip": "프레임 저장",
+        "savingFrame": "프레임을 저장하는 중…",
+        "savingFrameTooltip": "프레임을 저장하는 중…"
+      },
+      "monitor": {
+        "mute": "음소거",
+        "muteShort": "음소거",
+        "muted": "음소거됨",
+        "percent": "{{value}}%",
+        "previewOnlyNote": "로컬 재생에만 적용됩니다. 내보내기에는 프로젝트 믹스가 사용됩니다.",
+        "thisDeviceOnly": "이 기기에서만",
+        "title": "미리보기 오디오",
+        "unmute": "음소거 해제",
+        "volume": "볼륨"
+      },
+      "player": {
+        "exitFullscreen": "전체 화면 종료",
+        "fullscreen": "전체 화면",
+        "mute": "음소거",
+        "pause": "일시정지",
+        "play": "재생",
+        "seek": "탐색",
+        "unmute": "음소거 해제",
+        "volume": "볼륨"
+      },
+      "stage": {
+        "loadingMedia": "미디어를 불러오는 중…",
+        "videoPreview": "동영상 미리보기"
+      },
+      "zoom": {
+        "ariaLabel": "확대/축소: {{label}}",
+        "auto": "자동",
+        "tooltip": "확대/축소: {{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "타임라인에 놓기",
+        "compoundClipsTimeline": "컴파운드 클립은 타임라인에 배치하는 것이 가장 좋습니다.",
+        "presetsTimeline": "텍스트 및 도형 프리셋은 타임라인에 배치하는 것이 가장 좋습니다.",
+        "dropOneItem": "항목 하나 놓기",
+        "oneMediaAtATime": "캔버스에는 미디어 항목을 한 번에 하나씩 배치하세요.",
+        "audioGoesOnTimeline": "오디오는 타임라인으로",
+        "visualLayersOnly": "캔버스 드롭은 시각 레이어만 배치합니다.",
+        "dropToPlace": "놓아서 배치",
+        "addAtPlayhead": "이 미디어를 재생 헤드와 드롭 위치에 추가합니다.",
+        "dropOneFile": "파일 하나 놓기",
+        "oneVisualFileAtATime": "캔버스 드롭은 시각 파일을 한 번에 하나씩 가져옵니다.",
+        "importAndPlace": "가져와서 배치",
+        "importAndPlaceDescription": "이 파일을 가져와 캔버스에 배치합니다.",
+        "noCompatibleTrack": "이 드롭에 사용할 수 있는 잠금 해제된 호환 트랙이 없습니다.",
+        "unableToLoadMedia": "드롭한 미디어를 불러올 수 없습니다.",
+        "mediaNoLongerAvailable": "드롭한 미디어를 더 이상 사용할 수 없습니다.",
+        "dragDropUnsupported": "이 브라우저는 드래그 앤 드롭을 지원하지 않습니다. Chrome 또는 Edge를 사용하세요.",
+        "filesRejected": "일부 파일이 거부되었습니다: {{errors}}",
+        "dropAudioOnTimeline": "오디오는 타임라인에 놓으세요.",
+        "unableToInspectVideo": "드롭한 비디오를 검사할 수 없습니다.",
+        "unableToInspectFile": "드롭한 파일을 검사할 수 없습니다.",
+        "unableToImportFile": "드롭한 파일을 가져올 수 없습니다."
+      }
+    }
+  },
+  "zh": {
+    "preview": {
+      "align": {
+        "disableCanvasSnap": "禁用画布吸附",
+        "enableCanvasSnap": "启用画布吸附",
+        "toggleCanvasSnap": "切换画布吸附"
+      },
+      "controls": {
+        "captureFailed": "无法捕获当前帧。",
+        "disableProxyPlayback": "禁用代理播放",
+        "enableProxyPlayback": "启用代理播放",
+        "frameDownloadedNoProject": "已下载帧 — 打开项目即可保存到媒体库。",
+        "frameDownloadedNotSaved": "帧已下载，但无法保存到媒体库：{{message}}",
+        "frameSaved": "已将 \"{{name}}\" 保存到媒体库。",
+        "goToEnd": "跳到结尾",
+        "goToEndTooltip": "跳到结尾",
+        "goToStart": "跳到开始",
+        "goToStartTooltip": "跳到开始",
+        "nextFrame": "下一帧",
+        "nextFrameTooltip": "下一帧",
+        "pauseTooltip": "暂停",
+        "playTooltip": "播放",
+        "prevFrame": "上一帧",
+        "prevFrameTooltip": "上一帧",
+        "proxyPlaybackOff": "代理播放已关闭",
+        "proxyPlaybackOn": "代理播放已开启",
+        "saveFrame": "保存帧",
+        "saveFrameFailed": "无法保存帧。",
+        "saveFrameTooltip": "保存帧",
+        "savingFrame": "正在保存帧…",
+        "savingFrameTooltip": "正在保存帧…"
+      },
+      "monitor": {
+        "mute": "静音",
+        "muteShort": "静音",
+        "muted": "已静音",
+        "percent": "{{value}}%",
+        "previewOnlyNote": "仅影响本地播放 — 导出时使用项目混音。",
+        "thisDeviceOnly": "仅此设备",
+        "title": "预览音频",
+        "unmute": "取消静音",
+        "volume": "音量"
+      },
+      "player": {
+        "exitFullscreen": "退出全屏",
+        "fullscreen": "全屏",
+        "mute": "静音",
+        "pause": "暂停",
+        "play": "播放",
+        "seek": "拖动",
+        "unmute": "取消静音",
+        "volume": "音量"
+      },
+      "stage": {
+        "loadingMedia": "正在加载媒体…",
+        "videoPreview": "视频预览"
+      },
+      "zoom": {
+        "ariaLabel": "缩放级别：{{label}}",
+        "auto": "自动",
+        "tooltip": "缩放：{{label}}"
+      },
+      "canvasDrop": {
+        "dropOnTimeline": "拖放到时间线",
+        "compoundClipsTimeline": "复合剪辑仍然最适合放在时间线上。",
+        "presetsTimeline": "文本和形状预设仍然最适合放在时间线上。",
+        "dropOneItem": "拖放一个项目",
+        "oneMediaAtATime": "一次只能在画布上放置一个媒体项目。",
+        "audioGoesOnTimeline": "音频应放到时间线",
+        "visualLayersOnly": "画布拖放只会放置视觉图层。",
+        "dropToPlace": "拖放以放置",
+        "addAtPlayhead": "在播放头和拖放位置添加此媒体。",
+        "dropOneFile": "拖放一个文件",
+        "oneVisualFileAtATime": "画布拖放一次只导入一个视觉文件。",
+        "importAndPlace": "导入并放置",
+        "importAndPlaceDescription": "导入此文件并将其放在画布上。",
+        "noCompatibleTrack": "没有可用于此拖放的未锁定兼容轨道。",
+        "unableToLoadMedia": "无法加载拖放的媒体。",
+        "mediaNoLongerAvailable": "拖放的媒体已不可用。",
+        "dragDropUnsupported": "此浏览器不支持拖放。请使用 Chrome 或 Edge。",
+        "filesRejected": "部分文件被拒绝：{{errors}}",
+        "dropAudioOnTimeline": "请将音频拖放到时间线。",
+        "unableToInspectVideo": "无法检查拖放的视频。",
+        "unableToInspectFile": "无法检查拖放的文件。",
+        "unableToImportFile": "无法导入拖放的文件。"
+      }
+    }
+  }
+}

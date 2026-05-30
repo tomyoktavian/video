@@ -21,7 +21,9 @@ const objectUrlRegistryMocks = vi.hoisted(() => ({
 }))
 
 const previewAudioConformMocks = vi.hoisted(() => ({
+  isPreviewAudioConformed: vi.fn(async () => false),
   persistPreviewAudioConform: vi.fn(async () => undefined),
+  persistPreviewAudioConformFromInt16: vi.fn(async () => undefined),
 }))
 
 const mediabunnyMocks = vi.hoisted(() => {
@@ -393,5 +395,15 @@ describe('audio-decode-cache targeted slice reuse', () => {
     expect(mediabunnyMocks.__stats.sampleSinkConstructed).toBe(1)
     expect(decodedPreviewAudioMocks.saveDecodedPreviewAudio).toHaveBeenCalled()
     expect(previewAudioConformMocks.persistPreviewAudioConform).toHaveBeenCalled()
+  })
+
+  it('skips decode entirely when the conform asset already exists', async () => {
+    previewAudioConformMocks.isPreviewAudioConformed.mockResolvedValueOnce(true)
+    mediabunnyMocks.__setPendingSamples([makeSample(4)])
+
+    await expect(startPreviewAudioConform('media-conformed', 'blob:src')).resolves.toBeUndefined()
+
+    expect(mediabunnyMocks.__stats.inputConstructed).toBe(0)
+    expect(previewAudioConformMocks.persistPreviewAudioConform).not.toHaveBeenCalled()
   })
 })

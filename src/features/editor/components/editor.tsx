@@ -13,10 +13,14 @@ import { InteractionLockRegion } from './interaction-lock-region'
 import { AudioMeterPanel } from './audio-meter-panel'
 import {
   Timeline,
-  BentoLayoutDialog,
-  ReverseConformDialog,
-  SilenceRemovalDialog,
-  FillerRemovalDialog,
+  importBentoLayoutDialog,
+  importFillerRemovalDialog,
+  importReverseConformDialog,
+  importSilenceRemovalDialog,
+  useBentoLayoutDialogStore,
+  useFillerRemovalDialogStore,
+  useReverseConformDialogStore,
+  useSilenceRemovalDialogStore,
 } from '@/features/editor/deps/timeline-ui'
 import { toast } from 'sonner'
 import { useEditorHotkeys } from '@/features/editor/hooks/use-editor-hotkeys'
@@ -35,8 +39,13 @@ import { usePlaybackStore } from '@/shared/state/playback'
 import { useEditorStore } from '@/shared/state/editor'
 import { clearPreviewAudioCache } from '@/features/editor/deps/composition-runtime'
 import { useProjectStore } from '@/features/editor/deps/projects'
-import { importExportDialog } from '@/features/editor/deps/export-contract'
-import { prewarmEffectPreviews } from '@/features/editor/deps/effects-contract'
+import {
+  importExportDialog,
+  importExportsDialog,
+  RenderQueuePersistence,
+  RenderQueueRunner,
+  useRenderQueueStore,
+} from '@/features/editor/deps/export-contract'
 import { getEditorLayout, getEditorLayoutCssVars } from '@/config/editor-layout'
 import {
   createProjectUpgradeBackup,
@@ -69,6 +78,11 @@ const LazyExportDialog = lazy(() =>
 const LazyBundleExportDialog = lazy(() =>
   importBundleExportDialog().then((module) => ({
     default: module.BundleExportDialog,
+  })),
+)
+const LazyExportsDialog = lazy(() =>
+  importExportsDialog().then((module) => ({
+    default: module.ExportsDialog,
   })),
 )
 const LazyClearKeyframesDialog = lazy(() =>
@@ -134,6 +148,26 @@ const LazyEmbeddedSubtitleTrackPickerHost = lazy(() =>
 const LazySubtitleScanProgressDialog = lazy(() =>
   importSubtitleScanProgressDialog().then((module) => ({
     default: module.SubtitleScanProgressDialog,
+  })),
+)
+const LazyBentoLayoutDialog = lazy(() =>
+  importBentoLayoutDialog().then((module) => ({
+    default: module.BentoLayoutDialog,
+  })),
+)
+const LazyReverseConformDialog = lazy(() =>
+  importReverseConformDialog().then((module) => ({
+    default: module.ReverseConformDialog,
+  })),
+)
+const LazySilenceRemovalDialog = lazy(() =>
+  importSilenceRemovalDialog().then((module) => ({
+    default: module.SilenceRemovalDialog,
+  })),
+)
+const LazyFillerRemovalDialog = lazy(() =>
+  importFillerRemovalDialog().then((module) => ({
+    default: module.FillerRemovalDialog,
   })),
 )
 type ExportLauncherSelection =
@@ -314,6 +348,38 @@ const EditorDialogHost = memo(function EditorDialogHost({ projectId }: { project
   )
 })
 
+const TimelineDialogHost = memo(function TimelineDialogHost() {
+  const bentoLayoutOpen = useBentoLayoutDialogStore((s) => s.isOpen)
+  const reverseConformOpen = useReverseConformDialogStore((s) => s.request !== null)
+  const silenceRemovalOpen = useSilenceRemovalDialogStore((s) => s.isOpen)
+  const fillerRemovalOpen = useFillerRemovalDialogStore((s) => s.isOpen)
+
+  return (
+    <>
+      {bentoLayoutOpen && (
+        <Suspense fallback={null}>
+          <LazyBentoLayoutDialog />
+        </Suspense>
+      )}
+      {reverseConformOpen && (
+        <Suspense fallback={null}>
+          <LazyReverseConformDialog />
+        </Suspense>
+      )}
+      {silenceRemovalOpen && (
+        <Suspense fallback={null}>
+          <LazySilenceRemovalDialog />
+        </Suspense>
+      )}
+      {fillerRemovalOpen && (
+        <Suspense fallback={null}>
+          <LazyFillerRemovalDialog />
+        </Suspense>
+      )}
+    </>
+  )
+})
+
 export const LoadedEditor = memo(function LoadedEditor({
   projectId,
   project,
@@ -323,6 +389,10 @@ export const LoadedEditor = memo(function LoadedEditor({
   const router = useRouter()
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [bundleExportDialogOpen, setBundleExportDialogOpen] = useState(false)
+  const [renderQueueOpen, setRenderQueueOpen] = useState(false)
+  const renderQueueActiveCount = useRenderQueueStore(
+    (s) => s.jobs.filter((j) => j.status === 'queued' || j.status === 'rendering').length,
+  )
   const [bundleFileHandle, setBundleFileHandle] = useState<FileSystemFileHandle | undefined>()
   const [exportLauncherOpen, setExportLauncherOpen] = useState(false)
   const [pendingCompositionScope, setPendingCompositionScope] = useState<CompositionScope | null>(
@@ -369,10 +439,14 @@ export const LoadedEditor = memo(function LoadedEditor({
     return () => cancelIdleCallback(id)
   }, [])
 
-  // Prewarm effect preview thumbnails so the Add Effect picker has no
-  // placeholder → image flash on first open.
+  // Prewarm effect preview thumbnails during idle time without making the
+  // effects feature part of the initial editor route chunk.
   useEffect(() => {
-    const id = requestIdleCallback(() => prewarmEffectPreviews())
+    const id = requestIdleCallback(() => {
+      void import('@/features/editor/deps/effects-contract').then((module) =>
+        module.prewarmEffectPreviews(),
+      )
+    })
     return () => cancelIdleCallback(id)
   }, [])
 
@@ -510,6 +584,11 @@ export const LoadedEditor = memo(function LoadedEditor({
     setExportDialogOpen(true)
   }, [])
 
+  const handleOpenRenderQueue = useCallback(() => {
+    void importExportsDialog()
+    setRenderQueueOpen(true)
+  }, [])
+
   const openBundleExportDialog = useCallback(
     async (scope: CompositionScope | null) => {
       void preloadBundleExportDialog()
@@ -623,6 +702,8 @@ export const LoadedEditor = memo(function LoadedEditor({
           onExport={handleExport}
           onExportBundle={handleExportBundle}
           onExportLauncher={handleExportLauncher}
+          onOpenRenderQueue={handleOpenRenderQueue}
+          renderQueueCount={renderQueueActiveCount}
         />
       </InteractionLockRegion>
 
@@ -727,7 +808,17 @@ export const LoadedEditor = memo(function LoadedEditor({
               setExportDialogOpen(false)
               setPendingCompositionScope(null)
             }}
+            onOpenRenderQueue={handleOpenRenderQueue}
             compositionScope={pendingCompositionScope ?? undefined}
+          />
+        )}
+
+        {/* Exports + render queue dialog */}
+        {renderQueueOpen && (
+          <LazyExportsDialog
+            open={renderQueueOpen}
+            onClose={() => setRenderQueueOpen(false)}
+            projectId={projectId}
           />
         )}
 
@@ -748,13 +839,12 @@ export const LoadedEditor = memo(function LoadedEditor({
         )}
       </Suspense>
 
-      <EditorDialogHost projectId={projectId} />
+      {/* Restores/persists the per-project queue, and drains it serially. */}
+      <RenderQueuePersistence projectId={projectId} />
+      <RenderQueueRunner />
 
-      {/* Bento Layout Preset Dialog */}
-      <BentoLayoutDialog />
-      <ReverseConformDialog />
-      <SilenceRemovalDialog />
-      <FillerRemovalDialog />
+      <EditorDialogHost projectId={projectId} />
+      <TimelineDialogHost />
     </div>
   )
 })

@@ -21,6 +21,7 @@ import {
   type HotkeyKey,
   type HotkeyOverrideMap,
 } from '@/config/hotkeys'
+import { CAPTION_STYLE_PRESETS } from '@/shared/typography/caption-style-presets'
 
 /**
  * App-wide settings stored in localStorage
@@ -32,6 +33,7 @@ interface AppSettings {
   canvasSnapEnabled: boolean
   showWaveforms: boolean
   showFilmstrips: boolean
+  enableFilmstripExtraction: boolean
 
   // Interface
   editorDensity: EditorDensityPresetName
@@ -59,6 +61,10 @@ interface AppSettings {
   // substring + fuzzy-prefix matching on caption text.
   captionSearchMode: CaptionSearchMode
 
+  // Caption style preset id applied automatically to captions generated from
+  // transcripts / AI captioning (when not inheriting an existing caption's style).
+  defaultCaptionStylePresetId: string
+
   // Keyboard shortcuts
   hotkeyOverrides: HotkeyOverrideMap
 }
@@ -80,6 +86,14 @@ function normalizeWordsPerCaption(value: unknown, legacy?: unknown): number {
       ? Math.floor(value)
       : DEFAULT_WORDS_PER_CAPTION
   return Math.min(MAX_WORDS_PER_CAPTION, Math.max(1, numeric))
+}
+
+export const DEFAULT_CAPTION_STYLE_PRESET_ID = CAPTION_STYLE_PRESETS[0]?.id ?? 'netflix'
+
+function normalizeCaptionStylePresetId(value: unknown): string {
+  return typeof value === 'string' && CAPTION_STYLE_PRESETS.some((preset) => preset.id === value)
+    ? value
+    : DEFAULT_CAPTION_STYLE_PRESET_ID
 }
 
 export type CaptioningIntervalUnit = 'seconds' | 'frames'
@@ -145,6 +159,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   canvasSnapEnabled: true,
   showWaveforms: true,
   showFilmstrips: true,
+  enableFilmstripExtraction: true,
 
   // Interface
   editorDensity: DEFAULT_EDITOR_DENSITY_PRESET,
@@ -167,6 +182,9 @@ const DEFAULT_SETTINGS: AppSettings = {
 
   // Scene Browser defaults
   captionSearchMode: 'keyword',
+
+  // Caption styling default
+  defaultCaptionStylePresetId: DEFAULT_CAPTION_STYLE_PRESET_ID,
 
   // Keyboard shortcuts
   hotkeyOverrides: {},
@@ -213,6 +231,9 @@ export const useSettingsStore = create<SettingsStore>()(
           }
           if (key === 'editorDensity') {
             return { editorDensity: normalizeEditorDensityPreset(value) }
+          }
+          if (key === 'defaultCaptionStylePresetId') {
+            return { defaultCaptionStylePresetId: normalizeCaptionStylePresetId(value) }
           }
           return { [key]: value }
         }),
@@ -298,6 +319,9 @@ export const useSettingsStore = create<SettingsStore>()(
           defaultWordsPerCaption: normalizeWordsPerCaption(
             typedState.defaultWordsPerCaption,
             (typedState as { defaultCaptionGranularity?: unknown }).defaultCaptionGranularity,
+          ),
+          defaultCaptionStylePresetId: normalizeCaptionStylePresetId(
+            typedState.defaultCaptionStylePresetId,
           ),
         }
       },

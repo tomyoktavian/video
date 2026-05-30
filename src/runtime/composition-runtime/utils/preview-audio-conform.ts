@@ -9,8 +9,8 @@ import {
 } from '@/infrastructure/storage/workspace-fs/cache-mirror'
 import { previewAudioPath } from '@/infrastructure/storage/workspace-fs/paths'
 import { requireWorkspaceRoot } from '@/infrastructure/storage/workspace-fs/root'
-import { writeBlob } from '@/infrastructure/storage/workspace-fs/fs-primitives'
-import { audioBufferToWavBlob } from './audio-buffer-wav'
+import { exists, writeBlob } from '@/infrastructure/storage/workspace-fs/fs-primitives'
+import { audioBufferToWavBlob, int16StereoToWavBlob } from './audio-buffer-wav'
 
 const log = createLogger('PreviewAudioConform')
 
@@ -25,6 +25,25 @@ export function getPreviewAudioConformCacheKey(mediaId: string): string {
 
 export function getCachedPreviewAudioConformUrl(mediaId: string): string | null {
   return blobUrlManager.get(getPreviewAudioConformCacheKey(mediaId))
+}
+
+/**
+ * True when the conform WAV has already been persisted for this media and the
+ * file is still present. Callers use this to skip the (expensive) decode +
+ * AudioBuffer rebuild that would otherwise run purely to feed a conform that is
+ * already on disk — the dominant source of jank when audio clips scroll back
+ * into view.
+ */
+export async function isPreviewAudioConformed(mediaId: string): Promise<boolean> {
+  const media = await getMedia(mediaId)
+  if (!media?.previewAudioConformedAt) {
+    return false
+  }
+  try {
+    return await exists(requireWorkspaceRoot(), previewAudioPath(mediaId))
+  } catch {
+    return false
+  }
 }
 
 export async function resolvePreviewAudioConformUrl(mediaId: string): Promise<string | null> {
@@ -86,10 +105,12 @@ export async function resolvePreviewAudioConformUrl(mediaId: string): Promise<st
   return promise
 }
 
-export async function persistPreviewAudioConform(
-  mediaId: string,
-  buffer: AudioBuffer,
-): Promise<void> {
+/**
+ * Encode and persist the conform WAV. `buildBlob` is a lazy factory so the
+ * (potentially expensive) encode only runs once the in-flight guard and the
+ * already-conformed check have cleared — never speculatively per call.
+ */
+function persistConform(mediaId: string, buildBlob: () => Blob): Promise<void> {
   const pending = pendingPreviewAudioConformPersists.get(mediaId)
   if (pending) {
     return pending
@@ -101,16 +122,27 @@ export async function persistPreviewAudioConform(
       return
     }
 
-    const cacheKey = getPreviewAudioConformCacheKey(mediaId)
-    let wavBlob: Blob | null = null
+    // Already conformed in a prior visit/session — the WAV is on disk. Clips
+    // re-enter the viewport constantly while scrolling and each remount retries
+    // the conform; re-encoding the whole WAV every time is pure main-thread
+    // waste, so bail when the persisted asset is still present.
+    if (media.previewAudioConformedAt) {
+      try {
+        if (await exists(requireWorkspaceRoot(), previewAudioPath(mediaId))) {
+          return
+        }
+      } catch {
+        // Existence check failed — fall through and re-persist defensively.
+      }
+    }
 
+    const cacheKey = getPreviewAudioConformCacheKey(mediaId)
+    const wavBlob = buildBlob()
     if (!blobUrlManager.get(cacheKey)) {
-      wavBlob = audioBufferToWavBlob(buffer)
       blobUrlManager.acquire(cacheKey, wavBlob)
     }
 
-    const nextBlob = wavBlob ?? audioBufferToWavBlob(buffer)
-    const bytes = await nextBlob.arrayBuffer()
+    const bytes = await wavBlob.arrayBuffer()
     await writeBlob(requireWorkspaceRoot(), previewAudioPath(mediaId), new Uint8Array(bytes))
 
     await updateMedia(mediaId, {
@@ -127,6 +159,24 @@ export async function persistPreviewAudioConform(
 
   pendingPreviewAudioConformPersists.set(mediaId, promise)
   return promise
+}
+
+export function persistPreviewAudioConform(mediaId: string, buffer: AudioBuffer): Promise<void> {
+  return persistConform(mediaId, () => audioBufferToWavBlob(buffer))
+}
+
+/**
+ * Conform straight from persisted Int16 bins, avoiding the AudioBuffer
+ * Int16→Float32→Int16 round-trip. Preferred on the fresh-decode path where the
+ * raw Int16 samples are already in hand.
+ */
+export function persistPreviewAudioConformFromInt16(
+  mediaId: string,
+  left: Int16Array,
+  right: Int16Array,
+  sampleRate: number,
+): Promise<void> {
+  return persistConform(mediaId, () => int16StereoToWavBlob(left, right, sampleRate))
 }
 
 export async function deletePreviewAudioConform(

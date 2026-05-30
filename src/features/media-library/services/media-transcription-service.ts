@@ -7,6 +7,7 @@ import {
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useSelectionStore } from '@/shared/state/selection'
 import { createLogger } from '@/shared/logging/logger'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import type {
   MediaTranscript,
   MediaTranscriptModel,
@@ -28,9 +29,10 @@ import {
   getMediaTranscriptionAdapter,
   getMediaTranscriptionModelLabel,
 } from '../transcription/registry'
-import { mediaLibraryService } from './media-library-service'
+import { importMediaLibraryService } from './media-library-service-loader'
 import {
   buildSubtitleSegmentForClip,
+  getCaptionStyleTemplateFromPreset,
   buildCaptionTrackAbove,
   findReplaceableCaptionItemsForClip,
   findCompatibleCaptionTrackForRanges,
@@ -414,6 +416,7 @@ class MediaTranscriptionService {
 
   private async executeTranscriptionJob(job: QueuedTranscriptionJob): Promise<MediaTranscript> {
     const mediaId = job.mediaId
+    const { mediaLibraryService } = await importMediaLibraryService()
     const media = await mediaLibraryService.getMedia(mediaId)
     if (!media) {
       throw new Error(`Media not found: ${mediaId}`)
@@ -530,8 +533,13 @@ class MediaTranscriptionService {
       throw new Error('Select a clip for this media, or place one on the timeline first')
     }
 
-    const canvasWidth = project?.metadata.width ?? 1920
-    const canvasHeight = project?.metadata.height ?? 1080
+    const canvasWidth = project?.metadata.width ?? DEFAULT_PROJECT_WIDTH
+    const canvasHeight = project?.metadata.height ?? DEFAULT_PROJECT_HEIGHT
+    const defaultCaptionTemplate = getCaptionStyleTemplateFromPreset(
+      useSettingsStore.getState().defaultCaptionStylePresetId,
+      canvasWidth,
+      canvasHeight,
+    )
     const newTracks: TimelineTrack[] = [...timeline.tracks]
     const generatedCaptionIdsToRemove = options.replaceExisting
       ? new Set(
@@ -596,7 +604,7 @@ class MediaTranscriptionService {
         },
         styleTemplate: existingGeneratedCaptions[0]
           ? getCaptionTextItemTemplate(existingGeneratedCaptions[0])
-          : undefined,
+          : defaultCaptionTemplate,
         ...(typeof options.wordsPerCaption === 'number'
           ? { wordsPerCaption: options.wordsPerCaption }
           : {}),

@@ -1,33 +1,8 @@
+import { FULLSCREEN_QUAD_WGSL } from '@/infrastructure/gpu-shared/fullscreen-quad'
+
 /** Shared WGSL code prepended to every GPU transition shader */
 export const TRANSITION_COMMON_WGSL = /* wgsl */ `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex
-fn vertexMain(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-  var positions = array<vec2f, 6>(
-    vec2f(-1.0, -1.0),
-    vec2f(1.0, -1.0),
-    vec2f(-1.0, 1.0),
-    vec2f(-1.0, 1.0),
-    vec2f(1.0, -1.0),
-    vec2f(1.0, 1.0)
-  );
-  var uvs = array<vec2f, 6>(
-    vec2f(0.0, 1.0),
-    vec2f(1.0, 1.0),
-    vec2f(0.0, 0.0),
-    vec2f(0.0, 0.0),
-    vec2f(1.0, 1.0),
-    vec2f(1.0, 0.0)
-  );
-  var output: VertexOutput;
-  output.position = vec4f(positions[vertexIndex], 0.0, 1.0);
-  output.uv = uvs[vertexIndex];
-  return output;
-}
+${FULLSCREEN_QUAD_WGSL}
 
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.28318530718;

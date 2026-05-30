@@ -1,4 +1,5 @@
 import type { ShapeItem } from '@/types/timeline'
+import { FULLSCREEN_QUAD_WGSL } from '@/infrastructure/gpu-shared/fullscreen-quad'
 
 export interface GpuShapeRect {
   x: number
@@ -32,26 +33,7 @@ export const MAX_GPU_SHAPE_PATH_VERTICES = 32
 const SHAPE_UNIFORM_FLOAT_COUNT = 24 + MAX_GPU_SHAPE_PATH_VERTICES * 4
 
 const SHAPE_RENDER_SHADER = /* wgsl */ `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex
-fn vertexMain(@builtin(vertex_index) vi: u32) -> VertexOutput {
-  var pos = array<vec2f, 6>(
-    vec2f(-1,-1), vec2f(1,-1), vec2f(-1,1),
-    vec2f(-1,1), vec2f(1,-1), vec2f(1,1)
-  );
-  var uv = array<vec2f, 6>(
-    vec2f(0,1), vec2f(1,1), vec2f(0,0),
-    vec2f(0,0), vec2f(1,1), vec2f(1,0)
-  );
-  var o: VertexOutput;
-  o.position = vec4f(pos[vi], 0, 1);
-  o.uv = uv[vi];
-  return o;
-}
+${FULLSCREEN_QUAD_WGSL}
 
 struct ShapeUniforms {
   outputSize: vec2f,

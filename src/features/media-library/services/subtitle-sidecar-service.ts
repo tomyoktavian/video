@@ -6,6 +6,7 @@ import {
   type EmbeddedSubtitleTrack,
 } from '@/shared/utils/matroska-subtitles'
 import { getEmbeddedSubtitleSidecar, saveEmbeddedSubtitleSidecar } from '@/infrastructure/storage'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import type { MediaMetadata } from '@/types/storage'
 import type { TimelineItem, TimelineTrack } from '@/types/timeline'
 import {
@@ -107,8 +108,8 @@ class SubtitleSidecarService {
   ): number {
     const timeline = useTimelineStore.getState()
     const project = useProjectStore.getState().currentProject
-    const canvasWidth = project?.metadata.width ?? 1920
-    const canvasHeight = project?.metadata.height ?? 1080
+    const canvasWidth = project?.metadata.width ?? DEFAULT_PROJECT_WIDTH
+    const canvasHeight = project?.metadata.height ?? DEFAULT_PROJECT_HEIGHT
     const clips = findCaptionTargetClipsForMedia(timeline.items, media.id)
     if (clips.length === 0) return 0
 

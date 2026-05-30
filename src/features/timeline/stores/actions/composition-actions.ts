@@ -21,6 +21,7 @@ import { useCompositionsStore, type SubComposition } from '../compositions-store
 import { useEditorStore } from '@/shared/state/editor'
 import { useSelectionStore } from '@/shared/state/selection'
 import { DEFAULT_TRACK_HEIGHT } from '../../constants'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useCompositionNavigationStore } from '../composition-navigation-store'
 import { useProjectStore } from '@/features/timeline/deps/projects'
 import {
@@ -475,8 +476,8 @@ export function createPreComp(name?: string, itemIds?: string[]): TimelineItem |
       // --- 2. Determine canvas dimensions from project settings ---
       // Compound/pre-comp timelines should inherit the current project canvas.
       const projectMetadata = useProjectStore.getState().currentProject?.metadata
-      const width = projectMetadata?.width ?? 1920
-      const height = projectMetadata?.height ?? 1080
+      const width = projectMetadata?.width ?? DEFAULT_PROJECT_WIDTH
+      const height = projectMetadata?.height ?? DEFAULT_PROJECT_HEIGHT
       const backgroundColor = projectMetadata?.backgroundColor
 
       // --- 3. Collect distinct source tracks and build sub-comp tracks ---

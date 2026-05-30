@@ -86,13 +86,17 @@
       "captionEstimate": "{{fps}}fps hızında 1 dakikalık klip başına yaklaşık {{sceneCount}} {{scenes}}",
       "scene_one": "sahne",
       "scene_other": "sahne",
-      "captionIntervalHint": "{{estimate}}. Daha küçük aralıklar daha yoğun sahneler üretir ancak oluşturma daha uzun sürer."
+      "captionIntervalHint": "{{estimate}}. Daha küçük aralıklar daha yoğun sahneler üretir ancak oluşturma daha uzun sürer.",
+      "defaultCaptionStyle": "Varsayılan altyazı stili",
+      "defaultCaptionStyleDescription": "Transkripsiyonlardan veya yapay zekâ altyazısından oluşturulan altyazılara uygulanan stil."
     },
     "timeline": {
       "snapByDefault": "Varsayılan olarak yapıştır",
       "snapByDefaultDescription": "Bir proje açıldığında başlangıç yapıştırma durumunu ayarlar.",
       "showWaveforms": "Dalga formlarını göster",
-      "showFilmstrips": "Film şeritlerini göster"
+      "showFilmstrips": "Film şeritlerini göster",
+      "enableFilmstripExtraction": "Film şeritlerini çıkar",
+      "enableFilmstripExtractionDescription": "İçe aktarma ve zaman çizelgesinde görüntüleme sırasında video küçük resim şeritleri oluşturur."
     },
     "storage": {
       "generateMissingProxies": "Eksik Proxy'leri Oluştur",

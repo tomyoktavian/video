@@ -40,6 +40,10 @@ coverage
 .temp
 
 *.mp4
+
+# DevTools performance trace exports
+Trace-*.json
+
 # TanStack Router auto-generated files
 # Note: Some teams commit this, uncomment if you prefer to commit
 # src/routeTree.gen.ts
@@ -54,6 +58,12 @@ crates/*/Cargo.lock
 .knip-report.json
 
 tmp
+
+# Headless render harness: generated outputs, test assets, scratch workspaces.
+# (The harness source — headless/*.mjs, src/headless/ — is committed.)
+headless/output/
+headless/assets/
+tmp-workspace/
 
 .vercel
 

@@ -86,13 +86,17 @@
       "captionEstimate": "{{fps}} fps에서 1분 클립당 약 {{sceneCount}}{{scenes}}",
       "scene_one": "개 장면",
       "scene_other": "개 장면",
-      "captionIntervalHint": "{{estimate}}. 간격이 작을수록 장면이 더 촘촘해지지만 생성에 시간이 더 걸립니다."
+      "captionIntervalHint": "{{estimate}}. 간격이 작을수록 장면이 더 촘촘해지지만 생성에 시간이 더 걸립니다.",
+      "defaultCaptionStyle": "기본 자막 스타일",
+      "defaultCaptionStyleDescription": "전사 또는 AI 자막으로 생성된 자막에 적용되는 스타일입니다."
     },
     "timeline": {
       "snapByDefault": "기본적으로 스냅",
       "snapByDefaultDescription": "프로젝트를 열 때의 초기 스냅 상태를 설정합니다.",
       "showWaveforms": "파형 표시",
-      "showFilmstrips": "동영상 썸네일 표시"
+      "showFilmstrips": "동영상 썸네일 표시",
+      "enableFilmstripExtraction": "필름스트립 추출",
+      "enableFilmstripExtractionDescription": "가져오기와 타임라인 표시 중 동영상 썸네일 스트립을 생성합니다."
     },
     "storage": {
       "generateMissingProxies": "누락된 프록시 생성",

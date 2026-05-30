@@ -6,6 +6,7 @@ import type { TimelineItem, TimelineTrack } from '@/types/timeline'
 import type { Transition } from '@/types/transition'
 import type { ItemKeyframes } from '@/types/keyframe'
 import { createLogger } from '@/shared/logging/logger'
+import { withPerfMeasure } from '@/shared/logging/perf-marks'
 import { emitDomainEvent } from '@/shared/utils/domain-events'
 import { useTimelineCommandStore } from '../timeline-command-store'
 import { useItemsStore } from '../items-store'
@@ -23,7 +24,9 @@ export function getLogger() {
 }
 
 export function execute<T>(type: string, action: () => T, payload?: Record<string, unknown>): T {
-  return useTimelineCommandStore.getState().execute({ type, payload }, action)
+  return withPerfMeasure(`tl.action.${type}`, () =>
+    useTimelineCommandStore.getState().execute({ type, payload }, action),
+  )
 }
 
 /**
@@ -36,11 +39,8 @@ export function applyTransitionRepairs(
 ): void {
   const items = useItemsStore.getState().items
   const transitions = useTransitionsStore.getState().transitions
-  const { valid, repaired, broken } = repairTransitions(
-    changedClipIds,
-    items,
-    transitions,
-    deletedClipIds,
+  const { valid, repaired, broken } = withPerfMeasure('tl.repairTransitions', () =>
+    repairTransitions(changedClipIds, items, transitions, deletedClipIds),
   )
 
   // Merge valid + repaired transitions

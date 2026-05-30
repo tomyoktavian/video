@@ -11,13 +11,14 @@ import { useSourcePlayerStore } from '@/shared/state/source-player'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useMediaLibraryStore } from '@/features/timeline/deps/media-library-store'
 import { useProjectStore } from '@/features/timeline/deps/projects'
-import { mediaLibraryService } from '@/features/timeline/deps/media-library-service'
+import { importMediaLibraryService } from '@/features/timeline/deps/media-library-service'
 import { getMediaType, resolveMediaUrl } from '@/features/timeline/deps/media-library-resolver'
 import { toast } from 'sonner'
 import { execute, applyTransitionRepairs, getLogger } from './shared'
 import { resolveSourceEditTrackTargets } from '../../utils/source-edit-targeting'
 import { buildMediaTimelineItems } from '../../utils/media-timeline-item-builder'
 import { DEFAULT_TRACK_HEIGHT } from '../../constants'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 
 interface SourceEditContext {
   sourceMediaId: string
@@ -72,8 +73,7 @@ async function resolveSourceEditContext(): Promise<SourceEditContext | null> {
     : null
   const referenceTrack = activeTrack ?? preferredVideoTrack ?? preferredAudioTrack ?? null
 
-  const mediaItems = useMediaLibraryStore.getState().mediaItems
-  const media = mediaItems.find((m) => m.id === sourceMediaId)
+  const media = useMediaLibraryStore.getState().mediaById[sourceMediaId]
   if (!media) {
     getLogger().warn('Source edit: Source media not found')
     return null
@@ -103,8 +103,8 @@ async function resolveSourceEditContext(): Promise<SourceEditContext | null> {
   const insertFrame = usePlaybackStore.getState().currentFrame
 
   const currentProject = useProjectStore.getState().currentProject
-  const canvasWidth = currentProject?.metadata.width ?? 1920
-  const canvasHeight = currentProject?.metadata.height ?? 1080
+  const canvasWidth = currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH
+  const canvasHeight = currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT
   const hasAudio = mediaType === 'video' && !!media.audioCodec
   const resolvedTargets = resolveSourceEditTrackTargets({
     tracks,
@@ -151,6 +151,7 @@ async function resolveSourceEditContext(): Promise<SourceEditContext | null> {
     toast.error('Failed to load source media')
     return null
   }
+  const { mediaLibraryService } = await importMediaLibraryService()
   const thumbnailUrl = (await mediaLibraryService.getThumbnailBlobUrl(sourceMediaId)) || undefined
 
   return {

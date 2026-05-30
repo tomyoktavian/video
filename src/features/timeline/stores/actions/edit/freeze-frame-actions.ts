@@ -4,7 +4,7 @@ import { useTransitionsStore } from '../../transitions-store'
 import { useTimelineSettingsStore } from '../../timeline-settings-store'
 import { useSelectionStore } from '@/shared/state/selection'
 import { useMediaLibraryStore } from '@/features/timeline/deps/media-library-store'
-import { mediaLibraryService } from '@/features/timeline/deps/media-library-service'
+import { importMediaLibraryService } from '@/features/timeline/deps/media-library-service'
 import { blobUrlManager } from '@/infrastructure/browser/blob-url-manager'
 import { execute, applyTransitionRepairs, getLogger } from '../shared'
 import { timelineToSourceFrames } from '../../../utils/source-calculations'
@@ -44,8 +44,7 @@ export async function insertFreezeFrame(itemId: string, playheadFrame: number): 
   const sourceFrame = sourceStart + timelineToSourceFrames(timelineOffset, speed, fps, sourceFps)
 
   // Get media metadata for resolution and fps info
-  const mediaItems = useMediaLibraryStore.getState().mediaItems
-  const media = mediaItems.find((m) => m.id === item.mediaId)
+  const media = item.mediaId ? useMediaLibraryStore.getState().mediaById[item.mediaId] : undefined
   if (!media) {
     getLogger().error('[insertFreezeFrame] Media not found for item:', item.mediaId)
     return false
@@ -56,6 +55,8 @@ export async function insertFreezeFrame(itemId: string, playheadFrame: number): 
   const timestampSeconds = sourceFrame / mediaFps
 
   try {
+    const { mediaLibraryService } = await importMediaLibraryService()
+
     // Step 1: Get the media file blob
     const blob = await mediaLibraryService.getMediaFile(media.id)
     if (!blob) {

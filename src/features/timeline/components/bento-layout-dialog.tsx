@@ -15,6 +15,7 @@ import { X } from 'lucide-react'
 import { useBentoLayoutDialogStore } from './bento-layout-dialog-store'
 import { useBentoPresetsStore } from '../stores/bento-presets-store'
 import { useProjectStore } from '@/features/timeline/deps/projects'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useItemsStore } from '../stores/items-store'
 import { useTransitionsStore } from '../stores/transitions-store'
 import { applyBentoLayout } from '../stores/actions/transform-actions'
@@ -634,8 +635,12 @@ export function BentoLayoutDialog() {
   const addPreset = useBentoPresetsStore((s) => s.addPreset)
   const removePreset = useBentoPresetsStore((s) => s.removePreset)
 
-  const canvasWidth = useProjectStore((s) => s.currentProject?.metadata.width ?? 1920)
-  const canvasHeight = useProjectStore((s) => s.currentProject?.metadata.height ?? 1080)
+  const canvasWidth = useProjectStore(
+    (s) => s.currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH,
+  )
+  const canvasHeight = useProjectStore(
+    (s) => s.currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT,
+  )
 
   // Build transition chains when dialog opens
   const transitions = useTransitionsStore((s) => s.transitions)

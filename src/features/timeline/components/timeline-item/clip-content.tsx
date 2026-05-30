@@ -1,10 +1,7 @@
-import { memo, useCallback, useMemo } from 'react'
+import { Suspense, lazy, memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link2 } from 'lucide-react'
+import { perfMarkRender } from '@/shared/logging/perf-marks'
 import type { TimelineItem } from '@/types/timeline'
-import { ClipFilmstrip } from '../clip-filmstrip'
-import { ImageFilmstrip } from '../clip-filmstrip/image-filmstrip'
-import { ClipWaveform } from '../clip-waveform'
-import { CompoundClipWaveform } from '../clip-waveform/compound-clip-waveform'
 import { useSettingsStore } from '@/features/timeline/deps/settings'
 import { useMediaLibraryStore } from '@/features/timeline/deps/media-library-store'
 import { useCompositionsStore } from '../../stores/compositions-store'
@@ -24,6 +21,26 @@ import { isGifUrl, isWebpUrl } from '@/shared/utils/media-utils'
 
 const EMPTY_COMPOSITION_LOOKUP: Record<string, never> = {}
 const FILMSTRIP_MIN_WIDTH_PX = 5
+const LazyClipFilmstrip = lazy(() =>
+  import('../clip-filmstrip').then((module) => ({
+    default: module.ClipFilmstrip,
+  })),
+)
+const LazyImageFilmstrip = lazy(() =>
+  import('../clip-filmstrip/image-filmstrip').then((module) => ({
+    default: module.ImageFilmstrip,
+  })),
+)
+const LazyClipWaveform = lazy(() =>
+  import('../clip-waveform').then((module) => ({
+    default: module.ClipWaveform,
+  })),
+)
+const LazyCompoundClipWaveform = lazy(() =>
+  import('../clip-waveform/compound-clip-waveform').then((module) => ({
+    default: module.CompoundClipWaveform,
+  })),
+)
 
 interface CompositionFilmstripSegmentProps {
   segment: CompositionVisualSegment
@@ -100,23 +117,25 @@ function CompositionFilmstripSegment({
         width: `${widthFraction * 100}%`,
       }}
     >
-      <ClipFilmstrip
-        mediaId={mediaId}
-        clipWidth={segmentClipWidth}
-        renderWidth={segmentRenderWidth}
-        sourceStart={sourceStartSeconds}
-        sourceEnd={sourceEndSeconds}
-        sourceDuration={sourceDurationSeconds}
-        trimStart={0}
-        speed={segment.speed}
-        isReversed={isReversed}
-        fps={fps}
-        isVisible={segmentIsVisible}
-        visibleStartRatio={segmentVisibleStartRatio}
-        visibleEndRatio={segmentVisibleEndRatio}
-        pixelsPerSecond={pixelsPerSecond}
-        preferImmediateRendering={preferImmediateRendering}
-      />
+      <Suspense fallback={null}>
+        <LazyClipFilmstrip
+          mediaId={mediaId}
+          clipWidth={segmentClipWidth}
+          renderWidth={segmentRenderWidth}
+          sourceStart={sourceStartSeconds}
+          sourceEnd={sourceEndSeconds}
+          sourceDuration={sourceDurationSeconds}
+          trimStart={0}
+          speed={segment.speed}
+          isReversed={isReversed}
+          fps={fps}
+          isVisible={segmentIsVisible}
+          visibleStartRatio={segmentVisibleStartRatio}
+          visibleEndRatio={segmentVisibleEndRatio}
+          pixelsPerSecond={pixelsPerSecond}
+          preferImmediateRendering={preferImmediateRendering}
+        />
+      </Suspense>
     </div>
   )
 }
@@ -159,13 +178,51 @@ export const ClipContent = memo(function ClipContent({
   audioWaveformScale = 1,
   linkedSyncOffsetFrames = null,
 }: ClipContentProps) {
-  // Subscribe to live pixelsPerSecond so filmstrip/waveform content stays in sync
-  // with the CSS-variable-driven clip shell during zoom — avoids a visible catchup
-  // jump at settle. Per-item render cost is kept low by the filmstrip skip (<5px)
-  // and compact clip shell optimizations in the parent.
-  const pixelsPerSecond = useZoomStore((s) => s.pixelsPerSecond)
+  perfMarkRender('ClipContent')
+  // Drive filmstrip/waveform width from the SETTLED zoom (contentPixelsPerSecond)
+  // by default, not the live per-frame pps. The clip shell itself resizes
+  // smoothly during a zoom gesture via the --timeline-px-per-frame CSS variable
+  // (no React), while contentPixelsPerSecond only updates ~100ms after the gesture
+  // settles. This stops ClipContent (and the expensive filmstrip tile grid /
+  // waveform render) from re-rendering on every wheel/momentum frame — previously
+  // ~73% of zoom cost. During the gesture the filmstrip is briefly at the pre-zoom
+  // scale, covered by the repeating cover-frame background (zoom-in) or clipped by
+  // overflow:hidden (zoom-out); it snaps sharp on settle.
+  //
+  // preferImmediateRendering (active edit previews — trim/slide) opts back into
+  // the live pps so the content tracks the shell frame-for-frame while the user
+  // is actively dragging an edge, where the settle lag would be distracting.
+  const pixelsPerSecond = useZoomStore((s) =>
+    preferImmediateRendering ? s.pixelsPerSecond : s.contentPixelsPerSecond,
+  )
   const showWaveforms = useSettingsStore((s) => s.showWaveforms)
   const showFilmstrips = useSettingsStore((s) => s.showFilmstrips)
+  const enableFilmstripExtraction = useSettingsStore((s) => s.enableFilmstripExtraction)
+  const showVideoFilmstrips = showFilmstrips && enableFilmstripExtraction
+
+  // Defer the heavy filmstrip/waveform mount for clips that first appear DURING
+  // an active zoom gesture. Zooming out brings many clips into the viewport at
+  // once, and mounting each one's tile grid + canvas draws is ~90% of zoom-out
+  // cost. A clip that mounts mid-gesture shows just its colored shell until the
+  // zoom settles, then reveals the thumbnails. This is read once at mount via
+  // getState() (NOT a reactive subscription) so already-mounted clips never
+  // re-render — only clips born mid-gesture defer, and only they subscribe (to
+  // flip themselves on once interaction ends).
+  const [deferVisual, setDeferVisual] = useState(() => useZoomStore.getState().isZoomInteracting)
+  useEffect(() => {
+    if (!deferVisual) return
+    // The gesture may have settled between the mount-time getState() read and
+    // this effect attaching. The subscription only fires on *future* changes, so
+    // without this re-check the clip would stay shell-only until the next zoom.
+    if (!useZoomStore.getState().isZoomInteracting) {
+      setDeferVisual(false)
+      return
+    }
+    return useZoomStore.subscribe((state) => {
+      if (!state.isZoomInteracting) setDeferVisual(false)
+    })
+  }, [deferVisual])
+
   const clipLeftPx = useMemo(
     () => (fps > 0 ? (clipLeftFrames / fps) * pixelsPerSecond : 0),
     [clipLeftFrames, fps, pixelsPerSecond],
@@ -344,7 +401,7 @@ export const ClipContent = memo(function ClipContent({
     [renderTitleText],
   )
 
-  const showVisualContent = clipWidth >= FILMSTRIP_MIN_WIDTH_PX
+  const showVisualContent = clipWidth >= FILMSTRIP_MIN_WIDTH_PX && !deferVisual
 
   // Video clip 2-row layout: label | filmstrip
   if (item.type === 'video' && item.mediaId) {
@@ -363,24 +420,26 @@ export const ClipContent = memo(function ClipContent({
         {/* Row 2: Filmstrip - flex-1 to fill remaining space */}
         {showVisualContent && (
           <div className="relative overflow-hidden flex-1 min-h-0">
-            {showFilmstrips && (
-              <ClipFilmstrip
-                mediaId={item.mediaId}
-                clipWidth={clipWidth}
-                renderWidth={renderWidth}
-                sourceStart={sourceStart}
-                sourceEnd={sourceEnd}
-                sourceDuration={sourceDuration}
-                trimStart={trimStart}
-                speed={speed}
-                isReversed={isReversed}
-                fps={fps}
-                isVisible={clipVisibility.isVisible}
-                visibleStartRatio={clipVisibility.visibleStartRatio}
-                visibleEndRatio={clipVisibility.visibleEndRatio}
-                pixelsPerSecond={pixelsPerSecond}
-                preferImmediateRendering={preferImmediateRendering}
-              />
+            {showVideoFilmstrips && (
+              <Suspense fallback={null}>
+                <LazyClipFilmstrip
+                  mediaId={item.mediaId}
+                  clipWidth={clipWidth}
+                  renderWidth={renderWidth}
+                  sourceStart={sourceStart}
+                  sourceEnd={sourceEnd}
+                  sourceDuration={sourceDuration}
+                  trimStart={trimStart}
+                  speed={speed}
+                  isReversed={isReversed}
+                  fps={fps}
+                  isVisible={clipVisibility.isVisible}
+                  visibleStartRatio={clipVisibility.visibleStartRatio}
+                  visibleEndRatio={clipVisibility.visibleEndRatio}
+                  pixelsPerSecond={pixelsPerSecond}
+                  preferImmediateRendering={preferImmediateRendering}
+                />
+              </Suspense>
             )}
           </div>
         )}
@@ -412,22 +471,24 @@ export const ClipContent = memo(function ClipContent({
                 transformOrigin: '50% 50%',
               }}
             >
-              <ClipWaveform
-                mediaId={item.mediaId}
-                clipWidth={clipWidth}
-                renderWidth={renderWidth}
-                sourceStart={sourceStart}
-                sourceEnd={sourceEnd}
-                sourceDuration={sourceDuration}
-                trimStart={trimStart}
-                speed={speed}
-                isReversed={isReversed}
-                fps={fps}
-                isVisible={clipVisibility.isVisible}
-                visibleStartRatio={clipVisibility.visibleStartRatio}
-                visibleEndRatio={clipVisibility.visibleEndRatio}
-                pixelsPerSecond={pixelsPerSecond}
-              />
+              <Suspense fallback={null}>
+                <LazyClipWaveform
+                  mediaId={item.mediaId}
+                  clipWidth={clipWidth}
+                  renderWidth={renderWidth}
+                  sourceStart={sourceStart}
+                  sourceEnd={sourceEnd}
+                  sourceDuration={sourceDuration}
+                  trimStart={trimStart}
+                  speed={speed}
+                  isReversed={isReversed}
+                  fps={fps}
+                  isVisible={clipVisibility.isVisible}
+                  visibleStartRatio={clipVisibility.visibleStartRatio}
+                  visibleEndRatio={clipVisibility.visibleEndRatio}
+                  pixelsPerSecond={pixelsPerSecond}
+                />
+              </Suspense>
             </div>
           </div>
         )}
@@ -441,17 +502,19 @@ export const ClipContent = memo(function ClipContent({
         {renderCompoundClipLabel(item.label || 'Compound Clip')}
         {showVisualContent && showWaveforms && (
           <div className="relative overflow-hidden bg-waveform-gradient flex-1 min-h-0">
-            <CompoundClipWaveform
-              composition={composition}
-              clipWidth={clipWidth}
-              renderWidth={renderWidth}
-              sourceStart={compoundClipSourceStart}
-              sourceDuration={compoundClipSourceDuration}
-              isVisible={clipVisibility.isVisible}
-              visibleStartRatio={clipVisibility.visibleStartRatio}
-              visibleEndRatio={clipVisibility.visibleEndRatio}
-              pixelsPerSecond={pixelsPerSecond}
-            />
+            <Suspense fallback={null}>
+              <LazyCompoundClipWaveform
+                composition={composition}
+                clipWidth={clipWidth}
+                renderWidth={renderWidth}
+                sourceStart={compoundClipSourceStart}
+                sourceDuration={compoundClipSourceDuration}
+                isVisible={clipVisibility.isVisible}
+                visibleStartRatio={clipVisibility.visibleStartRatio}
+                visibleEndRatio={clipVisibility.visibleEndRatio}
+                pixelsPerSecond={pixelsPerSecond}
+              />
+            </Suspense>
           </div>
         )}
       </div>
@@ -480,7 +543,7 @@ export const ClipContent = memo(function ClipContent({
             <>
               {/* Row 2: Filmstrip stack - flex-1 */}
               <div className="relative overflow-hidden flex-1 min-h-0">
-                {showFilmstrips &&
+                {showVideoFilmstrips &&
                   visualSegments.map((segment) => (
                     <CompositionFilmstripSegment
                       key={segment.itemId}
@@ -504,17 +567,19 @@ export const ClipContent = memo(function ClipContent({
                   className="relative overflow-hidden bg-waveform-gradient"
                   style={{ height: EDITOR_LAYOUT_CSS_VALUES.timelineWaveformRowHeight }}
                 >
-                  <CompoundClipWaveform
-                    composition={composition}
-                    clipWidth={clipWidth}
-                    renderWidth={renderWidth}
-                    sourceStart={compoundClipSourceStart}
-                    sourceDuration={compoundClipSourceDuration}
-                    isVisible={clipVisibility.isVisible}
-                    visibleStartRatio={clipVisibility.visibleStartRatio}
-                    visibleEndRatio={clipVisibility.visibleEndRatio}
-                    pixelsPerSecond={pixelsPerSecond}
-                  />
+                  <Suspense fallback={null}>
+                    <LazyCompoundClipWaveform
+                      composition={composition}
+                      clipWidth={clipWidth}
+                      renderWidth={renderWidth}
+                      sourceStart={compoundClipSourceStart}
+                      sourceDuration={compoundClipSourceDuration}
+                      isVisible={clipVisibility.isVisible}
+                      visibleStartRatio={clipVisibility.visibleStartRatio}
+                      visibleEndRatio={clipVisibility.visibleEndRatio}
+                      pixelsPerSecond={pixelsPerSecond}
+                    />
+                  </Suspense>
                 </div>
               )}
             </>
@@ -528,17 +593,19 @@ export const ClipContent = memo(function ClipContent({
           {renderCompoundClipLabel(item.label || 'Compound Clip')}
           {showVisualContent && showWaveforms && (
             <div className="relative overflow-hidden bg-waveform-gradient flex-1 min-h-0">
-              <CompoundClipWaveform
-                composition={composition}
-                clipWidth={clipWidth}
-                renderWidth={renderWidth}
-                sourceStart={compoundClipSourceStart}
-                sourceDuration={compoundClipSourceDuration}
-                isVisible={clipVisibility.isVisible}
-                visibleStartRatio={clipVisibility.visibleStartRatio}
-                visibleEndRatio={clipVisibility.visibleEndRatio}
-                pixelsPerSecond={pixelsPerSecond}
-              />
+              <Suspense fallback={null}>
+                <LazyCompoundClipWaveform
+                  composition={composition}
+                  clipWidth={clipWidth}
+                  renderWidth={renderWidth}
+                  sourceStart={compoundClipSourceStart}
+                  sourceDuration={compoundClipSourceDuration}
+                  isVisible={clipVisibility.isVisible}
+                  visibleStartRatio={clipVisibility.visibleStartRatio}
+                  visibleEndRatio={clipVisibility.visibleEndRatio}
+                  pixelsPerSecond={pixelsPerSecond}
+                />
+              </Suspense>
             </div>
           )}
         </div>
@@ -605,23 +672,25 @@ export const ClipContent = memo(function ClipContent({
         {showVisualContent && (
           <div className="relative overflow-hidden flex-1 min-h-0">
             {showFilmstrips && (
-              <ImageFilmstrip
-                mediaId={item.mediaId}
-                isAnimated={isAnimated}
-                animationFormat={isAnimatedWebp ? 'webp' : 'gif'}
-                clipWidth={clipWidth}
-                renderWidth={renderWidth}
-                isVisible={clipVisibility.isVisible}
-                src={item.src}
-                sourceStart={sourceStart}
-                sourceDuration={sourceDuration}
-                trimStart={trimStart}
-                speed={speed}
-                fps={fps}
-                visibleStartRatio={clipVisibility.visibleStartRatio}
-                visibleEndRatio={clipVisibility.visibleEndRatio}
-                pixelsPerSecond={pixelsPerSecond}
-              />
+              <Suspense fallback={null}>
+                <LazyImageFilmstrip
+                  mediaId={item.mediaId}
+                  isAnimated={isAnimated}
+                  animationFormat={isAnimatedWebp ? 'webp' : 'gif'}
+                  clipWidth={clipWidth}
+                  renderWidth={renderWidth}
+                  isVisible={clipVisibility.isVisible}
+                  src={item.src}
+                  sourceStart={sourceStart}
+                  sourceDuration={sourceDuration}
+                  trimStart={trimStart}
+                  speed={speed}
+                  fps={fps}
+                  visibleStartRatio={clipVisibility.visibleStartRatio}
+                  visibleEndRatio={clipVisibility.visibleEndRatio}
+                  pixelsPerSecond={pixelsPerSecond}
+                />
+              </Suspense>
             )}
           </div>
         )}

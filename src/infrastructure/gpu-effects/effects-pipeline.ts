@@ -1,4 +1,5 @@
 import { createLogger } from '@/shared/logging/logger'
+import { FULLSCREEN_QUAD_WGSL } from '@/infrastructure/gpu-shared/fullscreen-quad'
 import { COMMON_WGSL } from './common'
 import type { GpuEffectDefinition, GpuEffectInstance } from './types'
 import { GPU_EFFECT_REGISTRY, getGpuEffect } from './index'
@@ -7,27 +8,7 @@ function getLogger() {
   return createLogger('EffectsPipeline')
 }
 
-const FULLSCREEN_VERTEX = /* wgsl */ `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-@vertex
-fn vertexMain(@builtin(vertex_index) vi: u32) -> VertexOutput {
-  var pos = array<vec2f, 6>(
-    vec2f(-1,-1), vec2f(1,-1), vec2f(-1,1),
-    vec2f(-1,1), vec2f(1,-1), vec2f(1,1)
-  );
-  var uv = array<vec2f, 6>(
-    vec2f(0,1), vec2f(1,1), vec2f(0,0),
-    vec2f(0,0), vec2f(1,1), vec2f(1,0)
-  );
-  var o: VertexOutput;
-  o.position = vec4f(pos[vi], 0, 1);
-  o.uv = uv[vi];
-  return o;
-}
-`
+const FULLSCREEN_VERTEX = FULLSCREEN_QUAD_WGSL
 
 const BLIT_SHADER = /* wgsl */ `
 ${FULLSCREEN_VERTEX}

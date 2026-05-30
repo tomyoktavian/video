@@ -38,6 +38,11 @@ import {
   useRestoreProject,
 } from '../hooks/use-project-actions'
 import { useProjectThumbnail } from '../hooks/use-project-thumbnail'
+import {
+  DEFAULT_PROJECT_FPS,
+  DEFAULT_PROJECT_HEIGHT,
+  DEFAULT_PROJECT_WIDTH,
+} from '@/shared/projects/defaults'
 
 interface ProjectCardProps {
   project: Project
@@ -145,9 +150,9 @@ export function ProjectCard({
   }
 
   // Safe metadata access with defaults
-  const width = project?.metadata?.width || 1920
-  const height = project?.metadata?.height || 1080
-  const fps = project?.metadata?.fps || 30
+  const width = project?.metadata?.width || DEFAULT_PROJECT_WIDTH
+  const height = project?.metadata?.height || DEFAULT_PROJECT_HEIGHT
+  const fps = project?.metadata?.fps || DEFAULT_PROJECT_FPS
 
   const resolution = `${width}×${height}`
   const aspectRatio = width / height

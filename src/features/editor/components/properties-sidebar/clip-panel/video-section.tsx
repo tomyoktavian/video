@@ -13,6 +13,7 @@ import {
   useTimelineCommandStore,
   useTimelineStore,
 } from '@/features/editor/deps/timeline-store'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useGizmoStore, useThrottledFrame } from '@/features/editor/deps/preview'
 import type { TimelineState, TimelineActions } from '@/features/editor/deps/timeline-store'
 import {
@@ -61,8 +62,8 @@ const CROP_EDGE_PROPERTY: Record<CropEdge, Exclude<CropProperty, 'cropSoftness'>
 
 function getCropDimensions(item: VideoItem): CropDimensions {
   return {
-    width: Math.max(1, item.sourceWidth ?? item.transform?.width ?? 1920),
-    height: Math.max(1, item.sourceHeight ?? item.transform?.height ?? 1080),
+    width: Math.max(1, item.sourceWidth ?? item.transform?.width ?? DEFAULT_PROJECT_WIDTH),
+    height: Math.max(1, item.sourceHeight ?? item.transform?.height ?? DEFAULT_PROJECT_HEIGHT),
   }
 }
 

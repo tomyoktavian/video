@@ -23,18 +23,25 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  DopesheetEditor,
-  getEffectPropertyBaseValue,
   getBezierPresetForEasing,
   getCropPropertyValue,
   getTransitionBlockedRanges,
   interpolatePropertyValue,
-  getAnimatablePropertiesForItem,
   getTextAnimatableBaseValue,
   isTextAnimatableProperty,
 } from '@/features/timeline/deps/keyframes'
+import {
+  DopesheetEditor,
+  getAnimatablePropertiesForItem,
+  getEffectPropertyBaseValue,
+} from '@/features/timeline/deps/keyframe-editors'
 import { resolveTransform, getSourceDimensions } from '@/features/timeline/deps/composition-runtime'
 import { useProjectStore } from '@/features/timeline/deps/projects'
+import {
+  DEFAULT_PROJECT_FPS,
+  DEFAULT_PROJECT_HEIGHT,
+  DEFAULT_PROJECT_WIDTH,
+} from '@/shared/projects/defaults'
 import { useSelectionStore } from '@/shared/state/selection'
 import { useItemsStore } from '../stores/items-store'
 import { useKeyframesStore } from '../stores/keyframes-store'
@@ -719,9 +726,9 @@ export const KeyframeGraphPanel = memo(function KeyframeGraphPanel({
 
   const canvas = useMemo<CanvasSettings>(
     () => ({
-      width: currentProject?.metadata.width ?? 1920,
-      height: currentProject?.metadata.height ?? 1080,
-      fps: currentProject?.metadata.fps ?? 30,
+      width: currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH,
+      height: currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT,
+      fps: currentProject?.metadata.fps ?? DEFAULT_PROJECT_FPS,
     }),
     [currentProject],
   )

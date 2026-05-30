@@ -31,10 +31,29 @@ import {
   Music,
   Video,
   Scissors,
+  ListPlus,
+  ChevronDown,
 } from 'lucide-react'
-import type { ExportSettings, ExportMode } from '@/types/export'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { toast } from 'sonner'
+import type { ExportSettings, ExportMode, ExtendedExportSettings } from '@/types/export'
 import { useClientRender } from '../hooks/use-client-render'
+import {
+  buildRenderJob,
+  buildSegmentJobs,
+  rangesFromFixedDuration,
+  rangesFromMarkers,
+} from '../utils/build-render-job'
+import { useRenderQueueStore, type RenderJob } from '../stores/render-queue-store'
 import { useProjectStore } from '@/features/export/deps/projects'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useTimelineStore } from '@/features/export/deps/timeline'
 import { formatTimecode, framesToSeconds } from '@/shared/utils/time-utils'
 import {
@@ -59,6 +78,8 @@ export interface ExportDialogProps {
   onClose: () => void
   /** When set, the dialog renders the named compound clip instead of the main timeline. */
   compositionScope?: ExportDialogCompositionScope
+  /** Open the render queue panel (called after jobs are added to the queue). */
+  onOpenRenderQueue?: () => void
 }
 
 type DialogView = 'settings' | 'progress' | 'complete' | 'error' | 'cancelled'
@@ -105,6 +126,70 @@ function formatFileSize(bytes: number): string {
 }
 
 /**
+ * Scale a dimension and round to the nearest even number (encoders require
+ * even dimensions). Shared by the resolution dropdown and the quick presets so
+ * preset detection compares against identical values.
+ */
+function scaleDimension(value: number, scale: number): number {
+  const scaled = Math.round(value * scale)
+  return scaled % 2 === 0 ? scaled : scaled + 1
+}
+
+function scaledResolution(projectWidth: number, projectHeight: number, scale: number) {
+  return {
+    width: scaleDimension(projectWidth, scale),
+    height: scaleDimension(projectHeight, scale),
+  }
+}
+
+type ExportPreset = {
+  id: 'max' | 'recommended' | 'balanced' | 'small'
+  labelKey: string
+  container: ClientVideoContainer
+  codec: ExportSettings['codec']
+  quality: ExportSettings['quality']
+  scale: number
+}
+
+// One-click targets that bundle container/codec/quality/resolution. All keep the
+// project's aspect ratio (scale only) so output is never distorted; they vary the
+// quality/size tradeoff, which is the part users shouldn't need codec knowledge for.
+const EXPORT_PRESETS: ExportPreset[] = [
+  {
+    id: 'max',
+    labelKey: 'export.settings.presetMax',
+    container: 'mp4',
+    codec: 'h264',
+    quality: 'ultra',
+    scale: 1,
+  },
+  {
+    id: 'recommended',
+    labelKey: 'export.settings.presetRecommended',
+    container: 'mp4',
+    codec: 'h264',
+    quality: 'high',
+    scale: 1,
+  },
+  {
+    id: 'balanced',
+    labelKey: 'export.settings.presetBalanced',
+    container: 'mp4',
+    codec: 'h264',
+    quality: 'medium',
+    scale: 0.666,
+  },
+  {
+    id: 'small',
+    labelKey: 'export.settings.presetSmall',
+    container: 'mp4',
+    codec: 'h264',
+    quality: 'low',
+    scale: 0.5,
+  },
+]
+
+/**
  * Generate resolution options based on project dimensions.
  */
 function getResolutionOptions(
@@ -115,10 +200,7 @@ function getResolutionOptions(
   const scales = [1, 0.666, 0.5]
 
   return scales.map((scale) => {
-    const w = Math.round(projectWidth * scale)
-    const h = Math.round(projectHeight * scale)
-    const width = w % 2 === 0 ? w : w + 1
-    const height = h % 2 === 0 ? h : h + 1
+    const { width, height } = scaledResolution(projectWidth, projectHeight, scale)
 
     const label =
       scale === 1
@@ -133,7 +215,12 @@ function getDefaultCodecForFormat(format: 'mp4' | 'webm'): ExportSettings['codec
   return getDefaultVideoCodec(format)
 }
 
-export function ExportDialog({ open, onClose, compositionScope }: ExportDialogProps) {
+export function ExportDialog({
+  open,
+  onClose,
+  compositionScope,
+  onOpenRenderQueue,
+}: ExportDialogProps) {
   const { t } = useTranslation()
   // Compound-scope export pulls dimensions/duration/fps from the sub-comp store.
   const scopedComposition = useCompositionsStore((s) =>
@@ -141,8 +228,12 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   )
   const isCompositionScope = Boolean(compositionScope)
 
-  const projectMetadataWidth = useProjectStore((s) => s.currentProject?.metadata.width ?? 1920)
-  const projectMetadataHeight = useProjectStore((s) => s.currentProject?.metadata.height ?? 1080)
+  const projectMetadataWidth = useProjectStore(
+    (s) => s.currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH,
+  )
+  const projectMetadataHeight = useProjectStore(
+    (s) => s.currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT,
+  )
   const projectWidth = scopedComposition?.width ?? projectMetadataWidth
   const projectHeight = scopedComposition?.height ?? projectMetadataHeight
 
@@ -152,6 +243,8 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
   const inPoint = useTimelineStore((s) => s.inPoint)
   const outPoint = useTimelineStore((s) => s.outPoint)
   const fps = scopedComposition?.fps ?? timelineFps
+  const markers = useTimelineStore((s) => s.markers)
+  const enqueueJobs = useRenderQueueStore((s) => s.enqueueJobs)
 
   const [settings, setSettings] = useState<ExportSettings>({
     codec: getDefaultCodecForFormat('mp4'),
@@ -207,6 +300,39 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
     () => getResolutionOptions(projectWidth, projectHeight, t),
     [projectWidth, projectHeight, t],
   )
+
+  // Which preset (if any) the current settings exactly match. null = "Custom".
+  const activePresetId = useMemo(() => {
+    const match = EXPORT_PRESETS.find((preset) => {
+      const res = scaledResolution(projectWidth, projectHeight, preset.scale)
+      return (
+        videoContainer === preset.container &&
+        settings.codec === preset.codec &&
+        settings.quality === preset.quality &&
+        settings.resolution.width === res.width &&
+        settings.resolution.height === res.height
+      )
+    })
+    return match?.id ?? null
+  }, [
+    videoContainer,
+    settings.codec,
+    settings.quality,
+    settings.resolution.width,
+    settings.resolution.height,
+    projectWidth,
+    projectHeight,
+  ])
+
+  const applyPreset = (preset: ExportPreset) => {
+    setVideoContainer(preset.container)
+    setSettings((prev) => ({
+      ...prev,
+      codec: preset.codec,
+      quality: preset.quality,
+      resolution: scaledResolution(projectWidth, projectHeight, preset.scale),
+    }))
+  }
 
   // Sync resolution when project dimensions change
   useEffect(() => {
@@ -276,20 +402,92 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
     onClose()
   }
 
+  // Assemble the extended settings the render pipeline expects from the dialog
+  // state. Shared by "Export now" and the "Add to queue" actions.
+  const buildExtendedSettings = (): ExtendedExportSettings => ({
+    ...settings,
+    mode: exportMode,
+    videoContainer: exportMode === 'video' ? videoContainer : undefined,
+    audioContainer: exportMode === 'audio' ? audioContainer : undefined,
+    embedSubtitles:
+      exportMode === 'video' && hasTranscriptSubtitles && containerSupportsEmbeddedSubtitles
+        ? embedSubtitles
+        : false,
+    // Compound-clip scope always renders the whole sub-comp; otherwise honour the toggle.
+    renderWholeProject: isCompositionScope ? true : renderWholeProject,
+    compositionId: compositionScope?.compositionId,
+  })
+
   // Start export
   const handleStartExport = async () => {
     setView('progress')
-    // Create extended settings with export mode and container
-    const extendedSettings = {
-      ...settings,
-      mode: exportMode,
-      videoContainer: exportMode === 'video' ? videoContainer : undefined,
-      audioContainer: exportMode === 'audio' ? audioContainer : undefined,
-      renderWholeProject: isCompositionScope ? true : renderWholeProject,
-      compositionId: compositionScope?.compositionId,
-      embedSubtitles: exportMode === 'video' && hasTranscriptSubtitles ? embedSubtitles : false,
+    await startExport(buildExtendedSettings())
+  }
+
+  // The active render range (whole project unless in/out points are set).
+  const queueRange = (): { inPoint: number | null; outPoint: number | null } =>
+    renderWholeProject || !hasInOutPoints
+      ? { inPoint: null, outPoint: null }
+      : { inPoint, outPoint }
+
+  // The frame window segment generators split over: the active range, or the
+  // whole timeline when no in/out points are set.
+  const segmentWindow = (): { start: number; end: number } => {
+    const range = queueRange()
+    return { start: range.inPoint ?? 0, end: range.outPoint ?? timelineDurationFrames }
+  }
+
+  // Close the export dialog and open the queue panel. Called BEFORE building
+  // jobs so picking an option gives instant feedback while the (single) codec
+  // probe + job assembly run.
+  const revealQueue = () => {
+    onClose()
+    onOpenRenderQueue?.()
+  }
+
+  // Capture settings synchronously (the dialog unmounts on reveal), reveal the
+  // queue, then build + enqueue. One codec probe covers the whole batch.
+  const enqueueAndReveal = async (
+    build: (settings: ExtendedExportSettings) => Promise<RenderJob[]>,
+  ) => {
+    const settings = buildExtendedSettings()
+    revealQueue()
+    try {
+      const jobs = await build(settings)
+      if (jobs.length === 0) return
+      enqueueJobs(jobs)
+      toast.success(t('export.renderQueue.addedToast', { count: jobs.length }))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('export.renderQueue.buildFailed'))
     }
-    await startExport(extendedSettings)
+  }
+
+  const handleAddCurrentRange = () => {
+    void enqueueAndReveal(async (settings) => [await buildRenderJob({ settings, ...queueRange() })])
+  }
+
+  const handleAddMarkerSegments = () => {
+    const { start, end } = segmentWindow()
+    const ranges = rangesFromMarkers(markers, start, end)
+    if (ranges.length <= 1) {
+      toast.info(t('export.renderQueue.noMarkers'))
+      return
+    }
+    void enqueueAndReveal((settings) =>
+      buildSegmentJobs(settings, ranges, (i) => t('export.renderQueue.partLabel', { n: i + 1 })),
+    )
+  }
+
+  const handleSplitChunks = (seconds: number) => {
+    const { start, end } = segmentWindow()
+    const ranges = rangesFromFixedDuration(start, end, Math.max(1, Math.round(seconds * fps)))
+    if (ranges.length === 0) {
+      toast.info(t('export.renderQueue.nothingToRender'))
+      return
+    }
+    void enqueueAndReveal((settings) =>
+      buildSegmentJobs(settings, ranges, (i) => t('export.renderQueue.partLabel', { n: i + 1 })),
+    )
   }
 
   // Reset when dialog closes
@@ -392,12 +590,6 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
 
   const hasCapabilityData = supportedVideoCodecs !== null && !videoSupportError
   const hasSupportedVideoPath = videoContainerOptions.some((option) => option.supported)
-  const hasSubtitleExportConflict =
-    exportMode === 'video' &&
-    embedSubtitles &&
-    hasTranscriptSubtitles &&
-    !containerSupportsEmbeddedSubtitles
-
   useEffect(() => {
     if (exportMode !== 'video' || !hasCapabilityData) return
 
@@ -616,6 +808,37 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
             {/* Video Export Settings */}
             {exportMode === 'video' && (
               <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>{t('export.settings.presetLabel')}</Label>
+                    {activePresetId === null && (
+                      <span className="text-xs text-muted-foreground">
+                        {t('export.settings.presetCustom')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EXPORT_PRESETS.map((preset) => {
+                      const isActive = activePresetId === preset.id
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => applyPreset(preset)}
+                          aria-pressed={isActive}
+                          className={`rounded-md border px-3 py-2 text-left text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'border-primary bg-primary/10 text-foreground'
+                              : 'border-border bg-muted/20 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                          }`}
+                        >
+                          {t(preset.labelKey)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   {!isCheckingVideoSupport && videoSupportError && (
                     <Alert>
@@ -741,20 +964,21 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                       <p className="text-xs text-muted-foreground">
                         {t('export.settings.embedSubtitlesDescription')}
                       </p>
-                      {embedSubtitles &&
-                        hasTranscriptSubtitles &&
-                        !containerSupportsEmbeddedSubtitles && (
-                          <p className="text-xs text-destructive">
-                            {t('export.settings.embedSubtitlesUnsupported', {
-                              container: videoContainer.toUpperCase(),
-                            })}
-                          </p>
-                        )}
-                      {embedSubtitles && hasTranscriptSubtitles && videoContainer === 'mp4' && (
+                      {hasTranscriptSubtitles && !containerSupportsEmbeddedSubtitles && (
                         <p className="text-xs text-muted-foreground">
-                          {t('export.settings.embedSubtitlesMp4Note')}
+                          {t('export.settings.embedSubtitlesUnsupported', {
+                            container: videoContainer.toUpperCase(),
+                          })}
                         </p>
                       )}
+                      {embedSubtitles &&
+                        hasTranscriptSubtitles &&
+                        containerSupportsEmbeddedSubtitles &&
+                        videoContainer === 'mp4' && (
+                          <p className="text-xs text-muted-foreground">
+                            {t('export.settings.embedSubtitlesMp4Note')}
+                          </p>
+                        )}
                       {!hasTranscriptSubtitles && (
                         <p className="text-xs text-muted-foreground">
                           {t('export.settings.noTranscriptSegments')}
@@ -763,8 +987,8 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
                     </div>
                     <Switch
                       id="embed-subtitles"
-                      checked={embedSubtitles}
-                      disabled={!hasTranscriptSubtitles}
+                      checked={embedSubtitles && containerSupportsEmbeddedSubtitles}
+                      disabled={!hasTranscriptSubtitles || !containerSupportsEmbeddedSubtitles}
                       onCheckedChange={setEmbedSubtitles}
                     />
                   </div>
@@ -832,11 +1056,46 @@ export function ExportDialog({ open, onClose, compositionScope }: ExportDialogPr
               <Button variant="outline" onClick={handleClose}>
                 {t('common.cancel')}
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="gap-1.5"
+                    disabled={
+                      exportMode === 'video' && (!hasSupportedVideoPath || isCheckingVideoSupport)
+                    }
+                  >
+                    <ListPlus className="h-4 w-4" />
+                    {t('export.renderQueue.addToQueue')}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleAddCurrentRange}>
+                    {t('export.renderQueue.addCurrentRange')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    {t('export.renderQueue.segmentsHeading')}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={handleAddMarkerSegments}>
+                    {t('export.renderQueue.perMarker')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSplitChunks(10)}>
+                    {t('export.renderQueue.splitChunks', { seconds: 10 })}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSplitChunks(30)}>
+                    {t('export.renderQueue.splitChunks', { seconds: 30 })}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSplitChunks(60)}>
+                    {t('export.renderQueue.splitChunks', { seconds: 60 })}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 onClick={handleStartExport}
                 disabled={
-                  exportMode === 'video' &&
-                  (!hasSupportedVideoPath || isCheckingVideoSupport || hasSubtitleExportConflict)
+                  exportMode === 'video' && (!hasSupportedVideoPath || isCheckingVideoSupport)
                 }
               >
                 {exportMode === 'audio'

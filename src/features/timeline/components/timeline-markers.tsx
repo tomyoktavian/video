@@ -6,6 +6,7 @@ import { useTimelineStore } from '../stores/timeline-store'
 import { setInOutPointsWithoutHistory } from '../stores/actions/marker-actions'
 import { usePlaybackStore } from '@/shared/state/playback'
 import { useSelectionStore } from '@/shared/state/selection'
+import { perfMarkRender } from '@/shared/logging/perf-marks'
 
 // Components
 import { TimelineInOutMarkers } from './timeline-in-out-markers'
@@ -39,6 +40,11 @@ interface MarkerInterval {
 const TILE_WIDTH = 1000
 const MAX_VISIBLE_MINOR_MARKERS = 72
 const MIN_MINOR_TICK_SPACING_PX = 14
+
+// Tick marks rise from the ruler's bottom edge. Majors are taller to read as the
+// primary division; both stay short so they don't compete with the playhead/clip grid.
+const MAJOR_TICK_HEIGHT = 14
+const MINOR_TICK_HEIGHT = 7
 
 // Quantize pixelsPerSecond for cache keys to avoid redrawing on every minor zoom change
 // Uses logarithmic steps for perceptually uniform quantization across zoom range
@@ -132,8 +138,8 @@ function drawTile(
   // Use pre-computed marker interval (intervalInSeconds is already set correctly in config)
   const intervalInSeconds = markerConfig.intervalInSeconds
   const markerWidthPx = timeToPixels(intervalInSeconds)
-  const minorTickTop = canvasHeight - 16
-  const minorTickBottom = canvasHeight - 8
+  const majorTickTop = canvasHeight - MAJOR_TICK_HEIGHT
+  const minorTickTop = canvasHeight - MINOR_TICK_HEIGHT
 
   if (markerWidthPx <= 0) return
 
@@ -155,13 +161,13 @@ function drawTile(
     const absoluteX = timeToPixels(timeInSeconds)
     const x = absoluteX - tileOffset // Convert to tile-relative coordinate
 
-    // Major tick line - only draw if within tile bounds
+    // Major tick mark - bottom-anchored, only draw if within tile bounds
     if (x >= 0 && x <= actualTileWidth) {
       const lineX = Math.round(x) + 0.5
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.30)'
       ctx.lineWidth = 1
       ctx.beginPath()
-      ctx.moveTo(lineX, 0)
+      ctx.moveTo(lineX, majorTickTop)
       ctx.lineTo(lineX, canvasHeight)
       ctx.stroke()
     }
@@ -172,7 +178,7 @@ function drawTile(
       const lastTickX = x + tickSpacing * (markerConfig.minorTicks - 1)
       if (lastTickX < 0 || x > actualTileWidth) continue
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)'
       ctx.lineWidth = 1
 
       for (let j = 1; j < markerConfig.minorTicks; j++) {
@@ -181,7 +187,7 @@ function drawTile(
 
         ctx.beginPath()
         ctx.moveTo(tickX, minorTickTop)
-        ctx.lineTo(tickX, minorTickBottom)
+        ctx.lineTo(tickX, canvasHeight)
         ctx.stroke()
       }
     }
@@ -258,7 +264,7 @@ function syncLabels(
       span.style.top = '2px'
       span.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
       span.style.fontFeatureSettings = '"tnum"'
-      span.style.textShadow = '1px 1px 0 rgba(0, 0, 0, 0.5)'
+      span.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.45)'
       span.style.zIndex = '24'
       container.appendChild(span)
       pool.set(i, span)
@@ -301,6 +307,7 @@ export const TimelineMarkers = memo(function TimelineMarkers({
   duration,
   width,
 }: TimelineMarkersProps) {
+  perfMarkRender('TimelineMarkers')
   const editorDensity = useSettingsStore((s) => s.editorDensity)
   const editorLayout = getEditorLayout(editorDensity)
   const { timeToPixels, pixelsPerSecond, pixelsToFrame } = useTimelineZoomContext()
@@ -453,8 +460,10 @@ export const TimelineMarkers = memo(function TimelineMarkers({
   // This dramatically reduces redraws during continuous zoom
   const quantizedPPS = quantizePPSForCache(pixelsPerSecond)
 
-  // Cache key uses quantized PPS for better hit rate during zoom
-  const cacheKey = `${quantizedPPS.toFixed(4)}-${fps}`
+  // Cache key uses quantized PPS for better hit rate during zoom. canvasHeight is
+  // included because tile tick geometry is drawn relative to it — without it, a
+  // ruler-height change (e.g. a new editor-density preset) would reuse stale tiles.
+  const cacheKey = `${quantizedPPS.toFixed(4)}-${fps}-${canvasHeight}`
 
   // Store config in refs so the imperative scroll handler can access them
   const displayWidthRef = useRef(displayWidth)
@@ -530,6 +539,14 @@ export const TimelineMarkers = memo(function TimelineMarkers({
     const renderTimeToPixels = (time: number) => time * qPPS
     const markerConfig = calculateMarkerInterval(qPPS)
 
+    // Per-tile cache key. The last (partial) tile's rendered width depends on
+    // displayWidth (`dw`), so a duration/viewport change at a fixed zoom would
+    // otherwise reuse a stale-width tile (ck alone is width-agnostic). Full
+    // tiles always resolve to TILE_WIDTH, so their key stays stable and the
+    // zoom-bucket reuse is preserved.
+    const tileKeyFor = (idx: number) =>
+      `${idx}-${ck}-${Math.round(Math.min(TILE_WIDTH, dw - idx * TILE_WIDTH))}`
+
     for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
       visibleTileIndices.add(tileIndex)
 
@@ -547,7 +564,7 @@ export const TimelineMarkers = memo(function TimelineMarkers({
       }
       // Existing canvases keep their transform — tileIndex is stable per pool entry
 
-      const tileCacheKey = `${tileIndex}-${ck}`
+      const tileCacheKey = tileKeyFor(tileIndex)
 
       // Skip redraw if this canvas already shows the correct content.
       // data-ck tracks the cache key used for the last successful paint.
@@ -591,14 +608,14 @@ export const TimelineMarkers = memo(function TimelineMarkers({
     // Pre-render adjacent tiles during idle
     const maxTile = Math.ceil(dw / TILE_WIDTH) - 1
     const adjacentTiles = [startTile - 1, endTile + 1].filter(
-      (t) => t >= 0 && t <= maxTile && !tileCache.has(`${t}-${ck}`),
+      (t) => t >= 0 && t <= maxTile && !tileCache.has(tileKeyFor(t)),
     )
     if (adjacentTiles.length > 0) {
       requestIdleCallback(
         (deadline) => {
           for (const adj of adjacentTiles) {
             if (deadline.timeRemaining() < 10 || tileCacheRef.current !== tileCache) break
-            const adjKey = `${adj}-${ck}`
+            const adjKey = tileKeyFor(adj)
             if (tileCache.has(adjKey)) continue
             const offscreen = document.createElement('canvas')
             drawTile(offscreen, adj, TILE_WIDTH, ch, markerConfig, renderTimeToPixels, dw)
@@ -886,12 +903,15 @@ export const TimelineMarkers = memo(function TimelineMarkers({
       }
 
       setInOutPointsWithoutHistory(nextIn, nextOut)
+      // Skim the preview to the range's leading (in) edge as it slides.
+      setPreviewFrameRef.current(nextIn)
       rangeDragLastInRef.current = nextIn
       rangeDragLastOutRef.current = nextOut
     }
 
     const handleMouseUp = () => {
       setIsRangeDragging(false)
+      setPreviewFrameRef.current(null)
       markDirtyRef.current()
     }
 
@@ -911,8 +931,7 @@ export const TimelineMarkers = memo(function TimelineMarkers({
       className="border-b border-border/80 relative"
       onMouseDown={handleMouseDown}
       style={{
-        background:
-          'linear-gradient(to bottom, oklch(0.22 0 0 / 0.30), oklch(0.22 0 0 / 0.20), oklch(0.22 0 0 / 0.10))',
+        background: 'oklch(0.22 0 0 / 0.22)',
         userSelect: 'none',
         height: EDITOR_LAYOUT_CSS_VALUES.timelineRulerHeight,
         width: width ? `${width}px` : undefined,
@@ -927,16 +946,6 @@ export const TimelineMarkers = memo(function TimelineMarkers({
         ref={labelsContainerRef}
         className="absolute inset-0 overflow-hidden pointer-events-none"
         style={{ contain: 'layout style paint' }}
-      />
-
-      {/* Vignette effects */}
-      <div
-        className="absolute inset-y-0 left-0 w-8 pointer-events-none"
-        style={{ background: 'linear-gradient(to right, oklch(0.15 0 0 / 0.15), transparent)' }}
-      />
-      <div
-        className="absolute inset-y-0 right-0 w-8 pointer-events-none"
-        style={{ background: 'linear-gradient(to left, oklch(0.15 0 0 / 0.15), transparent)' }}
       />
 
       {/* Full ruler highlight between in/out points */}

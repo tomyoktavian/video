@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,6 +9,7 @@ import {
   FolderArchive,
   Github,
   Keyboard,
+  ListVideo,
   Save,
   Settings,
   Sparkles,
@@ -24,9 +25,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { LocalInferenceStatusPill } from './local-inference-status-pill'
-import { ProjectDebugPanel } from './project-debug-panel'
-import { SettingsDialog } from './settings-dialog'
-import { ShortcutsDialog } from './shortcuts-dialog'
 import { UnsavedChangesDialog } from './unsaved-changes-dialog'
 import { WhatsNewDialog } from './whats-new-dialog'
 import { hasUnseenChangelog } from './whats-new-seen'
@@ -36,6 +34,15 @@ import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { useDebugStore } from '@/features/editor/stores/debug-store'
 
 const SAVE_ANIMATION_MIN_MS = 1800
+const LazyProjectDebugPanel = lazy(() =>
+  import('./project-debug-panel').then((module) => ({ default: module.ProjectDebugPanel })),
+)
+const LazySettingsDialog = lazy(() =>
+  import('./settings-dialog').then((module) => ({ default: module.SettingsDialog })),
+)
+const LazyShortcutsDialog = lazy(() =>
+  import('./shortcuts-dialog').then((module) => ({ default: module.ShortcutsDialog })),
+)
 
 interface ToolbarProps {
   projectId: string
@@ -52,6 +59,9 @@ interface ToolbarProps {
   onExport?: () => void
   onExportBundle?: () => void
   onExportLauncher?: () => void
+  onOpenRenderQueue?: () => void
+  /** Number of queued + rendering jobs, shown as a badge on the queue button. */
+  renderQueueCount?: number
 }
 
 export const Toolbar = memo(function Toolbar({
@@ -63,6 +73,8 @@ export const Toolbar = memo(function Toolbar({
   onExport,
   onExportBundle,
   onExportLauncher,
+  onOpenRenderQueue,
+  renderQueueCount = 0,
 }: ToolbarProps) {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -176,9 +188,17 @@ export const Toolbar = memo(function Toolbar({
 
       <LocalInferenceStatusPill />
 
-      <ShortcutsDialog open={showShortcutsDialog} onOpenChange={setShowShortcutsDialog} />
+      {showShortcutsDialog && (
+        <Suspense fallback={null}>
+          <LazyShortcutsDialog open={showShortcutsDialog} onOpenChange={setShowShortcutsDialog} />
+        </Suspense>
+      )}
 
-      <SettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
+      {showSettingsDialog && (
+        <Suspense fallback={null}>
+          <LazySettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
+        </Suspense>
+      )}
 
       <WhatsNewDialog open={showWhatsNewDialog} onOpenChange={setShowWhatsNewDialog} />
 
@@ -257,6 +277,25 @@ export const Toolbar = memo(function Toolbar({
           </div>
           {t('toolbar.save')}
         </Button>
+
+        {onOpenRenderQueue && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 relative"
+            onClick={onOpenRenderQueue}
+            data-tooltip={t('toolbar.renderQueue')}
+            data-tooltip-side="bottom"
+            aria-label={t('toolbar.renderQueueAria')}
+          >
+            <ListVideo className="h-4 w-4" />
+            {renderQueueCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium leading-none text-primary-foreground">
+                {renderQueueCount}
+              </span>
+            )}
+          </Button>
+        )}
 
         {hasCompositions ? (
           <Button
@@ -363,7 +402,11 @@ function DebugPopover({ projectId }: { projectId: string }) {
         sideOffset={8}
         className="w-64 p-0 bg-zinc-900 border-zinc-700 text-zinc-100"
       >
-        <ProjectDebugPanel projectId={projectId} />
+        {debugPanelOpen && (
+          <Suspense fallback={null}>
+            <LazyProjectDebugPanel projectId={projectId} />
+          </Suspense>
+        )}
       </PopoverContent>
     </Popover>
   )

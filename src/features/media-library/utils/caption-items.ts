@@ -5,7 +5,7 @@ import {
   type TrackKind,
 } from '../deps/timeline-contract'
 import type { MediaTranscriptSegment } from '@/types/storage'
-import type { MediaCaption } from '@/infrastructure/analysis'
+import type { MediaCaption } from '@/infrastructure/analysis/media-tagger'
 import type { SubtitleCue, SubtitleFormat } from '@/shared/utils/subtitles'
 import type {
   AudioItem,
@@ -17,6 +17,10 @@ import type {
   VideoItem,
 } from '@/types/timeline'
 import { timelineToSourceFrames } from '../deps/timeline-contract'
+import {
+  CAPTION_STYLE_PRESETS,
+  resolveCaptionStylePatch,
+} from '@/shared/typography/caption-style-presets'
 
 /**
  * Fallback segment duration when AI captions can't infer an `end` time from
@@ -674,6 +678,21 @@ export function buildSubtitleTextItem(input: SubtitleTextItemInput): TextItem {
     ...(input.mediaId ? { mediaId: input.mediaId } : {}),
     ...(input.captionSource ? { captionSource: input.captionSource } : {}),
   }
+}
+
+/**
+ * Resolve a named caption style preset into a template applied to freshly
+ * generated captions. Returns undefined when the preset id is unknown so the
+ * builders fall back to their hardcoded default look.
+ */
+export function getCaptionStyleTemplateFromPreset(
+  presetId: string,
+  canvasWidth: number,
+  canvasHeight: number,
+): CaptionTextItemTemplate | undefined {
+  const preset = CAPTION_STYLE_PRESETS.find((p) => p.id === presetId)
+  if (!preset) return undefined
+  return resolveCaptionStylePatch(preset, canvasWidth, canvasHeight)
 }
 
 export function getCaptionTextItemTemplate(

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeftRight, RotateCcw, LayoutDashboard, Clock } from 'lucide-react'
 import { useProjectStore } from '@/features/editor/deps/projects'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useGizmoStore } from '@/features/editor/deps/preview'
 import { HexColorPicker } from 'react-colorful'
@@ -113,8 +114,8 @@ export const CanvasPanel = memo(function CanvasPanel() {
   )
 
   // All handlers must be defined before any early returns (Rules of Hooks)
-  const width = currentProject?.metadata.width ?? 1920
-  const height = currentProject?.metadata.height ?? 1080
+  const width = currentProject?.metadata.width ?? DEFAULT_PROJECT_WIDTH
+  const height = currentProject?.metadata.height ?? DEFAULT_PROJECT_HEIGHT
   const storedBackgroundColor = currentProject?.metadata.backgroundColor ?? '#000000'
 
   const applyProjectMetadataChange = useCallback(

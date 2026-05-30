@@ -18,6 +18,7 @@ import { createOutputFormat, getDefaultAudioCodec, getMimeType } from './client-
 import { createMediabunnyInputSource } from '@/infrastructure/browser/mediabunny-input-source'
 import { createLogger } from '@/shared/logging/logger'
 import { hasMediaCrop } from '@/shared/utils/media-crop'
+import { DEFAULT_PROJECT_HEIGHT, DEFAULT_PROJECT_WIDTH } from '@/shared/projects/defaults'
 import {
   buildTranscriptSubtitleWebVtt,
   omitTranscriptSubtitleItemsForSoftSubtitleExport,
@@ -757,8 +758,8 @@ export async function renderSingleFrame(options: SingleFrameOptions): Promise<Bl
     format = 'image/jpeg',
   } = options
 
-  const compositionWidth = composition.width || 1920
-  const compositionHeight = composition.height || 1080
+  const compositionWidth = composition.width || DEFAULT_PROJECT_WIDTH
+  const compositionHeight = composition.height || DEFAULT_PROJECT_HEIGHT
 
   getLog().debug('Rendering single frame', {
     frame,

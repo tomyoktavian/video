@@ -18,34 +18,8 @@
 
 import type { Project, ProjectTimeline } from '@/types/project'
 import { DEFAULT_TRACK_HEIGHT, DEFAULT_FPS } from '@/shared/timeline/defaults'
-import {
-  AUDIO_EQ_HIGH_CUT_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_CUT_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_CUT_MIN_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_MID_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_MID_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_MID_MIN_FREQUENCY_HZ,
-  AUDIO_EQ_HIGH_MID_Q,
-  AUDIO_EQ_HIGH_MIN_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_CUT_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_CUT_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_CUT_MIN_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_MID_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_MID_MAX_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_MID_MIN_FREQUENCY_HZ,
-  AUDIO_EQ_LOW_MID_Q,
-  AUDIO_EQ_LOW_MIN_FREQUENCY_HZ,
-  clampAudioEqCutSlopeDbPerOct,
-  clampAudioEqFrequencyHz,
-  clampAudioEqGainDb,
-  clampAudioEqQ,
-  normalizeAudioEqSettings,
-} from '@/shared/utils/audio-eq'
-import { clampAudioPitchCents, clampAudioPitchSemitones } from '@/shared/utils/audio-pitch'
+import { normalizeAudioEqSettings } from '@/shared/utils/audio-eq'
+import { applyOptionalClamps } from '@/shared/timeline/item-clamps'
 
 /**
  * Normalize a track to ensure all fields have valid values.
@@ -79,34 +53,14 @@ function normalizeTrack(
  */
 function normalizeItem(item: ProjectTimeline['items'][number]): ProjectTimeline['items'][number] {
   const normalized = { ...item }
-  const maybeFrameFields = normalized as typeof normalized & {
-    trimStart?: number
-    trimEnd?: number
-    sourceStart?: number
-    sourceEnd?: number
-    sourceDuration?: number
-    sourceFps?: number
-  }
 
-  // Keep timeline and source coordinates aligned to whole frames.
+  // Keep timeline coordinates aligned to whole frames.
   normalized.from = Math.max(0, Math.round(normalized.from ?? 0))
   normalized.durationInFrames = Math.max(1, Math.round(normalized.durationInFrames ?? 1))
-  if (maybeFrameFields.trimStart !== undefined)
-    maybeFrameFields.trimStart = Math.max(0, Math.round(maybeFrameFields.trimStart))
-  if (maybeFrameFields.trimEnd !== undefined)
-    maybeFrameFields.trimEnd = Math.max(0, Math.round(maybeFrameFields.trimEnd))
-  if (maybeFrameFields.sourceStart !== undefined)
-    maybeFrameFields.sourceStart = Math.max(0, Math.round(maybeFrameFields.sourceStart))
-  if (maybeFrameFields.sourceEnd !== undefined)
-    maybeFrameFields.sourceEnd = Math.max(0, Math.round(maybeFrameFields.sourceEnd))
-  if (maybeFrameFields.sourceDuration !== undefined)
-    maybeFrameFields.sourceDuration = Math.max(0, Math.round(maybeFrameFields.sourceDuration))
-  if (maybeFrameFields.sourceFps !== undefined) {
-    maybeFrameFields.sourceFps =
-      Number.isFinite(maybeFrameFields.sourceFps) && maybeFrameFields.sourceFps > 0
-        ? Math.round(maybeFrameFields.sourceFps * 1000) / 1000
-        : undefined
-  }
+
+  // Frame/audio/EQ optional-field clamps — shared with the runtime items-store
+  // normalizer so adding a new clamped field only needs registering once.
+  applyOptionalClamps(normalized as Record<string, unknown>)
 
   // Ensure speed is valid (default 1.0, range 0.1-10.0)
   if (normalized.speed !== undefined) {
@@ -130,162 +84,6 @@ function normalizeItem(item: ProjectTimeline['items'][number]): ProjectTimeline[
   }
   if (normalized.audioFadeOut !== undefined) {
     normalized.audioFadeOut = Math.max(0, normalized.audioFadeOut)
-  }
-  if (normalized.audioPitchSemitones !== undefined) {
-    normalized.audioPitchSemitones = clampAudioPitchSemitones(normalized.audioPitchSemitones)
-  }
-  if (normalized.audioPitchCents !== undefined) {
-    normalized.audioPitchCents = clampAudioPitchCents(normalized.audioPitchCents)
-  }
-  if (normalized.audioEqOutputGainDb !== undefined) {
-    normalized.audioEqOutputGainDb = clampAudioEqGainDb(normalized.audioEqOutputGainDb)
-  }
-  if (normalized.audioEqBand1Enabled !== undefined) {
-    normalized.audioEqBand1Enabled = !!normalized.audioEqBand1Enabled
-  }
-  if (normalized.audioEqBand1FrequencyHz !== undefined) {
-    normalized.audioEqBand1FrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqBand1FrequencyHz,
-      AUDIO_EQ_LOW_CUT_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_CUT_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_CUT_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqBand1GainDb !== undefined) {
-    normalized.audioEqBand1GainDb = clampAudioEqGainDb(normalized.audioEqBand1GainDb)
-  }
-  if (normalized.audioEqBand1Q !== undefined) {
-    normalized.audioEqBand1Q = clampAudioEqQ(normalized.audioEqBand1Q)
-  }
-  if (normalized.audioEqBand1SlopeDbPerOct !== undefined) {
-    normalized.audioEqBand1SlopeDbPerOct = clampAudioEqCutSlopeDbPerOct(
-      normalized.audioEqBand1SlopeDbPerOct,
-    )
-  }
-  if (normalized.audioEqLowCutEnabled !== undefined) {
-    normalized.audioEqLowCutEnabled = !!normalized.audioEqLowCutEnabled
-  }
-  if (normalized.audioEqLowCutFrequencyHz !== undefined) {
-    normalized.audioEqLowCutFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqLowCutFrequencyHz,
-      AUDIO_EQ_LOW_CUT_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_CUT_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_CUT_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqLowCutSlopeDbPerOct !== undefined) {
-    normalized.audioEqLowCutSlopeDbPerOct = clampAudioEqCutSlopeDbPerOct(
-      normalized.audioEqLowCutSlopeDbPerOct,
-    )
-  }
-  if (normalized.audioEqLowEnabled !== undefined) {
-    normalized.audioEqLowEnabled = !!normalized.audioEqLowEnabled
-  }
-  if (normalized.audioEqLowGainDb !== undefined) {
-    normalized.audioEqLowGainDb = clampAudioEqGainDb(normalized.audioEqLowGainDb)
-  }
-  if (normalized.audioEqLowFrequencyHz !== undefined) {
-    normalized.audioEqLowFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqLowFrequencyHz,
-      AUDIO_EQ_LOW_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqLowQ !== undefined) {
-    normalized.audioEqLowQ = clampAudioEqQ(normalized.audioEqLowQ)
-  }
-  if (normalized.audioEqLowMidEnabled !== undefined) {
-    normalized.audioEqLowMidEnabled = !!normalized.audioEqLowMidEnabled
-  }
-  if (normalized.audioEqLowMidGainDb !== undefined) {
-    normalized.audioEqLowMidGainDb = clampAudioEqGainDb(normalized.audioEqLowMidGainDb)
-  }
-  if (normalized.audioEqLowMidFrequencyHz !== undefined) {
-    normalized.audioEqLowMidFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqLowMidFrequencyHz,
-      AUDIO_EQ_LOW_MID_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_MID_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_LOW_MID_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqLowMidQ !== undefined) {
-    normalized.audioEqLowMidQ = clampAudioEqQ(normalized.audioEqLowMidQ, AUDIO_EQ_LOW_MID_Q)
-  }
-  if (normalized.audioEqMidGainDb !== undefined) {
-    normalized.audioEqMidGainDb = clampAudioEqGainDb(normalized.audioEqMidGainDb)
-  }
-  if (normalized.audioEqHighMidEnabled !== undefined) {
-    normalized.audioEqHighMidEnabled = !!normalized.audioEqHighMidEnabled
-  }
-  if (normalized.audioEqHighMidGainDb !== undefined) {
-    normalized.audioEqHighMidGainDb = clampAudioEqGainDb(normalized.audioEqHighMidGainDb)
-  }
-  if (normalized.audioEqHighMidFrequencyHz !== undefined) {
-    normalized.audioEqHighMidFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqHighMidFrequencyHz,
-      AUDIO_EQ_HIGH_MID_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_MID_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_MID_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqHighMidQ !== undefined) {
-    normalized.audioEqHighMidQ = clampAudioEqQ(normalized.audioEqHighMidQ, AUDIO_EQ_HIGH_MID_Q)
-  }
-  if (normalized.audioEqHighEnabled !== undefined) {
-    normalized.audioEqHighEnabled = !!normalized.audioEqHighEnabled
-  }
-  if (normalized.audioEqHighGainDb !== undefined) {
-    normalized.audioEqHighGainDb = clampAudioEqGainDb(normalized.audioEqHighGainDb)
-  }
-  if (normalized.audioEqHighFrequencyHz !== undefined) {
-    normalized.audioEqHighFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqHighFrequencyHz,
-      AUDIO_EQ_HIGH_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqHighQ !== undefined) {
-    normalized.audioEqHighQ = clampAudioEqQ(normalized.audioEqHighQ)
-  }
-  if (normalized.audioEqBand6Enabled !== undefined) {
-    normalized.audioEqBand6Enabled = !!normalized.audioEqBand6Enabled
-  }
-  if (normalized.audioEqBand6FrequencyHz !== undefined) {
-    normalized.audioEqBand6FrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqBand6FrequencyHz,
-      AUDIO_EQ_HIGH_CUT_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_CUT_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_CUT_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqBand6GainDb !== undefined) {
-    normalized.audioEqBand6GainDb = clampAudioEqGainDb(normalized.audioEqBand6GainDb)
-  }
-  if (normalized.audioEqBand6Q !== undefined) {
-    normalized.audioEqBand6Q = clampAudioEqQ(normalized.audioEqBand6Q)
-  }
-  if (normalized.audioEqBand6SlopeDbPerOct !== undefined) {
-    normalized.audioEqBand6SlopeDbPerOct = clampAudioEqCutSlopeDbPerOct(
-      normalized.audioEqBand6SlopeDbPerOct,
-    )
-  }
-  if (normalized.audioEqHighCutEnabled !== undefined) {
-    normalized.audioEqHighCutEnabled = !!normalized.audioEqHighCutEnabled
-  }
-  if (normalized.audioEqHighCutFrequencyHz !== undefined) {
-    normalized.audioEqHighCutFrequencyHz = clampAudioEqFrequencyHz(
-      normalized.audioEqHighCutFrequencyHz,
-      AUDIO_EQ_HIGH_CUT_MIN_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_CUT_MAX_FREQUENCY_HZ,
-      AUDIO_EQ_HIGH_CUT_FREQUENCY_HZ,
-    )
-  }
-  if (normalized.audioEqHighCutSlopeDbPerOct !== undefined) {
-    normalized.audioEqHighCutSlopeDbPerOct = clampAudioEqCutSlopeDbPerOct(
-      normalized.audioEqHighCutSlopeDbPerOct,
-    )
   }
 
   // Normalize transform if present

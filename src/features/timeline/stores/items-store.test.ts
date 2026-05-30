@@ -7,6 +7,7 @@ import type {
   VideoItem,
 } from '@/types/timeline'
 import { useItemsStore } from './items-store'
+import { selectReplaceableCaptionClipIds } from './items-store-indexes'
 import { useTimelineSettingsStore } from './timeline-settings-store'
 import { timelineToSourceFrames } from '../utils/source-calculations'
 import { rollingTrimItems } from './actions/item-actions'
@@ -562,7 +563,7 @@ describe('items-store indexes', () => {
 
     useItemsStore.getState().setItems([clip, legacyCaption])
 
-    expect(useItemsStore.getState().replaceableCaptionClipIds.has('legacy-clip')).toBe(true)
+    expect(selectReplaceableCaptionClipIds(useItemsStore.getState()).has('legacy-clip')).toBe(true)
   })
 
   it('indexes transcript subtitle segments as replaceable for their source clip', () => {
@@ -581,7 +582,9 @@ describe('items-store indexes', () => {
 
     useItemsStore.getState().setItems([clip, transcriptSegment])
 
-    expect(useItemsStore.getState().replaceableCaptionClipIds.has('transcript-clip')).toBe(true)
+    expect(selectReplaceableCaptionClipIds(useItemsStore.getState()).has('transcript-clip')).toBe(
+      true,
+    )
   })
 
   it('indexes legacy linked audio/video pairs for O(1) lookups', () => {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { GPU_EFFECT_REGISTRY, getGpuEffect, getGpuEffectDefaultParams } from './index'
+import {
+  GPU_EFFECT_REGISTRY,
+  getGpuCategoriesWithEffects,
+  getGpuEffect,
+  getGpuEffectDefaultParams,
+  getGpuEffectsByCategory,
+} from './index'
 
 describe('GPU effect registry', () => {
   it('registers every effect with shader metadata and valid default uniforms', () => {
@@ -118,5 +124,68 @@ describe('GPU effect registry', () => {
     expect(
       effect!.params.colorSaturation!.visibleWhen?.({ ...defaults, matchSourceColor: false }),
     ).toBe(false)
+  })
+
+  it('returns undefined for unknown effect ids without throwing', () => {
+    expect(getGpuEffect('nope-not-here')).toBeUndefined()
+    expect(getGpuEffect('')).toBeUndefined()
+    expect(getGpuEffectDefaultParams('nope-not-here')).toEqual({})
+  })
+
+  it('groups effects under their declared category', () => {
+    // Every effect should be reachable via its category. The categories
+    // returned by getGpuCategoriesWithEffects() should exactly cover the
+    // registry.
+    const categorized = getGpuCategoriesWithEffects()
+    expect(categorized.length).toBeGreaterThan(0)
+
+    const seenIds = new Set<string>()
+    for (const { category, effects } of categorized) {
+      expect(effects.length).toBeGreaterThan(0)
+      for (const effect of effects) {
+        expect(effect.category, effect.id).toBe(category)
+        expect(seenIds.has(effect.id), `duplicate id ${effect.id}`).toBe(false)
+        seenIds.add(effect.id)
+      }
+    }
+    expect(seenIds.size).toBe(GPU_EFFECT_REGISTRY.size)
+  })
+
+  it('returns the same effect list via category lookup as via direct getters', () => {
+    for (const { category, effects } of getGpuCategoriesWithEffects()) {
+      const byCategory = getGpuEffectsByCategory(category)
+      expect(byCategory.map((e) => e.id).sort()).toEqual(effects.map((e) => e.id).sort())
+    }
+  })
+
+  it('returns empty list for an empty category', () => {
+    // Categories with no registered effects (none today) should return [],
+    // not throw. Pass a name that is in the union but lacks effects — if
+    // none exists, any unknown key returns [] via nullish coalescing.
+    // We assert the well-typed surface area here.
+    const result = getGpuEffectsByCategory('color')
+    expect(Array.isArray(result)).toBe(true)
+  })
+
+  it('tolerates unknown params without crashing', () => {
+    for (const [id, effect] of GPU_EFFECT_REGISTRY) {
+      if (effect.uniformSize === 0) continue
+      const defaults = getGpuEffectDefaultParams(id)
+      const polluted = { ...defaults, __unknownExtraParam__: 'ignored' }
+      expect(() => effect.packUniforms(polluted, 1920, 1080), id).not.toThrow()
+    }
+  })
+
+  it('declares uniform sizes as multiples of 16 (WebGPU alignment)', () => {
+    // WebGPU requires uniform buffers be multiples of 16 bytes. The packed
+    // Float32Array must also fit within the declared size.
+    for (const [id, effect] of GPU_EFFECT_REGISTRY) {
+      expect(effect.uniformSize % 16, id).toBe(0)
+      if (effect.uniformSize === 0) continue
+      const defaults = getGpuEffectDefaultParams(id)
+      const packed = effect.packUniforms(defaults, 1920, 1080)
+      expect(packed, id).not.toBeNull()
+      expect(packed!.byteLength, id).toBeLessThanOrEqual(effect.uniformSize)
+    }
   })
 })

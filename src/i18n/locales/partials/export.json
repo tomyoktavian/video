@@ -1,0 +1,866 @@
+{
+  "en": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "The export was cancelled. No file was saved."
+      },
+      "complete": {
+        "audioSuccess": "Your audio is ready to download.",
+        "download": "Download",
+        "fileSizeLabel": "Size",
+        "timeTakenLabel": "Time",
+        "videoSuccess": "Your video is ready to download."
+      },
+      "dialog": {
+        "descCancelled": "The export was cancelled before it finished.",
+        "descComplete": "Your file is ready.",
+        "descError": "Something went wrong while exporting.",
+        "descProgress": "Rendering your video. This can take a few minutes.",
+        "descSettings": "Configure your export options.",
+        "titleCancelled": "Export cancelled",
+        "titleComplete": "Export complete",
+        "titleError": "Export failed",
+        "titleProgress": "Exporting video",
+        "titleSettings": "Export"
+      },
+      "errors": {
+        "verifyCodec": "Couldn't verify codec support for the current settings."
+      },
+      "progress": {
+        "cancelExport": "Cancel",
+        "elapsedLabel": "Elapsed",
+        "encoding": "Encoding…",
+        "finalizing": "Finalizing…",
+        "framesLabel": "Frames",
+        "keepTabOpen": "Keep this tab open until the export finishes.",
+        "preparing": "Preparing…",
+        "rendering": "Rendering…"
+      },
+      "settings": {
+        "audio": "Audio",
+        "audioOnlyNote": "Audio-only export — no video will be included.",
+        "audioQualityHigh": "High",
+        "audioQualityLow": "Low",
+        "audioQualityMedium": "Medium",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "No supported encoder for {{width}}×{{height}} at the selected quality.",
+        "codec": "Codec",
+        "codecSupportUnverified": "Couldn't verify codec support. Exporting may still work, but compatibility isn't guaranteed.",
+        "duration": "Duration",
+        "embedSubtitles": "Embed subtitles",
+        "embedSubtitlesDescription": "Include transcript captions as a subtitle track in the exported file.",
+        "embedSubtitlesMp4Note": "MP4 stores subtitles as a separate track. Some players may not show them by default.",
+        "embedSubtitlesUnsupported": "{{container}} doesn't support embedded subtitles. Choose MP4, MKV, or WebM.",
+        "exportAudio": "Export Audio",
+        "exportRange": "Export range",
+        "exportType": "Export type",
+        "exportVideo": "Export Video",
+        "format": "Format",
+        "in": "In",
+        "inOutRangeHint": "Only the selected in/out range will be exported.",
+        "noTranscriptSegments": "No transcript captions available to embed.",
+        "out": "Out",
+        "presetBalanced": "Balanced",
+        "presetCustom": "Custom",
+        "presetLabel": "Preset",
+        "presetMax": "Maximum",
+        "presetRecommended": "Recommended",
+        "presetSmall": "Small file",
+        "quality": "Quality",
+        "qualityHigh": "High",
+        "qualityLow": "Low",
+        "qualityMedium": "Medium",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Render whole project",
+        "resolution": "Resolution",
+        "resolutionSameAsProject": "Same as project ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Select codec",
+        "selectFormat": "Select format",
+        "selectQuality": "Select quality",
+        "selectResolution": "Select resolution",
+        "video": "Video"
+      },
+      "videoContainer": {
+        "mp4": "Widely supported, great for sharing",
+        "mov": "Apple ecosystem, best in Final Cut and QuickTime",
+        "webm": "Open, modern container for web playback",
+        "mkv": "Flexible container with strong subtitle support"
+      }
+    }
+  },
+  "es": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "La exportación se canceló. No se guardó ningún archivo."
+      },
+      "complete": {
+        "audioSuccess": "Tu audio está listo para descargar.",
+        "download": "Descargar",
+        "fileSizeLabel": "Tamaño",
+        "timeTakenLabel": "Tiempo",
+        "videoSuccess": "Tu vídeo está listo para descargar."
+      },
+      "dialog": {
+        "descCancelled": "La exportación se canceló antes de terminar.",
+        "descComplete": "Tu archivo está listo.",
+        "descError": "Algo salió mal durante la exportación.",
+        "descProgress": "Estamos renderizando tu vídeo. Esto puede tardar unos minutos.",
+        "descSettings": "Configura las opciones de exportación.",
+        "titleCancelled": "Exportación cancelada",
+        "titleComplete": "Exportación completada",
+        "titleError": "Error al exportar",
+        "titleProgress": "Exportando vídeo",
+        "titleSettings": "Exportar"
+      },
+      "errors": {
+        "verifyCodec": "No se pudo verificar la compatibilidad del códec con la configuración actual."
+      },
+      "progress": {
+        "cancelExport": "Cancelar",
+        "elapsedLabel": "Transcurrido",
+        "encoding": "Codificando…",
+        "finalizing": "Finalizando…",
+        "framesLabel": "Fotogramas",
+        "keepTabOpen": "Mantén esta pestaña abierta hasta que finalice la exportación.",
+        "preparing": "Preparando…",
+        "rendering": "Renderizando…"
+      },
+      "settings": {
+        "audio": "Audio",
+        "audioOnlyNote": "Exportación solo de audio: no se incluirá vídeo.",
+        "audioQualityHigh": "Alta",
+        "audioQualityLow": "Baja",
+        "audioQualityMedium": "Media",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "No hay un codificador compatible para {{width}}×{{height}} con la calidad seleccionada.",
+        "codec": "Códec",
+        "codecSupportUnverified": "No se pudo verificar la compatibilidad del códec. La exportación puede funcionar, pero no se garantiza.",
+        "duration": "Duración",
+        "embedSubtitles": "Incrustar subtítulos",
+        "embedSubtitlesDescription": "Incluye los subtítulos de la transcripción como una pista en el archivo exportado.",
+        "embedSubtitlesMp4Note": "MP4 guarda los subtítulos como una pista aparte. Algunos reproductores pueden no mostrarlos por defecto.",
+        "embedSubtitlesUnsupported": "{{container}} no admite subtítulos incrustados. Elige MP4, MKV o WebM.",
+        "exportAudio": "Exportar audio",
+        "exportRange": "Rango de exportación",
+        "exportType": "Tipo de exportación",
+        "exportVideo": "Exportar vídeo",
+        "format": "Formato",
+        "in": "Entrada",
+        "inOutRangeHint": "Solo se exportará el rango de entrada/salida seleccionado.",
+        "noTranscriptSegments": "No hay subtítulos de transcripción disponibles para incrustar.",
+        "out": "Salida",
+        "presetBalanced": "Equilibrado",
+        "presetCustom": "Personalizado",
+        "presetLabel": "Preajuste",
+        "presetMax": "Máxima",
+        "presetRecommended": "Recomendado",
+        "presetSmall": "Archivo pequeño",
+        "quality": "Calidad",
+        "qualityHigh": "Alta",
+        "qualityLow": "Baja",
+        "qualityMedium": "Media",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Renderizar todo el proyecto",
+        "resolution": "Resolución",
+        "resolutionSameAsProject": "Igual que el proyecto ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Selecciona un códec",
+        "selectFormat": "Selecciona un formato",
+        "selectQuality": "Selecciona una calidad",
+        "selectResolution": "Selecciona una resolución",
+        "video": "Vídeo"
+      },
+      "videoContainer": {
+        "mp4": "Compatible con casi cualquier reproductor",
+        "mov": "Ecosistema Apple, ideal para Final Cut y QuickTime",
+        "webm": "Contenedor abierto y moderno para web",
+        "mkv": "Contenedor flexible con buen soporte de subtítulos"
+      }
+    }
+  },
+  "fr": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "L'exportation a été annulée. Aucun fichier n'a été enregistré."
+      },
+      "complete": {
+        "audioSuccess": "Votre audio est prêt à être téléchargé.",
+        "download": "Télécharger",
+        "fileSizeLabel": "Taille",
+        "timeTakenLabel": "Durée",
+        "videoSuccess": "Votre vidéo est prête à être téléchargée."
+      },
+      "dialog": {
+        "descCancelled": "L'exportation a été annulée avant d'être terminée.",
+        "descComplete": "Votre fichier est prêt.",
+        "descError": "Une erreur est survenue lors de l'exportation.",
+        "descProgress": "Rendu de votre vidéo en cours. Cela peut prendre quelques minutes.",
+        "descSettings": "Configurez les options d'exportation.",
+        "titleCancelled": "Exportation annulée",
+        "titleComplete": "Exportation terminée",
+        "titleError": "Échec de l'exportation",
+        "titleProgress": "Exportation de la vidéo",
+        "titleSettings": "Exporter"
+      },
+      "errors": {
+        "verifyCodec": "Impossible de vérifier la prise en charge du codec pour ces paramètres."
+      },
+      "progress": {
+        "cancelExport": "Annuler",
+        "elapsedLabel": "Écoulé",
+        "encoding": "Encodage…",
+        "finalizing": "Finalisation…",
+        "framesLabel": "Images",
+        "keepTabOpen": "Gardez cet onglet ouvert jusqu'à la fin de l'exportation.",
+        "preparing": "Préparation…",
+        "rendering": "Rendu en cours…"
+      },
+      "settings": {
+        "audio": "Audio",
+        "audioOnlyNote": "Exportation audio uniquement — aucune vidéo ne sera incluse.",
+        "audioQualityHigh": "Haute",
+        "audioQualityLow": "Basse",
+        "audioQualityMedium": "Moyenne",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "Aucun encodeur compatible pour {{width}}×{{height}} à la qualité choisie.",
+        "codec": "Codec",
+        "codecSupportUnverified": "Impossible de vérifier la prise en charge du codec. L'exportation peut fonctionner, mais sans garantie.",
+        "duration": "Durée",
+        "embedSubtitles": "Intégrer les sous-titres",
+        "embedSubtitlesDescription": "Incluez les sous-titres de la transcription en tant que piste dans le fichier exporté.",
+        "embedSubtitlesMp4Note": "MP4 enregistre les sous-titres dans une piste distincte. Certains lecteurs ne les affichent pas par défaut.",
+        "embedSubtitlesUnsupported": "{{container}} ne prend pas en charge les sous-titres intégrés. Choisissez MP4, MKV ou WebM.",
+        "exportAudio": "Exporter l'audio",
+        "exportRange": "Plage d'exportation",
+        "exportType": "Type d'exportation",
+        "exportVideo": "Exporter la vidéo",
+        "format": "Format",
+        "in": "Entrée",
+        "inOutRangeHint": "Seule la plage entrée/sortie sélectionnée sera exportée.",
+        "noTranscriptSegments": "Aucun sous-titre de transcription à intégrer.",
+        "out": "Sortie",
+        "presetBalanced": "Équilibré",
+        "presetCustom": "Personnalisé",
+        "presetLabel": "Préréglage",
+        "presetMax": "Maximale",
+        "presetRecommended": "Recommandé",
+        "presetSmall": "Fichier léger",
+        "quality": "Qualité",
+        "qualityHigh": "Haute",
+        "qualityLow": "Basse",
+        "qualityMedium": "Moyenne",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Rendre le projet entier",
+        "resolution": "Résolution",
+        "resolutionSameAsProject": "Identique au projet ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Sélectionner un codec",
+        "selectFormat": "Sélectionner un format",
+        "selectQuality": "Sélectionner une qualité",
+        "selectResolution": "Sélectionner une résolution",
+        "video": "Vidéo"
+      },
+      "videoContainer": {
+        "mp4": "Très large compatibilité, idéal pour le partage",
+        "mov": "Écosystème Apple, idéal pour Final Cut et QuickTime",
+        "webm": "Conteneur ouvert et moderne pour le web",
+        "mkv": "Conteneur flexible avec prise en charge avancée des sous-titres"
+      }
+    }
+  },
+  "de": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "Der Export wurde abgebrochen. Es wurde keine Datei gespeichert."
+      },
+      "complete": {
+        "audioSuccess": "Dein Audio kann heruntergeladen werden.",
+        "download": "Herunterladen",
+        "fileSizeLabel": "Größe",
+        "timeTakenLabel": "Dauer",
+        "videoSuccess": "Dein Video kann heruntergeladen werden."
+      },
+      "dialog": {
+        "descCancelled": "Der Export wurde vor dem Abschluss abgebrochen.",
+        "descComplete": "Deine Datei ist bereit.",
+        "descError": "Beim Export ist etwas schiefgegangen.",
+        "descProgress": "Dein Video wird gerendert. Das kann einige Minuten dauern.",
+        "descSettings": "Konfiguriere die Exportoptionen.",
+        "titleCancelled": "Export abgebrochen",
+        "titleComplete": "Export abgeschlossen",
+        "titleError": "Export fehlgeschlagen",
+        "titleProgress": "Video wird exportiert",
+        "titleSettings": "Exportieren"
+      },
+      "errors": {
+        "verifyCodec": "Codec-Unterstützung konnte für diese Einstellungen nicht überprüft werden."
+      },
+      "progress": {
+        "cancelExport": "Abbrechen",
+        "elapsedLabel": "Verstrichen",
+        "encoding": "Codieren…",
+        "finalizing": "Wird abgeschlossen…",
+        "framesLabel": "Bilder",
+        "keepTabOpen": "Lass diesen Tab geöffnet, bis der Export abgeschlossen ist.",
+        "preparing": "Vorbereiten…",
+        "rendering": "Rendern…"
+      },
+      "settings": {
+        "audio": "Audio",
+        "audioOnlyNote": "Reiner Audio-Export — kein Video wird einbezogen.",
+        "audioQualityHigh": "Hoch",
+        "audioQualityLow": "Niedrig",
+        "audioQualityMedium": "Mittel",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "Kein unterstützter Encoder für {{width}}×{{height}} in der gewählten Qualität.",
+        "codec": "Codec",
+        "codecSupportUnverified": "Codec-Unterstützung konnte nicht überprüft werden. Der Export kann trotzdem funktionieren, ist aber nicht garantiert.",
+        "duration": "Dauer",
+        "embedSubtitles": "Untertitel einbetten",
+        "embedSubtitlesDescription": "Untertitel aus dem Transkript als Spur in die exportierte Datei einfügen.",
+        "embedSubtitlesMp4Note": "MP4 speichert Untertitel als separate Spur. Manche Player zeigen sie nicht standardmäßig an.",
+        "embedSubtitlesUnsupported": "{{container}} unterstützt keine eingebetteten Untertitel. Wähle MP4, MKV oder WebM.",
+        "exportAudio": "Audio exportieren",
+        "exportRange": "Exportbereich",
+        "exportType": "Exporttyp",
+        "exportVideo": "Video exportieren",
+        "format": "Format",
+        "in": "Anfang",
+        "inOutRangeHint": "Nur der ausgewählte In/Out-Bereich wird exportiert.",
+        "noTranscriptSegments": "Keine Transkript-Untertitel zum Einbetten vorhanden.",
+        "out": "Ende",
+        "presetBalanced": "Ausgewogen",
+        "presetCustom": "Benutzerdefiniert",
+        "presetLabel": "Voreinstellung",
+        "presetMax": "Maximal",
+        "presetRecommended": "Empfohlen",
+        "presetSmall": "Kleine Datei",
+        "quality": "Qualität",
+        "qualityHigh": "Hoch",
+        "qualityLow": "Niedrig",
+        "qualityMedium": "Mittel",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Gesamtes Projekt rendern",
+        "resolution": "Auflösung",
+        "resolutionSameAsProject": "Wie Projekt ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Codec auswählen",
+        "selectFormat": "Format auswählen",
+        "selectQuality": "Qualität auswählen",
+        "selectResolution": "Auflösung auswählen",
+        "video": "Video"
+      },
+      "videoContainer": {
+        "mp4": "Breite Unterstützung, ideal zum Teilen",
+        "mov": "Apple-Ökosystem, ideal für Final Cut und QuickTime",
+        "webm": "Offener, moderner Container für die Webwiedergabe",
+        "mkv": "Flexibler Container mit starker Untertitelunterstützung"
+      }
+    }
+  },
+  "pt-BR": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "A exportação foi cancelada. Nenhum arquivo foi salvo."
+      },
+      "complete": {
+        "audioSuccess": "Seu áudio está pronto para download.",
+        "download": "Baixar",
+        "fileSizeLabel": "Tamanho",
+        "timeTakenLabel": "Tempo",
+        "videoSuccess": "Seu vídeo está pronto para download."
+      },
+      "dialog": {
+        "descCancelled": "A exportação foi cancelada antes de terminar.",
+        "descComplete": "Seu arquivo está pronto.",
+        "descError": "Algo deu errado durante a exportação.",
+        "descProgress": "Exportacao em andamento.",
+        "descSettings": "Configure as opções de exportação.",
+        "titleCancelled": "Exportação cancelada",
+        "titleComplete": "Exportação concluída",
+        "titleError": "Falha na exportação",
+        "titleProgress": "Exportando",
+        "titleSettings": "Exportar"
+      },
+      "errors": {
+        "verifyCodec": "Não foi possível verificar a compatibilidade do codec para estas configurações."
+      },
+      "progress": {
+        "cancelExport": "Cancelar exportação",
+        "elapsedLabel": "Decorrido",
+        "encoding": "Codificando…",
+        "finalizing": "Finalizando…",
+        "framesLabel": "Quadros",
+        "keepTabOpen": "Mantenha esta aba aberta até o término da exportação.",
+        "preparing": "Preparando…",
+        "rendering": "Renderizando…"
+      },
+      "settings": {
+        "audio": "Áudio",
+        "audioOnlyNote": "Exportação somente de áudio — nenhum vídeo será incluído.",
+        "audioQualityHigh": "Alta",
+        "audioQualityLow": "Baixa",
+        "audioQualityMedium": "Média",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "Nenhum codificador compatível para {{width}}×{{height}} com a qualidade selecionada.",
+        "codec": "Codec",
+        "codecSupportUnverified": "Não foi possível verificar o suporte ao codec. A exportação pode funcionar, mas sem garantia.",
+        "duration": "Duração",
+        "embedSubtitles": "Incorporar legendas",
+        "embedSubtitlesDescription": "Inclui legendas da transcrição como uma faixa no arquivo exportado.",
+        "embedSubtitlesMp4Note": "MP4 armazena legendas em uma faixa separada. Alguns reprodutores podem não mostrá-las por padrão.",
+        "embedSubtitlesUnsupported": "{{container}} não suporta legendas incorporadas. Escolha MP4, MKV ou WebM.",
+        "exportAudio": "Exportar áudio",
+        "exportRange": "Intervalo de exportação",
+        "exportType": "Tipo de exportação",
+        "exportVideo": "Exportar vídeo",
+        "format": "Formato",
+        "in": "Entrada",
+        "inOutRangeHint": "Apenas o intervalo de entrada/saída selecionado será exportado.",
+        "noTranscriptSegments": "Nenhuma legenda de transcrição disponível para incorporar.",
+        "out": "Saída",
+        "presetBalanced": "Equilibrado",
+        "presetCustom": "Personalizado",
+        "presetLabel": "Predefinição",
+        "presetMax": "Máxima",
+        "presetRecommended": "Recomendado",
+        "presetSmall": "Arquivo pequeno",
+        "quality": "Qualidade",
+        "qualityHigh": "Alta",
+        "qualityLow": "Baixa",
+        "qualityMedium": "Média",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Renderizar o projeto inteiro",
+        "resolution": "Resolução",
+        "resolutionSameAsProject": "Igual ao projeto ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Selecione um codec",
+        "selectFormat": "Selecione um formato",
+        "selectQuality": "Selecione uma qualidade",
+        "selectResolution": "Selecione uma resolução",
+        "video": "Vídeo"
+      },
+      "videoContainer": {
+        "mp4": "Amplo suporte, ideal para compartilhar",
+        "mov": "Ecossistema Apple, ideal para Final Cut e QuickTime",
+        "webm": "Contêiner aberto e moderno para reprodução na web",
+        "mkv": "Contêiner flexível com ótimo suporte a legendas"
+      }
+    }
+  },
+  "tr": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "Dışa aktarma iptal edildi. Dosya kaydedilmedi."
+      },
+      "complete": {
+        "audioSuccess": "Sesiniz indirilmeye hazır.",
+        "download": "İndir",
+        "fileSizeLabel": "Boyut",
+        "timeTakenLabel": "Süre",
+        "videoSuccess": "Videonuz indirilmeye hazır."
+      },
+      "dialog": {
+        "descCancelled": "Dışa aktarma tamamlanmadan iptal edildi.",
+        "descComplete": "Dosyanız hazır.",
+        "descError": "Dışa aktarma sırasında bir sorun oluştu.",
+        "descProgress": "Videonuz işleniyor.",
+        "descSettings": "Dışa aktarma seçeneklerini yapılandırın.",
+        "titleCancelled": "Dışa aktarma iptal edildi",
+        "titleComplete": "Dışa aktarma tamamlandı",
+        "titleError": "Dışa aktarma başarısız",
+        "titleProgress": "Dışa aktarılıyor",
+        "titleSettings": "Dışa aktar"
+      },
+      "errors": {
+        "verifyCodec": "Mevcut ayarlar için codec desteği doğrulanamadı."
+      },
+      "progress": {
+        "cancelExport": "Dışa aktarmayı iptal et",
+        "elapsedLabel": "Geçen süre",
+        "encoding": "Kodlanıyor…",
+        "finalizing": "Tamamlanıyor…",
+        "framesLabel": "Kareler",
+        "keepTabOpen": "Lütfen bu sekmeyi açık tutun.",
+        "preparing": "Hazırlanıyor…",
+        "rendering": "İşleniyor…"
+      },
+      "settings": {
+        "audio": "Ses",
+        "audioOnlyNote": "Yalnızca ses dışa aktarılacak — video dahil edilmeyecek.",
+        "audioQualityHigh": "Yüksek",
+        "audioQualityLow": "Düşük",
+        "audioQualityMedium": "Orta",
+        "audioQualityUltra": "Ultra",
+        "cannotEncode": "Seçilen kalitede {{width}}×{{height}} için desteklenen bir kodlayıcı yok.",
+        "codec": "Codec",
+        "codecSupportUnverified": "Codec desteği doğrulanamadı. Dışa aktarma çalışabilir ancak uyumluluk garanti edilmez.",
+        "duration": "Süre",
+        "embedSubtitles": "Altyazıları göm",
+        "embedSubtitlesDescription": "Transkripsiyon altyazılarını dışa aktarılan dosyaya bir altyazı izi olarak ekle.",
+        "embedSubtitlesMp4Note": "MP4 altyazıları ayrı bir iz olarak saklar. Bazı oynatıcılar varsayılan olarak göstermeyebilir.",
+        "embedSubtitlesUnsupported": "{{container}} gömülü altyazıları desteklemiyor. MP4, MKV veya WebM seçin.",
+        "exportAudio": "Sesi dışa aktar",
+        "exportRange": "Dışa aktarma aralığı",
+        "exportType": "Dışa aktarma türü",
+        "exportVideo": "Videoyu dışa aktar",
+        "format": "Biçim",
+        "in": "Giriş",
+        "inOutRangeHint": "Yalnızca seçili giriş/çıkış aralığı dışa aktarılacak.",
+        "noTranscriptSegments": "Gömülecek transkripsiyon altyazısı bulunamadı.",
+        "out": "Çıkış",
+        "presetBalanced": "Dengeli",
+        "presetCustom": "Özel",
+        "presetLabel": "Hazır ayar",
+        "presetMax": "En yüksek",
+        "presetRecommended": "Önerilen",
+        "presetSmall": "Küçük dosya",
+        "quality": "Kalite",
+        "qualityHigh": "Yüksek",
+        "qualityLow": "Düşük",
+        "qualityMedium": "Orta",
+        "qualityUltra": "Ultra",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "Projenin tamamını işle",
+        "resolution": "Çözünürlük",
+        "resolutionSameAsProject": "Proje ile aynı ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "Codec seçin",
+        "selectFormat": "Biçim seçin",
+        "selectQuality": "Kalite seçin",
+        "selectResolution": "Çözünürlük seçin",
+        "video": "Video"
+      },
+      "videoContainer": {
+        "mp4": "Geniş uyumluluk, paylaşmak için ideal",
+        "mov": "Apple ekosistemi, Final Cut ve QuickTime için ideal",
+        "webm": "Web oynatma için açık ve modern bir kapsayıcı",
+        "mkv": "Esnek bir kapsayıcı, güçlü altyazı desteği"
+      }
+    }
+  },
+  "ja": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "書き出しはキャンセルされました。ファイルは保存されていません。"
+      },
+      "complete": {
+        "audioSuccess": "オーディオのダウンロード準備が整いました。",
+        "download": "ダウンロード",
+        "fileSizeLabel": "サイズ",
+        "timeTakenLabel": "経過時間",
+        "videoSuccess": "動画のダウンロード準備が整いました。"
+      },
+      "dialog": {
+        "descCancelled": "書き出しが完了する前にキャンセルされました。",
+        "descComplete": "ファイルの準備ができました。",
+        "descError": "書き出し中に問題が発生しました。",
+        "descProgress": "動画をレンダリングしています。数分かかる場合があります。",
+        "descSettings": "書き出しオプションを設定します。",
+        "titleCancelled": "書き出しをキャンセルしました",
+        "titleComplete": "書き出しが完了しました",
+        "titleError": "書き出しに失敗しました",
+        "titleProgress": "動画を書き出し中",
+        "titleSettings": "書き出し"
+      },
+      "errors": {
+        "verifyCodec": "現在の設定でコーデックのサポート状況を確認できませんでした。"
+      },
+      "progress": {
+        "cancelExport": "キャンセル",
+        "elapsedLabel": "経過時間",
+        "encoding": "エンコード中…",
+        "finalizing": "仕上げ中…",
+        "framesLabel": "フレーム",
+        "keepTabOpen": "書き出しが完了するまでこのタブを開いたままにしてください。",
+        "preparing": "準備中…",
+        "rendering": "レンダリング中…"
+      },
+      "settings": {
+        "audio": "オーディオ",
+        "audioOnlyNote": "オーディオのみの書き出しです。動画は含まれません。",
+        "audioQualityHigh": "高",
+        "audioQualityLow": "低",
+        "audioQualityMedium": "中",
+        "audioQualityUltra": "ウルトラ",
+        "cannotEncode": "選択した品質で {{width}}×{{height}} に対応するエンコーダーがありません。",
+        "codec": "コーデック",
+        "codecSupportUnverified": "コーデックのサポート状況を確認できませんでした。書き出しは可能かもしれませんが、互換性は保証されません。",
+        "duration": "長さ",
+        "embedSubtitles": "字幕を埋め込む",
+        "embedSubtitlesDescription": "文字起こしの字幕を書き出しファイルの字幕トラックとして埋め込みます。",
+        "embedSubtitlesMp4Note": "MP4 は字幕を別トラックとして保存します。プレーヤーによっては既定で表示されない場合があります。",
+        "embedSubtitlesUnsupported": "{{container}} は字幕の埋め込みに対応していません。MP4、MKV、または WebM を選択してください。",
+        "exportAudio": "オーディオを書き出す",
+        "exportRange": "書き出し範囲",
+        "exportType": "書き出しタイプ",
+        "exportVideo": "動画を書き出す",
+        "format": "形式",
+        "in": "イン",
+        "inOutRangeHint": "選択したイン/アウト範囲のみが書き出されます。",
+        "noTranscriptSegments": "埋め込み可能な文字起こし字幕がありません。",
+        "out": "アウト",
+        "presetBalanced": "バランス",
+        "presetCustom": "カスタム",
+        "presetLabel": "プリセット",
+        "presetMax": "最高品質",
+        "presetRecommended": "推奨",
+        "presetSmall": "小サイズ",
+        "quality": "品質",
+        "qualityHigh": "高",
+        "qualityLow": "低",
+        "qualityMedium": "中",
+        "qualityUltra": "ウルトラ",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "プロジェクト全体を書き出す",
+        "resolution": "解像度",
+        "resolutionSameAsProject": "プロジェクトと同じ ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "コーデックを選択",
+        "selectFormat": "形式を選択",
+        "selectQuality": "品質を選択",
+        "selectResolution": "解像度を選択",
+        "video": "動画"
+      },
+      "videoContainer": {
+        "mp4": "対応プレーヤーが多く、共有に最適",
+        "mov": "Apple 環境向け、Final Cut や QuickTime に最適",
+        "webm": "ウェブ再生向けのオープンで先進的なコンテナ",
+        "mkv": "字幕サポートが優れた柔軟なコンテナ"
+      }
+    }
+  },
+  "ko": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "내보내기가 취소되었습니다. 파일이 저장되지 않았습니다."
+      },
+      "complete": {
+        "audioSuccess": "오디오를 다운로드할 준비가 되었습니다.",
+        "download": "다운로드",
+        "fileSizeLabel": "크기",
+        "timeTakenLabel": "소요 시간",
+        "videoSuccess": "동영상을 다운로드할 준비가 되었습니다."
+      },
+      "dialog": {
+        "descCancelled": "내보내기가 완료되기 전에 취소되었습니다.",
+        "descComplete": "파일이 준비되었습니다.",
+        "descError": "내보내는 중 문제가 발생했습니다.",
+        "descProgress": "동영상을 렌더링하는 중입니다. 몇 분 정도 걸릴 수 있습니다.",
+        "descSettings": "내보내기 옵션을 구성합니다.",
+        "titleCancelled": "내보내기가 취소됨",
+        "titleComplete": "내보내기 완료",
+        "titleError": "내보내기 실패",
+        "titleProgress": "동영상 내보내는 중",
+        "titleSettings": "내보내기"
+      },
+      "errors": {
+        "verifyCodec": "현재 설정에 대한 코덱 지원 여부를 확인할 수 없습니다."
+      },
+      "progress": {
+        "cancelExport": "취소",
+        "elapsedLabel": "경과 시간",
+        "encoding": "인코딩 중…",
+        "finalizing": "마무리하는 중…",
+        "framesLabel": "프레임",
+        "keepTabOpen": "내보내기가 완료될 때까지 이 탭을 열어 두세요.",
+        "preparing": "준비 중…",
+        "rendering": "렌더링 중…"
+      },
+      "settings": {
+        "audio": "오디오",
+        "audioOnlyNote": "오디오만 내보내며 동영상은 포함되지 않습니다.",
+        "audioQualityHigh": "높음",
+        "audioQualityLow": "낮음",
+        "audioQualityMedium": "보통",
+        "audioQualityUltra": "최고",
+        "cannotEncode": "선택한 품질의 {{width}}×{{height}} 인코더를 사용할 수 없습니다.",
+        "codec": "코덱",
+        "codecSupportUnverified": "코덱 지원 여부를 확인할 수 없습니다. 내보내기는 가능할 수 있지만 호환성은 보장되지 않습니다.",
+        "duration": "길이",
+        "embedSubtitles": "자막 포함",
+        "embedSubtitlesDescription": "전사 자막을 내보낸 파일에 자막 트랙으로 포함합니다.",
+        "embedSubtitlesMp4Note": "MP4는 자막을 별도 트랙으로 저장합니다. 일부 플레이어에서는 기본적으로 표시되지 않을 수 있습니다.",
+        "embedSubtitlesUnsupported": "{{container}}는 자막 포함을 지원하지 않습니다. MP4, MKV 또는 WebM을 선택하세요.",
+        "exportAudio": "오디오 내보내기",
+        "exportRange": "내보내기 범위",
+        "exportType": "내보내기 형식",
+        "exportVideo": "동영상 내보내기",
+        "format": "형식",
+        "in": "시작",
+        "inOutRangeHint": "선택한 시작/종료 구간만 내보내집니다.",
+        "noTranscriptSegments": "포함할 전사 자막이 없습니다.",
+        "out": "끝",
+        "presetBalanced": "균형",
+        "presetCustom": "사용자 지정",
+        "presetLabel": "사전 설정",
+        "presetMax": "최고 품질",
+        "presetRecommended": "권장",
+        "presetSmall": "작은 파일",
+        "quality": "품질",
+        "qualityHigh": "높음",
+        "qualityLow": "낮음",
+        "qualityMedium": "보통",
+        "qualityUltra": "최고",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "프로젝트 전체 렌더링",
+        "resolution": "해상도",
+        "resolutionSameAsProject": "프로젝트와 동일 ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "코덱 선택",
+        "selectFormat": "형식 선택",
+        "selectQuality": "품질 선택",
+        "selectResolution": "해상도 선택",
+        "video": "동영상"
+      },
+      "videoContainer": {
+        "mp4": "광범위한 지원, 공유에 적합",
+        "mov": "Apple 생태계, Final Cut 및 QuickTime에 적합",
+        "webm": "웹 재생을 위한 개방형 최신 컨테이너",
+        "mkv": "자막 지원이 강력한 유연한 컨테이너"
+      }
+    }
+  },
+  "zh": {
+    "export": {
+      "audioContainer": {
+        "aac": "AAC",
+        "mp3": "MP3",
+        "wav": "WAV"
+      },
+      "cancelled": {
+        "message": "导出已取消，未保存任何文件。"
+      },
+      "complete": {
+        "audioSuccess": "音频已准备好下载。",
+        "download": "下载",
+        "fileSizeLabel": "大小",
+        "timeTakenLabel": "用时",
+        "videoSuccess": "视频已准备好下载。"
+      },
+      "dialog": {
+        "descCancelled": "导出在完成前已被取消。",
+        "descComplete": "您的文件已就绪。",
+        "descError": "导出过程中发生错误。",
+        "descProgress": "正在渲染您的视频，这可能需要几分钟。",
+        "descSettings": "配置导出选项。",
+        "titleCancelled": "导出已取消",
+        "titleComplete": "导出完成",
+        "titleError": "导出失败",
+        "titleProgress": "正在导出视频",
+        "titleSettings": "导出"
+      },
+      "errors": {
+        "verifyCodec": "无法验证当前设置的编解码器支持情况。"
+      },
+      "progress": {
+        "cancelExport": "取消",
+        "elapsedLabel": "已用时间",
+        "encoding": "正在编码…",
+        "finalizing": "正在完成…",
+        "framesLabel": "帧",
+        "keepTabOpen": "请保持此标签页打开，直至导出完成。",
+        "preparing": "正在准备…",
+        "rendering": "正在渲染…"
+      },
+      "settings": {
+        "audio": "音频",
+        "audioOnlyNote": "仅导出音频 — 不会包含视频。",
+        "audioQualityHigh": "高",
+        "audioQualityLow": "低",
+        "audioQualityMedium": "中",
+        "audioQualityUltra": "超高",
+        "cannotEncode": "在所选画质下，没有可用于 {{width}}×{{height}} 的编码器。",
+        "codec": "编解码器",
+        "codecSupportUnverified": "无法验证编解码器支持情况。仍可尝试导出，但兼容性无法保证。",
+        "duration": "时长",
+        "embedSubtitles": "嵌入字幕",
+        "embedSubtitlesDescription": "将转录字幕作为字幕轨道嵌入导出的文件。",
+        "embedSubtitlesMp4Note": "MP4 将字幕保存为独立轨道。某些播放器默认可能不会显示。",
+        "embedSubtitlesUnsupported": "{{container}} 不支持嵌入字幕。请选择 MP4、MKV 或 WebM。",
+        "exportAudio": "导出音频",
+        "exportRange": "导出范围",
+        "exportType": "导出类型",
+        "exportVideo": "导出视频",
+        "format": "格式",
+        "in": "入点",
+        "inOutRangeHint": "仅会导出所选的入/出点范围。",
+        "noTranscriptSegments": "没有可嵌入的转录字幕。",
+        "out": "出点",
+        "presetBalanced": "平衡",
+        "presetCustom": "自定义",
+        "presetLabel": "预设",
+        "presetMax": "最高质量",
+        "presetRecommended": "推荐",
+        "presetSmall": "小文件",
+        "quality": "画质",
+        "qualityHigh": "高",
+        "qualityLow": "低",
+        "qualityMedium": "中",
+        "qualityUltra": "超高",
+        "quicktimeMov": "QuickTime MOV",
+        "renderWholeProject": "渲染整个项目",
+        "resolution": "分辨率",
+        "resolutionSameAsProject": "与项目相同 ({{width}}×{{height}})",
+        "resolutionScaled": "{{p}}p ({{width}}×{{height}})",
+        "selectCodec": "选择编解码器",
+        "selectFormat": "选择格式",
+        "selectQuality": "选择画质",
+        "selectResolution": "选择分辨率",
+        "video": "视频"
+      },
+      "videoContainer": {
+        "mp4": "兼容性广，适合分享",
+        "mov": "Apple 生态系统，最适合 Final Cut 与 QuickTime",
+        "webm": "面向网页播放的开放式现代容器",
+        "mkv": "灵活容器，字幕支持出色"
+      }
+    }
+  }
+}

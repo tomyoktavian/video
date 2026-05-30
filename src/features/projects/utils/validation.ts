@@ -1,5 +1,10 @@
 import { z } from 'zod'
 import { i18n } from '@/i18n'
+import {
+  DEFAULT_PROJECT_FPS,
+  DEFAULT_PROJECT_HEIGHT,
+  DEFAULT_PROJECT_WIDTH,
+} from '@/shared/projects/defaults'
 import { DEFAULT_PROJECT_FPS_OPTIONS, isAllowedProjectFps } from './project-fps'
 
 /**
@@ -162,9 +167,9 @@ export const FPS_PRESETS = [...DEFAULT_PROJECT_FPS_OPTIONS]
 export const DEFAULT_PROJECT_VALUES: ProjectFormData = {
   name: '',
   description: '',
-  width: 1920,
-  height: 1080,
-  fps: 30,
+  width: DEFAULT_PROJECT_WIDTH,
+  height: DEFAULT_PROJECT_HEIGHT,
+  fps: DEFAULT_PROJECT_FPS,
 }
 
 /**

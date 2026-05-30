@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { getGpuTransition, getGpuTransitionIds } from './index'
+import { GPU_TRANSITION_REGISTRY, getGpuTransition, getGpuTransitionIds } from './index'
 
 describe('GPU transition registry', () => {
   it('registers the Resolve-style dissolve family', () => {
@@ -221,5 +221,86 @@ describe('GPU transition registry', () => {
       0,
       0,
     ])
+  })
+
+  it('exposes every transition with shader metadata and valid default uniforms', () => {
+    expect(GPU_TRANSITION_REGISTRY.size).toBeGreaterThan(0)
+
+    for (const [id, def] of GPU_TRANSITION_REGISTRY) {
+      expect(def.id, id).toBe(id)
+      expect(def.name.trim().length, id).toBeGreaterThan(0)
+      expect(def.shader.trim().length, id).toBeGreaterThan(0)
+      expect(def.entryPoint.trim().length, id).toBeGreaterThan(0)
+      // WebGPU requires uniform buffer sizes to be a multiple of 16 bytes.
+      expect(def.uniformSize % 16, id).toBe(0)
+      expect(def.uniformSize, id).toBeGreaterThan(0)
+      if (def.hasDirection) {
+        expect(def.directions, id).toBeDefined()
+        expect(def.directions!.length, id).toBeGreaterThan(0)
+      }
+      // packUniforms must produce a buffer that fits inside the declared size,
+      // with all finite values, even when no custom properties are provided.
+      const uniforms = def.packUniforms(0.5, 1920, 1080, 0, {})
+      expect(uniforms, id).toBeInstanceOf(Float32Array)
+      expect(uniforms.byteLength, id).toBeLessThanOrEqual(def.uniformSize)
+      expect(Array.from(uniforms).every(Number.isFinite), id).toBe(true)
+    }
+  })
+
+  it('always packs progress as the first float', () => {
+    // The pipeline assumes lane 0 is progress so it can update per-frame
+    // state without re-packing the full uniform buffer. Lanes 1+ are
+    // shader-specific (pixelate, for example, replaces width/height with
+    // pre-computed block sizes derived from the resolution).
+    for (const [id, def] of GPU_TRANSITION_REGISTRY) {
+      const uniforms = def.packUniforms(0.42, 1280, 720, 0, {})
+      expect(uniforms[0], `${id} progress`).toBeCloseTo(0.42)
+    }
+  })
+
+  it('clamps and accepts unknown properties without throwing', () => {
+    // packUniforms should be defensive: unknown keys or out-of-range progress
+    // values must not crash. This guards against UI passing partial state.
+    for (const [id, def] of GPU_TRANSITION_REGISTRY) {
+      expect(
+        () => def.packUniforms(-0.5, 1920, 1080, 0, { unknownProp: 'ignored' }),
+        id,
+      ).not.toThrow()
+      expect(() => def.packUniforms(1.5, 1920, 1080, 0, { anotherUnknown: 42 }), id).not.toThrow()
+    }
+  })
+
+  it('registers the basic transition family with stable contract', () => {
+    const expected = [
+      { id: 'fade', entryPoint: 'fadeFragment', hasDirection: false, category: 'basic' },
+      { id: 'wipe', entryPoint: 'wipeFragment', hasDirection: true, category: 'wipe' },
+      { id: 'slide', entryPoint: 'slideFragment', hasDirection: true, category: 'slide' },
+      { id: 'flip', entryPoint: 'flipFragment', hasDirection: true, category: 'custom' },
+      { id: 'clockWipe', entryPoint: 'clockWipeFragment', hasDirection: false, category: 'mask' },
+      { id: 'iris', entryPoint: 'irisFragment', hasDirection: false, category: 'iris' },
+    ] as const
+
+    for (const expectation of expected) {
+      const def = getGpuTransition(expectation.id)
+      expect(def, expectation.id).toBeDefined()
+      expect(def).toMatchObject(expectation)
+    }
+  })
+
+  it('packs fade progress/width/height as the canonical 4-float layout', () => {
+    const def = getGpuTransition('fade')!
+    const uniforms = def.packUniforms(0.25, 1920, 1080, 0, {})
+    expect(Array.from(uniforms)).toEqual([0.25, 1920, 1080, 0])
+  })
+
+  it('packs wipe with the direction byte in lane 3', () => {
+    const def = getGpuTransition('wipe')!
+    const uniforms = def.packUniforms(0.6, 1280, 720, 3, {})
+    expect(Array.from(uniforms)).toEqual([expect.closeTo(0.6), 1280, 720, 3])
+  })
+
+  it('returns undefined for unknown transition ids without throwing', () => {
+    expect(getGpuTransition('nope-not-here')).toBeUndefined()
+    expect(getGpuTransition('')).toBeUndefined()
   })
 })

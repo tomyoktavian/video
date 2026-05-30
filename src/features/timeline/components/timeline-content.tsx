@@ -15,6 +15,7 @@ import { useSelectionStore } from '@/shared/state/selection'
 // Hooks
 import { useMarqueeSelection } from '@/shared/marquee/use-marquee-selection'
 import { useWaveformPrefetch } from '../hooks/use-waveform-prefetch'
+import { withPerfMeasure, perfMarkRender } from '@/shared/logging/perf-marks'
 
 // Constants
 import {
@@ -220,7 +221,7 @@ function TrackSectionScrollbarOverlay({
       if (scrollFrameId !== 0) return
       scrollFrameId = window.requestAnimationFrame(() => {
         scrollFrameId = 0
-        updateThumbPosition()
+        withPerfMeasure('tl.raf.scrollThumb', updateThumbPosition)
       })
     }
 
@@ -682,6 +683,8 @@ export const TimelineContent = memo(function TimelineContent({
 }: TimelineContentProps) {
   void duration
 
+  perfMarkRender('TimelineContent')
+
   // Prefetch waveforms for clips approaching the viewport
   useWaveformPrefetch()
 
@@ -826,24 +829,53 @@ export const TimelineContent = memo(function TimelineContent({
   const queuedZoomLevelRef = useRef<number | null>(null)
   const queuedZoomScrollLeftRef = useRef<number | null>(null)
   const zoomApplyRafRef = useRef<number | null>(null)
+  // Latest known scrollLeft, kept fresh by the scroll handler. Declared here so
+  // scheduleViewportSync can hand it to syncViewportFromContainer instead of
+  // reading container.scrollLeft back (a forced reflow after a width write).
+  const scrollLeftRef = useRef(0)
 
-  const syncViewportFromContainer = useCallback(() => {
+  // Cached viewport box dimensions. clientWidth/clientHeight are invariant under
+  // scroll and horizontal zoom (only the *content* width changes), so reading
+  // them every scroll/zoom frame forces a needless layout flush. A ResizeObserver
+  // refreshes this cache; we fall back to a live read until it has measured once.
+  const viewportDimsRef = useRef<{ width: number; height: number } | null>(null)
+
+  const syncViewportFromContainer = useCallback((knownScrollLeft?: number, immediate = false) => {
     const container = containerRef.current
     if (!container) return
-    const tracksViewportHeight = tracksContainerRef.current?.clientHeight ?? container.clientHeight
-    useTimelineViewportStore.getState().setViewport({
-      scrollLeft: container.scrollLeft,
-      scrollTop: container.scrollTop,
-      viewportWidth: container.clientWidth,
-      viewportHeight: tracksViewportHeight,
-    })
+    const dims = viewportDimsRef.current
+    const viewportWidth = dims?.width ?? container.clientWidth
+    const viewportHeight =
+      dims?.height ?? tracksContainerRef.current?.clientHeight ?? container.clientHeight
+    // When the caller just wrote scrollLeft it passes that value so we can skip
+    // the read-back. Reading scrollLeft/scrollTop after a write forces a
+    // synchronous reflow — negligible normally, but ~16ms/frame at extreme zoom
+    // widths (>1M px). The main scroll container is overflow-y-hidden, so its
+    // scrollTop is always 0 in the known-value path.
+    const scrollLeft = knownScrollLeft ?? container.scrollLeft
+    const scrollTop = knownScrollLeft !== undefined ? 0 : container.scrollTop
+    const viewport = {
+      scrollLeft,
+      scrollTop,
+      viewportWidth,
+      viewportHeight,
+    }
+    const viewportStore = useTimelineViewportStore.getState()
+    if (immediate) {
+      viewportStore.setViewportImmediate(viewport)
+    } else {
+      viewportStore.setViewport(viewport)
+    }
   }, [])
 
   const scheduleViewportSync = useCallback(() => {
     if (viewportSyncRafRef.current !== null) return
     viewportSyncRafRef.current = requestAnimationFrame(() => {
       viewportSyncRafRef.current = null
-      syncViewportFromContainer()
+      // Pass the tracked scrollLeft (handleScroll updates it before scheduling)
+      // so the sync skips a container.scrollLeft read-back, which would force a
+      // synchronous reflow when a zoom width write landed the same frame.
+      withPerfMeasure('tl.raf.viewportSync', () => syncViewportFromContainer(scrollLeftRef.current))
     })
   }, [syncViewportFromContainer])
 
@@ -870,10 +902,16 @@ export const TimelineContent = memo(function TimelineContent({
   // Measure container width - run after render and on resize
   useEffect(() => {
     const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth)
-        syncViewportFromContainer()
+      const container = containerRef.current
+      if (!container) return
+      // Refresh the cached box dims (read here, on actual resizes only, instead
+      // of every scroll/zoom frame).
+      viewportDimsRef.current = {
+        width: container.clientWidth,
+        height: tracksContainerRef.current?.clientHeight ?? container.clientHeight,
       }
+      setContainerWidth(container.clientWidth)
+      syncViewportFromContainer()
     }
 
     // Measure immediately
@@ -882,8 +920,12 @@ export const TimelineContent = memo(function TimelineContent({
     // Re-measure during idle in case DOM wasn't fully laid out on mount
     const idleId = requestIdleCallback(updateWidth)
 
-    // Measure on resize
+    // Measure on resize. A ResizeObserver catches panel/track-height changes that
+    // the window 'resize' event misses, and keeps the cached dims fresh.
     window.addEventListener('resize', updateWidth)
+    const ro = new ResizeObserver(updateWidth)
+    if (containerRef.current) ro.observe(containerRef.current)
+    if (tracksContainerRef.current) ro.observe(tracksContainerRef.current)
 
     return () => {
       cancelIdleCallback(idleId)
@@ -892,6 +934,7 @@ export const TimelineContent = memo(function TimelineContent({
         viewportSyncRafRef.current = null
       }
       window.removeEventListener('resize', updateWidth)
+      ro.disconnect()
     }
   }, [syncViewportFromContainer])
 
@@ -908,7 +951,6 @@ export const TimelineContent = memo(function TimelineContent({
 
   // Track scroll position with coalesced updates for viewport culling
   // Throttle at 50ms to match zoom throttle rate - prevents width jitter during zoom+scroll
-  const scrollLeftRef = useRef(0)
   const scrollUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const SCROLL_THROTTLE_MS = 50 // Match zoom throttle for synchronized updates
   const setScrollPosition = useTimelineStore((s) => s.setScrollPosition)
@@ -964,10 +1006,15 @@ export const TimelineContent = memo(function TimelineContent({
   // Apply pending scroll AFTER render when DOM has updated width
   // This ensures zoom anchor works correctly even when timeline extends beyond content
   useLayoutEffect(() => {
-    if (pendingScrollRef.current !== null && containerRef.current) {
-      containerRef.current.scrollLeft = pendingScrollRef.current
+    const container = containerRef.current
+    if (pendingScrollRef.current !== null && container) {
+      const next = pendingScrollRef.current
+      container.scrollLeft = next
       pendingScrollRef.current = null
-      syncViewportFromContainer()
+      // Keep scrollLeftRef fresh so the clamp effect below can decide without a
+      // forced scrollLeft read, and pass the known value to skip the read-back.
+      scrollLeftRef.current = next
+      syncViewportFromContainer(next)
     }
   })
 
@@ -1249,7 +1296,7 @@ export const TimelineContent = memo(function TimelineContent({
       }
       previewRafRef.current = requestAnimationFrame(() => {
         previewRafRef.current = null
-        setPreviewFrameRef.current(frame, itemId)
+        withPerfMeasure('tl.raf.previewHover', () => setPreviewFrameRef.current(frame, itemId))
       })
     },
     [buildRazorSnapTargets],
@@ -1301,8 +1348,19 @@ export const TimelineContent = memo(function TimelineContent({
       return
     }
 
-    const maxScrollLeft = Math.max(0, timelineWidth - container.clientWidth)
-    if (container.scrollLeft <= maxScrollLeft + 1) {
+    // Use the cached viewport width and tracked scrollLeft instead of reading
+    // container.clientWidth / container.scrollLeft. Both are layout reads that,
+    // after this render's width write, force a synchronous reflow every frame —
+    // ~16ms at extreme zoom widths. clientWidth is invariant under horizontal
+    // zoom, and scrollLeftRef is kept fresh by the scroll handler and the
+    // pending-scroll effect above. Fall back to a live read only before the
+    // ResizeObserver has measured (mount).
+    const cachedWidth = viewportDimsRef.current?.width
+    const viewportWidthForClamp = cachedWidth ?? container.clientWidth
+    const maxScrollLeft = Math.max(0, timelineWidth - viewportWidthForClamp)
+    const currentScrollLeft =
+      cachedWidth !== undefined ? scrollLeftRef.current : container.scrollLeft
+    if (currentScrollLeft <= maxScrollLeft + 1) {
       return
     }
 
@@ -1310,7 +1368,7 @@ export const TimelineContent = memo(function TimelineContent({
     // without subscribing broad UI surfaces to item-array churn.
     container.scrollLeft = maxScrollLeft
     scrollLeftRef.current = maxScrollLeft
-    syncViewportFromContainer()
+    syncViewportFromContainer(maxScrollLeft)
   }, [timelineWidth, syncViewportFromContainer])
 
   // NOTE: itemsByTrack removed - TimelineTrack now fetches its own items
@@ -1327,18 +1385,20 @@ export const TimelineContent = memo(function TimelineContent({
 
       zoomApplyRafRef.current = requestAnimationFrame(() => {
         zoomApplyRafRef.current = null
-        const queuedZoomLevel = queuedZoomLevelRef.current
-        const queuedScrollLeft = queuedZoomScrollLeftRef.current
-        queuedZoomLevelRef.current = null
-        queuedZoomScrollLeftRef.current = null
+        withPerfMeasure('tl.raf.zoomApply', () => {
+          const queuedZoomLevel = queuedZoomLevelRef.current
+          const queuedScrollLeft = queuedZoomScrollLeftRef.current
+          queuedZoomLevelRef.current = null
+          queuedZoomScrollLeftRef.current = null
 
-        if (queuedZoomLevel === null || queuedScrollLeft === null) {
-          return
-        }
+          if (queuedZoomLevel === null || queuedScrollLeft === null) {
+            return
+          }
 
-        pendingScrollRef.current = queuedScrollLeft
-        scrollLeftRef.current = queuedScrollLeft
-        setZoomImmediate(queuedZoomLevel)
+          pendingScrollRef.current = queuedScrollLeft
+          scrollLeftRef.current = queuedScrollLeft
+          setZoomImmediate(queuedZoomLevel)
+        })
       })
     },
     [setZoomImmediate],
@@ -1455,7 +1515,8 @@ export const TimelineContent = memo(function TimelineContent({
     scrollLeftRef.current = 0
     useZoomStore.getState().setZoomLevelSynchronized(newZoomLevel)
     container.scrollLeft = 0
-  }, [clearQueuedZoomApply])
+    syncViewportFromContainer(0, true)
+  }, [clearQueuedZoomApply, syncViewportFromContainer])
 
   const handleZoomTo100 = useCallback(
     (centerFrame: number) => {
@@ -1523,14 +1584,19 @@ export const TimelineContent = memo(function TimelineContent({
     }
 
     const momentumLoop = () => {
-      if (!containerRef.current) return
+      const container = containerRef.current
+      if (!container) return
 
+      withPerfMeasure('tl.raf.momentum', () => momentumLoopBody(container))
+    }
+
+    const momentumLoopBody = (container: HTMLDivElement) => {
       let hasScrollMomentum = false
       let hasZoomMomentum = false
 
       // Apply velocity to scroll position
       if (Math.abs(velocityXRef.current) > SCROLL_MIN_VELOCITY) {
-        containerRef.current.scrollLeft += velocityXRef.current
+        container.scrollLeft += velocityXRef.current
         velocityXRef.current *= SCROLL_FRICTION
         hasScrollMomentum = true
       } else {

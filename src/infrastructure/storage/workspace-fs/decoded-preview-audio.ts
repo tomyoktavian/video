@@ -90,8 +90,15 @@ export async function getDecodedPreviewAudio(id: string): Promise<DecodedPreview
   }
 }
 
-export async function saveDecodedPreviewAudio(data: DecodedPreviewAudio): Promise<void> {
-  const root = requireWorkspaceRoot()
+/**
+ * Root-parameterized write. Identical format to {@link saveDecodedPreviewAudio}
+ * but takes the workspace handle explicitly so it can run in a Web Worker that
+ * was handed the workspace root (which has no module-global root of its own).
+ */
+export async function writeDecodedPreviewAudioToRoot(
+  root: FileSystemDirectoryHandle,
+  data: DecodedPreviewAudio,
+): Promise<void> {
   try {
     if (data.kind === 'meta') {
       await writeJsonAtomic(root, decodedAudioMetaPath(data.mediaId), data)
@@ -113,9 +120,13 @@ export async function saveDecodedPreviewAudio(data: DecodedPreviewAudio): Promis
       return
     }
   } catch (error) {
-    logger.error(`saveDecodedPreviewAudio(${data.id}) failed`, error)
+    logger.error(`writeDecodedPreviewAudioToRoot(${data.id}) failed`, error)
     throw error
   }
+}
+
+export async function saveDecodedPreviewAudio(data: DecodedPreviewAudio): Promise<void> {
+  await writeDecodedPreviewAudioToRoot(requireWorkspaceRoot(), data)
 }
 
 export async function deleteDecodedPreviewAudio(mediaId: string): Promise<void> {

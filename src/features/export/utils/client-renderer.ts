@@ -13,6 +13,7 @@
  */
 
 import type { ExportSettings, ExtendedExportSettings } from '@/types/export'
+import { DEFAULT_PROJECT_HEIGHT } from '@/shared/projects/defaults'
 
 // Codec mapping for mediabunny
 type ClientVideoCodec = 'avc' | 'hevc' | 'vp8' | 'vp9' | 'av1'
@@ -237,7 +238,7 @@ export async function getSupportedCodecs(
 ): Promise<ClientCodec[]> {
   const options: CodecSupportCheckOptions =
     typeof widthOrOptions === 'number'
-      ? { width: widthOrOptions, height: height ?? 1080 }
+      ? { width: widthOrOptions, height: height ?? DEFAULT_PROJECT_HEIGHT }
       : widthOrOptions
   const codecs: ClientCodec[] = ['avc', 'hevc', 'vp8', 'vp9', 'av1']
   const supported: ClientCodec[] = []

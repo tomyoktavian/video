@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, memo, useMemo, lazy, Suspense } from 'react'
 import { Columns2 } from 'lucide-react'
 import {
   VideoPreview,
@@ -6,12 +6,11 @@ import {
   AlignmentToolbar,
   TimecodeDisplay,
   PreviewZoomControls,
-  SourceMonitor,
-  InlineSourcePreview,
-  InlineCompositionPreview,
-  ColorScopesMonitor,
+  importSourceMonitor,
+  importInlineSourcePreview,
+  importInlineCompositionPreview,
+  importColorScopesMonitor,
 } from '@/features/editor/deps/preview'
-import { useTimelineStore } from '@/features/editor/deps/timeline-store'
 import { useProjectStore } from '@/features/editor/deps/projects'
 import { useSettingsStore } from '@/features/editor/deps/settings'
 import { useMaskEditorStore, useItemsStore } from '@/features/editor/deps/preview'
@@ -36,6 +35,20 @@ const PREVIEW_SOURCE_SPLIT_DEFAULT_PERCENT = 50
 const PREVIEW_SCOPES_SPLIT_DEFAULT_PERCENT = 32
 const PREVIEW_SIDE_PANEL_MIN_PERCENT = 22
 const PREVIEW_SIDE_PANEL_MAX_PERCENT = 55
+const LazySourceMonitor = lazy(() =>
+  importSourceMonitor().then((module) => ({ default: module.SourceMonitor })),
+)
+const LazyInlineSourcePreview = lazy(() =>
+  importInlineSourcePreview().then((module) => ({ default: module.InlineSourcePreview })),
+)
+const LazyInlineCompositionPreview = lazy(() =>
+  importInlineCompositionPreview().then((module) => ({
+    default: module.InlineCompositionPreview,
+  })),
+)
+const LazyColorScopesMonitor = lazy(() =>
+  importColorScopesMonitor().then((module) => ({ default: module.ColorScopesMonitor })),
+)
 
 function PreviewSplitHandle({
   onMouseDown,
@@ -94,17 +107,21 @@ const ProgramPreviewSurface = memo(function ProgramPreviewSurface({
   )
   const compoundClipSkimPreviewFrame = useEditorStore((s) => s.compoundClipSkimPreviewFrame)
   const skimPreviewOverlay = compoundClipSkimPreviewCompositionId ? (
-    <InlineCompositionPreview
-      compositionId={compoundClipSkimPreviewCompositionId}
-      seekFrame={compoundClipSkimPreviewFrame}
-      containerSize={containerSize}
-    />
+    <Suspense fallback={null}>
+      <LazyInlineCompositionPreview
+        compositionId={compoundClipSkimPreviewCompositionId}
+        seekFrame={compoundClipSkimPreviewFrame}
+        containerSize={containerSize}
+      />
+    </Suspense>
   ) : mediaSkimPreviewMediaId ? (
-    <InlineSourcePreview
-      mediaId={mediaSkimPreviewMediaId}
-      seekFrame={mediaSkimPreviewFrame}
-      containerSize={containerSize}
-    />
+    <Suspense fallback={null}>
+      <LazyInlineSourcePreview
+        mediaId={mediaSkimPreviewMediaId}
+        seekFrame={mediaSkimPreviewFrame}
+        containerSize={containerSize}
+      />
+    </Suspense>
   ) : null
 
   return (
@@ -178,20 +195,9 @@ export const PreviewArea = memo(function PreviewArea({ project }: PreviewAreaPro
   const fps = projectFps ?? project.fps
   const backgroundColor = projectBgColor ?? '#000000'
 
-  // Derive timeline end frame directly from store state to avoid recreating selector functions.
-  const timelineEndFrame = useTimelineStore((s) => {
-    if (s.items.length === 0) return null
-    let maxFrame = 0
-    for (const item of s.items) {
-      const itemEnd = item.from + item.durationInFrames
-      if (itemEnd > maxFrame) {
-        maxFrame = itemEnd
-      }
-    }
-    return maxFrame
-  })
-
-  const totalFrames = timelineEndFrame ?? fps * DEFAULT_EMPTY_TIMELINE_SECONDS
+  // Use the precomputed index from items-store; returns 0 when there are no items.
+  const maxItemEndFrame = useItemsStore((s) => s.maxItemEndFrame)
+  const totalFrames = maxItemEndFrame > 0 ? maxItemEndFrame : fps * DEFAULT_EMPTY_TIMELINE_SECONDS
   const isPathEditModeActive = isMaskEditingActive && !isPenModeActive
   const canFinishPenPath = isShapePenModeActive && penVertexCount >= 3
   const selectedVertexCount = selectedVertexIndices.length
@@ -484,11 +490,13 @@ export const PreviewArea = memo(function PreviewArea({ project }: PreviewAreaPro
             style={{ width: `${displayedSourceSplitPercent}%` }}
           >
             <div className="flex h-full flex-col min-w-0">
-              <SourceMonitor
-                key={sourcePreviewMediaId}
-                mediaId={sourcePreviewMediaId}
-                onClose={handleCloseSourceMonitor}
-              />
+              <Suspense fallback={null}>
+                <LazySourceMonitor
+                  key={sourcePreviewMediaId}
+                  mediaId={sourcePreviewMediaId}
+                  onClose={handleCloseSourceMonitor}
+                />
+              </Suspense>
             </div>
           </InteractionLockRegion>
           <InteractionLockRegion locked={isMaskEditingActive} overlayClassName="rounded-none">
@@ -534,7 +542,9 @@ export const PreviewArea = memo(function PreviewArea({ project }: PreviewAreaPro
           {isPenModeActive ? (
             <div
               className="border-t border-border panel-header flex items-center px-3 flex-shrink-0 gap-3 overflow-hidden"
-              style={{ height: EDITOR_LAYOUT_CSS_VALUES.previewControlsHeight }}
+              style={{
+                height: `calc(1.75rem + ${EDITOR_LAYOUT_CSS_VALUES.previewControlsHeight})`,
+              }}
               role="toolbar"
               aria-label="Path pen controls"
             >
@@ -578,7 +588,9 @@ export const PreviewArea = memo(function PreviewArea({ project }: PreviewAreaPro
           ) : isPathEditModeActive ? (
             <div
               className="border-t border-border panel-header flex items-center px-3 flex-shrink-0 gap-3 overflow-hidden"
-              style={{ height: EDITOR_LAYOUT_CSS_VALUES.previewControlsHeight }}
+              style={{
+                height: `calc(1.75rem + ${EDITOR_LAYOUT_CSS_VALUES.previewControlsHeight})`,
+              }}
               role="toolbar"
               aria-label="Path edit controls"
             >
@@ -685,7 +697,9 @@ export const PreviewArea = memo(function PreviewArea({ project }: PreviewAreaPro
             style={{ width: `${displayedScopesSplitPercent}%` }}
           >
             <div className="flex h-full flex-col min-w-0">
-              <ColorScopesMonitor onClose={handleCloseColorScopes} />
+              <Suspense fallback={null}>
+                <LazyColorScopesMonitor onClose={handleCloseColorScopes} />
+              </Suspense>
             </div>
           </InteractionLockRegion>
         </>
